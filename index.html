@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Simulateur de qualité image — du photon au pixel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#090E13; --panel:#131E27; --panel-2:#1A2833;
+  --line:#2E4152; --line-soft:#22323F;
+  --paper:#E6EEF4; --muted:#9BADBD; --muted-2:#8497AA;
+  --photon:#F5AC57; --pixel:#5FDCD0; --alert:#F0776D;
+  --display:"Barlow Condensed",Impact,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--void);color:var(--paper);font-family:var(--body);
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1400px;margin:0 auto;padding:0 26px 90px}
+
+/* ---------- en-tête compact ---------- */
+.masthead{padding:44px 0 22px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 14px}
+.eyebrow b{color:var(--photon);font-weight:500}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(46px,7vw,88px);
+  line-height:.9;letter-spacing:-.01em;margin:0;text-transform:uppercase}
+h1 .warm{color:var(--photon)} h1 .cool{color:var(--pixel)}
+h1 .arrow{color:var(--muted-2);font-weight:400}
+.thesis{max-width:62ch;margin:16px 0 0;color:var(--muted);font-size:17px}
+.thesis strong{color:var(--paper);font-weight:500}
+
+.rail{margin:26px 0 26px}
+.rail-bar{height:4px;border-radius:2px;
+  background:linear-gradient(90deg,var(--photon) 0%,#CFA268 34%,#86BCA6 66%,var(--pixel) 100%)}
+
+.stage{display:grid;grid-template-columns:minmax(212px,238px) 1fr minmax(272px,300px);gap:18px;align-items:start}
+.below{margin-top:16px}
+.metricsec .metrics{margin-top:0}
+.metricsec .metric{padding:13px 15px}
+.metricsec .metric-v{font-size:36px}
+.metricsec .readouts{margin-top:14px}
+.tabs{display:flex;gap:4px;margin-bottom:12px;border-bottom:1px solid var(--line-soft);
+  padding-bottom:0}
+.tab{appearance:none;cursor:pointer;background:transparent;border:1px solid transparent;
+  border-bottom:none;border-radius:3px 3px 0 0;color:var(--muted-2);
+  font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
+  padding:9px 12px;display:flex;align-items:center;gap:7px;position:relative;top:1px;
+  transition:color .14s,background .14s,border-color .14s}
+.tab:hover{color:var(--paper);background:var(--panel-2)}
+.tab[aria-selected="true"]{color:var(--paper);background:var(--panel);
+  border-color:var(--line-soft);border-bottom:1px solid var(--panel)}
+.tab .dot{width:6px;height:6px}
+/* le fléchage rappelle l'ordre de la chaîne : photon en premier, pixel en dernier */
+.tabs.chain .tab + .tab::before{content:"";position:absolute;left:-8px;top:50%;
+  width:4px;height:4px;border-top:1px solid var(--line);border-right:1px solid var(--line);
+  transform:translateY(-50%) rotate(45deg)}
+.tabs.chain .tab{flex:1;justify-content:center;padding:9px 6px;font-size:11px;letter-spacing:.06em}
+.tabpanel[hidden]{display:none}
+
+.panel{background:var(--panel);border:1px solid var(--line-soft);border-radius:4px;padding:20px}
+.panel + .panel{margin-top:14px}
+.tabpanel > .panel:first-child{margin-top:0}
+.panel.tbd{opacity:.48}
+.grouphead{font-family:var(--mono);font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;
+  margin:0 0 16px;display:flex;align-items:center;gap:10px;color:var(--muted)}
+.grouphead .tag{margin-left:auto;letter-spacing:.08em;color:var(--muted-2);
+  border:1px solid var(--line);border-radius:2px;padding:2px 7px;font-size:10px;text-transform:none}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.warm{background:var(--photon)} .dot.cool{background:var(--pixel)} .dot.source{background:#b05bf1}
+
+/* ---------- cas ---------- */
+.presets{display:flex;flex-direction:column;gap:7px}
+.preset{appearance:none;cursor:pointer;background:var(--panel-2);
+  border:1px solid var(--line-soft);color:var(--paper);border-radius:3px;padding:11px 14px;
+  font-family:var(--body);font-size:14.5px;line-height:1.3;
+  display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  transition:border-color .14s,background .14s}
+.preset small{font-family:var(--mono);font-size:11.5px;color:var(--muted);
+  text-align:right;flex:none;white-space:nowrap}
+.preset:hover{border-color:var(--line);background:#1F2E3A}
+.preset[aria-pressed="true"]{border-color:var(--photon);background:#20242A}
+.preset[aria-pressed="true"] small{color:var(--photon)}
+.reset{width:100%;margin-top:10px;padding:9px;cursor:pointer;background:transparent;
+  border:1px solid var(--line);color:var(--muted);border-radius:3px;font-family:var(--mono);
+  font-size:11.5px;transition:border-color .14s,color .14s}
+.reset:hover{border-color:var(--photon);color:var(--photon)}
+.reset[disabled]{opacity:.35;cursor:default;border-color:var(--line-soft)}
+
+/* ---------- scène ---------- */
+.scenebar{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.scenes .scene{flex:1 1 0;min-width:0}
+.scene{appearance:none;cursor:pointer;background:var(--panel-2);border:1px solid var(--line-soft);
+  color:var(--paper);border-radius:3px;padding:8px 10px;display:flex;align-items:center;gap:11px;
+  text-align:left;transition:border-color .14s,background .14s}
+.scene:hover{border-color:var(--line);background:#1F2E3A}
+.scene[aria-pressed="true"]{border-color:var(--photon);background:#20242A}
+.scene canvas{width:38px;height:38px;border-radius:2px;flex:none;
+  border:1px solid var(--line-soft);image-rendering:auto}
+.scene-meta{flex:1;min-width:0}
+.scene-name{font-size:13.5px}
+.scene-sub{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
+.scene[aria-pressed="true"] .scene-sub{color:var(--photon)}
+.scene-note{margin:11px 0 0;font-family:var(--mono);font-size:11px;color:var(--muted-2)}
+.scene-meta{overflow:hidden}
+.scene-name,.scene-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* ligne « cas personnalisé » : rendre explicite qu'on fabrique sa propre config */
+.lockhint{margin-left:auto;font-size:10px;letter-spacing:.08em;text-transform:none;
+  color:var(--muted-2);border:1px solid var(--line);border-radius:2px;padding:2px 7px;
+  white-space:nowrap;line-height:1.5}
+.lockhint b{color:var(--photon);font-weight:500}
+.params.locked .ctrl,.params.locked .modes,.params.locked details.adv{opacity:.42;transition:opacity .2s}
+.params.locked .grouphead{opacity:.62}
+.params:not(.locked) .lockhint{display:none}
+.params .ctrl,.params .modes,.params details.adv{opacity:1;transition:opacity .2s}
+
+/* « Votre instrument » : sixième ligne de la liste, mise en avant */
+.preset.custom{border-color:#6B4E28;background:linear-gradient(180deg,#22190E 0%,#1C1D18 100%);
+  margin-top:5px}
+.preset.custom:hover{border-color:var(--photon);background:#261B0E}
+.preset.custom .lbl{color:var(--photon)}
+.preset.custom[aria-pressed="true"]{border-color:var(--photon);background:#2A1E0E;box-shadow:inset 0 0 0 1px rgba(245,172,87,.35)}
+.preset.custom small{color:var(--muted-2)}
+.preset.custom[aria-pressed="true"] small{color:var(--photon)}
+
+/* ---------- offre ---------- */
+.panel.offer{border-color:#41321F;background:linear-gradient(180deg,#1E1911 0%,var(--panel) 72%);margin-top:14px}
+.offer-body{margin:0;font-size:14px;color:var(--muted);line-height:1.65}
+.offer-body b{color:var(--paper);font-weight:500}
+.offer-cta{display:block;margin-top:16px;max-width:340px;padding:12px;text-align:center;text-decoration:none;
+  background:var(--photon);color:#0A0F14;border-radius:3px;font-family:var(--mono);
+  font-size:12px;letter-spacing:.12em;text-transform:uppercase;font-weight:500}
+.offer-cta:hover{background:#FFBE72}
+
+/* ---------- curseurs ---------- */
+.ctrl{margin-bottom:17px} .ctrl:last-child{margin-bottom:0}
+.ctrl-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:6px}
+.ctrl-name{font-size:14px;color:var(--paper)}
+.ctrl-val{display:inline-flex;align-items:baseline;gap:3px;white-space:nowrap}
+.ctrl-val input{width:62px;text-align:right;background:transparent;border:none;
+  border-bottom:1px dashed var(--line);color:var(--paper);font-family:var(--mono);
+  font-size:15px;padding:0 2px 1px;-moz-appearance:textfield}
+.ctrl-val input::-webkit-outer-spin-button,.ctrl-val input::-webkit-inner-spin-button{
+  -webkit-appearance:none;margin:0}
+.ctrl-val input:hover{border-bottom-color:var(--muted)}
+.ctrl-val input:focus{outline:none;border-bottom-color:var(--photon);border-bottom-style:solid}
+.ctrl-val em{font-style:normal;color:var(--muted);font-size:12px}
+.ctrl.touched .ctrl-name{color:var(--photon)}
+
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:24px;
+  background:transparent;cursor:grab;display:block}
+input[type=range]:active{cursor:grabbing}
+input[type=range]::-webkit-slider-runnable-track{height:3px;background:var(--line);border-radius:2px}
+input[type=range]::-moz-range-track{height:3px;background:var(--line);border-radius:2px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:17px;height:17px;
+  border-radius:50%;margin-top:-7px;background:var(--paper);border:none;
+  box-shadow:0 0 0 0 rgba(245,172,87,0);transition:box-shadow .14s,transform .14s}
+input[type=range]::-moz-range-thumb{width:17px;height:17px;border-radius:50%;
+  background:var(--paper);border:none;transition:box-shadow .14s}
+.warm-ctrl input[type=range]::-webkit-slider-thumb{background:var(--photon)}
+.warm-ctrl input[type=range]::-moz-range-thumb{background:var(--photon)}
+.cool-ctrl input[type=range]::-webkit-slider-thumb{background:var(--pixel)}
+.cool-ctrl input[type=range]::-moz-range-thumb{background:var(--pixel)}
+.warm-ctrl input[type=range]:hover::-webkit-slider-thumb,
+.warm-ctrl input[type=range]:focus::-webkit-slider-thumb{box-shadow:0 0 0 6px rgba(245,172,87,.16)}
+.cool-ctrl input[type=range]:hover::-webkit-slider-thumb,
+.cool-ctrl input[type=range]:focus::-webkit-slider-thumb{box-shadow:0 0 0 6px rgba(95,220,208,.16)}
+input[type=range]:focus-visible{outline:2px solid var(--pixel);outline-offset:4px;border-radius:3px}
+button:focus-visible,a:focus-visible,summary:focus-visible{outline:2px solid var(--pixel);outline-offset:3px}
+
+details.adv{margin-top:16px;border-top:1px solid var(--line-soft);padding-top:14px}
+details.adv summary{cursor:pointer;list-style:none;font-family:var(--mono);font-size:11.5px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);display:flex;
+  align-items:center;gap:8px}
+details.adv summary::-webkit-details-marker{display:none}
+details.adv summary::before{content:"+";font-size:14px;line-height:1;color:var(--muted-2)}
+details.adv[open] summary::before{content:"–"}
+details.adv summary:hover{color:var(--muted)}
+details.adv .inner{margin-top:16px}
+
+.modes{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.mode{appearance:none;cursor:pointer;background:var(--panel-2);border:1px solid var(--line-soft);
+  color:var(--muted);border-radius:3px;padding:6px 10px;font-family:var(--mono);font-size:11.5px}
+.mode:hover{border-color:var(--line);color:var(--paper)}
+.mode[aria-pressed="true"]{border-color:var(--photon);color:var(--photon);background:#20242A}
+
+/* ---------- visualiseur ---------- */
+.viewer{background:var(--panel);border:1px solid var(--line-soft);border-radius:4px;padding:18px}
+.viewer-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;
+  flex-wrap:wrap;margin-bottom:16px}
+.viewer-title{font-size:15.5px;color:var(--paper);margin:0}
+.viewer-sub{font-size:13.5px;color:var(--muted);margin:4px 0 0}
+.vtools{display:flex;gap:6px;flex:none}
+
+.compare{position:relative;width:min(100%,108vh);aspect-ratio:3/2;margin:0 auto;
+  background:#000;overflow:hidden;border:1px solid var(--line-soft);border-radius:3px}
+.compare canvas{position:absolute;inset:0;width:100%;height:100%;display:block;
+  object-fit:cover;object-position:center;
+  image-rendering:pixelated;image-rendering:crisp-edges;
+  transform-origin:center;transition:transform .18s ease}
+#simLayer{clip-path:inset(0 0 0 50%)}
+.divider{position:absolute;top:0;bottom:0;width:2px;background:var(--paper);left:50%;
+  pointer-events:none;opacity:.92;box-shadow:0 0 0 1px rgba(9,14,19,.5)}
+.divider::after{content:"⟨⟩";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:36px;height:36px;border-radius:50%;border:2px solid var(--paper);
+  background:rgba(9,14,19,.72);color:var(--paper);font-family:var(--mono);font-size:13px;
+  display:flex;align-items:center;justify-content:center;letter-spacing:-1px}
+.chip{position:absolute;top:12px;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;
+  text-transform:uppercase;padding:5px 10px;border-radius:3px;background:rgba(9,14,19,.84);
+  border:1px solid var(--line);pointer-events:none}
+.chip.left{left:12px;color:var(--photon);border-color:#6B4E28}
+.chip.right{right:12px;color:var(--pixel);border-color:#2E6660}
+.scalebar{position:absolute;left:14px;bottom:14px;pointer-events:none;z-index:2;
+  display:flex;flex-direction:column-reverse;gap:5px;width:19.53%}
+.scalebar .bar{display:block;height:7px;border:1px solid rgba(230,238,244,.9);
+  border-top:none;box-shadow:0 1px 3px rgba(0,0,0,.7)}
+.scalebar .lab{font-family:var(--mono);font-size:11px;color:var(--paper);
+  text-shadow:0 1px 3px rgba(0,0,0,.95);letter-spacing:.04em;text-align:center}
+.tbd-note{margin:0;font-size:12.5px;color:var(--muted)}
+.analysis{align-items:stretch}
+.analysis > .panel{display:flex;flex-direction:column}
+/* le titre de la pupille tient sur deux lignes, celui de la PSF sur une :
+   on réserve la même hauteur pour que les deux canvas démarrent au même niveau */
+.analysis .grouphead{min-height:32px;align-items:flex-start}
+.analysis .note{margin-top:auto;padding-top:12px}
+.panel.offer{margin-top:14px}
+.offer-body b{color:var(--paper);font-weight:500}
+.offer-cta{max-width:340px}
+.visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;
+  overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.compare{cursor:ew-resize;touch-action:none}
+.divider::after{cursor:ew-resize;pointer-events:none}
+.viewfoot{display:flex;justify-content:space-between;align-items:center;gap:16px;
+  margin-top:8px;flex-wrap:wrap}
+.viewfoot .viewer-sub{margin:0}
+
+.up{color:var(--pixel)} .down{color:var(--alert)}
+
+/* ---------- métriques ---------- */
+.metrics{display:grid;grid-template-columns:1fr;gap:1px;
+  background:var(--line-soft);border:1px solid var(--line-soft);margin-top:14px;
+  border-radius:3px;overflow:hidden}
+.metric{background:var(--panel);padding:12px 14px}
+.metric.primary{background:#16232E}
+.metric-k{font-family:var(--mono);font-size:11.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--muted)}
+.metric-v{font-family:var(--display);font-size:33px;line-height:1.05;margin-top:3px;font-weight:500}
+.metric-v u{text-decoration:none;font-size:17px;color:var(--muted);margin-left:4px;font-family:var(--mono)}
+.metric-v.warm{color:var(--photon)} .metric-v.cool{color:var(--pixel)}
+.metric-d{font-family:var(--mono);font-size:12.5px;margin-top:3px;min-height:19px;color:var(--muted-2)}
+.metric-n{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.45}
+.metric-n.mono{font-family:var(--mono);font-size:12px;color:var(--muted-2)}
+.stackbar{display:flex;height:6px;margin-top:9px;gap:1px;background:var(--line-soft);
+  border-radius:2px;overflow:hidden}
+.stackbar i{display:block;height:100%}
+.stacklegend{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:7px;
+  display:flex;gap:11px;flex-wrap:wrap}
+.stacklegend s{text-decoration:none;display:inline-block;width:7px;height:7px;
+  margin-right:4px;border-radius:1px}
+
+.readouts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1px;
+  background:var(--line-soft);border:1px solid var(--line-soft);
+  border-radius:3px;overflow:hidden}
+.ro{padding:11px 14px;background:var(--panel)}
+.ro-k{font-family:var(--mono);font-size:11px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--muted-2)}
+.ro-v{font-family:var(--mono);font-size:15px;margin-top:3px;color:var(--paper)}
+
+/* ---------- analyse ---------- */
+.analysis{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.analysis .wide{grid-column:1/-1}
+canvas.sq{width:100%;aspect-ratio:1/1;display:block;image-rendering:pixelated;
+  border:1px solid var(--line-soft);border-radius:3px}
+canvas.chart{width:100%;height:272px;display:block}
+.cbar{height:8px;margin-top:12px;border-radius:2px}
+.cbar.psf{background:linear-gradient(90deg,#090E13 0%,#E6873C 55%,#FFFFF0 100%)}
+.cbar.pupil{background:linear-gradient(90deg,#5FDCD0 0%,#5A6A76 50%,#F5AC57 100%)}
+.cbar-lab{display:flex;justify-content:space-between;font-family:var(--mono);
+  font-size:11px;color:var(--muted-2);margin-top:5px}
+.note{font-size:12.5px;color:var(--muted);margin-top:12px;line-height:1.65}
+.note .flag{color:var(--alert)}
+
+footer{margin-top:56px;padding-top:26px;border-top:1px solid var(--line-soft);
+  display:flex;justify-content:space-between;gap:28px;flex-wrap:wrap}
+footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-height:1.75}
+
+@media(max-width:1040px){
+  .stage{grid-template-columns:300px 1fr}
+  .col-a{grid-column:1;grid-row:1}
+  .col-b{grid-column:1;grid-row:2}
+  .col-view{display:flex;flex-direction:column;grid-column:2;grid-row:1/span 2}
+}
+@media(max-width:760px){
+  .stage{grid-template-columns:1fr}
+  .col-l,.col-r,.col-view{display:flex;flex-direction:column;grid-column:1;grid-row:auto}
+}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="masthead">
+  <div class="mast-l">
+    <p class="eyebrow">Flora Gabriagues · Simulation de charge utile optique</p>
+    <h1><span class="warm">Du photon</span> <span class="arrow">→</span> <span class="cool">au pixel</span></h1>
+  </div>
+</header>
+
+
+<div class="rail">
+  <div class="rail-bar"></div>
+</div>
+
+<div class="stage">
+
+  <!-- choix de l'instrument et offre -->
+  <div class="col-l">
+    <div class="panel">
+      <p class="grouphead">QUICK START</p>
+      <div class="presets" id="presets"></div>
+    </div>
+
+    <div class="panel metricsec">
+      <p class="grouphead"><span class="dot cool"></span>Qualité image</p>
+      <div class="metrics">
+      <div class="metric"><div class="metric-k">Résolution au sol</div>
+      <div class="metric-v" id="m-gsd">—</div></div>
+      <div class="metric primary"><div class="metric-k">Détail limite · FTM 15 %</div>
+      <div class="metric-v warm" id="m-r15">—</div>
+      <div class="metric-n mono" id="n-r15">—</div></div>
+      <div class="metric primary"><div class="metric-k">Rapport signal / bruit</div>
+      <div class="metric-v cool" id="m-snr">—</div>
+      <div class="stackbar" id="stackbar"></div>
+      <div class="stacklegend" id="stacklegend"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- scène et image -->
+  <div class="col-view">
+    <div class="tabs" role="tablist" aria-label="Vue">
+      <button class="tab" id="tab-image" type="button" role="tab" aria-selected="true" aria-controls="tp-image">Image simulée</button>
+      <button class="tab" id="tab-graphs" type="button" role="tab" aria-selected="false" aria-controls="tp-graphs">Graphes</button>
+    </div>
+    <div class="tabpanel" id="tp-image" role="tabpanel" aria-labelledby="tab-image">
+      <div class="viewer">
+      <div class="scenebar" id="scenes"></div>
+      <div class="compare" id="compare">
+      <canvas id="truthLayer" width="1024" height="1024"></canvas>
+      <canvas id="simLayer" width="1024" height="1024"></canvas>
+      <div class="divider" id="divider"></div>
+      <span class="chip left">Image source</span>
+      <span class="chip right">Image simulée</span>
+      <div class="scalebar"><span class="bar"></span><span class="lab">20 m</span></div>
+      </div>
+      <input type="range" class="wipe visually-hidden" id="wipe" min="0" max="100" value="50" aria-label="Position du curseur de comparaison">
+      <div class="viewfoot">
+      <span class="viewer-sub">Glissez sur l'image pour comparer</span>
+      <span class="vtools">
+      <button class="mode zoom" data-z="1" type="button" aria-pressed="true">Ajusté</button>
+      <button class="mode zoom" data-z="2" type="button" aria-pressed="false">×2</button>
+      <button class="mode zoom" data-z="4" type="button" aria-pressed="false">×4</button>
+      </span>
+      </div>
+      </div>
+    </div>
+    <div class="tabpanel" id="tp-graphs" role="tabpanel" aria-labelledby="tab-graphs" hidden>
+      <div class="analysis">
+      <div class="panel">
+      <p class="grouphead"><span class="dot warm"></span>Pupille et front d'onde</p>
+      <canvas class="sq" id="pupilCv" width="256" height="256"></canvas>
+      <div class="cbar pupil"></div>
+      <div class="cbar-lab"><span>avance de phase</span><span>retard</span></div>
+      <p class="note" id="pupilNote"></p>
+      </div>
+      <div class="panel">
+      <p class="grouphead"><span class="dot warm"></span>PSF</p>
+      <canvas class="sq" id="psfCv" width="128" height="128"></canvas>
+      <div class="cbar psf"></div>
+      <div class="cbar-lab"><span>10⁻⁵</span><span>intensité relative</span><span>1</span></div>
+      <p class="note" id="psfNote"></p>
+      </div>
+      <div class="panel wide">
+      <p class="grouphead"><span class="dot cool"></span>Fonction de transfert de modulation</p>
+      <canvas class="chart" id="mtfChart"></canvas>
+      <p class="note" id="mtfNote"></p>
+      </div>
+      </div>
+    </div>
+    <div class="panel offer">
+    <p class="grouphead"><span class="dot warm"></span>Simulation sur mesure</p>
+    <p class="offer-body">La démo tourne sur des scènes de synthèse et une poignée de paramètres. Sur devis, la simulation porte sur <b>votre instrument et vos bandes spectrales</b>, à partir de <b>vos propres images sources</b> : études de sensibilité sur chaque paramètre, budgets FTM et SNR tracés par contributeur, et livraison des images simulées sur <b>l'ensemble du champ de vue</b>, pas seulement sur un extrait.</p>
+    <a class="offer-cta" href="mailto:contact@example.com?subject=Simulation%20qualit%C3%A9%20image%20%E2%80%94%20demande%20de%20devis">Faire simuler ma configuration</a>
+    </div>
+  </div>
+
+  <!-- tous les réglages -->
+  <div class="col-r">
+    <div class="tabs chain" role="tablist" aria-label="Chaîne de détection">
+      <button class="tab" id="tab-inst" type="button" role="tab" aria-selected="true" aria-controls="tp-inst"><span class="dot cool"></span>Instrument</button>
+      <button class="tab" id="tab-src" type="button" role="tab" aria-selected="false" aria-controls="tp-src"><span class="dot source"></span>Orbite</button>
+      <button class="tab" id="tab-plat" type="button" role="tab" aria-selected="false" aria-controls="tp-plat">Plateforme</button>
+    </div>
+    <div class="tabpanel" id="tp-src" role="tabpanel" aria-labelledby="tab-src" hidden>
+      <div class="panel params" id="p-orbit">
+        <p class="grouphead"><span class="dot source"></span>Orbite et éclairement<span class="lockhint">Verrouillé</span></p>
+        <div id="g-orbit"></div>
+      </div>
+      <div class="panel params cool-ctrl" id="p-acq">
+        <p class="grouphead"><span class="dot cool"></span>Acquisition<span class="lockhint">Verrouillé</span></p>
+        <div id="g-acq"></div>
+      </div>
+    </div>
+    <div class="tabpanel" id="tp-plat" role="tabpanel" aria-labelledby="tab-plat" hidden>
+      <div class="panel tbd">
+      <p class="grouphead">Effets géométriques<span class="tag">à venir</span></p>
+      </div>
+      <div class="panel tbd">
+      <p class="grouphead">Effets plateforme<span class="tag">à venir</span></p>
+      </div>
+    </div>
+    <div class="tabpanel" id="tp-inst" role="tabpanel" aria-labelledby="tab-inst">
+      <div class="panel params warm-ctrl" id="p-optics">
+      <p class="grouphead"><span class="dot warm"></span>Optique<span class="lockhint">Verrouillé</span></p>
+      <div id="g-optics"></div>
+      <div class="ctrl" style="margin-top:17px">
+      <div class="ctrl-top"><span class="ctrl-name">Aberration dominante</span></div>
+      <div class="modes" id="zmodes"></div>
+      </div>
+      <details class="adv"><summary>Paramètres avancés</summary>
+      <div class="inner" id="g-optics-adv"></div></details>
+      </div>
+      <div class="panel params cool-ctrl" id="p-detector">
+      <p class="grouphead"><span class="dot cool"></span>Détecteur<span class="lockhint">Verrouillé</span></p>
+      <div id="g-detector"></div>
+      <details class="adv"><summary>Paramètres avancés</summary>
+      <div class="inner" id="g-detector-adv"></div></details>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+
+<footer>
+  <p>Démonstrateur. La pupille, la PSF et la FTM optique sont calculées par transformée de Fourier de la pupille complexe (masque annulaire + phase de Zernike), pas par une gaussienne ajustée. Le flou appliqué à l'image utilise une PSF gaussienne équivalente calée sur la FTM à Nyquist — seule approximation restante. Radiométrie d'ordre de grandeur.</p>
+  <p>Scène synthétique — aucune donnée sous licence.<br>Effets plateforme non modélisés à ce stade.<br>Diamètre de pupille du NewSat IV déduit de l'encombrement plateforme, non publié.</p>
+</footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+// ===================== CONSTANTES PHYSIQUES (inchangées) =====================
+var LAMBDA = 550e-9, DLAMBDA_UM = 0.35, QE = 0.70;
+var E_PHOTON = 6.626e-34 * 2.998e8 / LAMBDA;
+var L_REF = 120, ELEV_REF = 45;
+var FULL_WELL = 150000;
+var GM = 3.986e14, RE = 6371e3;
+// TRUTH_RES = résolution "vérité" par défaut (m/px), utilisée par les 3 scènes de
+// synthèse (dessinées à cette résolution fixe via m2px). Une scène réelle peut
+// déclarer sa propre résolution native (res) pour éviter tout suréchantillonnage
+// artificiel — curRes/curExtW/curExtH/curW/curH sont mis à jour par useScene().
+var TRUTH_RES = 0.1;
+var curRes = TRUTH_RES;
+var curExtW = 102.4, curExtH = 102.4;
+var curW = Math.round(curExtW / curRes), curH = Math.round(curExtH / curRes);
+var NP = 256, DPX = 64;
+
+var st = {D:0.65, E:0.35, W:25, T:0.62, I:0.484, R:12, P:1.6, K:150, H:620, S:45,
+          TI:45, TDI:20, Z:"none"};
+
+var PARAMS = [
+  {k:"D", g:"optics",   adv:false, name:"Diamètre de pupille",  unit:"m",     min:0.08, max:1.30, step:0.01, dec:2},
+  {k:"I", g:"optics",   adv:false, name:"iFoV",                 unit:"µrad",  min:0.25, max:20,   step:0.01, dec:2},
+  {k:"W", g:"optics",   adv:false, name:"WFE RMS",              unit:"nm",    min:0,    max:150,  step:1,    dec:0},
+  {k:"E", g:"optics",   adv:true,  name:"Obscuration centrale", unit:"ε",     min:0,    max:0.55, step:0.01, dec:2},
+  {k:"T", g:"optics",   adv:true,  name:"Transmission optique", unit:"τ",     min:0.15, max:0.95, step:0.01, dec:2},
+  {k:"R",   g:"detector", adv:false, name:"Bruit de lecture",     unit:"e⁻",    min:1,    max:80,   step:0.5,  dec:1},
+  {k:"TI",  g:"acq", adv:false, name:"Temps d'intégration",  unit:"µs",    min:5,    max:2000, step:5,    dec:0},
+  {k:"TDI", g:"acq", adv:false, name:"Étages TDI",           unit:"×",     min:1,    max:64,   step:1,    dec:0},
+  {k:"P", g:"detector", adv:true,  name:"PRNU",                 unit:"%",     min:0,    max:5,    step:0.05, dec:2},
+  {k:"K", g:"detector", adv:true,  name:"Courant d'obscurité",  unit:"e⁻/s",  min:0,    max:4000, step:10,   dec:0},
+  {k:"H", g:"orbit",    adv:false, name:"Altitude",             unit:"km",    min:380,  max:900,  step:5,    dec:0},
+  {k:"S", g:"orbit",    adv:false, name:"Élévation solaire",    unit:"°",     min:8,    max:80,   step:1,    dec:0}
+];
+var PMAP = {}; PARAMS.forEach(function(p){ PMAP[p.k]=p; });
+
+var ZMODES = [
+  {id:"none",  label:"aucune"}, {id:"defoc", label:"défocus"},
+  {id:"astig", label:"astigm."}, {id:"coma",  label:"coma"},
+  {id:"spher", label:"sphérique"}, {id:"trefo", label:"trèfle"}
+];
+
+var PRESETS = [
+  {id:"pneo", label:"Pléiades Neo",
+   v:{D:0.65,E:0.35,W:25,T:0.62,I:0.484,R:12,P:1.60,K:150,H:620,S:45,TI:45,TDI:20,Z:"none"}},
+  {id:"newsat", label:"Satellogic NewSat IV",
+   v:{D:0.25,E:0.30,W:35,T:0.55,I:2.084,R:18,P:1.50,K:350,H:475,S:45,TI:140,TDI:6,Z:"none"}},
+  {id:"s2", label:"Sentinel-2",
+   v:{D:0.15,E:0.00,W:20,T:0.65,I:12.72,R:8,P:0.60,K:80,H:786,S:45,TI:1505,TDI:1,Z:"none"}},
+  {id:"defocus", label:"Défocus en orbite",
+   v:{D:0.65,E:0.35,W:110,T:0.62,I:0.484,R:12,P:1.60,K:150,H:620,S:45,TI:45,TDI:20,Z:"defoc"}},
+  {id:"lowsun", label:"Angle solaire faible",
+   v:{D:0.65,E:0.35,W:25,T:0.62,I:0.484,R:12,P:1.60,K:150,H:620,S:12,TI:45,TDI:20,Z:"none"}}
+];
+
+// ===================== GRANDEURS DÉRIVÉES =====================
+function ifovRad(s){ return s.I * 1e-6; }
+function altM(s){ return s.H * 1000; }
+function gsdOf(s){ return ifovRad(s) * altM(s); }
+function cutoffOf(s){ return s.D / (LAMBDA * altM(s)); }
+function nyqOf(s){ return 1 / (2 * gsdOf(s)); }
+function qOf(s){ return LAMBDA / (s.D * ifovRad(s)); }
+function groundSpeed(s){ var r = RE + altM(s); return Math.sqrt(GM/r) * RE / r; }
+function tIntOf(s){ return s.TI * 1e-6; }
+// durée nominale d'un pushbroom : GSD parcouru à la vitesse sol
+function tIntNominal(s){ return gsdOf(s) / groundSpeed(s); }
+function radianceOf(s){ return L_REF * Math.sin(s.S*Math.PI/180) / Math.sin(ELEV_REF*Math.PI/180); }
+function pupilAreaOf(s){ return Math.PI * s.D*s.D * (1 - s.E*s.E) / 4; }
+function signalOf(s){
+  return Math.min(FULL_WELL, radianceOf(s) * pupilAreaOf(s) * Math.pow(ifovRad(s),2) *
+    DLAMBDA_UM * s.T * QE * tIntOf(s) * s.TDI / E_PHOTON);
+}
+function darkOf(s){ return s.K * tIntOf(s) * s.TDI; }
+function noiseOf(s){
+  var S = signalOf(s), p = s.P/100;
+  return {S:S, shot:S, read:s.R*s.R, prnu:Math.pow(p*S,2), dark:darkOf(s)};
+}
+function snrOf(s){
+  var n = noiseOf(s);
+  return n.S / Math.sqrt(n.shot + n.read + n.prnu + n.dark);
+}
+// raccourcis sur l'état courant
+function gsd(){return gsdOf(st)} function cutoff(){return cutoffOf(st)}
+function nyquist(){return nyqOf(st)} function qFactor(){return qOf(st)}
+function tInt(){return tIntOf(st)} function signal(){return signalOf(st)}
+function darkE(){return darkOf(st)} function noiseTerms(){return noiseOf(st)}
+function snr(){return snrOf(st)}
+
+// ===================== FFT =====================
+function fft1d(re, im, n, inv){
+  for(var i=1, j=0; i<n; i++){
+    var bit = n >> 1;
+    for(; j & bit; bit >>= 1) j ^= bit;
+    j ^= bit;
+    if(i < j){ var tr=re[i];re[i]=re[j];re[j]=tr; var ti=im[i];im[i]=im[j];im[j]=ti; }
+  }
+  for(var len=2; len<=n; len<<=1){
+    var ang = 2*Math.PI/len*(inv?1:-1);
+    var wr = Math.cos(ang), wi = Math.sin(ang);
+    for(var s=0; s<n; s+=len){
+      var cr=1, ci=0;
+      for(var k=0; k<len/2; k++){
+        var i1=s+k, i2=s+k+len/2;
+        var ur=re[i1], ui=im[i1];
+        var vr=re[i2]*cr - im[i2]*ci, vi=re[i2]*ci + im[i2]*cr;
+        re[i1]=ur+vr; im[i1]=ui+vi; re[i2]=ur-vr; im[i2]=ui-vi;
+        var ncr=cr*wr - ci*wi; ci=cr*wi + ci*wr; cr=ncr;
+      }
+    }
+  }
+  if(inv) for(var q=0;q<n;q++){ re[q]/=n; im[q]/=n; }
+}
+function fft2d(re, im, n, inv){
+  var rr=new Float64Array(n), ri=new Float64Array(n), x, y;
+  for(y=0;y<n;y++){
+    for(x=0;x<n;x++){ rr[x]=re[y*n+x]; ri[x]=im[y*n+x]; }
+    fft1d(rr,ri,n,inv);
+    for(x=0;x<n;x++){ re[y*n+x]=rr[x]; im[y*n+x]=ri[x]; }
+  }
+  for(x=0;x<n;x++){
+    for(y=0;y<n;y++){ rr[y]=re[y*n+x]; ri[y]=im[y*n+x]; }
+    fft1d(rr,ri,n,inv);
+    for(y=0;y<n;y++){ re[y*n+x]=rr[y]; im[y*n+x]=ri[y]; }
+  }
+}
+
+// ===================== PUPILLE → PSF → FTM =====================
+function zernike(mode, rho, th){
+  switch(mode){
+    case "defoc": return Math.sqrt(3)*(2*rho*rho - 1);
+    case "astig": return Math.sqrt(6)*rho*rho*Math.cos(2*th);
+    case "coma":  return Math.sqrt(8)*(3*rho*rho*rho - 2*rho)*Math.cos(th);
+    case "spher": return Math.sqrt(5)*(6*Math.pow(rho,4) - 6*rho*rho + 1);
+    case "trefo": return Math.sqrt(8)*rho*rho*rho*Math.cos(3*th);
+    default: return 0;
+  }
+}
+function opticsFor(s){
+  var n = NP, R = DPX/2, Rin = s.E * R;
+  var mask = new Float32Array(n*n), phase = new Float32Array(n*n);
+  var re = new Float64Array(n*n), im = new Float64Array(n*n);
+  var c = n/2, wav = s.W / (LAMBDA*1e9), x, y, i;
+  for(y=0;y<n;y++) for(x=0;x<n;x++){
+    i = y*n + x;
+    var dx = x-c, dy = y-c, r = Math.sqrt(dx*dx+dy*dy);
+    // bord échantillonné en 4x4 sous-pixels : surface exacte et transition douce.
+    // Une marche dure fuirait dans la FFT et couvrirait la PSF d'un moiré parasite.
+    var amp;
+    if(r < Rin - 1 || r > R + 1){ amp = (r >= Rin && r <= R) ? 1 : 0; }
+    else if(r > Rin + 1 && r < R - 1){ amp = 1; }
+    else {
+      var hit = 0;
+      for(var sy=0; sy<4; sy++) for(var sx=0; sx<4; sx++){
+        var ddx = dx - 0.375 + sx*0.25, ddy = dy - 0.375 + sy*0.25;
+        var rr = Math.sqrt(ddx*ddx + ddy*ddy);
+        if(rr <= R && rr >= Rin) hit++;
+      }
+      amp = hit/16;
+    }
+    if(amp > 0){
+      var rho = Math.min(1, r/R), th = Math.atan2(dy,dx);
+      var w = wav * zernike(s.Z, rho, th), ph = 2*Math.PI*w;
+      mask[i] = amp; phase[i] = w;
+      re[i] = amp*Math.cos(ph); im[i] = amp*Math.sin(ph);
+    }
+  }
+  var pre = re.slice(), pim = im.slice();
+  fft2d(pre, pim, n, false);
+  var psf = new Float64Array(n*n), maxv = 0;
+  for(i=0;i<n*n;i++){
+    psf[i] = pre[i]*pre[i] + pim[i]*pim[i];
+    if(psf[i] > maxv) maxv = psf[i];
+  }
+  var ore = psf.slice(), oim = new Float64Array(n*n);
+  fft2d(ore, oim, n, false);
+  var norm = Math.sqrt(ore[0]*ore[0] + oim[0]*oim[0]) || 1;
+  // rayon effectif déduit de l'aire réelle du masque échantillonné :
+  // suppose que la coupure tombe exactement à DPX introduit un biais de 1 %
+  var area = 0;
+  for(i=0;i<n*n;i++) area += mask[i];
+  var rEff = Math.sqrt(area / Math.PI / Math.max(1e-6, 1 - s.E*s.E));
+  var dpxEff = 2 * rEff;
+
+  var mtf = new Float64Array(DPX+1);
+  for(var k=0;k<=DPX;k++){
+    var acc=0, cnt=0, dirs=[[k,0],[0,k],[(n-k)%n,0],[0,(n-k)%n]];
+    for(var d=0; d<dirs.length; d++){
+      var idx = (dirs[d][1]%n)*n + (dirs[d][0]%n);
+      acc += Math.sqrt(ore[idx]*ore[idx] + oim[idx]*oim[idx]); cnt++;
+    }
+    mtf[k] = Math.min(1, acc/cnt/norm);
+  }
+  return {psf:psf, psfMax:maxv, mtf:mtf, mask:mask, phase:phase, n:n, dpxEff:dpxEff};
+}
+var OPTICS = null, opticsKey = null;
+function computeOptics(){
+  // la pupille ne dépend que de ces quatre paramètres : inutile de refaire
+  // trois FFT quand on bouge le bruit de lecture ou l'élévation solaire
+  var key = st.D+"|"+st.E+"|"+st.W+"|"+st.Z;
+  if(key === opticsKey && OPTICS) return;
+  OPTICS = opticsFor(st); opticsKey = key;
+}
+
+function mtfOptFrom(o, s, nu){
+  var x = nu / cutoffOf(s);
+  if(x >= 1) return 0;
+  var f = x * (o.dpxEff || DPX), k = Math.floor(f), t = f - k;
+  if(k >= DPX) return o.mtf[DPX];
+  return o.mtf[k]*(1-t) + o.mtf[k+1]*t;
+}
+function mtfDetFrom(s, nu){ var a = Math.PI*nu*gsdOf(s); return a===0?1:Math.abs(Math.sin(a)/a); }
+function mtfOptAt(nu){ if(!OPTICS) computeOptics(); return mtfOptFrom(OPTICS, st, nu); }
+function mtfDet(nu){ return mtfDetFrom(st, nu); }
+function mtfTot(nu){ return mtfOptAt(nu) * mtfDet(nu); }
+
+function periodAtMtf(target){
+  var fc = cutoff(), prev = 1, pf = 0;
+  for(var i=1;i<=400;i++){
+    var f = fc*i/400, m = mtfTot(f);
+    if(m <= target){
+      var t = (prev - target) / Math.max(1e-9, prev - m);
+      var fx = pf + t*(f - pf);
+      return fx > 0 ? 1/fx : Infinity;
+    }
+    prev = m; pf = f;
+  }
+  return 1/fc;
+}
+
+
+// ===================== SCÈNE =====================
+var truthCv = document.getElementById("truthLayer"), tctx = truthCv.getContext("2d");
+var simCv = document.getElementById("simLayer"), sctx = simCv.getContext("2d");
+var sceneCv = document.createElement("canvas"); sceneCv.width = curW; sceneCv.height = curH;
+var scctx = sceneCv.getContext("2d", {willReadFrequently:true});
+var work = document.createElement("canvas");
+var wctx = work.getContext("2d", {willReadFrequently:true});
+var truthData = null, pyramid = {};
+var seed = 20260808;
+function rnd(){ seed = (seed*1664525 + 1013904223) % 4294967296; return seed/4294967296; }
+function m2px(m){ return m/TRUTH_RES; }
+
+function shade(base, d){
+  return "rgb("+Math.max(0,Math.min(255,base[0]+d))+","+
+    Math.max(0,Math.min(255,base[1]+d))+","+Math.max(0,Math.min(255,base[2]+d))+")";
+}
+
+// ---------- scène 1 : ville, parking et voitures ----------
+function drawVille(g, N){
+  g.fillStyle="#6E6E66"; g.fillRect(0,0,N,N);
+  // îlots bâtis
+  for(var b=0;b<34;b++){
+    var bw=m2px(6+rnd()*16), bh=m2px(6+rnd()*16);
+    var bx=rnd()*(N-bw), by=rnd()*(N-bh), tone=110+rnd()*105;
+    g.fillStyle="rgba(0,0,0,0.38)"; g.fillRect(bx+m2px(1.6),by+m2px(1.6),bw,bh);
+    g.fillStyle="rgb("+(tone|0)+","+((tone*0.95)|0)+","+((tone*0.87)|0)+")";
+    g.fillRect(bx,by,bw,bh);
+    g.fillStyle="rgba(255,255,255,0.11)"; g.fillRect(bx,by,bw,m2px(1.3));
+  }
+  // rues
+  g.fillStyle="#4E5256";
+  [14,62].forEach(function(m){ g.fillRect(0,m2px(m),N,m2px(7)); });
+  [8,88].forEach(function(m){ g.fillRect(m2px(m),0,m2px(7),N); });
+  g.fillStyle="#D2CFC3";
+  for(var y=0;y<N;y+=m2px(4)){ g.fillRect(m2px(11.3),y,m2px(0.35),m2px(2)); }
+  for(var x=0;x<N;x+=m2px(4)){ g.fillRect(x,m2px(17.3),m2px(2),m2px(0.35)); }
+
+  // parking : cible périodique naturelle, places au pas de 2,5 m
+  var px0=24, py0=26, rows=5, bays=22;
+  g.fillStyle="#575A5E";
+  g.fillRect(m2px(px0-1.5), m2px(py0-1.5), m2px(bays*2.5+3), m2px(rows*(5+3)+3));
+  var carCols=[[196,58,48],[222,222,214],[46,52,60],[70,96,150],[150,150,146],
+               [180,140,60],[60,110,80],[210,205,190]];
+  for(var r=0;r<rows;r++){
+    var yBay = py0 + r*(5+3);
+    // marquage des places
+    g.fillStyle="#E2DFD2";
+    for(var k=0;k<=bays;k++) g.fillRect(m2px(px0+k*2.5), m2px(yBay), m2px(0.12), m2px(5));
+    g.fillRect(m2px(px0), m2px(yBay), m2px(bays*2.5), m2px(0.12));
+    // véhicules
+    for(var c2=0;c2<bays;c2++){
+      if(rnd()>0.78) continue;
+      var col = carCols[(rnd()*carCols.length)|0];
+      var cw = m2px(1.75), ch = m2px(4.3);
+      var cx = m2px(px0 + c2*2.5 + 0.37), cy = m2px(yBay + 0.35);
+      g.fillStyle="rgba(0,0,0,0.32)"; g.fillRect(cx+m2px(0.35),cy+m2px(0.35),cw,ch);
+      g.fillStyle=shade(col, 0); g.fillRect(cx,cy,cw,ch);
+      g.fillStyle="rgba(255,255,255,0.16)"; g.fillRect(cx,cy+ch*0.28,cw,ch*0.22);
+    }
+  }
+  // arbres d'alignement
+  for(var t=0;t<26;t++){
+    var tx=rnd()*N, ty=rnd()*N, rr=m2px(1.4+rnd()*1.6);
+    g.fillStyle="rgba(0,0,0,0.3)"; g.beginPath();
+    g.arc(tx+m2px(0.8),ty+m2px(0.8),rr,0,6.284); g.fill();
+    g.fillStyle="rgb("+((44+rnd()*22)|0)+","+((78+rnd()*38)|0)+","+((40+rnd()*20)|0)+")";
+    g.beginPath(); g.arc(tx,ty,rr,0,6.284); g.fill();
+  }
+}
+
+// ---------- scène 2 : port et conteneurs ----------
+function drawPort(g, N){
+  // bassin
+  g.fillStyle="#1B3541"; g.fillRect(0,0,N,N);
+  for(var w=0;w<3000;w++){
+    var wx=rnd()*N, wy=rnd()*m2px(46);
+    g.fillStyle="rgba(120,160,180,"+(0.02+rnd()*0.05).toFixed(3)+")";
+    g.fillRect(wx,wy,m2px(0.6+rnd()*1.4),m2px(0.15));
+  }
+  // quai
+  g.fillStyle="#8C8C84"; g.fillRect(0,m2px(46),N,N);
+  g.fillStyle="#6F6F68"; g.fillRect(0,m2px(46),N,m2px(1.2));
+  // bollards
+  for(var bo=0;bo<9;bo++){
+    g.fillStyle="#3A3A38";
+    g.fillRect(m2px(4+bo*11), m2px(47.6), m2px(0.7), m2px(0.7));
+  }
+  // navire à quai
+  g.fillStyle="rgba(0,0,0,0.35)"; g.fillRect(m2px(9),m2px(31),m2px(84),m2px(14));
+  g.fillStyle="#7A2E28"; g.fillRect(m2px(8),m2px(30),m2px(84),m2px(14));
+  g.fillStyle="#2C3138"; g.fillRect(m2px(8),m2px(30),m2px(84),m2px(2.4));
+  g.fillStyle="#D8D6CC"; g.fillRect(m2px(72),m2px(32),m2px(14),m2px(9));
+  g.fillStyle="#9EA4A8"; g.fillRect(m2px(74),m2px(33.5),m2px(10),m2px(3));
+  // conteneurs à bord : pas de 2,44 m
+  var ctCols=[[168,58,48],[46,86,140],[52,110,72],[196,132,44],[150,150,146],[190,190,182]];
+  function stack(x0,y0,cols,rowsn){
+    for(var i=0;i<cols;i++) for(var j=0;j<rowsn;j++){
+      if(rnd()>0.94) continue;
+      var c=ctCols[(rnd()*ctCols.length)|0];
+      var x=m2px(x0+i*2.55), y=m2px(y0+j*6.2);
+      g.fillStyle=shade(c,-28); g.fillRect(x,y,m2px(2.44),m2px(6.06));
+      g.fillStyle=shade(c,10);  g.fillRect(x,y,m2px(2.44),m2px(5.2));
+      g.fillStyle="rgba(0,0,0,0.22)"; g.fillRect(x+m2px(2.1),y,m2px(0.34),m2px(6.06));
+    }
+  }
+  stack(12,31.6,12,2);
+  // parc à conteneurs sur le quai
+  stack(6,54,14,4);
+  stack(64,54,11,4);
+  // portique : structures fines
+  g.fillStyle="#B8B2A4";
+  [20,58].forEach(function(cx){
+    g.fillRect(m2px(cx),m2px(48),m2px(0.9),m2px(3.4));
+    g.fillRect(m2px(cx+13),m2px(48),m2px(0.9),m2px(3.4));
+    g.fillRect(m2px(cx-8),m2px(47.2),m2px(23),m2px(0.8));
+  });
+  // route et camions
+  g.fillStyle="#5A5C5E"; g.fillRect(0,m2px(85),N,m2px(8));
+  g.fillStyle="#D2CFC3";
+  for(var x2=0;x2<N;x2+=m2px(4)) g.fillRect(x2,m2px(88.8),m2px(2),m2px(0.3));
+  for(var tr=0;tr<7;tr++){
+    var tx2=rnd()*N;
+    g.fillStyle="rgba(0,0,0,0.3)"; g.fillRect(tx2+m2px(0.4),m2px(86.3),m2px(2.5),m2px(12));
+    g.fillStyle=rnd()>0.5?"#C8C4B8":"#3E4A5A"; g.fillRect(tx2,m2px(86),m2px(2.5),m2px(12));
+  }
+}
+
+// ---------- scène 3 : champs cultivés ----------
+function drawChamps(g, N){
+  g.fillStyle="#6A6A4E"; g.fillRect(0,0,N,N);
+  var parcels = [
+    {x:0,   y:0,  w:58, h:44, hue:[74,104,48],  pitch:0.75, ang:0.16},
+    {x:58,  y:0,  w:45, h:44, hue:[126,124,66], pitch:1.10, ang:-0.28},
+    {x:0,   y:44, w:40, h:59, hue:[58,88,44],   pitch:0.60, ang:0.62},
+    {x:40,  y:44, w:63, h:33, hue:[142,128,80], pitch:0.95, ang:0.05},
+    {x:40,  y:77, w:63, h:26, hue:[92,110,54],  pitch:1.35, ang:-0.12}
+  ];
+  parcels.forEach(function(p){
+    var X=m2px(p.x), Y=m2px(p.y), W=m2px(p.w), H=m2px(p.h);
+    g.save(); g.beginPath(); g.rect(X,Y,W,H); g.clip();
+    g.fillStyle="rgb("+p.hue[0]+","+p.hue[1]+","+p.hue[2]+")"; g.fillRect(X,Y,W,H);
+    // rangs de semis : cible périodique fine
+    g.save();
+    g.translate(X+W/2, Y+H/2); g.rotate(p.ang); g.translate(-(X+W/2), -(Y+H/2));
+    var span = m2px(Math.max(p.w,p.h))*1.6;
+    for(var u=-span;u<span;u+=m2px(p.pitch)){
+      g.fillStyle="rgb("+(p.hue[0]-22)+","+(p.hue[1]-24)+","+(p.hue[2]-14)+")";
+      g.fillRect(X+W/2+u, Y+H/2-span, m2px(p.pitch*0.42), span*2);
+    }
+    // passages d'engin, tous les 12 m
+    for(var v=-span;v<span;v+=m2px(12)){
+      g.fillStyle="rgba(150,138,104,0.55)";
+      g.fillRect(X+W/2+v, Y+H/2-span, m2px(0.4), span*2);
+      g.fillRect(X+W/2+v+m2px(1.9), Y+H/2-span, m2px(0.4), span*2);
+    }
+    g.restore();
+    // hétérogénéité intra-parcelle
+    for(var s2=0;s2<40;s2++){
+      g.fillStyle="rgba(0,0,0,"+(0.03+rnd()*0.06).toFixed(3)+")";
+      g.beginPath();
+      g.ellipse(X+rnd()*W, Y+rnd()*H, m2px(2+rnd()*7), m2px(2+rnd()*6), rnd()*3, 0, 6.284);
+      g.fill();
+    }
+    g.restore();
+    // limite de parcelle
+    g.strokeStyle="rgba(48,42,28,0.55)"; g.lineWidth=m2px(0.35);
+    g.strokeRect(X,Y,W,H);
+  });
+  // haie
+  for(var h2=0;h2<130;h2++){
+    var hx=m2px(0)+ (h2/130)*N, hy=m2px(44)+Math.sin(h2*0.4)*m2px(0.5);
+    g.fillStyle="rgb("+((30+rnd()*16)|0)+","+((56+rnd()*26)|0)+","+((28+rnd()*14)|0)+")";
+    g.beginPath(); g.arc(hx,hy,m2px(1.1+rnd()*0.9),0,6.284); g.fill();
+  }
+  // chemin de terre
+  g.fillStyle="#9A8A66"; g.fillRect(m2px(56),0,m2px(3.2),N);
+  g.fillStyle="rgba(120,104,72,0.7)";
+  g.fillRect(m2px(56.5),0,m2px(0.5),N); g.fillRect(m2px(58.2),0,m2px(0.5),N);
+  // corps de ferme
+  g.fillStyle="rgba(0,0,0,0.34)"; g.fillRect(m2px(63),m2px(81),m2px(15),m2px(8));
+  g.fillStyle="#9E5F44"; g.fillRect(m2px(62),m2px(80),m2px(15),m2px(8));
+  g.fillStyle="#C6C2B4"; g.fillRect(m2px(79),m2px(80.5),m2px(9),m2px(6));
+  // silos
+  [90,94].forEach(function(sx){
+    g.fillStyle="#B4B0A2"; g.beginPath(); g.arc(m2px(sx),m2px(84),m2px(1.7),0,6.284); g.fill();
+  });
+}
+
+var SCENES = [
+  {id:"ville",  name:"Ville", draw:drawVille},
+  {id:"port",   name:"Port", draw:drawPort},
+  {id:"champs", name:"Champs", draw:drawChamps},
+  {id:"aix", name:"Aix-en-Provence", sub:"Photo réelle · BD ORTHO IGN 2023, 20 cm/px natif",
+    real:true, src:"assets/scenes/aix_rotonde.jpg", thumb:"assets/scenes/aix_rotonde_thumb.jpg",
+    extW:258.0, extH:188.6, res:0.2}   // emprise et résolution source, sans interpolation
+];
+var sceneCanvases = {}, sceneReadyP = {}, activeScene = "ville";
+
+// Chaque scène peut déclarer sa propre emprise (extW/extH en m) et sa propre
+// résolution (res, m/px) ; par défaut 102.4 x 102.4 m à TRUTH_RES (les 3 scènes
+// de synthèse). Utiliser la résolution native évite d'inventer du détail par
+// interpolation, et réduit le coût de calcul du pipeline temps réel.
+function buildScenes(){
+  SCENES.forEach(function(sc){
+    var res = sc.res || TRUTH_RES;
+    var w = Math.round((sc.extW || 102.4) / res);
+    var h = Math.round((sc.extH || 102.4) / res);
+    sc._pxW = w; sc._pxH = h; sc._res = res;
+    var cv = document.createElement("canvas");
+    cv.width = w; cv.height = h;
+    sceneCanvases[sc.id] = cv;
+    if(sc.real){
+      sceneReadyP[sc.id] = new Promise(function(resolve){
+        var img = new Image();
+        img.onload = function(){
+          var g = cv.getContext("2d", {willReadFrequently:true});
+          g.imageSmoothingEnabled = true;
+          g.imageSmoothingQuality = "high";
+          g.drawImage(img, 0, 0, w, h);   // toute l'emprise source, à sa résolution native
+          resolve();
+        };
+        img.onerror = function(){
+          console.warn("Scène IGN introuvable : " + sc.src);
+          resolve(); // ne bloque jamais les autres scènes
+        };
+        img.src = sc.src;
+      });
+    } else {
+      var g = cv.getContext("2d", {willReadFrequently:true});
+      seed = 20260808;
+      sc.draw(g, w); // scènes de synthèse : toujours carrées, w === h, à TRUTH_RES
+      sceneReadyP[sc.id] = Promise.resolve();
+    }
+  });
+}
+function useScene(id){
+  activeScene = id;
+  var sc = SCENES.filter(function(s){ return s.id === id; })[0];
+  curExtW = sc.extW || 102.4; curExtH = sc.extH || 102.4;
+  curW = sc._pxW; curH = sc._pxH; curRes = sc._res;
+  var cv = sceneCanvases[id];
+  sceneCv.width = curW; sceneCv.height = curH;
+  scctx.clearRect(0,0,curW,curH);
+  scctx.drawImage(cv, 0, 0);
+  truthData = scctx.getImageData(0,0,curW,curH);
+  pyramid = {};
+  // cadre d'affichage ajusté au ratio réel de la scène : pas de déformation
+  var box = document.getElementById("compare");
+  if(box) box.style.aspectRatio = (curW/curH).toFixed(4);
+}
+
+// ===================== DÉGRADATION IMAGE =====================
+function gaussianBlur(src, W, H, sigmaPx, stride){
+  stride = stride || 4;
+  if(sigmaPx < 0.35) return src;
+  var rad = Math.max(1, Math.ceil(sigmaPx*3));
+  var ker = new Float32Array(rad*2+1), sum = 0, i;
+  for(i=-rad;i<=rad;i++){ var v=Math.exp(-(i*i)/(2*sigmaPx*sigmaPx)); ker[i+rad]=v; sum+=v; }
+  for(i=0;i<ker.length;i++) ker[i]/=sum;
+  var tmp = new Float32Array(W*H*3), out = new Float32Array(W*H*3);
+  var x,y,c,k,acc,p;
+  for(y=0;y<H;y++) for(x=0;x<W;x++) for(c=0;c<3;c++){
+    acc=0;
+    for(k=-rad;k<=rad;k++){ p=x+k; if(p<0)p=0; if(p>=W)p=W-1; acc+=src[(y*W+p)*stride+c]*ker[k+rad]; }
+    tmp[(y*W+x)*3+c]=acc;
+  }
+  for(x=0;x<W;x++) for(y=0;y<H;y++) for(c=0;c<3;c++){
+    acc=0;
+    for(k=-rad;k<=rad;k++){ p=y+k; if(p<0)p=0; if(p>=H)p=H-1; acc+=tmp[(p*W+x)*3+c]*ker[k+rad]; }
+    out[(y*W+x)*3+c]=acc;
+  }
+  return out;
+}
+function getLevel(f){
+  if(f===1) return {data:truthData.data, w:curW, h:curH, stride:4};
+  if(pyramid[f]) return pyramid[f];
+  var w=Math.max(1,Math.floor(curW/f)), h=Math.max(1,Math.floor(curH/f));
+  var src=truthData.data, dst=new Float32Array(w*h*3);
+  for(var y=0;y<h;y++) for(var x=0;x<w;x++){
+    var a=0,b=0,c2=0;
+    for(var yy=0;yy<f;yy++) for(var xx=0;xx<f;xx++){
+      var i=((y*f+yy)*curW+(x*f+xx))*4; a+=src[i]; b+=src[i+1]; c2+=src[i+2];
+    }
+    var m=f*f, o=(y*w+x)*3; dst[o]=a/m; dst[o+1]=b/m; dst[o+2]=c2/m;
+  }
+  pyramid[f] = {data:dst, w:w, h:h, stride:3};
+  return pyramid[f];
+}
+function gaussNoise(){
+  var u=0,v=0;
+  while(u===0) u=Math.random();
+  while(v===0) v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+var prnuMap=null, prnuW=0, prnuH=0;
+function getPrnuMap(w,h){
+  if(prnuMap && prnuW===w && prnuH===h) return prnuMap;
+  var s=987654321, total=w*h;
+  function r(){ s=(s*1664525+1013904223)%4294967296; return s/4294967296; }
+  prnuMap = new Float32Array(total);
+  for(var i=0;i<total;i++){
+    var u=Math.max(1e-6,r()), v=Math.max(1e-6,r());
+    prnuMap[i]=Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+  }
+  prnuW=w; prnuH=h; return prnuMap;
+}
+
+function renderSim(){
+  if(!truthData) return;
+  var g = gsd(), nyq = nyquist();
+  var mOpt = Math.min(0.999, Math.max(0.010, mtfOptAt(nyq)));
+  var sigmaGround = Math.sqrt(-Math.log(mOpt)/(2*Math.PI*Math.PI*nyq*nyq));
+  var sigmaFull = sigmaGround/curRes;
+  var outW = Math.max(6, Math.round(curExtW/g));
+  var outH = Math.max(6, Math.round(curExtH/g));
+  var f = 1;
+  [2,4,8,16].forEach(function(cd){
+    if(sigmaFull/cd > 3 && Math.min(curW,curH)/cd >= Math.min(outW,outH)*2) f = cd;
+  });
+  var lvl = getLevel(f), W = lvl.w, H = lvl.h, sigmaPx = sigmaFull/f;
+  var blurred = gaussianBlur(lvl.data, W, H, sigmaPx, lvl.stride);
+  var isF = blurred.length === W*H*3;
+
+  var stepX = W/outW, stepY = H/outH, grid = new Float32Array(outW*outH*3), gx, gy, c;
+  for(gy=0;gy<outH;gy++){
+    var y0=Math.floor(gy*stepY), y1=Math.min(H,Math.max(y0+1,Math.floor((gy+1)*stepY)));
+    for(gx=0;gx<outW;gx++){
+      var x0=Math.floor(gx*stepX), x1=Math.min(W,Math.max(x0+1,Math.floor((gx+1)*stepX)));
+      var s0=0,s1=0,s2=0,cnt=0;
+      for(var yy=y0;yy<y1;yy++) for(var xx=x0;xx<x1;xx++){
+        var idx=yy*W+xx;
+        if(isF){ s0+=blurred[idx*3]; s1+=blurred[idx*3+1]; s2+=blurred[idx*3+2]; }
+        else { s0+=blurred[idx*4]; s1+=blurred[idx*4+1]; s2+=blurred[idx*4+2]; }
+        cnt++;
+      }
+      if(!cnt) cnt=1;
+      grid[(gy*outW+gx)*3]=s0/cnt; grid[(gy*outW+gx)*3+1]=s1/cnt; grid[(gy*outW+gx)*3+2]=s2/cnt;
+    }
+  }
+  var Sfull = signal(), pr = st.P/100, dk = darkE(), pmap = getPrnuMap(outW,outH);
+  work.width = outW; work.height = outH;
+  var img = wctx.createImageData(outW,outH);
+  for(var i=0;i<outW*outH;i++){
+    var gain = 1 + pr*pmap[i];
+    for(c=0;c<3;c++){
+      var e = Math.max(0, grid[i*3+c]/255) * Sfull * gain;
+      var sg = Math.sqrt(e + st.R*st.R + dk);
+      var val = (e + sg*gaussNoise())/Sfull*255;
+      img.data[i*4+c] = val<0?0:(val>255?255:val);
+    }
+    img.data[i*4+3] = 255;
+  }
+  wctx.putImageData(img,0,0);
+  simCv.width = outW; simCv.height = outH;
+  sctx.imageSmoothingEnabled = false;
+  sctx.drawImage(work,0,0);
+}
+
+// ===================== PUPILLE / PSF =====================
+function drawPupil(){
+  var cv = document.getElementById("pupilCv"), ctx;
+  var n = NP, crop = 88, half = crop/2, c = n/2;   // recadré : la pupille remplit le cadre
+  cv.width = cv.height = crop; ctx = cv.getContext("2d");
+  var img = ctx.createImageData(crop,crop);
+  var ph = OPTICS.phase, mk = OPTICS.mask, maxp = 0.001, i;
+  for(i=0;i<n*n;i++) if(mk[i] > 0.5 && Math.abs(ph[i])>maxp) maxp = Math.abs(ph[i]);
+  for(var y=0;y<crop;y++) for(var x=0;x<crop;x++){
+    var si = (y - half + c)*n + (x - half + c);
+    var o = (y*crop+x)*4, a = mk[si];
+    if(a <= 0.02){ img.data[o]=9; img.data[o+1]=14; img.data[o+2]=19; img.data[o+3]=255; continue; }
+    var t = ph[si]/maxp, r, g, b;
+    if(t >= 0){ r = 90+155*t; g = 106+66*t; b = 118-31*t; }
+    else      { r = 90+5*t;   g = 106-114*t; b = 118-90*t; }
+    img.data[o]=9+(r-9)*a; img.data[o+1]=14+(g-14)*a; img.data[o+2]=19+(b-19)*a; img.data[o+3]=255;
+  }
+  ctx.putImageData(img,0,0);
+  document.getElementById("pupilNote").innerHTML =
+    st.Z === "none"
+      ? "Pupille annulaire, obscuration centrale ε = " + st.E.toFixed(2) +
+        ". Front d'onde plat : la PSF est une tache d'Airy."
+      : "Aberration <b>" + (ZMODES.filter(function(z){return z.id===st.Z;})[0].label) +
+        "</b> · " + st.W + " nm RMS, soit ±" + maxp.toFixed(2) +
+        " onde en crête. C'est cette carte de phase qui déforme la PSF ci-contre.";
+}
+function drawPsf(){
+  var cv = document.getElementById("psfCv"), ctx;
+  var n = NP, crop = 88, half = crop/2, c = n/2;
+  cv.width = cv.height = crop; ctx = cv.getContext("2d");
+  var img = ctx.createImageData(crop,crop);
+  var psf = OPTICS.psf, mx = OPTICS.psfMax || 1, dec = 4;
+  for(var y=0;y<crop;y++) for(var x=0;x<crop;x++){
+    var sx = (x - half + c + n) % n, sy = (y - half + c + n) % n;
+    var v = psf[sy*n + sx]/mx;
+    var t = Math.max(0, Math.min(1, (Math.log10(Math.max(v,1e-12)) + dec)/dec));
+    var o = (y*crop+x)*4, r, g, b;
+    if(t < 0.55){ var u=t/0.55; r=9+228*u; g=14+121*u; b=19+41*u; }
+    else { var u2=(t-0.55)/0.45; r=237+18*u2; g=135+120*u2; b=60+180*u2; }
+    img.data[o]=r; img.data[o+1]=g; img.data[o+2]=b; img.data[o+3]=255;
+  }
+  ctx.putImageData(img,0,0);
+  var airyGround = 1.22 * LAMBDA / st.D * altM(st);
+  document.getElementById("psfNote").innerHTML =
+    "Échelle logarithmique sur 4 décades. La tache d'Airy mesure <b>" +
+    airyGround.toFixed(2) + " m</b> au sol, pour un pixel de <b>" + gsd().toFixed(2) + " m</b>. " +
+    (airyGround > gsd()*1.5
+      ? "<span class='flag'>La tache déborde largement du pixel</span> : c'est l'optique qui limite la résolution."
+      : "Tache et pixel sont du même ordre : l'échantillonnage suit l'optique.");
+}
+
+// ===================== GRAPHIQUE FTM =====================
+function setupCanvas(cv){
+  var dpr = window.devicePixelRatio||1, r = cv.getBoundingClientRect();
+  cv.width = r.width*dpr; cv.height = r.height*dpr;
+  var ctx = cv.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx:ctx, w:r.width, h:r.height};
+}
+function drawMtfChart(){
+  var s = setupCanvas(document.getElementById("mtfChart")), ctx=s.ctx, W=s.w, H=s.h;
+  var pad={l:54,r:18,t:22,b:52}, pw=W-pad.l-pad.r, ph=H-pad.t-pad.b;
+  ctx.clearRect(0,0,W,H);
+  var nyq = nyquist(), fmax = Math.max(nyq*1.4, cutoff()*0.12);
+  var X=function(f){return pad.l+(f/fmax)*pw;}, Y=function(m){return pad.t+(1-m)*ph;};
+  var MONO = "'IBM Plex Mono',monospace";
+
+  ctx.strokeStyle="#22323F"; ctx.lineWidth=1;
+  [0,0.25,0.5,0.75,1].forEach(function(m){
+    ctx.beginPath(); ctx.moveTo(pad.l,Y(m)); ctx.lineTo(W-pad.r,Y(m)); ctx.stroke();
+    ctx.fillStyle="#9BADBD"; ctx.font="12px "+MONO; ctx.textAlign="right";
+    ctx.fillText(m.toFixed(2), pad.l-9, Y(m)+4);
+  });
+  ctx.fillStyle="#8497AA"; ctx.font="11.5px "+MONO; ctx.textAlign="center";
+  for(var t=0;t<=4;t++){
+    var fv = fmax*t/4;
+    ctx.fillText(fv.toFixed(fv<1?2:1), X(fv), pad.t+ph+18);
+  }
+  ctx.fillStyle="#9BADBD"; ctx.font="12px "+MONO;
+  ctx.fillText("fréquence spatiale au sol (cycles/m)", pad.l+pw/2, pad.t+ph+42);
+  ctx.save(); ctx.translate(15, pad.t+ph/2); ctx.rotate(-Math.PI/2);
+  ctx.fillText("contraste transmis", 0, 0); ctx.restore();
+
+  ctx.strokeStyle="#4A6072"; ctx.setLineDash([4,3]); ctx.lineWidth=1.2;
+  ctx.beginPath(); ctx.moveTo(X(nyq),pad.t); ctx.lineTo(X(nyq),pad.t+ph); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle="#9BADBD"; ctx.textAlign="center"; ctx.font="11.5px "+MONO;
+  ctx.fillText("Nyquist", X(nyq), pad.t-7);
+  if(cutoff() < fmax){
+    ctx.fillStyle="#8497AA"; ctx.fillText("coupure optique", X(cutoff()), pad.t-7);
+    ctx.strokeStyle="#2E4152"; ctx.setLineDash([2,4]);
+    ctx.beginPath(); ctx.moveTo(X(cutoff()),pad.t); ctx.lineTo(X(cutoff()),pad.t+ph); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  function curve(fn,color,width,dash){
+    ctx.strokeStyle=color; ctx.lineWidth=width; ctx.setLineDash(dash||[]);
+    ctx.beginPath();
+    for(var i=0;i<=200;i++){
+      var f=(i/200)*fmax, m=fn(f);
+      if(i===0) ctx.moveTo(X(f),Y(m)); else ctx.lineTo(X(f),Y(m));
+    }
+    ctx.stroke(); ctx.setLineDash([]);
+  }
+  curve(mtfDet,"#4E9A97",1.4,[5,4]);
+  curve(mtfOptAt,"#F5AC57",1.9);
+  curve(mtfTot,"#5FDCD0",2.6);
+
+  var items = [["#F5AC57","optique (pupille + WFE)"],["#4E9A97","détecteur"],
+               ["#5FDCD0","chaîne complète"]];
+  var lx = pad.l+12, ly = pad.t+10, lw = 182, lh = 14+items.length*17;
+  ctx.fillStyle="rgba(9,14,19,0.86)"; ctx.strokeStyle="#22323F";
+  ctx.fillRect(lx,ly,lw,lh); ctx.strokeRect(lx,ly,lw,lh);
+  ctx.textAlign="left"; ctx.font="11.5px "+MONO;
+  items.forEach(function(e,i){
+    ctx.fillStyle=e[0]; ctx.fillRect(lx+10, ly+15+i*17-5, 14, 3);
+    ctx.fillStyle="#E6EEF4"; ctx.fillText(e[1], lx+31, ly+15+i*17);
+  });
+}
+
+// ===================== ÉTAT DE COMPARAISON =====================
+var zoom = 1, locked = true;
+
+
+
+// ===================== CONSTRUCTION DES CONTRÔLES =====================
+var els = {};
+function buildControls(){
+  var groups = {optics:"g-optics", "optics-adv":"g-optics-adv",
+                detector:"g-detector", "detector-adv":"g-detector-adv",
+                acq:"g-acq", orbit:"g-orbit"};
+  PARAMS.forEach(function(p){
+    var host = document.getElementById(groups[p.g + (p.adv ? "-adv" : "")]);
+    if(!host) return;
+    var d = document.createElement("div");
+    d.className = "ctrl"; d.dataset.k = p.k;
+    d.innerHTML =
+      '<div class="ctrl-top"><label class="ctrl-name" for="s-'+p.k+'">'+p.name+'</label>'+
+      '<span class="ctrl-val"><input type="number" id="n-'+p.k+'" step="'+p.step+
+      '" min="'+p.min+'" max="'+p.max+'" aria-label="'+p.name+'"><em>'+p.unit+'</em></span></div>'+
+      '<input type="range" id="s-'+p.k+'" min="'+p.min+'" max="'+p.max+'" step="'+p.step+
+      '" aria-label="'+p.name+'">';
+    host.appendChild(d);
+    els[p.k] = {row:d, s:d.querySelector('input[type=range]'), n:d.querySelector('input[type=number]')};
+
+    els[p.k].s.addEventListener("input", function(){
+      applyChange(p.k, parseFloat(this.value));
+    });
+    els[p.k].n.addEventListener("change", function(){
+      var v = parseFloat(this.value);
+      if(isNaN(v)) { syncOne(p.k); return; }
+      v = Math.min(p.max, Math.max(p.min, v));
+      applyChange(p.k, v);
+    });
+    els[p.k].n.addEventListener("keydown", function(e){ if(e.key === "Enter") this.blur(); });
+  });
+}
+function syncOne(k){
+  var p = PMAP[k];
+  els[k].s.value = st[k];
+  els[k].n.value = Number(st[k]).toFixed(p.dec);
+}
+function syncAll(){ PARAMS.forEach(function(p){ syncOne(p.k); }); }
+
+function setLocked(v){
+  locked = v;
+  document.querySelectorAll(".panel.params").forEach(function(el){
+    el.classList.toggle("locked", v);
+  });
+  if(typeof customRow !== "undefined" && customRow)
+    customRow.setAttribute("aria-pressed", v ? "false" : "true");
+}
+
+function applyChange(k, v){
+  // premier contact avec un curseur verrouillé : le geste déverrouille lui-même,
+  // pour ne pas donner l'impression d'une page cassée
+  if(locked) setLocked(false);
+  var from = st[k];
+  if(v === from) return;
+  st[k] = v;
+  syncOne(k);
+  els[k].row.classList.add("touched");
+  markPreset(null);
+  refresh();
+}
+
+// ===================== AFFICHAGE =====================
+
+
+function updateMetrics(){
+  var g = gsd(), sn = snr(), q = qFactor(), r15 = periodAtMtf(0.15);
+
+  document.getElementById("m-gsd").innerHTML = (g<1?g.toFixed(2):g.toFixed(1))+"<u>m</u>";
+
+  document.getElementById("m-r15").innerHTML =
+    (isFinite(r15) ? (r15<10?r15.toFixed(2):r15.toFixed(1)) : "—")+"<u>m</u>";
+  document.getElementById("n-r15").textContent =
+    isFinite(r15) ? "soit " + (1/r15).toFixed(2) + " cycles/m" : "";
+
+  document.getElementById("m-snr").textContent = sn.toFixed(1);
+
+  var n = noiseTerms(), tot = n.shot+n.read+n.prnu+n.dark;
+  var parts = [{k:"photonique",v:n.shot,c:"#F5AC57"},{k:"lecture",v:n.read,c:"#9BADBD"},
+               {k:"PRNU",v:n.prnu,c:"#5FDCD0"},{k:"obscurité",v:n.dark,c:"#9B7AD1"}];
+  var bar = document.getElementById("stackbar"), leg = document.getElementById("stacklegend");
+  bar.innerHTML = ""; leg.innerHTML = "";
+  parts.forEach(function(p){
+    var frac = tot>0 ? p.v/tot : 0;
+    if(frac < 0.004) return;
+    var el = document.createElement("i"); el.style.background = p.c; el.style.flex = frac;
+    bar.appendChild(el);
+    var sp = document.createElement("span");
+    sp.innerHTML = "<s style='background:"+p.c+"'></s>"+p.k+" "+Math.round(frac*100)+"%";
+    leg.appendChild(sp);
+  });
+
+  var mtfNote = document.getElementById("mtfNote");
+  if(q < 1){
+    mtfNote.innerHTML = "<span class='flag'>Q = "+q.toFixed(2)+", inférieur à 1.</span> "+
+      "L'optique transmet encore du contraste au-delà de Nyquist : ce contenu trop fin pour "+
+      "le pixel se replie dans l'image sous forme d'artefacts. C'est un choix de conception "+
+      "assumé, pas un défaut — il privilégie le rapport signal/bruit et la largeur de fauchée.";
+  } else if(q > 2.2){
+    mtfNote.textContent = "Q = "+q.toFixed(2)+", supérieur à 2. Le pixel n'est plus le facteur "+
+      "limitant : affiner le détecteur n'apporterait rien tant que la pupille ne grandit pas.";
+  } else {
+    mtfNote.textContent = "Q = "+q.toFixed(2)+". L'échantillonnage est accordé à la coupure "+
+      "optique : optique et détecteur pèsent du même ordre dans le budget de contraste.";
+  }
+
+}
+
+
+// ===================== COMPARAISON / ZOOM =====================
+function paintLeft(){
+  truthCv.width = curW; truthCv.height = curH;
+  tctx.imageSmoothingEnabled = false;
+  tctx.drawImage(sceneCv, 0, 0);
+}
+function setZoom(z){
+  zoom = z;
+  truthCv.style.transform = simCv.style.transform = "scale("+z+")";
+  document.querySelectorAll(".mode.zoom").forEach(function(b){
+    b.setAttribute("aria-pressed", parseFloat(b.dataset.z) === z ? "true" : "false");
+  });
+}
+
+// ===================== BOUCLE ======================
+var pending = null;
+function refresh(){
+  computeOptics();
+  syncAll(); updateMetrics();
+  if(graphsVisible){ drawPupil(); drawPsf(); drawMtfChart(); }
+  if(typeof updateCustomRow === "function") updateCustomRow();
+  if(pending) cancelAnimationFrame(pending);
+  pending = requestAnimationFrame(function(){
+    renderSim();
+    paintLeft();
+    pending = null;
+  });
+}
+
+// ===================== INITIALISATION UI =====================
+buildControls();
+
+var zc = document.getElementById("zmodes");
+ZMODES.forEach(function(z){
+  var b = document.createElement("button");
+  b.className = "mode"; b.type = "button"; b.dataset.z = z.id;
+  b.setAttribute("aria-pressed", z.id === st.Z ? "true" : "false");
+  b.textContent = z.label;
+  b.addEventListener("click", function(){
+    if(locked) setLocked(false);
+    if(st.Z === z.id) return;
+    st.Z = z.id;
+    syncZ();
+    markPreset(null);
+    refresh();
+  });
+  zc.appendChild(b);
+});
+function syncZ(){
+  zc.querySelectorAll(".mode").forEach(function(x){
+    x.setAttribute("aria-pressed", x.dataset.z === st.Z ? "true" : "false");
+  });
+}
+
+buildScenes();
+useScene("ville");
+
+var sceneHost = document.getElementById("scenes");
+SCENES.forEach(function(sc){
+  var b = document.createElement("button");
+  b.className = "scene"; b.type = "button"; b.dataset.id = sc.id;
+  b.setAttribute("aria-pressed", sc.id === activeScene ? "true" : "false");
+  if(sc.real){
+    // vignette carrée pré-générée : évite d'attendre le décodage de
+    // l'image pleine résolution juste pour peupler le sélecteur de scène.
+    var im = document.createElement("img");
+    im.src = sc.thumb; im.alt = "";
+    im.style.cssText = "width:38px;height:38px;border-radius:2px;flex:none;"+
+      "border:1px solid var(--line-soft);object-fit:cover";
+    b.appendChild(im);
+  } else {
+    var th = document.createElement("canvas"); th.width = th.height = 92;
+    var tg = th.getContext("2d");
+    tg.imageSmoothingEnabled = true;
+    tg.drawImage(sceneCanvases[sc.id], 0, 0, 92, 92);
+    b.appendChild(th);
+  }
+  var meta = document.createElement("div");
+  meta.className = "scene-meta";
+  meta.innerHTML = "<div class='scene-name'>" + sc.name + "</div>" +
+                 (sc.sub ? "<div class='scene-sub'>" + sc.sub + "</div>" : "");
+  b.appendChild(meta);
+  b.addEventListener("click", function(){ switchScene(sc.id); });
+  sceneHost.appendChild(b);
+});
+
+function switchScene(id){
+  if(id === activeScene) return;
+  // sceneReadyP[id] est déjà résolue pour les scènes synthétiques ;
+  // pour une scène IGN encore en cours de décodage, on attend simplement.
+  sceneReadyP[id].then(function(){
+    useScene(id);
+    sceneHost.querySelectorAll(".scene").forEach(function(x){
+      x.setAttribute("aria-pressed", x.dataset.id === id ? "true" : "false");
+    });
+    refresh();
+  });
+}
+
+var pc = document.getElementById("presets");
+function markPreset(id){
+  pc.querySelectorAll(".preset").forEach(function(x){
+    x.setAttribute("aria-pressed", x.dataset.id === id ? "true" : "false");
+  });
+}
+function loadPreset(p){
+  Object.keys(p.v).forEach(function(k){ st[k] = p.v[k]; });
+  syncZ(); markPreset(p.id); setLocked(true);
+  refresh();
+
+}
+PRESETS.forEach(function(p){
+  var b = document.createElement("button");
+  b.className = "preset"; b.type = "button"; b.dataset.id = p.id;
+  b.setAttribute("aria-pressed", "false");
+  b.innerHTML = p.label + (p.sub ? "<small>" + p.sub + "</small>" : "");
+  b.addEventListener("click", function(){ loadPreset(p); });
+  pc.appendChild(b);
+});
+
+// ligne de statut : apparaît dès qu'un curseur est bougé
+var customRow = document.createElement("button");
+customRow.className = "preset custom"; customRow.type = "button";
+customRow.dataset.id = "custom";
+customRow.setAttribute("aria-pressed", "false");
+customRow.innerHTML = "<span class='lab'>Votre instrument</span><small id='customFrom'>régler librement</small>";
+customRow.addEventListener("click", function(){
+  setLocked(false); markPreset(null);
+  customRow.setAttribute("aria-pressed","true"); updateCustomRow();
+});
+pc.appendChild(customRow);
+
+
+function updateCustomRow(){
+  customRow.setAttribute("aria-pressed", locked ? "false" : "true");
+  document.getElementById("customFrom").textContent =
+    locked ? "Régler librement" : "Curseurs déverrouillés";
+}
+
+
+document.querySelectorAll(".mode.zoom").forEach(function(b){
+  b.addEventListener("click", function(){ setZoom(parseFloat(b.dataset.z)); });
+});
+
+var wipe = document.getElementById("wipe"), divider = document.getElementById("divider");
+var compareBox = document.getElementById("compare");
+
+function setWipe(pct){
+  pct = Math.max(0, Math.min(100, pct));
+  wipe.value = pct;
+  simCv.style.clipPath = "inset(0 0 0 "+pct+"%)";
+  divider.style.left = pct+"%";
+}
+wipe.addEventListener("input", function(){ setWipe(parseFloat(this.value)); });
+
+// glissement direct sur l'image
+var dragging = false;
+function pctFromEvent(e){
+  var r = compareBox.getBoundingClientRect();
+  return (e.clientX - r.left) / r.width * 100;
+}
+compareBox.addEventListener("pointerdown", function(e){
+  dragging = true;
+  compareBox.setPointerCapture(e.pointerId);
+  setWipe(pctFromEvent(e));
+  e.preventDefault();
+});
+compareBox.addEventListener("pointermove", function(e){
+  if(dragging) setWipe(pctFromEvent(e));
+});
+["pointerup","pointercancel"].forEach(function(ev){
+  compareBox.addEventListener(ev, function(e){
+    dragging = false;
+    if(compareBox.hasPointerCapture(e.pointerId)) compareBox.releasePointerCapture(e.pointerId);
+  });
+});
+// accessibilité clavier : le curseur masqué reste focusable
+compareBox.addEventListener("keydown", function(e){
+  if(e.key === "ArrowLeft")  setWipe(parseFloat(wipe.value) - 2);
+  if(e.key === "ArrowRight") setWipe(parseFloat(wipe.value) + 2);
+});
+compareBox.tabIndex = 0;
+
+// ===================== ONGLETS =====================
+// Un canvas caché mesure 0 px de large : on ne redessine les graphes
+// qu'au moment où leur onglet devient visible.
+function setupTabs(listSel, onShow){
+  var list = document.querySelector(listSel);
+  var tabs = [].slice.call(list.querySelectorAll(".tab"));
+  function show(tab){
+    tabs.forEach(function(t){
+      var panel = document.getElementById(t.getAttribute("aria-controls"));
+      var on = t === tab;
+      t.setAttribute("aria-selected", on ? "true" : "false");
+      if(panel) panel.hidden = !on;
+    });
+    if(onShow) onShow(tab.getAttribute("aria-controls"));
+  }
+  tabs.forEach(function(t, i){
+    t.addEventListener("click", function(){ show(t); });
+    t.addEventListener("keydown", function(e){
+      var d = e.key === "ArrowRight" ? 1 : (e.key === "ArrowLeft" ? -1 : 0);
+      if(!d) return;
+      e.preventDefault();
+      var nx = tabs[(i + d + tabs.length) % tabs.length];
+      nx.focus(); show(nx);
+    });
+  });
+  return {show:show, tabs:tabs};
+}
+
+var graphsVisible = false;
+setupTabs(".tabs[aria-label='Vue']", function(id){
+  graphsVisible = (id === "tp-graphs");
+  if(graphsVisible){ drawPupil(); drawPsf(); drawMtfChart(); }
+});
+setupTabs(".tabs.chain");
+
+loadPreset(PRESETS[0]);
+window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); });
+
+})();
+</script>
+</body>
+</html>
