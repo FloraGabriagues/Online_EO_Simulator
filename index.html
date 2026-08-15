@@ -767,7 +767,11 @@ function buildScenes(){
     }
   });
 }
+var scenePan = {};   // { sceneId: {x, y} } — chaque scène garde son propre déplacement
 function useScene(id){
+  // sauvegarde le pan de la scène qu'on quitte, pour le retrouver plus tard
+  if(activeScene) scenePan[activeScene] = {x: panX, y: panY};
+
   activeScene = id;
   var sc = SCENES.filter(function(s){ return s.id === id; })[0];
   curExtW = sc.extW || 102.4; curExtH = sc.extH || 102.4;
@@ -781,9 +785,11 @@ function useScene(id){
   // cadre d'affichage ajusté au ratio réel de la scène : pas de déformation
   var box = document.getElementById("compare");
   if(box) box.style.aspectRatio = (curW/curH).toFixed(4);
-  // le déplacement (pan) est propre à la scène affichée ; le niveau de zoom,
-  // lui, reste volontairement inchangé d'une scène à l'autre.
-  panX = 0; panY = 0;
+  // restaure le déplacement propre à cette scène (0,0 si jamais visitée) ;
+  // le niveau de zoom, lui, reste volontairement partagé entre les scènes.
+  var saved = scenePan[id] || {x:0, y:0};
+  panX = saved.x; panY = saved.y;
+  if(typeof clampPan === "function") clampPan();
   if(typeof applyTransform === "function") applyTransform();
   if(typeof updateClipPath === "function") updateClipPath();
   updateScaleBar();
