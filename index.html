@@ -700,191 +700,15 @@ var seed = 20260808;
 function rnd(){ seed = (seed*1664525 + 1013904223) % 4294967296; return seed/4294967296; }
 function m2px(m){ return m/TRUTH_RES; }
 
-function shade(base, d){
-  return "rgb("+Math.max(0,Math.min(255,base[0]+d))+","+
-    Math.max(0,Math.min(255,base[1]+d))+","+Math.max(0,Math.min(255,base[2]+d))+")";
-}
-
-// ---------- scène 1 : ville, parking et voitures ----------
-function drawVille(g, N){
-  g.fillStyle="#6E6E66"; g.fillRect(0,0,N,N);
-  // îlots bâtis
-  for(var b=0;b<34;b++){
-    var bw=m2px(6+rnd()*16), bh=m2px(6+rnd()*16);
-    var bx=rnd()*(N-bw), by=rnd()*(N-bh), tone=110+rnd()*105;
-    g.fillStyle="rgba(0,0,0,0.38)"; g.fillRect(bx+m2px(1.6),by+m2px(1.6),bw,bh);
-    g.fillStyle="rgb("+(tone|0)+","+((tone*0.95)|0)+","+((tone*0.87)|0)+")";
-    g.fillRect(bx,by,bw,bh);
-    g.fillStyle="rgba(255,255,255,0.11)"; g.fillRect(bx,by,bw,m2px(1.3));
-  }
-  // rues
-  g.fillStyle="#4E5256";
-  [14,62].forEach(function(m){ g.fillRect(0,m2px(m),N,m2px(7)); });
-  [8,88].forEach(function(m){ g.fillRect(m2px(m),0,m2px(7),N); });
-  g.fillStyle="#D2CFC3";
-  for(var y=0;y<N;y+=m2px(4)){ g.fillRect(m2px(11.3),y,m2px(0.35),m2px(2)); }
-  for(var x=0;x<N;x+=m2px(4)){ g.fillRect(x,m2px(17.3),m2px(2),m2px(0.35)); }
-
-  // parking : cible périodique naturelle, places au pas de 2,5 m
-  var px0=24, py0=26, rows=5, bays=22;
-  g.fillStyle="#575A5E";
-  g.fillRect(m2px(px0-1.5), m2px(py0-1.5), m2px(bays*2.5+3), m2px(rows*(5+3)+3));
-  var carCols=[[196,58,48],[222,222,214],[46,52,60],[70,96,150],[150,150,146],
-               [180,140,60],[60,110,80],[210,205,190]];
-  for(var r=0;r<rows;r++){
-    var yBay = py0 + r*(5+3);
-    // marquage des places
-    g.fillStyle="#E2DFD2";
-    for(var k=0;k<=bays;k++) g.fillRect(m2px(px0+k*2.5), m2px(yBay), m2px(0.12), m2px(5));
-    g.fillRect(m2px(px0), m2px(yBay), m2px(bays*2.5), m2px(0.12));
-    // véhicules
-    for(var c2=0;c2<bays;c2++){
-      if(rnd()>0.78) continue;
-      var col = carCols[(rnd()*carCols.length)|0];
-      var cw = m2px(1.75), ch = m2px(4.3);
-      var cx = m2px(px0 + c2*2.5 + 0.37), cy = m2px(yBay + 0.35);
-      g.fillStyle="rgba(0,0,0,0.32)"; g.fillRect(cx+m2px(0.35),cy+m2px(0.35),cw,ch);
-      g.fillStyle=shade(col, 0); g.fillRect(cx,cy,cw,ch);
-      g.fillStyle="rgba(255,255,255,0.16)"; g.fillRect(cx,cy+ch*0.28,cw,ch*0.22);
-    }
-  }
-  // arbres d'alignement
-  for(var t=0;t<26;t++){
-    var tx=rnd()*N, ty=rnd()*N, rr=m2px(1.4+rnd()*1.6);
-    g.fillStyle="rgba(0,0,0,0.3)"; g.beginPath();
-    g.arc(tx+m2px(0.8),ty+m2px(0.8),rr,0,6.284); g.fill();
-    g.fillStyle="rgb("+((44+rnd()*22)|0)+","+((78+rnd()*38)|0)+","+((40+rnd()*20)|0)+")";
-    g.beginPath(); g.arc(tx,ty,rr,0,6.284); g.fill();
-  }
-}
-
-// ---------- scène 2 : port et conteneurs ----------
-function drawPort(g, N){
-  // bassin
-  g.fillStyle="#1B3541"; g.fillRect(0,0,N,N);
-  for(var w=0;w<3000;w++){
-    var wx=rnd()*N, wy=rnd()*m2px(46);
-    g.fillStyle="rgba(120,160,180,"+(0.02+rnd()*0.05).toFixed(3)+")";
-    g.fillRect(wx,wy,m2px(0.6+rnd()*1.4),m2px(0.15));
-  }
-  // quai
-  g.fillStyle="#8C8C84"; g.fillRect(0,m2px(46),N,N);
-  g.fillStyle="#6F6F68"; g.fillRect(0,m2px(46),N,m2px(1.2));
-  // bollards
-  for(var bo=0;bo<9;bo++){
-    g.fillStyle="#3A3A38";
-    g.fillRect(m2px(4+bo*11), m2px(47.6), m2px(0.7), m2px(0.7));
-  }
-  // navire à quai
-  g.fillStyle="rgba(0,0,0,0.35)"; g.fillRect(m2px(9),m2px(31),m2px(84),m2px(14));
-  g.fillStyle="#7A2E28"; g.fillRect(m2px(8),m2px(30),m2px(84),m2px(14));
-  g.fillStyle="#2C3138"; g.fillRect(m2px(8),m2px(30),m2px(84),m2px(2.4));
-  g.fillStyle="#D8D6CC"; g.fillRect(m2px(72),m2px(32),m2px(14),m2px(9));
-  g.fillStyle="#9EA4A8"; g.fillRect(m2px(74),m2px(33.5),m2px(10),m2px(3));
-  // conteneurs à bord : pas de 2,44 m
-  var ctCols=[[168,58,48],[46,86,140],[52,110,72],[196,132,44],[150,150,146],[190,190,182]];
-  function stack(x0,y0,cols,rowsn){
-    for(var i=0;i<cols;i++) for(var j=0;j<rowsn;j++){
-      if(rnd()>0.94) continue;
-      var c=ctCols[(rnd()*ctCols.length)|0];
-      var x=m2px(x0+i*2.55), y=m2px(y0+j*6.2);
-      g.fillStyle=shade(c,-28); g.fillRect(x,y,m2px(2.44),m2px(6.06));
-      g.fillStyle=shade(c,10);  g.fillRect(x,y,m2px(2.44),m2px(5.2));
-      g.fillStyle="rgba(0,0,0,0.22)"; g.fillRect(x+m2px(2.1),y,m2px(0.34),m2px(6.06));
-    }
-  }
-  stack(12,31.6,12,2);
-  // parc à conteneurs sur le quai
-  stack(6,54,14,4);
-  stack(64,54,11,4);
-  // portique : structures fines
-  g.fillStyle="#B8B2A4";
-  [20,58].forEach(function(cx){
-    g.fillRect(m2px(cx),m2px(48),m2px(0.9),m2px(3.4));
-    g.fillRect(m2px(cx+13),m2px(48),m2px(0.9),m2px(3.4));
-    g.fillRect(m2px(cx-8),m2px(47.2),m2px(23),m2px(0.8));
-  });
-  // route et camions
-  g.fillStyle="#5A5C5E"; g.fillRect(0,m2px(85),N,m2px(8));
-  g.fillStyle="#D2CFC3";
-  for(var x2=0;x2<N;x2+=m2px(4)) g.fillRect(x2,m2px(88.8),m2px(2),m2px(0.3));
-  for(var tr=0;tr<7;tr++){
-    var tx2=rnd()*N;
-    g.fillStyle="rgba(0,0,0,0.3)"; g.fillRect(tx2+m2px(0.4),m2px(86.3),m2px(2.5),m2px(12));
-    g.fillStyle=rnd()>0.5?"#C8C4B8":"#3E4A5A"; g.fillRect(tx2,m2px(86),m2px(2.5),m2px(12));
-  }
-}
-
-// ---------- scène 3 : champs cultivés ----------
-function drawChamps(g, N){
-  g.fillStyle="#6A6A4E"; g.fillRect(0,0,N,N);
-  var parcels = [
-    {x:0,   y:0,  w:58, h:44, hue:[74,104,48],  pitch:0.75, ang:0.16},
-    {x:58,  y:0,  w:45, h:44, hue:[126,124,66], pitch:1.10, ang:-0.28},
-    {x:0,   y:44, w:40, h:59, hue:[58,88,44],   pitch:0.60, ang:0.62},
-    {x:40,  y:44, w:63, h:33, hue:[142,128,80], pitch:0.95, ang:0.05},
-    {x:40,  y:77, w:63, h:26, hue:[92,110,54],  pitch:1.35, ang:-0.12}
-  ];
-  parcels.forEach(function(p){
-    var X=m2px(p.x), Y=m2px(p.y), W=m2px(p.w), H=m2px(p.h);
-    g.save(); g.beginPath(); g.rect(X,Y,W,H); g.clip();
-    g.fillStyle="rgb("+p.hue[0]+","+p.hue[1]+","+p.hue[2]+")"; g.fillRect(X,Y,W,H);
-    // rangs de semis : cible périodique fine
-    g.save();
-    g.translate(X+W/2, Y+H/2); g.rotate(p.ang); g.translate(-(X+W/2), -(Y+H/2));
-    var span = m2px(Math.max(p.w,p.h))*1.6;
-    for(var u=-span;u<span;u+=m2px(p.pitch)){
-      g.fillStyle="rgb("+(p.hue[0]-22)+","+(p.hue[1]-24)+","+(p.hue[2]-14)+")";
-      g.fillRect(X+W/2+u, Y+H/2-span, m2px(p.pitch*0.42), span*2);
-    }
-    // passages d'engin, tous les 12 m
-    for(var v=-span;v<span;v+=m2px(12)){
-      g.fillStyle="rgba(150,138,104,0.55)";
-      g.fillRect(X+W/2+v, Y+H/2-span, m2px(0.4), span*2);
-      g.fillRect(X+W/2+v+m2px(1.9), Y+H/2-span, m2px(0.4), span*2);
-    }
-    g.restore();
-    // hétérogénéité intra-parcelle
-    for(var s2=0;s2<40;s2++){
-      g.fillStyle="rgba(0,0,0,"+(0.03+rnd()*0.06).toFixed(3)+")";
-      g.beginPath();
-      g.ellipse(X+rnd()*W, Y+rnd()*H, m2px(2+rnd()*7), m2px(2+rnd()*6), rnd()*3, 0, 6.284);
-      g.fill();
-    }
-    g.restore();
-    // limite de parcelle
-    g.strokeStyle="rgba(48,42,28,0.55)"; g.lineWidth=m2px(0.35);
-    g.strokeRect(X,Y,W,H);
-  });
-  // haie
-  for(var h2=0;h2<130;h2++){
-    var hx=m2px(0)+ (h2/130)*N, hy=m2px(44)+Math.sin(h2*0.4)*m2px(0.5);
-    g.fillStyle="rgb("+((30+rnd()*16)|0)+","+((56+rnd()*26)|0)+","+((28+rnd()*14)|0)+")";
-    g.beginPath(); g.arc(hx,hy,m2px(1.1+rnd()*0.9),0,6.284); g.fill();
-  }
-  // chemin de terre
-  g.fillStyle="#9A8A66"; g.fillRect(m2px(56),0,m2px(3.2),N);
-  g.fillStyle="rgba(120,104,72,0.7)";
-  g.fillRect(m2px(56.5),0,m2px(0.5),N); g.fillRect(m2px(58.2),0,m2px(0.5),N);
-  // corps de ferme
-  g.fillStyle="rgba(0,0,0,0.34)"; g.fillRect(m2px(63),m2px(81),m2px(15),m2px(8));
-  g.fillStyle="#9E5F44"; g.fillRect(m2px(62),m2px(80),m2px(15),m2px(8));
-  g.fillStyle="#C6C2B4"; g.fillRect(m2px(79),m2px(80.5),m2px(9),m2px(6));
-  // silos
-  [90,94].forEach(function(sx){
-    g.fillStyle="#B4B0A2"; g.beginPath(); g.arc(m2px(sx),m2px(84),m2px(1.7),0,6.284); g.fill();
-  });
-}
-
 var SCENES = [
-  {id:"ville",  name:"Ville", draw:drawVille},
-  {id:"port",   name:"Port", draw:drawPort},
-  {id:"champs", name:"Champs", draw:drawChamps},
-  {id:"aix", name:"Aix-en-Provence", sub:"Photo réelle · BD ORTHO IGN 2023, 20 cm/px natif",
+  {id:"aix", name:"Aix-en-Provence", sub:"BD ORTHO IGN 2023",
     real:true, src:"assets/scenes/aix_rotonde.jpg", thumb:"assets/scenes/aix_rotonde_thumb.jpg",
-    extW:258.0, extH:188.6, res:0.2}   // emprise et résolution source, sans interpolation
+    extW:258.0, extH:188.6, res:0.2},
+  {id:"parking", name:"Parking", sub:"BD ORTHO IGN 2023",
+    real:true, src:"assets/scenes/parking.jpg", thumb:"assets/scenes/parking_thumb.jpg",
+    extW:258.0, extH:188.6, res:0.2}
 ];
-var sceneCanvases = {}, sceneReadyP = {}, activeScene = "ville";
+var sceneCanvases = {}, sceneReadyP = {}, activeScene = "aix";
 
 // Chaque scène peut déclarer sa propre emprise (extW/extH en m) et sa propre
 // résolution (res, m/px) ; par défaut 102.4 x 102.4 m à TRUTH_RES (les 3 scènes
@@ -1332,7 +1156,6 @@ function syncZ(){
 }
 
 buildScenes();
-useScene("ville");
 
 var sceneHost = document.getElementById("scenes");
 SCENES.forEach(function(sc){
@@ -1495,7 +1318,11 @@ setupTabs(".tabs[aria-label='Vue']", function(id){
 });
 setupTabs(".tabs.chain");
 
-loadPreset(PRESETS[0]);
+// on n'affiche/rend rien tant que l'image de la scène par défaut n'est pas décodée
+sceneReadyP[activeScene].then(function(){
+  useScene(activeScene);
+  loadPreset(PRESETS[0]);
+});
 window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); });
 
 })();
