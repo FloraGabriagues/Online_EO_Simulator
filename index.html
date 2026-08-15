@@ -201,7 +201,7 @@ details.adv .inner{margin-top:16px}
 .compare{position:relative;width:min(100%,108vh);aspect-ratio:3/2;margin:0 auto;
   background:#000;overflow:hidden;border:1px solid var(--line-soft);border-radius:3px}
 .compare canvas{position:absolute;inset:0;width:100%;height:100%;display:block;
-  object-fit:cover;object-position:center;
+  object-fit:fill;
   image-rendering:pixelated;image-rendering:crisp-edges;
   transform-origin:center;transition:transform .18s ease}
 #simLayer{clip-path:inset(0 0 0 50%)}
@@ -216,8 +216,8 @@ details.adv .inner{margin-top:16px}
   border:1px solid var(--line);pointer-events:none}
 .chip.left{left:12px;color:var(--photon);border-color:#6B4E28}
 .chip.right{right:12px;color:var(--pixel);border-color:#2E6660}
-.scalebar{position:absolute;left:14px;bottom:14px;pointer-events:none;z-index:2;
-  display:flex;flex-direction:column-reverse;gap:5px;width:19.53%}
+.scalebar{position:absolute;left:14px;right:14px;bottom:14px;pointer-events:none;z-index:2;
+  display:flex;flex-direction:column-reverse;gap:5px}
 .scalebar .bar{display:block;height:7px;border:1px solid rgba(230,238,244,.9);
   border-top:none;box-shadow:0 1px 3px rgba(0,0,0,.7)}
 .scalebar .lab{font-family:var(--mono);font-size:11px;color:var(--paper);
@@ -358,7 +358,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <div class="divider" id="divider"></div>
       <span class="chip left">Image source</span>
       <span class="chip right">Image simulée</span>
-      <div class="scalebar"><span class="bar"></span><span class="lab">20 m</span></div>
+      <div class="scalebar" id="scalebar"><span class="bar" id="scalebarBar"></span><span class="lab" id="scalebarLab">20 m</span></div>
       </div>
       <input type="range" class="wipe visually-hidden" id="wipe" min="0" max="100" value="50" aria-label="Position du curseur de comparaison">
       <div class="viewfoot">
@@ -701,7 +701,7 @@ function rnd(){ seed = (seed*1664525 + 1013904223) % 4294967296; return seed/429
 function m2px(m){ return m/TRUTH_RES; }
 
 var SCENES = [
-  {id:"aix", name:"Aix-en-Provence", sub:"BD ORTHO IGN 2023",
+  {id:"aix", name:"Ville", sub:"BD ORTHO IGN 2023",
     real:true, src:"assets/scenes/aix_rotonde.jpg", thumb:"assets/scenes/aix_rotonde_thumb.jpg",
     extW:258.0, extH:188.6, res:0.2},
   {id:"parking", name:"Parking", sub:"BD ORTHO IGN 2023",
@@ -764,6 +764,25 @@ function useScene(id){
   // cadre d'affichage ajusté au ratio réel de la scène : pas de déformation
   var box = document.getElementById("compare");
   if(box) box.style.aspectRatio = (curW/curH).toFixed(4);
+  updateScaleBar();
+}
+
+// Choisit une distance "ronde" (1/2/5 x 10^n) proche de 20% de l'emprise
+// affichée, puis dimensionne la barre en conséquence — remplace le "20 m"
+// fixe d'avant, qui n'était correct que pour l'ancienne emprise 102.4 m.
+function niceScaleMeters(x){
+  var exp = Math.floor(Math.log10(x));
+  var f = x / Math.pow(10, exp);
+  var nf = f < 1.5 ? 1 : (f < 3.5 ? 2 : (f < 7.5 ? 5 : 10));
+  return nf * Math.pow(10, exp);
+}
+function updateScaleBar(){
+  var bar = document.getElementById("scalebarBar"), lab = document.getElementById("scalebarLab");
+  if(!bar || !lab) return;
+  var meters = niceScaleMeters(curExtW * 0.2);
+  var pct = (meters / curExtW) * 100;
+  bar.style.width = pct.toFixed(2) + "%";
+  lab.textContent = (meters >= 1000 ? (meters/1000) + " km" : meters + " m");
 }
 
 // ===================== DÉGRADATION IMAGE =====================
