@@ -207,10 +207,11 @@ details.adv .inner{margin-top:16px}
 #simLayer{clip-path:inset(0 0 0 50%)}
 .divider{position:absolute;top:0;bottom:0;width:2px;background:var(--paper);left:50%;
   pointer-events:none;opacity:.92;box-shadow:0 0 0 1px rgba(9,14,19,.5)}
-.divider::after{content:"⟨⟩";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+.divider .handle{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
   width:36px;height:36px;border-radius:50%;border:2px solid var(--paper);
   background:rgba(9,14,19,.72);color:var(--paper);font-family:var(--mono);font-size:13px;
   display:flex;align-items:center;justify-content:center;letter-spacing:-1px}
+.divider .handle::before{content:"⟨⟩"}
 .chip{position:absolute;top:12px;font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;
   text-transform:uppercase;padding:5px 10px;border-radius:3px;background:rgba(9,14,19,.84);
   border:1px solid var(--line);pointer-events:none}
@@ -235,7 +236,9 @@ details.adv .inner{margin-top:16px}
 .visually-hidden{position:absolute;width:1px;height:1px;padding:0;margin:-1px;
   overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .compare{cursor:ew-resize;touch-action:none}
-.divider::after{cursor:ew-resize;pointer-events:none}
+.compare.pannable{cursor:grab}
+.compare.panning{cursor:grabbing}
+.divider .handle{cursor:ew-resize;pointer-events:auto}
 .viewfoot{display:flex;justify-content:space-between;align-items:center;gap:16px;
   margin-top:8px;flex-wrap:wrap}
 .viewfoot .viewer-sub{margin:0}
@@ -355,7 +358,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <div class="compare" id="compare">
       <canvas id="truthLayer" width="1024" height="1024"></canvas>
       <canvas id="simLayer" width="1024" height="1024"></canvas>
-      <div class="divider" id="divider"></div>
+      <div class="divider" id="divider"><span class="handle" id="dividerHandle"></span></div>
       <span class="chip left">Image source</span>
       <span class="chip right">Image simulée</span>
       <div class="scalebar" id="scalebar"><span class="bar" id="scalebarBar"></span><span class="lab" id="scalebarLab">20 m</span></div>
@@ -1016,7 +1019,7 @@ function drawMtfChart(){
 }
 
 // ===================== ÉTAT DE COMPARAISON =====================
-var zoom = 1, locked = true;
+var zoom = 1, panX = 0, panY = 0, locked = true;
 
 
 
@@ -1134,12 +1137,27 @@ function paintLeft(){
   tctx.imageSmoothingEnabled = false;
   tctx.drawImage(sceneCv, 0, 0);
 }
+function applyTransform(){
+  // translate exprimé en unités déjà mises à l'échelle par scale() : diviser
+  // par zoom pour qu'un déplacement en px écran corresponde au même déplacement
+  // visuel quel que soit le niveau de zoom.
+  var t = "scale("+zoom+") translate("+(panX/zoom)+"px,"+(panY/zoom)+"px)";
+  truthCv.style.transform = simCv.style.transform = t;
+}
+function clampPan(){
+  var r = compareBox.getBoundingClientRect();
+  var maxX = Math.max(0, (zoom-1) * r.width / 2);
+  var maxY = Math.max(0, (zoom-1) * r.height / 2);
+  panX = Math.max(-maxX, Math.min(maxX, panX));
+  panY = Math.max(-maxY, Math.min(maxY, panY));
+}
 function setZoom(z){
-  zoom = z;
-  truthCv.style.transform = simCv.style.transform = "scale("+z+")";
+  zoom = z; panX = 0; panY = 0;
+  applyTransform();
   document.querySelectorAll(".mode.zoom").forEach(function(b){
     b.setAttribute("aria-pressed", parseFloat(b.dataset.z) === z ? "true" : "false");
   });
+  compareBox.classList.toggle("pannable", zoom > 1);
   updateScaleBar();
   updateDividerVisual();
 }
@@ -1288,36 +1306,68 @@ function setWipe(pct){
 // (ou l'intérieur) par rapport au centre — la ligne du curseur doit suivre ce
 // déplacement pour rester alignée avec la vraie coupure floue/nette à l'écran.
 function updateDividerVisual(){
-  var visualPct = 50 + (wipePct - 50) * (zoom || 1);
+  var r = compareBox.getBoundingClientRect();
+  var panPct = r.width ? (panX / r.width) * 100 : 0;
+  var visualPct = 50 + (wipePct - 50) * (zoom || 1) + panPct;
   divider.style.left = visualPct + "%";
 }
 wipe.addEventListener("input", function(){ setWipe(parseFloat(this.value)); });
 
 // glissement direct sur l'image
 var dragging = false;
+var panning = false, panStartX = 0, panStartY = 0, panStartPanX = 0, panStartPanY = 0;
 function pctFromEvent(e){
   var r = compareBox.getBoundingClientRect();
+  var panPct = r.width ? (panX / r.width) * 100 : 0;
   var visualPct = (e.clientX - r.left) / r.width * 100;
   // la souris doit piloter la position VISIBLE à l'écran 1:1 ; on convertit
   // donc vers le pourcentage "brut" pré-zoom attendu par setWipe/clip-path
-  // (inverse exact de updateDividerVisual), sinon la sensibilité se retrouve
-  // multipliée par le niveau de zoom.
-  return 50 + (visualPct - 50) / (zoom || 1);
+  // (inverse exact de updateDividerVisual, pan compris), sinon la sensibilité
+  // se retrouve multipliée par le niveau de zoom ou faussée par le pan.
+  return 50 + (visualPct - panPct - 50) / (zoom || 1);
 }
 compareBox.addEventListener("pointerdown", function(e){
+  if(zoom > 1){
+    panning = true;
+    panStartX = e.clientX; panStartY = e.clientY;
+    panStartPanX = panX; panStartPanY = panY;
+    compareBox.classList.add("panning");
+    compareBox.setPointerCapture(e.pointerId);
+    e.preventDefault();
+    return;
+  }
   dragging = true;
   compareBox.setPointerCapture(e.pointerId);
   setWipe(pctFromEvent(e));
   e.preventDefault();
 });
 compareBox.addEventListener("pointermove", function(e){
+  if(panning){
+    panX = panStartPanX + (e.clientX - panStartX);
+    panY = panStartPanY + (e.clientY - panStartY);
+    clampPan();
+    applyTransform();
+    updateDividerVisual();
+    return;
+  }
   if(dragging) setWipe(pctFromEvent(e));
 });
 ["pointerup","pointercancel"].forEach(function(ev){
   compareBox.addEventListener(ev, function(e){
-    dragging = false;
+    dragging = false; panning = false;
+    compareBox.classList.remove("panning");
     if(compareBox.hasPointerCapture(e.pointerId)) compareBox.releasePointerCapture(e.pointerId);
   });
+});
+// la poignée du curseur reste toujours dédiée à la comparaison, même zoomé,
+// pour ne jamais entrer en conflit avec le geste de déplacement de la vue.
+var dividerHandle = document.getElementById("dividerHandle");
+dividerHandle.addEventListener("pointerdown", function(e){
+  dragging = true;
+  compareBox.setPointerCapture(e.pointerId);
+  setWipe(pctFromEvent(e));
+  e.stopPropagation();
+  e.preventDefault();
 });
 // accessibilité clavier : le curseur masqué reste focusable
 compareBox.addEventListener("keydown", function(e){
