@@ -781,6 +781,11 @@ function useScene(id){
   // cadre d'affichage ajusté au ratio réel de la scène : pas de déformation
   var box = document.getElementById("compare");
   if(box) box.style.aspectRatio = (curW/curH).toFixed(4);
+  // le déplacement (pan) est propre à la scène affichée ; le niveau de zoom,
+  // lui, reste volontairement inchangé d'une scène à l'autre.
+  panX = 0; panY = 0;
+  if(typeof applyTransform === "function") applyTransform();
+  if(typeof updateClipPath === "function") updateClipPath();
   updateScaleBar();
 }
 
