@@ -779,9 +779,14 @@ function niceScaleMeters(x){
 function updateScaleBar(){
   var bar = document.getElementById("scalebarBar"), lab = document.getElementById("scalebarLab");
   if(!bar || !lab) return;
-  var meters = niceScaleMeters(curExtW * 0.2);
-  var pct = (meters / curExtW) * 100;
-  bar.style.width = pct.toFixed(2) + "%";
+  // au zoom z, l'emprise réellement visible à l'écran est curExtW/z :
+  // la barre doit représenter cette distance-là, pas l'emprise totale.
+  var visExtW = curExtW / (zoom || 1);
+  var meters = niceScaleMeters(visExtW * 0.2);
+  var pct = (meters / visExtW) * 100;
+  var w = pct.toFixed(2) + "%";
+  bar.style.width = w;
+  lab.style.width = w;   // même largeur que la barre : le texte se centre dessus, pas sur tout le bloc
   lab.textContent = (meters >= 1000 ? (meters/1000) + " km" : meters + " m");
 }
 
@@ -1135,6 +1140,8 @@ function setZoom(z){
   document.querySelectorAll(".mode.zoom").forEach(function(b){
     b.setAttribute("aria-pressed", parseFloat(b.dataset.z) === z ? "true" : "false");
   });
+  updateScaleBar();
+  updateDividerVisual();
 }
 
 // ===================== BOUCLE ======================
@@ -1269,11 +1276,20 @@ document.querySelectorAll(".mode.zoom").forEach(function(b){
 var wipe = document.getElementById("wipe"), divider = document.getElementById("divider");
 var compareBox = document.getElementById("compare");
 
+var wipePct = 50;
 function setWipe(pct){
-  pct = Math.max(0, Math.min(100, pct));
-  wipe.value = pct;
-  simCv.style.clipPath = "inset(0 0 0 "+pct+"%)";
-  divider.style.left = pct+"%";
+  wipePct = Math.max(0, Math.min(100, pct));
+  wipe.value = wipePct;
+  simCv.style.clipPath = "inset(0 0 0 "+wipePct+"%)";
+  updateDividerVisual();
+}
+// Le clip-path se calcule dans le repère propre du calque, AVANT le transform:scale
+// du zoom. Un scale centré déplace donc la limite visible réelle vers l'extérieur
+// (ou l'intérieur) par rapport au centre — la ligne du curseur doit suivre ce
+// déplacement pour rester alignée avec la vraie coupure floue/nette à l'écran.
+function updateDividerVisual(){
+  var visualPct = 50 + (wipePct - 50) * (zoom || 1);
+  divider.style.left = visualPct + "%";
 }
 wipe.addEventListener("input", function(){ setWipe(parseFloat(this.value)); });
 
