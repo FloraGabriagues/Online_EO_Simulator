@@ -1297,7 +1297,12 @@ wipe.addEventListener("input", function(){ setWipe(parseFloat(this.value)); });
 var dragging = false;
 function pctFromEvent(e){
   var r = compareBox.getBoundingClientRect();
-  return (e.clientX - r.left) / r.width * 100;
+  var visualPct = (e.clientX - r.left) / r.width * 100;
+  // la souris doit piloter la position VISIBLE à l'écran 1:1 ; on convertit
+  // donc vers le pourcentage "brut" pré-zoom attendu par setWipe/clip-path
+  // (inverse exact de updateDividerVisual), sinon la sensibilité se retrouve
+  // multipliée par le niveau de zoom.
+  return 50 + (visualPct - 50) / (zoom || 1);
 }
 compareBox.addEventListener("pointerdown", function(e){
   dragging = true;
