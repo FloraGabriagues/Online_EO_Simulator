@@ -197,15 +197,16 @@ details.adv .inner{margin-top:16px}
 .viewer-title{font-size:15.5px;color:var(--paper);margin:0}
 .viewer-sub{font-size:13.5px;color:var(--muted);margin:4px 0 0}
 .vtools{display:flex;gap:6px;flex:none}
-.pad{display:grid;grid-template-columns:repeat(3,22px);grid-template-rows:repeat(2,22px);
-  gap:3px;flex:none;margin-left:6px}
-.padbtn{grid-row:auto;border:1px solid var(--line-soft);background:var(--panel-2);
-  color:var(--muted);border-radius:2px;font-size:10px;line-height:1;cursor:pointer;padding:0}
-.padbtn:hover{border-color:var(--line);color:var(--paper)}
-.padbtn[data-dx="0"][data-dy="-1"]{grid-column:2;grid-row:1}
-.padbtn[data-dx="-1"]{grid-column:1;grid-row:2}
-.padbtn[data-dx="1"]{grid-column:3;grid-row:2}
-.padbtn[data-dx="0"][data-dy="1"]{grid-column:2;grid-row:2}
+.pad{position:absolute;inset:0;z-index:2;pointer-events:none}
+.padbtn{position:absolute;pointer-events:auto;width:28px;height:28px;
+  border:1px solid rgba(230,238,244,.35);background:rgba(9,14,19,.72);
+  color:var(--paper);border-radius:3px;font-size:12px;line-height:1;cursor:pointer;padding:0;
+  box-shadow:0 1px 3px rgba(0,0,0,.7)}
+.padbtn:hover{border-color:var(--paper);background:rgba(9,14,19,.9)}
+.padbtn[data-dx="0"][data-dy="-1"]{top:10px;left:50%;transform:translateX(-50%)}
+.padbtn[data-dx="0"][data-dy="1"]{bottom:10px;left:50%;transform:translateX(-50%)}
+.padbtn[data-dx="-1"]{left:10px;top:50%;transform:translateY(-50%)}
+.padbtn[data-dx="1"]{right:10px;top:50%;transform:translateY(-50%)}
 
 .compare{position:relative;width:min(100%,108vh);aspect-ratio:3/2;margin:0 auto;
   background:#000;overflow:hidden;border:1px solid var(--line-soft);border-radius:3px}
@@ -369,6 +370,12 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <span class="chip left">Image source</span>
       <span class="chip right">Image simulée</span>
       <div class="scalebar" id="scalebar"><span class="bar" id="scalebarBar"></span><span class="lab" id="scalebarLab">20 m</span></div>
+      <span class="pad" id="panPad" hidden>
+      <button class="padbtn" type="button" data-dx="0" data-dy="-1" aria-label="Déplacer vers le haut">▲</button>
+      <button class="padbtn" type="button" data-dx="-1" data-dy="0" aria-label="Déplacer vers la gauche">◀</button>
+      <button class="padbtn" type="button" data-dx="1" data-dy="0" aria-label="Déplacer vers la droite">▶</button>
+      <button class="padbtn" type="button" data-dx="0" data-dy="1" aria-label="Déplacer vers le bas">▼</button>
+      </span>
       </div>
       <input type="range" class="wipe visually-hidden" id="wipe" min="0" max="100" value="50" aria-label="Position du curseur de comparaison">
       <div class="viewfoot">
@@ -377,12 +384,6 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <button class="mode zoom" data-z="1" type="button" aria-pressed="true">Ajusté</button>
       <button class="mode zoom" data-z="2" type="button" aria-pressed="false">×2</button>
       <button class="mode zoom" data-z="4" type="button" aria-pressed="false">×4</button>
-      </span>
-      <span class="pad" id="panPad" hidden>
-      <button class="padbtn" type="button" data-dx="0" data-dy="-1" aria-label="Déplacer vers le haut">▲</button>
-      <button class="padbtn" type="button" data-dx="-1" data-dy="0" aria-label="Déplacer vers la gauche">◀</button>
-      <button class="padbtn" type="button" data-dx="1" data-dy="0" aria-label="Déplacer vers la droite">▶</button>
-      <button class="padbtn" type="button" data-dx="0" data-dy="1" aria-label="Déplacer vers le bas">▼</button>
       </span>
       </div>
       </div>
@@ -1173,7 +1174,7 @@ function setZoom(z){
   var pad = document.getElementById("panPad");
   if(pad) pad.hidden = (zoom <= 1);
   updateScaleBar();
-  updateDividerVisual();
+  updateClipPath();
 }
 
 // ===================== BOUCLE ======================
@@ -1308,34 +1309,42 @@ document.querySelectorAll(".mode.zoom").forEach(function(b){
 var wipe = document.getElementById("wipe"), divider = document.getElementById("divider");
 var compareBox = document.getElementById("compare");
 
-// pavé directionnel : déplace la vue par pas fixe quand on est zoomé
+// pavé directionnel : déplace la vue par pas fixe quand on est zoomé.
+// stopPropagation est indispensable : le pad est superposé à l'image, qui
+// écoute déjà pointerdown partout pour le curseur de comparaison.
 var PAN_STEP = 40;
 document.querySelectorAll(".padbtn").forEach(function(b){
-  b.addEventListener("click", function(){
-    panX += parseFloat(b.dataset.dx) * PAN_STEP;
-    panY += parseFloat(b.dataset.dy) * PAN_STEP;
+  b.addEventListener("pointerdown", function(e){ e.stopPropagation(); });
+  b.addEventListener("click", function(e){
+    e.stopPropagation();
+    // flèche droite -> on veut voir plus loin à droite -> le contenu se
+    // déplace vers la gauche à l'écran, d'où le signe inversé ici.
+    panX -= parseFloat(b.dataset.dx) * PAN_STEP;
+    panY -= parseFloat(b.dataset.dy) * PAN_STEP;
     clampPan();
     applyTransform();
-    updateDividerVisual();
+    updateClipPath();
   });
 });
 
 var wipePct = 50;
+// Le curseur reste fixe par rapport au CADRE (toujours à wipePct % de la
+// fenêtre de visualisation), quel que soit le zoom/pan. Comme le clip-path
+// se calcule dans le repère propre du calque AVANT le transform:scale/translate
+// du zoom, il faut calculer l'inset "brut" à rebours pour qu'une fois le
+// transform appliqué, la coupure visible retombe exactement à wipePct % du cadre.
+function updateClipPath(){
+  var r = compareBox.getBoundingClientRect();
+  var panPct = r.width ? (panX / r.width) * 100 : 0;
+  var z = zoom || 1;
+  var rawPct = 50 + (wipePct - 50 - panPct) / z;
+  simCv.style.clipPath = "inset(0 0 0 "+rawPct+"%)";
+}
 function setWipe(pct){
   wipePct = Math.max(0, Math.min(100, pct));
   wipe.value = wipePct;
-  simCv.style.clipPath = "inset(0 0 0 "+wipePct+"%)";
-  updateDividerVisual();
-}
-// Le clip-path se calcule dans le repère propre du calque, AVANT le transform:scale
-// du zoom. Un scale centré déplace donc la limite visible réelle vers l'extérieur
-// (ou l'intérieur) par rapport au centre — la ligne du curseur doit suivre ce
-// déplacement pour rester alignée avec la vraie coupure floue/nette à l'écran.
-function updateDividerVisual(){
-  var r = compareBox.getBoundingClientRect();
-  var panPct = r.width ? (panX / r.width) * 100 : 0;
-  var visualPct = 50 + (wipePct - 50) * (zoom || 1) + panPct;
-  divider.style.left = visualPct + "%";
+  divider.style.left = wipePct + "%";
+  updateClipPath();
 }
 wipe.addEventListener("input", function(){ setWipe(parseFloat(this.value)); });
 
@@ -1343,19 +1352,16 @@ wipe.addEventListener("input", function(){ setWipe(parseFloat(this.value)); });
 var dragging = false;
 function pctFromEvent(e){
   var r = compareBox.getBoundingClientRect();
-  var panPct = r.width ? (panX / r.width) * 100 : 0;
-  var visualPct = (e.clientX - r.left) / r.width * 100;
-  // la souris doit piloter la position VISIBLE à l'écran 1:1 ; on convertit
-  // donc vers le pourcentage "brut" pré-zoom attendu par setWipe/clip-path
-  // (inverse exact de updateDividerVisual, pan compris), sinon la sensibilité
-  // se retrouve multipliée par le niveau de zoom ou faussée par le pan.
-  return 50 + (visualPct - panPct - 50) / (zoom || 1);
+  // le curseur étant maintenant défini en % du cadre, la position souris
+  // s'y convertit directement, sans compensation de zoom/pan.
+  return (e.clientX - r.left) / r.width * 100;
 }
 compareBox.addEventListener("pointerdown", function(e){
   dragging = true;
   compareBox.setPointerCapture(e.pointerId);
   setWipe(pctFromEvent(e));
   e.preventDefault();
+
 });
 compareBox.addEventListener("pointermove", function(e){
   if(dragging) setWipe(pctFromEvent(e));
