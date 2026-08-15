@@ -472,6 +472,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
 </footer>
 </div>
 
+<script src="presets.js"></script>
 <script>
 (function(){
 "use strict";
@@ -517,18 +518,7 @@ var ZMODES = [
   {id:"spher", label:"sphérique"}, {id:"trefo", label:"trèfle"}
 ];
 
-var PRESETS = [
-  {id:"pneo", label:"Pléiades Neo",
-   v:{D:0.65,E:0.35,W:25,T:0.62,I:0.484,R:12,P:1.60,K:150,H:620,S:45,TI:45,TDI:20,Z:"none"}},
-  {id:"newsat", label:"Satellogic NewSat IV",
-   v:{D:0.25,E:0.30,W:35,T:0.55,I:2.084,R:18,P:1.50,K:350,H:475,S:45,TI:140,TDI:6,Z:"none"}},
-  {id:"s2", label:"Sentinel-2",
-   v:{D:0.15,E:0.00,W:20,T:0.65,I:12.72,R:8,P:0.60,K:80,H:786,S:45,TI:1505,TDI:1,Z:"none"}},
-  {id:"defocus", label:"Défocus en orbite",
-   v:{D:0.65,E:0.35,W:110,T:0.62,I:0.484,R:12,P:1.60,K:150,H:620,S:45,TI:45,TDI:20,Z:"defoc"}},
-  {id:"lowsun", label:"Angle solaire faible",
-   v:{D:0.65,E:0.35,W:25,T:0.62,I:0.484,R:12,P:1.60,K:150,H:620,S:12,TI:45,TDI:20,Z:"none"}}
-];
+// Instruments "quick start" : voir presets.js (chargé avant ce script)
 
 // ===================== GRANDEURS DÉRIVÉES =====================
 function ifovRad(s){ return s.I * 1e-6; }
