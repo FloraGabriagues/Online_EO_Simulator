@@ -233,6 +233,29 @@ details.adv .inner{margin-top:16px}
   border-top:none;box-shadow:0 1px 3px rgba(0,0,0,.7)}
 .scalebar .lab{font-family:var(--mono);font-size:11px;color:var(--paper);
   text-shadow:0 1px 3px rgba(0,0,0,.95);letter-spacing:.04em;text-align:center}
+.simbar{margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft)}
+.simbar-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+.engine{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--muted)}
+.engine b{color:var(--paper);font-weight:600}
+.simbtn{border:1px solid var(--photon);background:transparent;color:var(--photon);
+  font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;padding:8px 16px;
+  border-radius:3px;cursor:pointer;flex:none}
+.simbtn:hover:not(:disabled){background:var(--photon);color:#0B1116}
+.simbtn:disabled{opacity:.45;cursor:default}
+.prog{margin-top:14px}
+.prog-track{height:4px;background:var(--panel-2);border-radius:2px;overflow:hidden}
+.prog-fill{display:block;height:100%;width:0%;background:var(--photon);
+  transition:width .28s cubic-bezier(.4,0,.2,1)}
+.prog-steps{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:5px}
+.prog-steps li{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);
+  display:flex;align-items:center;gap:8px;transition:color .2s}
+.prog-steps li::before{content:"○";font-size:10px;color:var(--muted-2)}
+.prog-steps li.active{color:var(--photon)}
+.prog-steps li.active::before{content:"◐";color:var(--photon)}
+.prog-steps li.done{color:var(--muted)}
+.prog-steps li.done::before{content:"●";color:var(--photon)}
+.prog-note{margin:10px 0 0;font-size:12px;color:var(--muted)}
+.prog-note.err{color:#FF9A8B}
 .tbd-note{margin:0;font-size:12.5px;color:var(--muted)}
 .analysis{align-items:stretch}
 .analysis > .panel{display:flex;flex-direction:column}
@@ -386,6 +409,18 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <button class="mode zoom" data-z="4" type="button" aria-pressed="false">×4</button>
       </span>
       </div>
+
+      <div class="simbar" id="simbar" hidden>
+        <div class="simbar-head">
+          <span class="engine" id="engineBadge"></span>
+          <button class="simbtn" id="simBtn" type="button">Simuler avec EO_Toolbox</button>
+        </div>
+        <div class="prog" id="progWrap" hidden>
+          <div class="prog-track"><span class="prog-fill" id="progFill"></span></div>
+          <ol class="prog-steps" id="progSteps"></ol>
+          <p class="prog-note" id="progNote"></p>
+        </div>
+      </div>
       </div>
     </div>
     <div class="tabpanel" id="tp-graphs" role="tabpanel" aria-labelledby="tab-graphs" hidden>
@@ -472,6 +507,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
 </footer>
 </div>
 
+<script src="config.js"></script>
 <script src="presets.js"></script>
 <script>
 (function(){
@@ -1096,6 +1132,10 @@ function applyChange(k, v){
   syncOne(k);
   els[k].row.classList.add("touched");
   markPreset(null);
+  // on quitte le résultat EO_Toolbox : les réglages ne lui correspondent plus.
+  // L'aperçu JS reprend la main jusqu'à la prochaine simulation demandée.
+  if(typeof cancelSim === "function") cancelSim();
+  useJsEngine();
   refresh();
 }
 
@@ -1180,14 +1220,35 @@ function setZoom(z){
 
 // ===================== BOUCLE ======================
 var pending = null;
+// Source de l'image de droite : "js" = moteur temps réel du navigateur
+// (aperçu instantané), "ext" = image calculée par EO_Toolbox (preset
+// pré-calculé ou réponse de l'API). On ne laisse pas le moteur JS écraser
+// un résultat EO_Toolbox, sinon le rendu de référence disparaîtrait au
+// premier redessin.
+var simSource = "js", extImage = null;
+
+function paintExternal(){
+  if(!extImage) return;
+  simCv.width = extImage.naturalWidth || extImage.width;
+  simCv.height = extImage.naturalHeight || extImage.height;
+  sctx.imageSmoothingEnabled = false;
+  sctx.drawImage(extImage, 0, 0);
+}
+function useJsEngine(){
+  simSource = "js"; extImage = null;
+  if(typeof setEngineBadge === "function") setEngineBadge();
+}
+
 function refresh(){
   computeOptics();
   syncAll(); updateMetrics();
   if(graphsVisible){ drawPupil(); drawPsf(); drawMtfChart(); }
   if(typeof updateCustomRow === "function") updateCustomRow();
+  if(typeof setEngineBadge === "function") setEngineBadge();
   if(pending) cancelAnimationFrame(pending);
   pending = requestAnimationFrame(function(){
-    renderSim();
+    if(simSource === "ext" && extImage) paintExternal();
+    else renderSim();
     paintLeft();
     pending = null;
   });
@@ -1258,6 +1319,13 @@ function switchScene(id){
     sceneHost.querySelectorAll(".scene").forEach(function(x){
       x.setAttribute("aria-pressed", x.dataset.id === id ? "true" : "false");
     });
+    // l'image EO_Toolbox affichée concerne l'ancienne scène : soit on charge
+    // celle du preset pour la nouvelle scène, soit on repasse à l'aperçu JS.
+    if(typeof cancelSim === "function") cancelSim();
+    var active = document.querySelector(".preset[aria-pressed='true']");
+    var pid = active && active.dataset.id;
+    if(pid && pid !== "custom") loadPresetImage(pid);
+    else useJsEngine();
     refresh();
   });
 }
@@ -1271,8 +1339,31 @@ function markPreset(id){
 function loadPreset(p){
   Object.keys(p.v).forEach(function(k){ st[k] = p.v[k]; });
   syncZ(); markPreset(p.id); setLocked(true);
+  if(typeof cancelSim === "function") cancelSim();
+  loadPresetImage(p.id);
   refresh();
+}
 
+// Les presets sont pré-calculés hors ligne par render_presets.py : le quick
+// start reste donc instantané et ne dépend pas de l'API (ni de son réveil).
+// Si l'image n'existe pas encore, on retombe sur le moteur JS sans bruit.
+var presetImgToken = 0;
+function loadPresetImage(presetId){
+  var token = ++presetImgToken;
+  var dir = (typeof PRESETS_DIR !== "undefined" && PRESETS_DIR) ? PRESETS_DIR : "";
+  if(!dir){ useJsEngine(); return; }
+  var img = new Image();
+  img.onload = function(){
+    if(token !== presetImgToken) return;   // un autre preset a été cliqué entre-temps
+    extImage = img; simSource = "ext";
+    refresh();
+  };
+  img.onerror = function(){
+    if(token !== presetImgToken) return;
+    useJsEngine();
+    refresh();
+  };
+  img.src = dir + "/" + presetId + "__" + activeScene + ".png";
 }
 PRESETS.forEach(function(p){
   var b = document.createElement("button");
@@ -1416,9 +1507,158 @@ setupTabs(".tabs[aria-label='Vue']", function(id){
 setupTabs(".tabs.chain");
 
 // on n'affiche/rend rien tant que l'image de la scène par défaut n'est pas décodée
+// ===================== CLIENT API EO_TOOLBOX =====================
+// Le quick start s'appuie sur des images pré-calculées ; seule la
+// configuration libre déclenche un vrai calcul serveur, d'où le bouton.
+var API = (typeof API_BASE !== "undefined" && API_BASE) ? API_BASE.replace(/\/$/, "") : "";
+var simbar = document.getElementById("simbar");
+var simBtn = document.getElementById("simBtn");
+var progWrap = document.getElementById("progWrap");
+var progFill = document.getElementById("progFill");
+var progSteps = document.getElementById("progSteps");
+var progNote = document.getElementById("progNote");
+var engineBadge = document.getElementById("engineBadge");
+
+var API_STAGES = [];      // rempli par /stages
+var simAbort = 0;         // incrémenté pour invalider une simulation en cours
+var simRunning = false;
+
+if(API) simbar.hidden = false;
+
+function setEngineBadge(){
+  if(!engineBadge) return;
+  if(simSource === "ext"){
+    engineBadge.innerHTML = "Moteur : <b>EO_Toolbox</b> — chaîne radiométrique complète";
+  } else {
+    engineBadge.innerHTML = "Moteur : <b>aperçu navigateur</b> — approximation temps réel";
+  }
+  if(simBtn) simBtn.disabled = simRunning || simSource === "ext";
+}
+
+function buildSteps(stages){
+  progSteps.innerHTML = "";
+  stages.forEach(function(s){
+    var li = document.createElement("li");
+    li.dataset.key = s.key;
+    li.textContent = s.label;
+    progSteps.appendChild(li);
+  });
+}
+function markSteps(activeKey, finished){
+  var keys = API_STAGES.map(function(s){ return s.key; });
+  var idx = keys.indexOf(activeKey);
+  [].forEach.call(progSteps.children, function(li, i){
+    li.classList.toggle("done", finished || (idx >= 0 && i < idx));
+    li.classList.toggle("active", !finished && i === idx);
+  });
+}
+
+function cancelSim(){
+  simAbort++;
+  simRunning = false;
+  if(progWrap) progWrap.hidden = true;
+  if(progFill) progFill.style.width = "0%";
+  if(simBtn) simBtn.disabled = false;
+}
+
+function fetchStages(){
+  if(!API || API_STAGES.length) return Promise.resolve();
+  return fetch(API + "/stages").then(function(r){ return r.json(); })
+    .then(function(j){ API_STAGES = j.stages || []; buildSteps(API_STAGES); })
+    .catch(function(){ /* la barre restera sans détail d'étapes */ });
+}
+
+function runSimulation(){
+  if(!API || simRunning) return;
+  var token = ++simAbort;
+  simRunning = true;
+  simBtn.disabled = true;
+  progWrap.hidden = false;
+  progFill.style.width = "0%";
+  progNote.className = "prog-note";
+  progNote.textContent = "Connexion au serveur…";
+
+  var body = {scene: activeScene};
+  ["D","I","W","E","T","R","TI","TDI","P","K","H","S","Z"].forEach(function(k){
+    body[k] = st[k];
+  });
+
+  fetchStages().then(function(){
+    markSteps(null, false);
+    // Les offres d'hébergement gratuites mettent l'instance en veille : la
+    // première requête peut prendre ~30 s. On l'annonce au lieu de laisser
+    // croire que le site est planté.
+    var slow = setTimeout(function(){
+      if(token === simAbort && simRunning)
+        progNote.textContent = "Réveil du serveur (première simulation, ~30 s)…";
+    }, 3000);
+
+    return fetch(API + "/simulate", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(body)
+    }).then(function(r){
+      clearTimeout(slow);
+      if(r.status === 429) throw new Error("Quota atteint. Réessayez dans quelques minutes.");
+      if(!r.ok) throw new Error("Le serveur a refusé la requête (" + r.status + ").");
+      return r.json();
+    });
+  }).then(function(j){
+    if(token !== simAbort) return;
+    return poll(j.job_id, token);
+  }).catch(function(err){
+    if(token !== simAbort) return;
+    simRunning = false;
+    simBtn.disabled = false;
+    progNote.className = "prog-note err";
+    progNote.textContent = err && err.message
+      ? err.message : "Serveur injoignable. L'aperçu navigateur reste disponible.";
+  });
+}
+
+function poll(jobId, token){
+  return new Promise(function(resolve, reject){
+    var tick = function(){
+      if(token !== simAbort) return resolve();
+      fetch(API + "/simulate/" + jobId + "/status").then(function(r){
+        if(!r.ok) throw new Error("Simulation expirée.");
+        return r.json();
+      }).then(function(s){
+        if(token !== simAbort) return resolve();
+        progFill.style.width = Math.round((s.pct || 0) * 100) + "%";
+        if(s.label) progNote.textContent = s.label;
+        markSteps(s.stage, s.state === "done");
+        if(s.state === "done"){
+          var img = new Image();
+          img.onload = function(){
+            if(token !== simAbort) return resolve();
+            extImage = img; simSource = "ext";
+            simRunning = false;
+            progNote.textContent = "Simulation terminée.";
+            refresh();
+            setTimeout(function(){
+              if(token === simAbort) progWrap.hidden = true;
+            }, 1400);
+            resolve();
+          };
+          img.onerror = function(){ reject(new Error("Image de résultat illisible.")); };
+          img.src = API + "/simulate/" + jobId + "/result";
+          return;
+        }
+        if(s.state === "error") return reject(new Error(s.error || "Échec de la simulation."));
+        setTimeout(tick, 250);
+      }).catch(reject);
+    };
+    tick();
+  });
+}
+
+if(simBtn) simBtn.addEventListener("click", runSimulation);
+
 sceneReadyP[activeScene].then(function(){
   useScene(activeScene);
   loadPreset(PRESETS[0]);
+  setEngineBadge();
 });
 window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); });
 
