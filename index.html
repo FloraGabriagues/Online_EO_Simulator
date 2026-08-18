@@ -1687,7 +1687,11 @@ function poll(jobId, token){
       }).then(function(s){
         if(token !== simAbort) return resolve();
         progFill.style.width = Math.round((s.pct || 0) * 100) + "%";
-        if(s.label) progNote.textContent = s.label;
+        if(s.state === "queued"){
+          progNote.textContent = "En attente — d'autres simulations sont en cours…";
+        } else if(s.label){
+          progNote.textContent = s.label;
+        }
         markSteps(s.stage, s.state === "done");
         if(s.state === "done"){
           var img = new Image();
