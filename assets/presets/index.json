@@ -1,0 +1,10 @@
+{
+  "pneo": {
+    "port": "pneo__port.png",
+    "champ": "pneo__champ.png"
+  },
+  "newsat": {
+    "port": "newsat__port.png",
+    "champ": "newsat__champ.png"
+  }
+}

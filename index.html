@@ -1188,6 +1188,9 @@ function applyChange(k, v){
   var from = st[k];
   if(v === from) return;
   st[k] = v;
+  // le full_well calibré du dernier preset ne vaut que pour SES réglages
+  // exacts — dès qu'un curseur bouge, on retombe sur le défaut du template.
+  st.FW = null;
   if(k === "D" || k === "I" || k === "H") updateDynamicRanges();
   syncOne(k);
   els[k].row.classList.add("touched");
@@ -1577,6 +1580,7 @@ var simBtn = document.getElementById("simBtn");
 var progWrap = document.getElementById("progWrap");
 var progFill = document.getElementById("progFill");
 var progSteps = document.getElementById("progSteps");
+if(progSteps) progSteps.hidden = true;  // plus de progression détaillée par étape (cf. runSimulation)
 var progNote = document.getElementById("progNote");
 var engineBadge = document.getElementById("engineBadge");
 
@@ -1643,78 +1647,71 @@ function runSimulation(){
   ["D","I","W","E","T","R","TI","TDI","P","K","H","S","Z"].forEach(function(k){
     body[k] = st[k];
   });
+  // full_well calibré n'a de sens que pour les réglages exacts du preset
+  // qui l'a fourni — st.FW est effacé dès qu'un curseur est touché en
+  // mode custom (cf. applyChange), donc absent ici = template par défaut.
+  if(st.FW !== undefined && st.FW !== null) body.FW = st.FW;
 
-  fetchStages().then(function(){
-    markSteps(null, false);
-    // Les offres d'hébergement gratuites mettent l'instance en veille : la
-    // première requête peut prendre ~30 s. On l'annonce au lieu de laisser
-    // croire que le site est planté.
-    var slow = setTimeout(function(){
-      if(token === simAbort && simRunning)
-        progNote.textContent = "Réveil du serveur (première simulation, ~30 s)…";
-    }, 3000);
+  // Le serveur attend maintenant la fin réelle du calcul avant de répondre
+  // (POST /simulate est synchrone — cf. main.py, contournement d'un souci
+  // d'infrastructure où la plateforme recyclait le conteneur pendant un
+  // calcul en tâche de fond). Plus de job_id ni de polling : on affiche
+  // juste un indicateur d'attente pendant que la requête est en vol, la
+  // connexion HTTP elle-même reste ouverte tout du long.
+  var slow = setTimeout(function(){
+    if(token === simAbort && simRunning)
+      progNote.textContent = "Réveil du serveur (première simulation, ~30 s)…";
+  }, 3000);
+  var busy = setTimeout(function(){
+    if(token === simAbort && simRunning)
+      progNote.textContent = "Calcul en cours (généralement 15-30 s)…";
+  }, 8000);
+  progFill.style.width = "50%";  // pas de progression détaillée par étape ; juste "en cours"
 
-    return fetch(API + "/simulate", {
-      method: "POST",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify(body)
-    }).then(function(r){
-      clearTimeout(slow);
-      if(r.status === 429) throw new Error("Quota atteint. Réessayez dans quelques minutes.");
-      if(!r.ok) throw new Error("Le serveur a refusé la requête (" + r.status + ").");
-      return r.json();
-    });
-  }).then(function(j){
+  fetch(API + "/simulate", {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify(body)
+  }).then(function(r){
+    clearTimeout(slow); clearTimeout(busy);
     if(token !== simAbort) return;
-    return poll(j.job_id, token);
+    if(r.status === 429) throw new Error("Quota atteint. Réessayez dans quelques minutes.");
+    if(!r.ok) return r.json().then(function(j){
+      throw new Error(j.detail || ("Le serveur a refusé la requête (" + r.status + ")."));
+    }).catch(function(){
+      throw new Error("Le serveur a refusé la requête (" + r.status + ").");
+    });
+    return r.blob();
+  }).then(function(blob){
+    if(token !== simAbort || !blob) return;
+    var url = URL.createObjectURL(blob);
+    var img = new Image();
+    img.onload = function(){
+      if(token !== simAbort) return;
+      extImage = img; simSource = "ext";
+      simRunning = false;
+      progFill.style.width = "100%";
+      progNote.textContent = "Simulation terminée.";
+      refresh();
+      setTimeout(function(){
+        if(token === simAbort) progWrap.hidden = true;
+      }, 1400);
+    };
+    img.onerror = function(){
+      simRunning = false;
+      simBtn.disabled = false;
+      progNote.className = "prog-note err";
+      progNote.textContent = "Image de résultat illisible.";
+    };
+    img.src = url;
   }).catch(function(err){
+    clearTimeout(slow); clearTimeout(busy);
     if(token !== simAbort) return;
     simRunning = false;
     simBtn.disabled = false;
     progNote.className = "prog-note err";
     progNote.textContent = err && err.message
       ? err.message : "Serveur injoignable. L'aperçu navigateur reste disponible.";
-  });
-}
-
-function poll(jobId, token){
-  return new Promise(function(resolve, reject){
-    var tick = function(){
-      if(token !== simAbort) return resolve();
-      fetch(API + "/simulate/" + jobId + "/status").then(function(r){
-        if(!r.ok) throw new Error("Simulation expirée.");
-        return r.json();
-      }).then(function(s){
-        if(token !== simAbort) return resolve();
-        progFill.style.width = Math.round((s.pct || 0) * 100) + "%";
-        if(s.state === "queued"){
-          progNote.textContent = "En attente — d'autres simulations sont en cours…";
-        } else if(s.label){
-          progNote.textContent = s.label;
-        }
-        markSteps(s.stage, s.state === "done");
-        if(s.state === "done"){
-          var img = new Image();
-          img.onload = function(){
-            if(token !== simAbort) return resolve();
-            extImage = img; simSource = "ext";
-            simRunning = false;
-            progNote.textContent = "Simulation terminée.";
-            refresh();
-            setTimeout(function(){
-              if(token === simAbort) progWrap.hidden = true;
-            }, 1400);
-            resolve();
-          };
-          img.onerror = function(){ reject(new Error("Image de résultat illisible.")); };
-          img.src = API + "/simulate/" + jobId + "/result";
-          return;
-        }
-        if(s.state === "error") return reject(new Error(s.error || "Échec de la simulation."));
-        setTimeout(tick, 250);
-      }).catch(reject);
-    };
-    tick();
   });
 }
 
