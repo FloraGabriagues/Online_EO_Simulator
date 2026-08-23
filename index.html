@@ -233,7 +233,12 @@ details.adv .inner{margin-top:16px}
   border-top:none;box-shadow:0 1px 3px rgba(0,0,0,.7)}
 .scalebar .lab{font-family:var(--mono);font-size:11px;color:var(--paper);
   text-shadow:0 1px 3px rgba(0,0,0,.95);letter-spacing:.04em;text-align:center}
-.simbar{margin-top:14px;padding-top:14px;border-top:1px solid var(--line-soft)}
+.simbar{position:fixed;left:20px;bottom:20px;z-index:80;max-width:340px;
+  background:var(--panel);border:1px solid var(--line);border-radius:8px;
+  padding:16px 18px;box-shadow:0 12px 32px rgba(0,0,0,.55);
+  transform:translateY(12px);opacity:0;pointer-events:none;
+  transition:transform .22s ease,opacity .22s ease}
+.simbar.visible{transform:translateY(0);opacity:1;pointer-events:auto}
 .simbar-head{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
 .engine{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;color:var(--muted)}
 .engine b{color:var(--paper);font-weight:600}
@@ -243,9 +248,14 @@ details.adv .inner{margin-top:16px}
 .simbtn:hover:not(:disabled){background:var(--photon);color:#0B1116}
 .simbtn:disabled{opacity:.45;cursor:default}
 .prog{margin-top:14px}
-.prog-track{height:4px;background:var(--panel-2);border-radius:2px;overflow:hidden}
-.prog-fill{display:block;height:100%;width:0%;background:var(--photon);
-  transition:width .28s cubic-bezier(.4,0,.2,1)}
+.prog-track{height:6px;background:var(--panel-2);border-radius:3px;overflow:hidden}
+.prog-fill{display:block;height:100%;width:40%;border-radius:3px;
+  background:linear-gradient(90deg,transparent,var(--photon),transparent);
+  animation:prog-sweep 1.4s ease-in-out infinite}
+@keyframes prog-sweep{
+  0%{transform:translateX(-120%)}
+  100%{transform:translateX(320%)}
+}
 .prog-steps{list-style:none;margin:12px 0 0;padding:0;display:grid;gap:5px}
 .prog-steps li{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);
   display:flex;align-items:center;gap:8px;transition:color .2s}
@@ -410,7 +420,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       </span>
       </div>
 
-      <div class="simbar" id="simbar" hidden>
+      <div class="simbar" id="simbar">
         <div class="simbar-head">
           <span class="engine" id="engineBadge"></span>
           <button class="simbtn" id="simBtn" type="button">Simuler avec EO_Toolbox</button>
@@ -1179,6 +1189,9 @@ function setLocked(v){
   });
   if(typeof customRow !== "undefined" && customRow)
     customRow.setAttribute("aria-pressed", v ? "false" : "true");
+  // le popup "Simuler" n'a de sens qu'en mode custom (curseurs déverrouillés) —
+  // les presets ont déjà leur image pré-calculée, pas besoin de le proposer.
+  if(typeof updateSimbarVisibility === "function") updateSimbarVisibility();
 }
 
 function applyChange(k, v){
@@ -1584,11 +1597,37 @@ if(progSteps) progSteps.hidden = true;  // plus de progression détaillée par �
 var progNote = document.getElementById("progNote");
 var engineBadge = document.getElementById("engineBadge");
 
-var API_STAGES = [];      // rempli par /stages
+var API_STAGES = [];      // conservé pour compat, plus utilisé activement
 var simAbort = 0;         // incrémenté pour invalider une simulation en cours
 var simRunning = false;
 
-if(API) simbar.hidden = false;
+// Phrases génériques qui défilent pendant l'attente — PURE mise en scène,
+// pas un vrai reflet de l'étape serveur en cours (on n'a plus de suivi
+// détaillé depuis le passage à /simulate synchrone, cf. runSimulation).
+var GENERIC_STAGES = [
+  "Calcul de la pupille…", "Simulation de la PSF…", "Convolution optique…",
+  "Transfert radiatif atmosphérique…", "Ajout du bruit capteur…", "Quantification…"
+];
+var stageTimer = null;
+
+function updateSimbarVisibility(){
+  if(!simbar) return;
+  var show = !!API && !locked;
+  simbar.classList.toggle("visible", show);
+}
+
+function startStageRotation(){
+  if(!progNote) return;
+  var i = 0;
+  progNote.textContent = GENERIC_STAGES[0];
+  stageTimer = setInterval(function(){
+    i = (i + 1) % GENERIC_STAGES.length;
+    progNote.textContent = GENERIC_STAGES[i];
+  }, 2200);
+}
+function stopStageRotation(){
+  if(stageTimer){ clearInterval(stageTimer); stageTimer = null; }
+}
 
 function setEngineBadge(){
   if(!engineBadge) return;
@@ -1621,16 +1660,9 @@ function markSteps(activeKey, finished){
 function cancelSim(){
   simAbort++;
   simRunning = false;
+  stopStageRotation();
   if(progWrap) progWrap.hidden = true;
-  if(progFill) progFill.style.width = "0%";
   if(simBtn) simBtn.disabled = false;
-}
-
-function fetchStages(){
-  if(!API || API_STAGES.length) return Promise.resolve();
-  return fetch(API + "/stages").then(function(r){ return r.json(); })
-    .then(function(j){ API_STAGES = j.stages || []; buildSteps(API_STAGES); })
-    .catch(function(){ /* la barre restera sans détail d'étapes */ });
 }
 
 function runSimulation(){
@@ -1639,9 +1671,8 @@ function runSimulation(){
   simRunning = true;
   simBtn.disabled = true;
   progWrap.hidden = false;
-  progFill.style.width = "0%";
   progNote.className = "prog-note";
-  progNote.textContent = "Connexion au serveur…";
+  startStageRotation();
 
   var body = {scene: activeScene};
   ["D","I","W","E","T","R","TI","TDI","P","K","H","S","Z"].forEach(function(k){
@@ -1655,25 +1686,16 @@ function runSimulation(){
   // Le serveur attend maintenant la fin réelle du calcul avant de répondre
   // (POST /simulate est synchrone — cf. main.py, contournement d'un souci
   // d'infrastructure où la plateforme recyclait le conteneur pendant un
-  // calcul en tâche de fond). Plus de job_id ni de polling : on affiche
-  // juste un indicateur d'attente pendant que la requête est en vol, la
-  // connexion HTTP elle-même reste ouverte tout du long.
-  var slow = setTimeout(function(){
-    if(token === simAbort && simRunning)
-      progNote.textContent = "Réveil du serveur (première simulation, ~30 s)…";
-  }, 3000);
-  var busy = setTimeout(function(){
-    if(token === simAbort && simRunning)
-      progNote.textContent = "Calcul en cours (généralement 15-30 s)…";
-  }, 8000);
-  progFill.style.width = "50%";  // pas de progression détaillée par étape ; juste "en cours"
+  // calcul en tâche de fond). Plus de job_id ni de polling : la barre
+  // défile (animation CSS pure, pas liée à un vrai %) et le texte tourne
+  // parmi quelques étapes génériques — pure mise en scène, pas un vrai
+  // suivi de progression, tant que la connexion HTTP reste en vol.
 
   fetch(API + "/simulate", {
     method: "POST",
     headers: {"Content-Type": "application/json"},
     body: JSON.stringify(body)
   }).then(function(r){
-    clearTimeout(slow); clearTimeout(busy);
     if(token !== simAbort) return;
     if(r.status === 429) throw new Error("Quota atteint. Réessayez dans quelques minutes.");
     if(!r.ok) return r.json().then(function(j){
@@ -1690,7 +1712,7 @@ function runSimulation(){
       if(token !== simAbort) return;
       extImage = img; simSource = "ext";
       simRunning = false;
-      progFill.style.width = "100%";
+      stopStageRotation();
       progNote.textContent = "Simulation terminée.";
       refresh();
       setTimeout(function(){
@@ -1699,15 +1721,16 @@ function runSimulation(){
     };
     img.onerror = function(){
       simRunning = false;
+      stopStageRotation();
       simBtn.disabled = false;
       progNote.className = "prog-note err";
       progNote.textContent = "Image de résultat illisible.";
     };
     img.src = url;
   }).catch(function(err){
-    clearTimeout(slow); clearTimeout(busy);
     if(token !== simAbort) return;
     simRunning = false;
+    stopStageRotation();
     simBtn.disabled = false;
     progNote.className = "prog-note err";
     progNote.textContent = err && err.message
@@ -1716,6 +1739,7 @@ function runSimulation(){
 }
 
 if(simBtn) simBtn.addEventListener("click", runSimulation);
+updateSimbarVisibility();  // état initial : caché tant qu'on est sur un preset (locked=true)
 
 sceneReadyP[activeScene].then(function(){
   useScene(activeScene);
