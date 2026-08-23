@@ -1147,6 +1147,35 @@ function updateDynamicRanges(){
   var H_max = ABS_H_MAX;
   while(H_max > H_min && !feasibleDIH(D, I, H_max)) H_max -= 5;
   applyDynamicBound("H", H_min, Math.max(H_min, H_max));
+
+  updateExposureBounds();
+}
+
+// ===================== BORNE DYNAMIQUE : TI (exposition) =====================
+// Le full_well n'est calibré que pour UN seul point (Pléiades Neo : D=0.91,
+// I=1.905µrad, TI=160µs, TDI=20 — cf. échange du 22/08/2026, S_ref≈38% du
+// puits plein sur la bande la plus forte). En mode custom, dès qu'un
+// curseur bouge, cette calibration ne s'applique plus (st.FW=null, cf.
+// applyChange) — le serveur retombe sur le full_well du template, calibré
+// pour CE point précis, ce qui sature (image blanche) si le nouveau réglage
+// collecte nettement plus de signal.
+//
+// Signal ∝ D² × I² × TI × TDI (aire de collecte × solid angle × temps ×
+// étages) — on contraint donc le MAX de TI dynamiquement à partir de D, I
+// et TDI courants, pour rester sous un seuil de sécurité (80% du seuil de
+// saturation estimé) quelle que soit la combinaison. TDI et TI jouent un
+// rôle symétrique dans la formule ; on ne contraint que TI (plus naturel à
+// associer à "l'exposition" pour l'utilisateur), TDI garde ses bornes
+// d'origine.
+var EXPOSURE_BASELINE = 0.91*0.91 * 1.905*1.905 * 160 * 20;   // ≈ 9617, calibré Pléiades Neo
+var EXPOSURE_SAFE_THRESHOLD = (EXPOSURE_BASELINE / 0.38) * 0.80;  // ≈ 20246
+
+function updateExposureBounds(){
+  var D = st.D, I = st.I, TDI = st.TDI;
+  var geomFactor = D*D * I*I * TDI;
+  if(geomFactor <= 0) return;
+  var TI_max = EXPOSURE_SAFE_THRESHOLD / geomFactor;
+  applyDynamicBound("TI", PMAP.TI.min, Math.min(2000, Math.max(PMAP.TI.min, TI_max)));
 }
 
 var els = {};
@@ -1211,6 +1240,7 @@ function applyChange(k, v){
   // exacts — dès qu'un curseur bouge, on retombe sur le défaut du template.
   st.FW = null;
   if(k === "D" || k === "I" || k === "H") updateDynamicRanges();
+  else if(k === "TDI") updateExposureBounds();
   syncOne(k);
   els[k].row.classList.add("touched");
   markPreset(null);
