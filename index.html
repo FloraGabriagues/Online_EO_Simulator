@@ -1701,7 +1701,7 @@ function cancelSim(){
   if(simBtn) simBtn.disabled = false;
 }
 
-function runSimulation(){
+async function runSimulation(){
   if(!API || simRunning) return;
   var token = ++simAbort;
   simRunning = true;
@@ -1726,52 +1726,69 @@ function runSimulation(){
   // défile (animation CSS pure, pas liée à un vrai %) et le texte tourne
   // parmi quelques étapes génériques — pure mise en scène, pas un vrai
   // suivi de progression, tant que la connexion HTTP reste en vol.
+  //
+  // Relance automatique (jusqu'à 3 tentatives au total) : un 502 juste
+  // après un déploiement (transition entre deux instances côté Scaleway)
+  // est souvent transitoire — inutile de faire échouer tout de suite.
+  var MAX_ATTEMPTS = 3;
+  var lastErr = null;
 
-  fetch(API + "/simulate", {
-    method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify(body)
-  }).then(function(r){
+  for(var attempt = 1; attempt <= MAX_ATTEMPTS; attempt++){
     if(token !== simAbort) return;
-    if(r.status === 429) throw new Error("Quota atteint. Réessayez dans quelques minutes.");
-    if(!r.ok) return r.json().then(function(j){
-      throw new Error(j.detail || ("Le serveur a refusé la requête (" + r.status + ")."));
-    }).catch(function(){
-      throw new Error("Le serveur a refusé la requête (" + r.status + ").");
-    });
-    return r.blob();
-  }).then(function(blob){
-    if(token !== simAbort || !blob) return;
-    var url = URL.createObjectURL(blob);
-    var img = new Image();
-    img.onload = function(){
+    try{
+      var r = await fetch(API + "/simulate", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(body)
+      });
       if(token !== simAbort) return;
-      extImage = img; simSource = "ext";
+      if(r.status === 429) throw new Error("Quota atteint. Réessayez dans quelques minutes.");
+      if(!r.ok){
+        var detail = null;
+        try{ var j = await r.json(); detail = j.detail; } catch(e){}
+        throw new Error(detail || ("Le serveur a refusé la requête (" + r.status + ").")); 
+      }
+      var blob = await r.blob();
+      if(token !== simAbort || !blob) return;
+
+      var url = URL.createObjectURL(blob);
+      await new Promise(function(resolve, reject){
+        var img = new Image();
+        img.onload = function(){
+          if(token !== simAbort) return resolve();
+          extImage = img; simSource = "ext";
+          refresh();
+          resolve();
+        };
+        img.onerror = function(){ reject(new Error("Image de résultat illisible.")); };
+        img.src = url;
+      });
+
+      if(token !== simAbort) return;
       simRunning = false;
       stopStageRotation();
       progNote.textContent = "Simulation terminée.";
-      refresh();
       setTimeout(function(){
         if(token === simAbort) progWrap.hidden = true;
       }, 1400);
-    };
-    img.onerror = function(){
-      simRunning = false;
-      stopStageRotation();
-      simBtn.disabled = false;
-      progNote.className = "prog-note err";
-      progNote.textContent = "Image de résultat illisible.";
-    };
-    img.src = url;
-  }).catch(function(err){
-    if(token !== simAbort) return;
-    simRunning = false;
-    stopStageRotation();
-    simBtn.disabled = false;
-    progNote.className = "prog-note err";
-    progNote.textContent = err && err.message
-      ? err.message : "Serveur injoignable. L'aperçu navigateur reste disponible.";
-  });
+      return;
+
+    }catch(err){
+      lastErr = err;
+      if(attempt < MAX_ATTEMPTS && token === simAbort){
+        progNote.textContent = "Nouvelle tentative (" + (attempt + 1) + "/" + MAX_ATTEMPTS + ")…";
+        await new Promise(function(res){ setTimeout(res, 2500); });
+      }
+    }
+  }
+
+  if(token !== simAbort) return;
+  simRunning = false;
+  stopStageRotation();
+  simBtn.disabled = false;
+  progNote.className = "prog-note err";
+  progNote.textContent = lastErr && lastErr.message
+    ? lastErr.message : "Serveur injoignable. L'aperçu navigateur reste disponible.";
 }
 
 if(simBtn) simBtn.addEventListener("click", runSimulation);
