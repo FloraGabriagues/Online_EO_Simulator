@@ -1153,7 +1153,7 @@ function updateDynamicRanges(){
   // sécurité confortable avant le cas dégénéré, vérifié sur les presets
   // existants : Pléiades Neo et Satellogic restent largement en dessous).
   var DIFFRACTION_LAMBDA_M = 650e-9;
-  var R_AIRY_MIN_PX = 0.4;
+  var R_AIRY_MIN_PX = 0.15;   // seuil réel de plantage : 0.1 (window=1) — marge confortable mais pas excessive
   var theta_airy_rad = 1.22 * DIFFRACTION_LAMBDA_M / D;
   var I_max_diffraction = (theta_airy_rad / R_AIRY_MIN_PX) * 1e6;   // µrad
   I_max = Math.min(I_max, I_max_diffraction);
