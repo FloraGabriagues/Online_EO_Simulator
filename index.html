@@ -1140,6 +1140,24 @@ function updateDynamicRanges(){
   var I_min = Math.max(ABS_I_MIN, GSD_FLOOR_M * 1000 / H);
   var I_max = ABS_I_MAX;
   while(I_max > I_min && !feasibleDIH(D, I_max, H)) I_max -= 0.05;
+
+  // Contrainte de diffraction : un iFoV trop grand par rapport à D fait
+  // s'effondrer la fenêtre PSF cible à 1 pixel côté serveur
+  // (POPPY_compute_psf_window), qui fait ensuite planter le tuilage —
+  // constaté avec D=0.91m, I=9µrad (tache d'Airy à seulement ~0.1px de la
+  // résolution cible). Physiquement, c'est un appairage non plausible :
+  // un instrument visant un tel iFoV n'aurait jamais une pupille aussi
+  // grande, ça n'apporterait rien — le pixel gâcherait ~90% de la
+  // résolution que la pupille peut offrir. On borne I_max pour garder la
+  // tache d'Airy à au moins 0.4px à la résolution cible (marge de
+  // sécurité confortable avant le cas dégénéré, vérifié sur les presets
+  // existants : Pléiades Neo et Satellogic restent largement en dessous).
+  var DIFFRACTION_LAMBDA_M = 650e-9;
+  var R_AIRY_MIN_PX = 0.4;
+  var theta_airy_rad = 1.22 * DIFFRACTION_LAMBDA_M / D;
+  var I_max_diffraction = (theta_airy_rad / R_AIRY_MIN_PX) * 1e6;   // µrad
+  I_max = Math.min(I_max, I_max_diffraction);
+
   applyDynamicBound("I", I_min, Math.max(I_min, I_max));
 
   // plage de H, étant donné D et I courants
