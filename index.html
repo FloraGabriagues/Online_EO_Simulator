@@ -516,6 +516,70 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
 
 </div>
 
+<!-- ===================== MODE ADMIN ===================== -->
+<!-- Lien discret, jamais mis en avant pour un visiteur normal de la démo. -->
+<p style="text-align:center;margin:34px 0 0">
+  <button id="adminTrigger" type="button" style="background:transparent;border:none;
+    color:var(--muted-2);font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;
+    cursor:pointer;opacity:.5;padding:4px">admin</button>
+</p>
+
+<div id="adminOverlay" style="display:none;position:fixed;inset:0;z-index:200;
+  background:rgba(9,14,19,.86);align-items:center;justify-content:center;padding:20px">
+
+  <!-- Écran mot de passe -->
+  <div id="adminAuthBox" class="panel" style="max-width:340px;width:100%">
+    <p class="grouphead"><span class="dot warm"></span>Mode admin</p>
+    <p class="note" style="margin-top:0">
+      Rappel : cet écran n'est qu'un confort d'usage — la vraie protection
+      est côté serveur (clé vérifiée à chaque appel), pas ce mot de passe.
+    </p>
+    <input type="password" id="adminPassInput" placeholder="Clé admin"
+      style="width:100%;box-sizing:border-box;background:var(--panel-2);
+      border:1px solid var(--line-soft);color:var(--paper);border-radius:3px;
+      padding:10px 12px;font-family:var(--mono);font-size:14px;margin-top:14px">
+    <p id="adminAuthErr" class="note" style="color:var(--alert);display:none;margin-top:8px"></p>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button id="adminAuthSubmit" class="simbtn" type="button">Entrer</button>
+      <button id="adminAuthCancel" class="reset" type="button" style="width:auto;flex:1">Annuler</button>
+    </div>
+  </div>
+
+  <!-- Panneau admin (JSON + CSV) -->
+  <div id="adminPanelBox" class="panel" style="max-width:720px;width:100%;
+    max-height:88vh;overflow:auto;display:none">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <p class="grouphead" style="margin:0"><span class="dot warm"></span>Mode admin — paramFile complet</p>
+      <button id="adminClose" type="button" style="background:transparent;border:none;
+        color:var(--muted);cursor:pointer;font-size:20px;line-height:1;padding:4px">×</button>
+    </div>
+
+    <p class="ctrl-name" style="margin-top:16px">Scène</p>
+    <div id="adminScenes" class="scenebar" style="margin-top:8px"></div>
+
+    <p class="ctrl-name" style="margin-top:16px">paramFile (JSON — fusionné sur le template pour les champs omis)</p>
+    <textarea id="adminJsonInput" spellcheck="false" style="width:100%;box-sizing:border-box;
+      height:260px;background:var(--panel-2);border:1px solid var(--line-soft);
+      color:var(--paper);border-radius:3px;padding:10px 12px;font-family:var(--mono);
+      font-size:12.5px;margin-top:8px;resize:vertical">{}</textarea>
+
+    <p class="ctrl-name" style="margin-top:16px">CSV Zernike (Detector_ID;Band;Column;Z1..Z37 — vide = front d'onde nul)</p>
+    <textarea id="adminCsvInput" spellcheck="false" style="width:100%;box-sizing:border-box;
+      height:120px;background:var(--panel-2);border:1px solid var(--line-soft);
+      color:var(--paper);border-radius:3px;padding:10px 12px;font-family:var(--mono);
+      font-size:12.5px;margin-top:8px;resize:vertical"></textarea>
+
+    <div style="display:flex;gap:8px;align-items:center;margin-top:16px">
+      <button id="adminSimBtn" class="simbtn" type="button">Simuler (admin)</button>
+      <span id="adminStatus" class="prog-note" style="margin:0"></span>
+    </div>
+
+    <div id="adminResultWrap" style="margin-top:16px;display:none">
+      <img id="adminResultImg" style="max-width:100%;border:1px solid var(--line-soft);
+        border-radius:3px;image-rendering:pixelated">
+    </div>
+  </div>
+</div>
 
 <footer>
   <p>Démonstrateur. La pupille, la PSF et la FTM optique sont calculées par transformée de Fourier de la pupille complexe (masque annulaire + phase de Zernike), pas par une gaussienne ajustée. Le flou appliqué à l'image utilise une PSF gaussienne équivalente calée sur la FTM à Nyquist — seule approximation restante. Radiométrie d'ordre de grandeur.</p>
@@ -761,10 +825,10 @@ function m2px(m){ return m/TRUTH_RES; }
 
 var SCENES = [
   {id:"aix", name:"Ville", sub:"BD ORTHO IGN 2023",
-    real:true, src:"assets/scenes/aix_rotonde.jpg", thumb:"assets/scenes/aix_rotonde_thumb.jpg",
+    real:true, src:"assets/scenes/aix.jpg", thumb:"assets/scenes/aix_thumb.jpg",
     extW:258.0, extH:188.6, res:0.2},
-  {id:"champ", name:"Champ", sub:"BD ORTHO IGN 2023",
-    real:true, src:"assets/scenes/champ.jpg", thumb:"assets/scenes/champ_thumb.jpg",
+  {id:"avion", name:"Avion", sub:"BD ORTHO IGN 2023",
+    real:true, src:"assets/scenes/avion.jpg", thumb:"assets/scenes/avion_thumb.jpg",
     extW:258.0, extH:188.6, res:0.2},
   {id:"port", name:"Port", sub:"BD ORTHO IGN 2023",
     real:true, src:"assets/scenes/port.jpg", thumb:"assets/scenes/port_thumb.jpg",
@@ -1818,6 +1882,139 @@ sceneReadyP[activeScene].then(function(){
   setEngineBadge();
 });
 window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); });
+
+// ===================== MODE ADMIN =====================
+// Le mot de passe ici n'est qu'un confort d'usage — la vraie protection
+// est côté serveur (clé vérifiée à chaque appel /simulate_admin, quoi que
+// fasse ce code JS, entièrement lisible par n'importe qui).
+(function(){
+  var trigger = document.getElementById("adminTrigger");
+  var overlay = document.getElementById("adminOverlay");
+  var authBox = document.getElementById("adminAuthBox");
+  var panelBox = document.getElementById("adminPanelBox");
+  var passInput = document.getElementById("adminPassInput");
+  var authErr = document.getElementById("adminAuthErr");
+  var authSubmit = document.getElementById("adminAuthSubmit");
+  var authCancel = document.getElementById("adminAuthCancel");
+  var closeBtn = document.getElementById("adminClose");
+  var scenesHost = document.getElementById("adminScenes");
+  var jsonInput = document.getElementById("adminJsonInput");
+  var csvInput = document.getElementById("adminCsvInput");
+  var simBtn2 = document.getElementById("adminSimBtn");
+  var status = document.getElementById("adminStatus");
+  var resultWrap = document.getElementById("adminResultWrap");
+  var resultImg = document.getElementById("adminResultImg");
+  if(!trigger) return;
+
+  var adminScene = "port";
+
+  function buildAdminScenes(){
+    scenesHost.innerHTML = "";
+    SCENES.forEach(function(sc){
+      var b = document.createElement("button");
+      b.className = "scene"; b.type = "button"; b.dataset.id = sc.id;
+      b.setAttribute("aria-pressed", sc.id === adminScene ? "true" : "false");
+      var meta = document.createElement("div");
+      meta.className = "scene-meta";
+      meta.innerHTML = "<div class='scene-name'>" + sc.name + "</div>";
+      b.appendChild(meta);
+      b.addEventListener("click", function(){
+        adminScene = sc.id;
+        scenesHost.querySelectorAll(".scene").forEach(function(x){
+          x.setAttribute("aria-pressed", x.dataset.id === adminScene ? "true" : "false");
+        });
+      });
+      scenesHost.appendChild(b);
+    });
+  }
+
+  function openOverlay(){
+    overlay.style.display = "flex";
+    if(sessionStorage.getItem("adminKey")){
+      authBox.style.display = "none";
+      panelBox.style.display = "block";
+      buildAdminScenes();
+    } else {
+      authBox.style.display = "block";
+      panelBox.style.display = "none";
+      passInput.value = "";
+      authErr.style.display = "none";
+      passInput.focus();
+    }
+  }
+  function closeOverlay(){ overlay.style.display = "none"; }
+
+  trigger.addEventListener("click", openOverlay);
+  authCancel.addEventListener("click", closeOverlay);
+  closeBtn.addEventListener("click", closeOverlay);
+  overlay.addEventListener("click", function(e){ if(e.target === overlay) closeOverlay(); });
+
+  function submitAuth(){
+    var key = passInput.value.trim();
+    if(!key){ authErr.textContent = "Entre une clé."; authErr.style.display = "block"; return; }
+    sessionStorage.setItem("adminKey", key);
+    authBox.style.display = "none";
+    panelBox.style.display = "block";
+    buildAdminScenes();
+  }
+  authSubmit.addEventListener("click", submitAuth);
+  passInput.addEventListener("keydown", function(e){ if(e.key === "Enter") submitAuth(); });
+
+  simBtn2.addEventListener("click", function(){
+    if(!API) return;
+    var key = sessionStorage.getItem("adminKey");
+    if(!key) return;
+
+    var paramFileOverride;
+    try{
+      var raw = jsonInput.value.trim();
+      paramFileOverride = raw ? JSON.parse(raw) : {};
+    }catch(e){
+      status.className = "prog-note err";
+      status.textContent = "JSON invalide : " + e.message;
+      return;
+    }
+
+    simBtn2.disabled = true;
+    status.className = "prog-note";
+    status.textContent = "Calcul en cours…";
+    resultWrap.style.display = "none";
+
+    fetch(API + "/simulate_admin", {
+      method: "POST",
+      headers: {"Content-Type": "application/json", "X-Admin-Key": key},
+      body: JSON.stringify({
+        scene: adminScene,
+        paramFile: paramFileOverride,
+        perfoCsv: csvInput.value || null,
+      }),
+    }).then(function(r){
+      if(r.status === 403){
+        sessionStorage.removeItem("adminKey");
+        throw new Error("Clé admin refusée par le serveur.");
+      }
+      if(!r.ok) return r.json().then(function(j){
+        throw new Error(j.detail || ("Erreur serveur (" + r.status + ")."));
+      }).catch(function(){ throw new Error("Erreur serveur (" + r.status + ")."); });
+      return r.blob();
+    }).then(function(blob){
+      var url = URL.createObjectURL(blob);
+      resultImg.src = url;
+      resultWrap.style.display = "block";
+      status.className = "prog-note";
+      status.textContent = "Terminé.";
+      simBtn2.disabled = false;
+    }).catch(function(err){
+      status.className = "prog-note err";
+      status.textContent = err.message;
+      simBtn2.disabled = false;
+      if(!sessionStorage.getItem("adminKey")){
+        panelBox.style.display = "none";
+        authBox.style.display = "block";
+      }
+    });
+  });
+})();
 
 })();
 </script>
