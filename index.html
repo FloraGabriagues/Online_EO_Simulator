@@ -236,9 +236,6 @@ details.adv .inner{margin-top:16px}
   border:1px solid var(--line);pointer-events:none}
 .chip.left{left:12px;color:var(--photon);border-color:#6B4E28}
 .chip.right{right:12px;color:var(--pixel);border-color:#2E6660}
-.chip.preview{top:auto;bottom:14px;right:12px;left:auto;text-transform:none;
-  letter-spacing:.02em;color:var(--alert);border-color:#5A2E28;z-index:3;
-  max-width:min(80%,340px);text-align:right;line-height:1.4}
 .scalebar{position:absolute;left:14px;right:14px;bottom:14px;pointer-events:none;z-index:2;
   display:flex;flex-direction:column-reverse;gap:5px}
 .scalebar .bar{display:block;height:7px;border:1px solid rgba(230,238,244,.9);
@@ -271,6 +268,12 @@ details.adv .inner{margin-top:16px}
   font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.04em;padding:11px 20px;
   border-radius:5px;cursor:pointer;flex:none;box-shadow:0 2px 10px rgba(245,172,87,.35)}
 .simbtn:hover:not(:disabled){background:#FFBE72;border-color:#FFBE72}
+.simbtn.nudge{animation:simbtn-nudge 2.4s ease-in-out infinite}
+@keyframes simbtn-nudge{
+  0%,100%{box-shadow:0 2px 10px rgba(245,172,87,.35)}
+  50%{box-shadow:0 2px 10px rgba(245,172,87,.35),0 0 0 6px rgba(245,172,87,.18)}
+}
+.previewhint{margin:0 0 8px;font-size:12px;color:var(--muted-2);font-style:italic}
 .simbtn:disabled{opacity:.45;cursor:default}
 .prog{margin-top:14px}
 .prog-track{height:6px;background:var(--panel-2);border-radius:3px;overflow:hidden}
@@ -439,7 +442,6 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <div class="divider" id="divider"><span class="handle" id="dividerHandle"></span></div>
       <span class="chip left">Image source</span>
       <span class="chip right">Image simulée</span>
-      <span class="chip preview" id="previewBadge" hidden>Aperçu rapide — lancez la simulation pour un résultat précis</span>
       <div class="scalebar" id="scalebar"><span class="bar" id="scalebarBar"></span><span class="lab" id="scalebarLab">20 m</span></div>
       <span class="pad" id="panPad" hidden>
       <button class="padbtn" type="button" data-dx="0" data-dy="-1" aria-label="Déplacer vers le haut">▲</button>
@@ -459,6 +461,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       </div>
 
       <div class="simbar" id="simbar">
+        <p class="previewhint" id="previewHint" hidden>Aperçu affiché</p>
         <div class="simbar-head">
           <button class="simbtn" id="simBtn" type="button">Lancer la simulation</button>
           <button class="infobtn" id="engineInfoBtn" type="button" aria-label="Qu'est-ce que ça change ?">?</button>
@@ -628,7 +631,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
 </div>
 
 <script src="config.js?v=2"></script>
-<script src="presets.js"></script>
+<script src="presets.js?v=2"></script>
 <script>
 (function(){
 "use strict";
@@ -1479,8 +1482,10 @@ function refresh(){
   if(graphsVisible){ drawPupil(); drawPsf(); drawMtfChart(); }
   if(typeof updateCustomRow === "function") updateCustomRow();
   if(typeof setEngineBadge === "function") setEngineBadge();
-  var pvBadge = document.getElementById("previewBadge");
-  if(pvBadge) pvBadge.hidden = (simSource === "ext");
+  var pvHint = document.getElementById("previewHint");
+  var isPreview = (simSource !== "ext");
+  if(pvHint) pvHint.hidden = !isPreview;
+  if(simBtn) simBtn.classList.toggle("nudge", isPreview && !!API && !locked && !simRunning);
   if(pending) cancelAnimationFrame(pending);
   pending = requestAnimationFrame(function(){
     if(simSource === "ext" && extImage) paintExternal();

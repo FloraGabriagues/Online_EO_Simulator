@@ -27,9 +27,5 @@ var PRESETS = [
   {id:"newsat", label:"Satellogic NewSat IV",
    v:{D:0.25,E:0.30,W:35,T:0.55,I:2.084,R:18,P:1.50,K:350,H:475,S:45,TI:140,TDI:6,Z:"none",FW:3200}},
   {id:"s2", label:"Sentinel-2",
-   v:{D:0.15,E:0.00,W:20,T:0.65,I:12.72,R:8,P:0.60,K:80,H:786,S:45,TI:1505,TDI:1,Z:"none"}},
-  {id:"defocus", label:"Défocus en orbite",
-   v:{D:0.91,E:0.35,W:110,T:0.62,I:1.905,R:12,P:1.60,K:150,H:620,S:45,TI:160,TDI:20,Z:"defoc",FW:190000}},
-  {id:"lowsun", label:"Angle solaire faible",
-   v:{D:0.91,E:0.35,W:25,T:0.62,I:1.905,R:12,P:1.60,K:150,H:620,S:12,TI:160,TDI:20,Z:"none",FW:190000}}
+   v:{D:0.15,E:0.00,W:20,T:0.65,I:12.72,R:8,P:0.60,K:80,H:786,S:45,TI:1505,TDI:1,Z:"none"}}
 ];
