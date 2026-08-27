@@ -236,6 +236,9 @@ details.adv .inner{margin-top:16px}
   border:1px solid var(--line);pointer-events:none}
 .chip.left{left:12px;color:var(--photon);border-color:#6B4E28}
 .chip.right{right:12px;color:var(--pixel);border-color:#2E6660}
+.chip.preview{top:auto;bottom:14px;right:12px;left:auto;text-transform:none;
+  letter-spacing:.02em;color:var(--alert);border-color:#5A2E28;z-index:3;
+  max-width:min(80%,340px);text-align:right;line-height:1.4}
 .scalebar{position:absolute;left:14px;right:14px;bottom:14px;pointer-events:none;z-index:2;
   display:flex;flex-direction:column-reverse;gap:5px}
 .scalebar .bar{display:block;height:7px;border:1px solid rgba(230,238,244,.9);
@@ -436,6 +439,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <div class="divider" id="divider"><span class="handle" id="dividerHandle"></span></div>
       <span class="chip left">Image source</span>
       <span class="chip right">Image simulée</span>
+      <span class="chip preview" id="previewBadge" hidden>Aperçu rapide — lancez la simulation pour un résultat précis</span>
       <div class="scalebar" id="scalebar"><span class="bar" id="scalebarBar"></span><span class="lab" id="scalebarLab">20 m</span></div>
       <span class="pad" id="panPad" hidden>
       <button class="padbtn" type="button" data-dx="0" data-dy="-1" aria-label="Déplacer vers le haut">▲</button>
@@ -491,6 +495,11 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
     </div>
     <div class="tabpanel" id="tp-graphs" role="tabpanel" aria-labelledby="tab-graphs" hidden>
       <div class="analysis">
+      <div class="panel wide">
+      <p class="grouphead"><span class="dot cool"></span>Fonction de transfert de modulation</p>
+      <canvas class="chart" id="mtfChart"></canvas>
+      <p class="note" id="mtfNote"></p>
+      </div>
       <div class="panel">
       <p class="grouphead"><span class="dot warm"></span>Pupille et front d'onde</p>
       <canvas class="sq" id="pupilCv" width="256" height="256"></canvas>
@@ -504,11 +513,6 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <div class="cbar psf"></div>
       <div class="cbar-lab"><span>10⁻⁵</span><span>intensité relative</span><span>1</span></div>
       <p class="note" id="psfNote"></p>
-      </div>
-      <div class="panel wide">
-      <p class="grouphead"><span class="dot cool"></span>Fonction de transfert de modulation</p>
-      <canvas class="chart" id="mtfChart"></canvas>
-      <p class="note" id="mtfNote"></p>
       </div>
       </div>
     </div>
@@ -524,21 +528,21 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
     <p class="steptitle"><span class="stepnum">3.</span> Configurer votre instrument</p>
     <div class="tabs chain" role="tablist" aria-label="Chaîne de détection">
       <button class="tab" id="tab-inst" type="button" role="tab" aria-selected="true" aria-controls="tp-inst"><span class="dot cool"></span>Instrument</button>
-      <button class="tab" id="tab-src" type="button" role="tab" aria-selected="false" aria-controls="tp-src"><span class="dot source"></span>Orbite</button>
+      <button class="tab" id="tab-src" type="button" role="tab" aria-selected="false" aria-controls="tp-src"><span class="dot source"></span>Acquisition</button>
     </div>
     <div class="tabpanel" id="tp-src" role="tabpanel" aria-labelledby="tab-src" hidden>
       <div class="panel params" id="p-orbit">
-        <p class="grouphead"><span class="dot source"></span>Orbite et éclairement<span class="lockhint">Verrouillé</span></p>
+        <p class="grouphead"><span class="dot source"></span>Orbite et éclairement</p>
         <div id="g-orbit"></div>
       </div>
       <div class="panel params cool-ctrl" id="p-acq">
-        <p class="grouphead"><span class="dot cool"></span>Acquisition<span class="lockhint">Verrouillé</span></p>
+        <p class="grouphead"><span class="dot cool"></span>Acquisition</p>
         <div id="g-acq"></div>
       </div>
     </div>
     <div class="tabpanel" id="tp-inst" role="tabpanel" aria-labelledby="tab-inst">
       <div class="panel params warm-ctrl" id="p-optics">
-      <p class="grouphead"><span class="dot warm"></span>Optique<span class="lockhint">Verrouillé</span></p>
+      <p class="grouphead"><span class="dot warm"></span>Optique</p>
       <div id="g-optics"></div>
       <div class="ctrl" style="margin-top:17px">
       <div class="ctrl-top"><span class="ctrl-name">Aberration dominante</span></div>
@@ -548,7 +552,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <div class="inner" id="g-optics-adv"></div></details>
       </div>
       <div class="panel params cool-ctrl" id="p-detector">
-      <p class="grouphead"><span class="dot cool"></span>Détecteur<span class="lockhint">Verrouillé</span></p>
+      <p class="grouphead"><span class="dot cool"></span>Détecteur</p>
       <div id="g-detector"></div>
       <details class="adv"><summary>Paramètres avancés</summary>
       <div class="inner" id="g-detector-adv"></div></details>
@@ -1475,6 +1479,8 @@ function refresh(){
   if(graphsVisible){ drawPupil(); drawPsf(); drawMtfChart(); }
   if(typeof updateCustomRow === "function") updateCustomRow();
   if(typeof setEngineBadge === "function") setEngineBadge();
+  var pvBadge = document.getElementById("previewBadge");
+  if(pvBadge) pvBadge.hidden = (simSource === "ext");
   if(pending) cancelAnimationFrame(pending);
   pending = requestAnimationFrame(function(){
     if(simSource === "ext" && extImage) paintExternal();
