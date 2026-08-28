@@ -45,7 +45,7 @@ h1 .cool{color:var(--pixel)}
 .rail-bar{height:4px;border-radius:2px;
   background:linear-gradient(90deg,var(--photon) 0%,#CFA268 34%,#86BCA6 66%,var(--pixel) 100%)}
 
-.stage{display:grid;grid-template-columns:minmax(260px,300px) 1fr minmax(272px,300px);gap:18px;align-items:start}
+.stage{display:grid;grid-template-columns:minmax(220px,250px) 1fr minmax(272px,300px);gap:18px;align-items:start}
 .below{margin-top:16px}
 .metricsec .metrics{margin-top:0}
 .metricsec .metric{padding:13px 15px}
@@ -1661,16 +1661,14 @@ PRESETS.forEach(function(p){
     pop = document.createElement("div");
     pop.className = "infopop preset-src"; pop.hidden = true;
     pop.textContent = p.src;
+
+    var infoSpan = b.querySelector(".preset-info");
+    infoSpan.addEventListener("mouseenter", function(){ pop.hidden = false; });
+    infoSpan.addEventListener("mouseleave", function(){ pop.hidden = true; });
+    infoSpan.addEventListener("click", function(e){ e.stopPropagation(); });
   }
 
-  b.addEventListener("click", function(e){
-    if(pop && e.target.classList.contains("preset-info")){
-      e.stopPropagation();
-      pop.hidden = !pop.hidden;
-      return;
-    }
-    loadPreset(p);
-  });
+  b.addEventListener("click", function(){ loadPreset(p); });
 
   wrap.appendChild(b);
   if(pop) wrap.appendChild(pop);
