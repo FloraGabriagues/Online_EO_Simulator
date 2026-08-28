@@ -632,38 +632,53 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <button id="adminSimBtn" class="simbtn" type="button">Simuler (admin)</button>
       <span id="adminStatus" class="prog-note" style="margin:0"></span>
     </div>
+  </div>
+</div>
 
-    <div id="adminResultWrap" style="margin-top:16px;display:none">
-      <div class="tabs" role="tablist" aria-label="Résultat admin" id="admTabs">
-        <button class="tab" id="admtab-image" type="button" role="tab" aria-selected="true" aria-controls="admtp-image">Image</button>
-        <button class="tab" id="admtab-graphs" type="button" role="tab" aria-selected="false" aria-controls="admtp-graphs">Graphes</button>
-        <button class="tab" id="admtab-logs" type="button" role="tab" aria-selected="false" aria-controls="admtp-logs">Logs</button>
+<!-- Page plein écran des résultats — PAS un popup superposé, une vraie
+     page dédiée, pour avoir la place de vraiment travailler dessus. -->
+<div id="adminResultPage" style="display:none;position:fixed;inset:0;z-index:250;
+  background:var(--void);overflow:auto">
+  <div style="max-width:1100px;margin:0 auto;padding:28px 26px 60px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <p class="grouphead" style="margin:0"><span class="dot warm"></span>Résultat — simulation avancée</p>
+      <div style="display:flex;gap:8px">
+        <button id="adminBackToConfig" class="reset" type="button" style="width:auto;padding:8px 14px">← Configuration</button>
+        <button id="adminResultClose" type="button" style="background:transparent;border:none;
+          color:var(--muted);cursor:pointer;font-size:22px;line-height:1;padding:4px 8px">×</button>
       </div>
+    </div>
 
-      <div class="tabpanel" id="admtp-image" role="tabpanel" aria-labelledby="admtab-image">
-        <img id="adminResultImg" style="max-width:100%;border:1px solid var(--line-soft);
-          border-radius:3px;image-rendering:pixelated">
-        <div style="margin-top:8px">
-          <a id="adminDownloadLink" download="simulation_admin.png" class="reset"
-            style="display:inline-block;width:auto;padding:8px 14px;text-decoration:none">Télécharger l'image</a>
-        </div>
-        <p class="ctrl-name" style="margin-top:18px">Diagnostics par bande</p>
-        <div id="adminBandsTable" style="margin-top:8px;font-family:var(--mono);font-size:11.5px"></div>
-      </div>
+    <div class="tabs" role="tablist" aria-label="Résultat admin" id="admTabs">
+      <button class="tab" id="admtab-image" type="button" role="tab" aria-selected="true" aria-controls="admtp-image">Image</button>
+      <button class="tab" id="admtab-graphs" type="button" role="tab" aria-selected="false" aria-controls="admtp-graphs">Graphes</button>
+      <button class="tab" id="admtab-logs" type="button" role="tab" aria-selected="false" aria-controls="admtp-logs">Logs</button>
+    </div>
 
-      <div class="tabpanel" id="admtp-graphs" role="tabpanel" aria-labelledby="admtab-graphs" hidden>
-        <p class="note">Visualisations PSF, pupille et budget MTF — pas encore disponibles dans ce panneau (à venir).</p>
+    <div class="tabpanel" id="admtp-image" role="tabpanel" aria-labelledby="admtab-image">
+      <img id="adminResultImg" style="max-width:100%;border:1px solid var(--line-soft);
+        border-radius:3px;image-rendering:pixelated">
+      <div style="margin-top:8px">
+        <a id="adminDownloadLink" download="simulation_admin.png" class="reset"
+          style="display:inline-block;width:auto;padding:8px 14px;text-decoration:none">Télécharger l'image</a>
       </div>
+      <p class="ctrl-name" style="margin-top:18px">Diagnostics par bande</p>
+      <div id="adminBandsTable" style="margin-top:8px;font-family:var(--mono);font-size:11.5px"></div>
+    </div>
 
-      <div class="tabpanel" id="admtp-logs" role="tabpanel" aria-labelledby="admtab-logs" hidden>
-        <pre id="adminLogs" style="margin:0;max-height:400px;overflow:auto;
-          background:var(--void);border:1px solid var(--line-soft);border-radius:3px;
-          padding:10px 12px;font-family:var(--mono);font-size:11px;color:var(--muted);
-          white-space:pre-wrap;word-break:break-word"></pre>
-      </div>
+    <div class="tabpanel" id="admtp-graphs" role="tabpanel" aria-labelledby="admtab-graphs" hidden>
+      <p class="note">Visualisations PSF, pupille et budget MTF — pas encore disponibles dans ce panneau (à venir).</p>
+    </div>
+
+    <div class="tabpanel" id="admtp-logs" role="tabpanel" aria-labelledby="admtab-logs" hidden>
+      <pre id="adminLogs" style="margin:0;max-height:60vh;overflow:auto;
+        background:var(--panel);border:1px solid var(--line-soft);border-radius:3px;
+        padding:12px 14px;font-family:var(--mono);font-size:11.5px;color:var(--muted);
+        white-space:pre-wrap;word-break:break-word"></pre>
     </div>
   </div>
 </div>
+
 
 <footer>
   <p>Scènes réelles — orthophotographies BD ORTHO IGN 2023.</p>
@@ -2015,12 +2030,20 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
   var csvInput = document.getElementById("adminCsvInput");
   var simBtn2 = document.getElementById("adminSimBtn");
   var status = document.getElementById("adminStatus");
-  var resultWrap = document.getElementById("adminResultWrap");
+  var resultPage = document.getElementById("adminResultPage");
   var resultImg = document.getElementById("adminResultImg");
   var downloadLink = document.getElementById("adminDownloadLink");
+  var backToConfigBtn = document.getElementById("adminBackToConfig");
+  var resultCloseBtn = document.getElementById("adminResultClose");
   if(!trigger) return;
 
   var adminScene = "port";
+
+  function updateTriggerLabel(){
+    trigger.textContent = sessionStorage.getItem("adminKey")
+      ? "Simulation avancée →" : "Accès complet →";
+  }
+  updateTriggerLabel();
 
   function buildAdminScenes(){
     scenesHost.innerHTML = "";
@@ -2058,6 +2081,14 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
   }
   function closeOverlay(){ overlay.style.display = "none"; }
 
+  if(backToConfigBtn) backToConfigBtn.addEventListener("click", function(){
+    resultPage.style.display = "none";
+    openOverlay();
+  });
+  if(resultCloseBtn) resultCloseBtn.addEventListener("click", function(){
+    resultPage.style.display = "none";
+  });
+
   trigger.addEventListener("click", openOverlay);
   authCancel.addEventListener("click", closeOverlay);
   closeBtn.addEventListener("click", closeOverlay);
@@ -2070,6 +2101,7 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
     authBox.style.display = "none";
     panelBox.style.display = "block";
     buildAdminScenes();
+    updateTriggerLabel();
   }
   authSubmit.addEventListener("click", submitAuth);
   passInput.addEventListener("keydown", function(e){ if(e.key === "Enter") submitAuth(); });
@@ -2092,7 +2124,6 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
     simBtn2.disabled = true;
     status.className = "prog-note";
     status.textContent = "Calcul en cours…";
-    resultWrap.style.display = "none";
 
     fetch(API + "/simulate_admin", {
       method: "POST",
@@ -2146,7 +2177,8 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
         });
       }
 
-      resultWrap.style.display = "block";
+      overlay.style.display = "none";
+      resultPage.style.display = "block";
       if(admShowTab) admShowTab("admtp-image");
       status.className = "prog-note";
       status.textContent = "Terminé.";
@@ -2166,7 +2198,8 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
         if(tableEl2) tableEl2.innerHTML = "<p class='note'>Échec — pas d'image ni de diagnostics disponibles pour ce calcul.</p>";
         resultImg.removeAttribute("src");
         downloadLink.removeAttribute("href");
-        resultWrap.style.display = "block";
+        overlay.style.display = "none";
+        resultPage.style.display = "block";
         if(admShowTab) admShowTab("admtp-logs");
       }
 
