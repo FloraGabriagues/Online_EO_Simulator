@@ -30,14 +30,14 @@
 var PRESETS = [
   {id:"pneo", label:"Pléiades Neo",
    v:{D:0.91,E:0.35,W:25,T:0.62,I:1.905,R:12,P:1.60,K:150,H:620,S:45,TI:160,TDI:20,Z:"none",FW:190000},
-   src:"D=0.91m et H=620km confirmés (Airbus, ESA). iFoV correspond au canal multispectral publié (1.2m GSD — le 30cm concerne le canal panchromatique, non simulé ici). WFE, bruit détecteur, PRNU : estimations plausibles, non publiées."},
+   src:"Confirmé (Airbus, ESA) — diamètre 0.91m, altitude 620km. Le GSD simulé (1.2m) correspond au canal multispectral publié — le canal panchromatique (30cm) n'est pas simulé ici.\n\nEstimé (non publié par le constructeur) — front d'onde, bruit détecteur, PRNU."},
   {id:"newsat", label:"Satellogic NewSat IV",
    v:{D:0.25,E:0.30,W:35,T:0.55,I:2.084,R:18,P:1.50,K:350,H:475,S:45,TI:140,TDI:6,Z:"none",FW:3200},
-   src:"H=475km et GSD=0.99m confirmés (Satellogic, eoPortal — NewSat Mark-IV). Diamètre de pupille : estimation (jamais publié officiellement). WFE, bruit détecteur : estimations plausibles."},
+   src:"Confirmé (Satellogic, eoPortal) — altitude 475km, GSD 0.99m (NewSat Mark-IV).\n\nEstimé (non publié par le constructeur) — diamètre de pupille, front d'onde, bruit détecteur."},
   {id:"s2", label:"Sentinel-2",
    v:{D:0.15,E:0.00,W:20,T:0.65,I:12.72,R:8,P:0.60,K:80,H:786,S:45,TI:1505,TDI:1,Z:"none"},
-   src:"D=0.15m et H=786km confirmés (ESA, Airbus — télescope TMA 150mm). GSD=10m correspond aux bandes B2/B3/B4/B8 publiées. Bandes spectrales simulées reprennent celles de Pléiades Neo (simplification). Bruit détecteur : estimation."},
+   src:"Confirmé (ESA, Airbus) — diamètre 0.15m (télescope TMA), altitude 786km. GSD 10m correspond aux bandes B2/B3/B4/B8 publiées.\n\nSimplification — bandes spectrales simulées identiques à celles de Pléiades Neo, pas les vraies bandes Sentinel-2.\n\nEstimé (non publié) — bruit détecteur."},
   {id:"skysat", label:"Planet SkySat",
    v:{D:0.35,E:0.33,W:30,T:0.60,I:1.806,R:15,P:1.40,K:200,H:475,S:45,TI:3800,TDI:1,Z:"none",FW:30000},
-   src:"D=0.35m, focale=3.6m, pixel=6.5µm et H=475km confirmés (Planet, eoPortal — télescope Ritchey-Chretien Cassegrain). GSD dérivé ≈0.86m, cohérent avec les ~0.8m publiés. Capture par trames courtes empilées (pas un vrai TDI push-broom) — modélisé ici en TDI=1 avec un temps d'intégration équivalent plus long pour compenser. Obscuration centrale, WFE, bruit détecteur : estimations plausibles, non publiées."}
+   src:"Confirmé (Planet, eoPortal) — diamètre 0.35m, focale 3.6m, pixel 6.5µm, altitude 475km (télescope Ritchey-Chretien Cassegrain). GSD dérivé ≈0.86m, cohérent avec les ~0.8m publiés.\n\nSimplification — SkySat capture par trames courtes empilées, pas un vrai capteur push-broom TDI. Modélisé ici avec TDI=1 et un temps d'intégration équivalent allongé pour compenser.\n\nEstimé (non publié) — obscuration centrale, front d'onde, bruit détecteur."}
 ];
