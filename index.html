@@ -716,7 +716,7 @@ var PARAMS = [
   {k:"D", g:"optics",   adv:false, name:"Diamètre de pupille",  unit:"m",     min:0.20, max:1.30, step:0.01, dec:2},
   {k:"I", g:"optics",   adv:false, name:"iFoV",                 unit:"µrad",  min:0.75, max:15.0, step:0.01, dec:2},
   {k:"W", g:"optics",   adv:false, name:"WFE RMS",              unit:"nm",    min:0,    max:150,  step:1,    dec:0},
-  {k:"E", g:"optics",   adv:true,  name:"Obscuration centrale", unit:"ε",     min:0,    max:0.55, step:0.01, dec:2},
+  {k:"E", g:"optics",   adv:true,  name:"Obscuration centrale", unit:"m",     min:0,    max:0.5,  step:0.005, dec:3},
   {k:"T", g:"optics",   adv:true,  name:"Transmission optique", unit:"τ",     min:0.15, max:0.95, step:0.01, dec:2},
   {k:"R",   g:"detector", adv:false, name:"Bruit de lecture",     unit:"e⁻",    min:1,    max:80,   step:0.5,  dec:1},
   {k:"TI",  g:"acq", adv:false, name:"Temps d'intégration",  unit:"µs",    min:5,    max:2000, step:5,    dec:0},
@@ -1299,6 +1299,14 @@ function applyDynamicBound(k, lo, hi){
 }
 function updateDynamicRanges(){
   var D = st.D, I = st.I, H = st.H;
+
+  // E (obscuration centrale, en m) doit rester nettement < D — on plafonne
+  // à 55% de D (même ratio max que l'ancienne borne en pourcentage, mais
+  // exprimé en mètres maintenant pour correspondre à ce qu'attend
+  // réellement le pipeline, cf. central_obscuration en mètres dans
+  // optics.py — évite la confusion ratio/mètres qui existait avant).
+  var E_max = 0.55 * D;
+  applyDynamicBound("E", 0, E_max);
 
   // plage de I, étant donné D et H courants
   var I_min = Math.max(ABS_I_MIN, GSD_FLOOR_M * 1000 / H);
