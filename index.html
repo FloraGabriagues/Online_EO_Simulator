@@ -85,8 +85,8 @@ h1 .cool{color:var(--pixel)}
 
 /* ---------- cas ---------- */
 .presets{display:flex;flex-direction:column;gap:7px}
-.preset-wrap{position:relative}
-.preset{position:relative}
+.preset-wrap{position:relative;width:100%;box-sizing:border-box}
+.preset{position:relative;width:100%;box-sizing:border-box}
 .preset-info{position:absolute;top:50%;right:8px;transform:translateY(-50%);
   width:16px;height:16px;border-radius:50%;border:1px solid var(--muted-2);
   display:flex;align-items:center;justify-content:center;
@@ -94,9 +94,9 @@ h1 .cool{color:var(--pixel)}
   cursor:help;transition:opacity .14s,color .14s,border-color .14s}
 .preset-info:hover{opacity:1;color:var(--pixel);border-color:var(--pixel)}
 .infopop.preset-src{position:absolute;top:100%;left:0;z-index:10;margin-top:4px;
-  width:min(340px,80vw);white-space:pre-line}
+  width:min(340px,80vw);max-width:340px;box-sizing:border-box;white-space:pre-line}
 .preset{appearance:none;cursor:pointer;background:var(--panel-2);
-  border:1px solid var(--line-soft);color:var(--paper);border-radius:3px;padding:11px 14px;
+  border:1px solid var(--line-soft);color:var(--paper);border-radius:3px;padding:11px 30px 11px 14px;
   font-family:var(--body);font-size:14.5px;line-height:1.3;
   display:flex;align-items:baseline;justify-content:space-between;gap:14px;flex-wrap:wrap;
   transition:border-color .14s,background .14s}
@@ -246,8 +246,12 @@ details.adv .inner{margin-top:16px}
   border:1px solid var(--line);pointer-events:none}
 .chip.left{left:12px;color:var(--photon);border-color:#6B4E28}
 .chip.right{right:12px;color:var(--pixel);border-color:#2E6660}
-.chip.right.preview{color:var(--photon);border-color:#6B4E28;
-  animation:simbtn-nudge 2.4s ease-in-out infinite}
+.chip.right.preview{color:var(--pixel);border-color:#2E6660;
+  animation:chip-nudge 2.4s ease-in-out infinite}
+@keyframes chip-nudge{
+  0%,100%{box-shadow:0 0 0 0 rgba(95,220,208,0)}
+  50%{box-shadow:0 0 0 5px rgba(95,220,208,.22)}
+}
 .scalebar{position:absolute;left:14px;right:14px;bottom:14px;pointer-events:none;z-index:2;
   display:flex;flex-direction:column-reverse;gap:5px}
 .scalebar .bar{display:block;height:7px;border:1px solid rgba(230,238,244,.9);
