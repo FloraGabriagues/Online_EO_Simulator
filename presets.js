@@ -38,6 +38,6 @@ var PRESETS = [
    v:{D:0.15,E:0.00,W:20,T:0.65,I:12.72,R:8,P:0.60,K:80,H:786,S:45,TI:1505,TDI:1,Z:"none"},
    src:"D=0.15m et H=786km confirmés (ESA, Airbus — télescope TMA 150mm). GSD=10m correspond aux bandes B2/B3/B4/B8 publiées. Bandes spectrales simulées reprennent celles de Pléiades Neo (simplification). Bruit détecteur : estimation."},
   {id:"skysat", label:"Planet SkySat",
-   v:{D:0.35,E:0.33,W:30,T:0.60,I:1.806,R:15,P:1.40,K:200,H:475,S:45,TI:100,TDI:1,Z:"none",FW:30000},
-   src:"D=0.35m, focale=3.6m, pixel=6.5µm et H=475km confirmés (Planet, eoPortal — télescope Ritchey-Chretien Cassegrain). GSD dérivé ≈0.86m, cohérent avec les ~0.8m publiés. Capture par trames courtes empilées (pas un vrai TDI push-broom) — modélisé ici en TDI=1. Obscuration centrale, WFE, bruit détecteur : estimations plausibles, non publiées."}
+   v:{D:0.35,E:0.33,W:30,T:0.60,I:1.806,R:15,P:1.40,K:200,H:475,S:45,TI:3800,TDI:1,Z:"none",FW:30000},
+   src:"D=0.35m, focale=3.6m, pixel=6.5µm et H=475km confirmés (Planet, eoPortal — télescope Ritchey-Chretien Cassegrain). GSD dérivé ≈0.86m, cohérent avec les ~0.8m publiés. Capture par trames courtes empilées (pas un vrai TDI push-broom) — modélisé ici en TDI=1 avec un temps d'intégration équivalent plus long pour compenser. Obscuration centrale, WFE, bruit détecteur : estimations plausibles, non publiées."}
 ];
