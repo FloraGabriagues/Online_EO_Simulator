@@ -656,6 +656,12 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
     </div>
 
     <div class="tabpanel" id="admtp-image" role="tabpanel" aria-labelledby="admtab-image">
+      <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+        <filter id="admWbFilter" color-interpolation-filters="sRGB">
+          <feColorMatrix id="admWbMatrix" type="matrix"
+            values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
+        </filter>
+      </svg>
       <div id="adminImgWrap" style="max-width:100%;overflow:auto;border:1px solid var(--line-soft);
         border-radius:3px;background:var(--void)">
         <img id="adminResultImg" style="display:block;max-width:none;
@@ -683,6 +689,16 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
           <div class="ctrl-top"><span class="ctrl-name">Saturation</span>
             <span class="ctrl-val"><input type="number" id="admImgSatN" step="5" min="0" max="300"><em>%</em></span></div>
           <input type="range" id="admImgSat" min="0" max="300" step="1" value="100">
+        </div>
+        <div class="ctrl">
+          <div class="ctrl-top"><span class="ctrl-name">Température</span>
+            <span class="ctrl-val"><input type="number" id="admImgTempN" step="5" min="-100" max="100"></span></div>
+          <input type="range" id="admImgTemp" min="-100" max="100" step="1" value="0">
+        </div>
+        <div class="ctrl">
+          <div class="ctrl-top"><span class="ctrl-name">Teinte</span>
+            <span class="ctrl-val"><input type="number" id="admImgTintN" step="5" min="-100" max="100"></span></div>
+          <input type="range" id="admImgTint" min="-100" max="100" step="1" value="0">
         </div>
         <button id="admImgReset" class="reset" type="button" style="width:auto;padding:8px 14px">Réinitialiser l'affichage</button>
         <p class="note" style="margin-top:10px">Ces réglages n'affectent que l'affichage dans ce navigateur — l'image téléchargée reste celle calculée par le serveur, sans retouche.</p>
@@ -2061,21 +2077,41 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
   var brightS = document.getElementById("admImgBright"), brightN = document.getElementById("admImgBrightN");
   var contrastS = document.getElementById("admImgContrast"), contrastN = document.getElementById("admImgContrastN");
   var satS = document.getElementById("admImgSat"), satN = document.getElementById("admImgSatN");
+  var tempS = document.getElementById("admImgTemp"), tempN = document.getElementById("admImgTempN");
+  var tintS = document.getElementById("admImgTint"), tintN = document.getElementById("admImgTintN");
+  var wbMatrix = document.getElementById("admWbMatrix");
   var resetBtn = document.getElementById("admImgReset");
 
-  var DEFAULTS = {zoom:100, bright:100, contrast:100, sat:100};
+  var DEFAULTS = {zoom:100, bright:100, contrast:100, sat:100, temp:0, tint:0};
+
+  // Température (-100..100) : chaud (>0) monte R / baisse B, froid (<0) l'inverse.
+  // Teinte (-100..100) : magenta (>0) baisse G, vert (<0) monte G.
+  // Matrice diagonale simple (pas de mélange inter-canal) — suffisant pour un
+  // réglage d'appoint visuel, pas une vraie balance des blancs colorimétrique.
+  function updateWbMatrix(){
+    var temp = parseFloat(tempS.value) / 100;   // -1..1
+    var tint = parseFloat(tintS.value) / 100;   // -1..1
+    var rGain = 1 + temp * 0.35;
+    var bGain = 1 - temp * 0.35;
+    var gGain = 1 - tint * 0.35;
+    wbMatrix.setAttribute("values",
+      rGain + " 0 0 0 0  0 " + gGain + " 0 0 0  0 0 " + bGain + " 0 0  0 0 0 1 0");
+  }
 
   function apply(){
     var z = parseFloat(zoomS.value) / 100;
     img.style.transform = "scale(" + z + ")";
+    updateWbMatrix();
     img.style.filter =
+      "url(#admWbFilter) " +
       "brightness(" + brightS.value + "%) " +
       "contrast(" + contrastS.value + "%) " +
       "saturate(" + satS.value + "%)";
   }
 
   // chaque curseur/champ numérique reste synchronisé avec son jumeau
-  [[zoomS, zoomN], [brightS, brightN], [contrastS, contrastN], [satS, satN]].forEach(function(pair){
+  [[zoomS, zoomN], [brightS, brightN], [contrastS, contrastN], [satS, satN],
+   [tempS, tempN], [tintS, tintN]].forEach(function(pair){
     var s = pair[0], n = pair[1];
     s.addEventListener("input", function(){ n.value = s.value; apply(); });
     n.addEventListener("change", function(){
@@ -2090,6 +2126,8 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
     brightS.value = brightN.value = DEFAULTS.bright;
     contrastS.value = contrastN.value = DEFAULTS.contrast;
     satS.value = satN.value = DEFAULTS.sat;
+    tempS.value = tempN.value = DEFAULTS.temp;
+    tintS.value = tintN.value = DEFAULTS.tint;
     apply();
   });
 
