@@ -1,0 +1,102 @@
+{
+  "Telescope": {
+    "D": 0.5,
+    "iFoV": 2.222222e-06,
+    "central_obscuration": 0.3,
+    "n_supports": 3,
+    "support_width": 0.0476,
+    "support_angle_offset": 90,
+    "T_opt_spectral": {
+      "wavelength_nm": [
+        400,
+        500,
+        600,
+        700,
+        800,
+        900,
+        1000
+      ],
+      "values": [
+        0.7,
+        0.75,
+        0.78,
+        0.8,
+        0.78,
+        0.75,
+        0.7
+      ]
+    },
+    "WFE_convention": "Fringe",
+    "WFE_value": "RMS"
+  },
+  "Detector": {
+    "nb_detectors": 1,
+    "nb_columns": 700,
+    "cross_pixels": 10,
+    "bands": [
+      {
+        "name": "Rouge",
+        "lambda_c": 645.0,
+        "fwhm": 90,
+        "nb_TDI": 12,
+        "source_band": "Red"
+      },
+      {
+        "name": "Vert",
+        "lambda_c": 557.5,
+        "fwhm": 85,
+        "nb_TDI": 7,
+        "source_band": "Green"
+      },
+      {
+        "name": "Bleu",
+        "lambda_c": 482.5,
+        "fwhm": 65,
+        "nb_TDI": 4,
+        "source_band": "Blue"
+      }
+    ],
+    "QE_spectral": {
+      "wavelength_nm": [
+        400,
+        500,
+        600,
+        700,
+        800,
+        900,
+        1000
+      ],
+      "values": [
+        0.6,
+        0.75,
+        0.85,
+        0.9,
+        0.88,
+        0.8,
+        0.7
+      ]
+    },
+    "T_filter": 0.76,
+    "pixel_pitch": 4.4e-06,
+    "full_well": 50000,
+    "read_noise": 1.5,
+    "dark_current": 3.4,
+    "bits": 12,
+    "prnu_sigma": 0.005,
+    "dsnu_sigma": 0.01
+  },
+  "Acquisition_scenario": {
+    "altitude": 450000.0,
+    "T_int": 0.000585,
+    "solar_zenith": 30.0,
+    "Image_length": 700
+  },
+  "Image_source": {
+    "bands": {
+      "Red": 1,
+      "Green": 2,
+      "Blue": 3
+    },
+    "GSD_source": 0.3
+  }
+}

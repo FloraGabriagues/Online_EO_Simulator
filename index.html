@@ -2180,7 +2180,9 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
             + Math.round(d.signal_median_e) + " e⁻) — puits plein : "
             + Math.round(d.full_well_e) + " e⁻<br>"
             + "<b>remplissage : " + d.fill_pct.toFixed(2) + "%</b> — SNR moyen : "
-            + d.snr_mean.toFixed(1);
+            + d.snr_mean.toFixed(1) + "<br>"
+            + (d.S_ref_e != null ? "S_ref (théorique) : " + Math.round(d.S_ref_e) + " e⁻ — gain RGB appliqué : ×"
+              + d.rgb_gain_applied.toFixed(3) : "");
           tableEl.appendChild(row);
         });
       }
