@@ -656,8 +656,38 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
     </div>
 
     <div class="tabpanel" id="admtp-image" role="tabpanel" aria-labelledby="admtab-image">
-      <img id="adminResultImg" style="max-width:100%;border:1px solid var(--line-soft);
-        border-radius:3px;image-rendering:pixelated">
+      <div id="adminImgWrap" style="max-width:100%;overflow:auto;border:1px solid var(--line-soft);
+        border-radius:3px;background:var(--void)">
+        <img id="adminResultImg" style="display:block;max-width:none;
+          image-rendering:pixelated;transform-origin:top left">
+      </div>
+
+      <div class="panel" style="margin-top:14px">
+        <p class="grouphead" style="margin-bottom:14px"><span class="dot cool"></span>Affichage — zoom &amp; rendu</p>
+        <div class="ctrl">
+          <div class="ctrl-top"><span class="ctrl-name">Zoom</span>
+            <span class="ctrl-val"><input type="number" id="admImgZoomN" step="10" min="25" max="800"><em>%</em></span></div>
+          <input type="range" id="admImgZoom" min="25" max="800" step="5" value="100">
+        </div>
+        <div class="ctrl">
+          <div class="ctrl-top"><span class="ctrl-name">Luminosité</span>
+            <span class="ctrl-val"><input type="number" id="admImgBrightN" step="5" min="30" max="250"><em>%</em></span></div>
+          <input type="range" id="admImgBright" min="30" max="250" step="1" value="100">
+        </div>
+        <div class="ctrl">
+          <div class="ctrl-top"><span class="ctrl-name">Contraste</span>
+            <span class="ctrl-val"><input type="number" id="admImgContrastN" step="5" min="30" max="300"><em>%</em></span></div>
+          <input type="range" id="admImgContrast" min="30" max="300" step="1" value="100">
+        </div>
+        <div class="ctrl">
+          <div class="ctrl-top"><span class="ctrl-name">Saturation</span>
+            <span class="ctrl-val"><input type="number" id="admImgSatN" step="5" min="0" max="300"><em>%</em></span></div>
+          <input type="range" id="admImgSat" min="0" max="300" step="1" value="100">
+        </div>
+        <button id="admImgReset" class="reset" type="button" style="width:auto;padding:8px 14px">Réinitialiser l'affichage</button>
+        <p class="note" style="margin-top:10px">Ces réglages n'affectent que l'affichage dans ce navigateur — l'image téléchargée reste celle calculée par le serveur, sans retouche.</p>
+      </div>
+
       <div style="margin-top:8px">
         <a id="adminDownloadLink" download="simulation_admin.png" class="reset"
           style="display:inline-block;width:auto;padding:8px 14px;text-decoration:none">Télécharger l'image</a>
@@ -1964,7 +1994,7 @@ async function runSimulation(){
       if(!r.ok){
         var detail = null;
         try{ var j = await r.json(); detail = j.detail; } catch(e){}
-        throw new Error(detail || ("Le serveur a refusé la requête (" + r.status + ").")); 
+        throw new Error(detail || ("Le serveur a refusé la requête (" + r.status + ")."));
       }
       var blob = await r.blob();
       if(token !== simAbort || !blob) return;
@@ -2018,6 +2048,53 @@ sceneReadyP[activeScene].then(function(){
   setEngineBadge();
 });
 window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); });
+
+// ===================== IMAGE ADMIN — zoom / contraste / saturation / luminosité =====================
+// Purement de l'affichage côté navigateur (filter CSS + transform scale) —
+// aucun recalcul serveur, l'image téléchargée reste toujours la brute
+// calculée par le pipeline.
+(function(){
+  var img = document.getElementById("adminResultImg");
+  if(!img) return;
+
+  var zoomS = document.getElementById("admImgZoom"), zoomN = document.getElementById("admImgZoomN");
+  var brightS = document.getElementById("admImgBright"), brightN = document.getElementById("admImgBrightN");
+  var contrastS = document.getElementById("admImgContrast"), contrastN = document.getElementById("admImgContrastN");
+  var satS = document.getElementById("admImgSat"), satN = document.getElementById("admImgSatN");
+  var resetBtn = document.getElementById("admImgReset");
+
+  var DEFAULTS = {zoom:100, bright:100, contrast:100, sat:100};
+
+  function apply(){
+    var z = parseFloat(zoomS.value) / 100;
+    img.style.transform = "scale(" + z + ")";
+    img.style.filter =
+      "brightness(" + brightS.value + "%) " +
+      "contrast(" + contrastS.value + "%) " +
+      "saturate(" + satS.value + "%)";
+  }
+
+  // chaque curseur/champ numérique reste synchronisé avec son jumeau
+  [[zoomS, zoomN], [brightS, brightN], [contrastS, contrastN], [satS, satN]].forEach(function(pair){
+    var s = pair[0], n = pair[1];
+    s.addEventListener("input", function(){ n.value = s.value; apply(); });
+    n.addEventListener("change", function(){
+      var v = Math.min(parseFloat(s.max), Math.max(parseFloat(s.min), parseFloat(n.value) || 0));
+      s.value = v; n.value = v; apply();
+    });
+    n.value = s.value; // valeur initiale affichée dans le champ numérique
+  });
+
+  if(resetBtn) resetBtn.addEventListener("click", function(){
+    zoomS.value = zoomN.value = DEFAULTS.zoom;
+    brightS.value = brightN.value = DEFAULTS.bright;
+    contrastS.value = contrastN.value = DEFAULTS.contrast;
+    satS.value = satN.value = DEFAULTS.sat;
+    apply();
+  });
+
+  apply(); // état initial cohérent avec les valeurs par défaut des curseurs
+})();
 
 // ===================== MODE ADMIN =====================
 // Le mot de passe ici n'est qu'un confort d'usage — la vraie protection
