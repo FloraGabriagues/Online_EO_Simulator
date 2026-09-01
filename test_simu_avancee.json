@@ -38,14 +38,14 @@
         "name": "Rouge",
         "lambda_c": 645.0,
         "fwhm": 90,
-        "nb_TDI": 12,
+        "nb_TDI": 4,
         "source_band": "Red"
       },
       {
         "name": "Vert",
         "lambda_c": 557.5,
         "fwhm": 85,
-        "nb_TDI": 7,
+        "nb_TDI": 4,
         "source_band": "Green"
       },
       {
