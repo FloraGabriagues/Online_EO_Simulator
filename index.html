@@ -998,16 +998,22 @@ var seed = 20260808;
 function rnd(){ seed = (seed*1664525 + 1013904223) % 4294967296; return seed/4294967296; }
 function m2px(m){ return m/TRUTH_RES; }
 
+// extW/extH = 200.0m — DOIT correspondre exactement à CORE_FOOTPRINT_M côté
+// serveur (eo_adapter.py), et les JPEG doivent être recadrés au même centre
+// géométrique que SCENE_CENTER_FRAC (même fichier) — sans ça, l'image
+// source affichée ici et le résultat /simulate ne montrent pas la même
+// zone (cf. échange du 01/09/2026, régénéré via generate_scene_previews.py
+// avec un crop de 1000x1000px source à 0.2m/px).
 var SCENES = [
   {id:"aix", name:"Ville", sub:"BD ORTHO IGN 2023",
     real:true, src:"assets/scenes/aix.jpg", thumb:"assets/scenes/aix_thumb.jpg",
-    extW:258.0, extH:188.6, res:0.2},
+    extW:200.0, extH:200.0, res:0.2},
   {id:"avion", name:"Avion", sub:"BD ORTHO IGN 2023",
     real:true, src:"assets/scenes/avion.jpg", thumb:"assets/scenes/avion_thumb.jpg",
-    extW:258.0, extH:188.6, res:0.2},
+    extW:200.0, extH:200.0, res:0.2},
   {id:"port", name:"Port", sub:"BD ORTHO IGN 2023",
     real:true, src:"assets/scenes/port.jpg", thumb:"assets/scenes/port_thumb.jpg",
-    extW:258.0, extH:188.6, res:0.2}
+    extW:200.0, extH:200.0, res:0.2}
 ];
 var sceneCanvases = {}, sceneReadyP = {}, activeScene = "aix";
 
