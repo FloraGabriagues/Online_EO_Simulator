@@ -678,11 +678,13 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
             </div>
           </div>
 
-          <div id="adminImgWrap" style="max-width:100%;overflow:auto;border:1px solid var(--line-soft);
-            border-radius:3px;background:var(--void)">
+          <div id="adminImgWrap" style="max-width:100%;height:420px;overflow:auto;
+            border:1px solid var(--line-soft);border-radius:3px;background:var(--void);
+            resize:vertical">
             <img id="adminResultImg" style="display:block;max-width:none;
               image-rendering:pixelated;transform-origin:top left">
           </div>
+          <p class="note" style="margin-top:4px">Glisse le coin inférieur droit du cadre pour l'agrandir en hauteur, ou utilise le curseur "Hauteur du cadre" à droite.</p>
 
           <div style="margin-top:8px">
             <a id="adminDownloadLink" download="simulation_admin.png" class="reset"
@@ -699,6 +701,11 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
               <div class="ctrl-top"><span class="ctrl-name">Zoom</span>
                 <span class="ctrl-val"><input type="number" id="admImgZoomN" step="10" min="25" max="800"><em>%</em></span></div>
               <input type="range" id="admImgZoom" min="25" max="800" step="5" value="100">
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-top"><span class="ctrl-name">Hauteur du cadre</span>
+                <span class="ctrl-val"><input type="number" id="admImgHeightN" step="20" min="200" max="1400"><em>px</em></span></div>
+              <input type="range" id="admImgHeight" min="200" max="1400" step="10" value="420">
             </div>
             <div class="ctrl">
               <div class="ctrl-top"><span class="ctrl-name">Luminosité</span>
@@ -2095,7 +2102,9 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
   var img = document.getElementById("adminResultImg");
   if(!img) return;
 
+  var wrap = document.getElementById("adminImgWrap");
   var zoomS = document.getElementById("admImgZoom"), zoomN = document.getElementById("admImgZoomN");
+  var heightS = document.getElementById("admImgHeight"), heightN = document.getElementById("admImgHeightN");
   var brightS = document.getElementById("admImgBright"), brightN = document.getElementById("admImgBrightN");
   var contrastS = document.getElementById("admImgContrast"), contrastN = document.getElementById("admImgContrastN");
   var satS = document.getElementById("admImgSat"), satN = document.getElementById("admImgSatN");
@@ -2104,7 +2113,7 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
   var wbMatrix = document.getElementById("admWbMatrix");
   var resetBtn = document.getElementById("admImgReset");
 
-  var DEFAULTS = {zoom:100, bright:100, contrast:100, sat:100, temp:0, tint:0};
+  var DEFAULTS = {zoom:100, height:420, bright:100, contrast:100, sat:100, temp:0, tint:0};
 
   // Température (-100..100) : chaud (>0) monte R / baisse B, froid (<0) l'inverse.
   // Teinte (-100..100) : magenta (>0) baisse G, vert (<0) monte G.
@@ -2123,6 +2132,7 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
   function apply(){
     var z = parseFloat(zoomS.value) / 100;
     img.style.transform = "scale(" + z + ")";
+    if(wrap) wrap.style.height = heightS.value + "px";
     updateWbMatrix();
     img.style.filter =
       "url(#admWbFilter) " +
@@ -2132,7 +2142,7 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
   }
 
   // chaque curseur/champ numérique reste synchronisé avec son jumeau
-  [[zoomS, zoomN], [brightS, brightN], [contrastS, contrastN], [satS, satN],
+  [[zoomS, zoomN], [heightS, heightN], [brightS, brightN], [contrastS, contrastN], [satS, satN],
    [tempS, tempN], [tintS, tintN]].forEach(function(pair){
     var s = pair[0], n = pair[1];
     s.addEventListener("input", function(){ n.value = s.value; apply(); });
@@ -2143,8 +2153,22 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
     n.value = s.value; // valeur initiale affichée dans le champ numérique
   });
 
+  // redimensionnement manuel (glisser le coin, via CSS resize:vertical) ->
+  // garde le curseur synchronisé avec la hauteur réellement choisie
+  if(wrap && window.ResizeObserver){
+    var ro = new ResizeObserver(function(entries){
+      var h = Math.round(entries[0].contentRect.height);
+      if(h && Math.abs(h - parseFloat(heightS.value)) > 2){
+        var clamped = Math.min(parseFloat(heightS.max), Math.max(parseFloat(heightS.min), h));
+        heightS.value = heightN.value = clamped;
+      }
+    });
+    ro.observe(wrap);
+  }
+
   if(resetBtn) resetBtn.addEventListener("click", function(){
     zoomS.value = zoomN.value = DEFAULTS.zoom;
+    heightS.value = heightN.value = DEFAULTS.height;
     brightS.value = brightN.value = DEFAULTS.bright;
     contrastS.value = contrastN.value = DEFAULTS.contrast;
     satS.value = satN.value = DEFAULTS.sat;
@@ -2352,9 +2376,22 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
         graphsEl.innerHTML = "";
         var bandColors2 = {Rouge:"var(--photon)", Vert:"#8CC98A", Bleu:"var(--pixel)"};
         var anyGraph = false;
+        var GRAPH_FIELDS = [
+          ["psf_png_b64", "PSF (oversampled vs rebinnée)"],
+          ["mtf_png_b64", "Budget MTF"],
+          ["snr_regimes_png_b64", "SNR — régimes de bruit dominants"],
+          ["snr_noise_budget_png_b64", "Budget de bruit (barres)"],
+          ["snr_map_png_b64", "Carte SNR"],
+          ["snr_noise_maps_png_b64", "Cartes de bruit — analytique"],
+          ["snr_noise_maps_sim_png_b64", "Cartes de bruit — simulé"],
+          ["snr_image_compare_png_b64", "Image source / bruitée / résidu"],
+          ["snr_profile_1d_png_b64", "Profil 1D (signal)"],
+          ["snr_histogram_png_b64", "Histogramme signal"],
+        ];
         Object.keys(data.bands || {}).forEach(function(bandName){
           var d = data.bands[bandName];
-          if(!d.psf_png_b64 && !d.mtf_png_b64) return;
+          var hasAny = GRAPH_FIELDS.some(function(f){ return !!d[f[0]]; });
+          if(!hasAny) return;
           anyGraph = true;
           var sec = document.createElement("div");
           sec.className = "panel";
@@ -2362,10 +2399,13 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
           var head = "<p class='grouphead'><span class='dot warm'></span>"
             + "<span style='color:" + (bandColors2[bandName] || "var(--paper)") + "'>" + bandName + "</span></p>";
           var imgs = "<div style='display:flex;gap:14px;flex-wrap:wrap'>";
-          if(d.psf_png_b64) imgs += "<img src='data:image/png;base64," + d.psf_png_b64
-            + "' style='max-width:100%;flex:1 1 320px;border:1px solid var(--line-soft);border-radius:3px'>";
-          if(d.mtf_png_b64) imgs += "<img src='data:image/png;base64," + d.mtf_png_b64
-            + "' style='max-width:100%;flex:1 1 320px;border:1px solid var(--line-soft);border-radius:3px'>";
+          GRAPH_FIELDS.forEach(function(f){
+            if(!d[f[0]]) return;
+            imgs += "<div style='flex:1 1 320px;max-width:480px'>"
+              + "<img src='data:image/png;base64," + d[f[0]]
+              + "' style='width:100%;display:block;border:1px solid var(--line-soft);border-radius:3px'>"
+              + "<p class='note' style='margin-top:4px;text-align:center'>" + f[1] + "</p></div>";
+          });
           imgs += "</div>";
           sec.innerHTML = head + imgs;
           graphsEl.appendChild(sec);
