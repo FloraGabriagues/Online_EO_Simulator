@@ -230,7 +230,7 @@ details.adv .inner{margin-top:16px}
 .compare{position:relative;width:min(100%,108vh);aspect-ratio:3/2;margin:0 auto;
   background:#000;overflow:hidden;border:1px solid var(--line-soft);border-radius:3px}
 .compare canvas{position:absolute;inset:0;width:100%;height:100%;display:block;
-  object-fit:fill;
+  object-fit:contain;
   image-rendering:pixelated;image-rendering:crisp-edges;
   transform-origin:center;transition:transform .18s ease}
 #simLayer{clip-path:inset(0 0 0 50%)}
@@ -1204,16 +1204,6 @@ function renderSim(){
   simCv.width = outW; simCv.height = outH;
   sctx.imageSmoothingEnabled = false;
   sctx.drawImage(work,0,0);
-
-  // Le cadre affiche les deux calques avec object-fit:fill, étirés à SON
-  // propre ratio (fixé sur curW/curH, la résolution de la scène SOURCE).
-  // outW/outH (résolution de l'image SIMULÉE, au GSD instrument) est calculé
-  // séparément — à faible résolution de sortie, l'arrondi indépendant de
-  // chaque axe peut décaler son ratio par rapport à celui du cadre, d'où des
-  // pixels visiblement rectangulaires (surtout à fort zoom). On réaligne
-  // donc le ratio du cadre sur l'image RÉELLEMENT affichée à chaque rendu.
-  var compareBoxEl = document.getElementById("compare");
-  if(compareBoxEl) compareBoxEl.style.aspectRatio = (outW/outH).toFixed(4);
 }
 
 // ===================== PUPILLE / PSF =====================
@@ -1616,18 +1606,10 @@ var simSource = "js", extImage = null;
 
 function paintExternal(){
   if(!extImage) return;
-  var w = extImage.naturalWidth || extImage.width;
-  var h = extImage.naturalHeight || extImage.height;
-  simCv.width = w;
-  simCv.height = h;
+  simCv.width = extImage.naturalWidth || extImage.width;
+  simCv.height = extImage.naturalHeight || extImage.height;
   sctx.imageSmoothingEnabled = false;
   sctx.drawImage(extImage, 0, 0);
-  // même correctif que renderSim() : le cadre affiche via object-fit:fill,
-  // étiré à son propre ratio — on le recale sur l'image réellement affichée
-  // (preset pré-calculé ou résultat API), pas sur la résolution de la scène
-  // source, sans quoi les pixels ressortent rectangulaires.
-  var compareBoxEl2 = document.getElementById("compare");
-  if(compareBoxEl2 && w && h) compareBoxEl2.style.aspectRatio = (w/h).toFixed(4);
 }
 function useJsEngine(){
   simSource = "js"; extImage = null;
