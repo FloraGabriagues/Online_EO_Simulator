@@ -2229,6 +2229,23 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
   authSubmit.addEventListener("click", submitAuth);
   passInput.addEventListener("keydown", function(e){ if(e.key === "Enter") submitAuth(); });
 
+  // Estimation grossière de l'empreinte réelle à partir de D/iFoV/altitude/
+  // nb_columns — même logique que côté serveur (cf. eo_adapter.py), pour
+  // prévenir AVANT l'envoi si le calcul s'annonce long (le timeout serveur
+  // reste fixe, cf. échange du 31/08/2026 — Scaleway ne permet pas un
+  // timeout variable par requête, plage autorisée 10-900s).
+  function estimateFootprintM(paramFile){
+    try{
+      var D = paramFile.Telescope && paramFile.Telescope.D;
+      var iFoV = paramFile.Telescope && paramFile.Telescope.iFoV;
+      var altitude = paramFile.Acquisition_scenario && paramFile.Acquisition_scenario.altitude;
+      var nbCols = paramFile.Detector && paramFile.Detector.nb_columns;
+      if(!D || !iFoV || !altitude || !nbCols) return null; // valeur(s) issue(s) du template, pas estimable ici
+      return nbCols * (iFoV * altitude);
+    }catch(e){ return null; }
+  }
+  var FOOTPRINT_WARN_M = 2000; // au-delà, le calcul a de bonnes chances de dépasser 300s
+
   simBtn2.addEventListener("click", function(){
     if(!API) return;
     var key = sessionStorage.getItem("adminKey");
@@ -2242,6 +2259,16 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
       status.className = "prog-note err";
       status.textContent = "JSON invalide : " + e.message;
       return;
+    }
+
+    var footprint = estimateFootprintM(paramFileOverride);
+    if(footprint && footprint > FOOTPRINT_WARN_M){
+      var km = (footprint / 1000).toFixed(1);
+      var proceed = confirm(
+        "Empreinte estimée ≈ " + km + " km — ce calcul risque d'être long "
+        + "(voire de dépasser le timeout serveur). Continuer quand même ?"
+      );
+      if(!proceed) return;
     }
 
     simBtn2.disabled = true;
