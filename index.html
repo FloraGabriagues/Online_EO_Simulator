@@ -662,58 +662,80 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
             values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 1 0"/>
         </filter>
       </svg>
-      <div id="adminImgWrap" style="max-width:100%;overflow:auto;border:1px solid var(--line-soft);
-        border-radius:3px;background:var(--void)">
-        <img id="adminResultImg" style="display:block;max-width:none;
-          image-rendering:pixelated;transform-origin:top left">
-      </div>
 
-      <div class="panel" style="margin-top:14px">
-        <p class="grouphead" style="margin-bottom:14px"><span class="dot cool"></span>Affichage — zoom &amp; rendu</p>
-        <div class="ctrl">
-          <div class="ctrl-top"><span class="ctrl-name">Zoom</span>
-            <span class="ctrl-val"><input type="number" id="admImgZoomN" step="10" min="25" max="800"><em>%</em></span></div>
-          <input type="range" id="admImgZoom" min="25" max="800" step="5" value="100">
-        </div>
-        <div class="ctrl">
-          <div class="ctrl-top"><span class="ctrl-name">Luminosité</span>
-            <span class="ctrl-val"><input type="number" id="admImgBrightN" step="5" min="30" max="250"><em>%</em></span></div>
-          <input type="range" id="admImgBright" min="30" max="250" step="1" value="100">
-        </div>
-        <div class="ctrl">
-          <div class="ctrl-top"><span class="ctrl-name">Contraste</span>
-            <span class="ctrl-val"><input type="number" id="admImgContrastN" step="5" min="30" max="300"><em>%</em></span></div>
-          <input type="range" id="admImgContrast" min="30" max="300" step="1" value="100">
-        </div>
-        <div class="ctrl">
-          <div class="ctrl-top"><span class="ctrl-name">Saturation</span>
-            <span class="ctrl-val"><input type="number" id="admImgSatN" step="5" min="0" max="300"><em>%</em></span></div>
-          <input type="range" id="admImgSat" min="0" max="300" step="1" value="100">
-        </div>
-        <div class="ctrl">
-          <div class="ctrl-top"><span class="ctrl-name">Température</span>
-            <span class="ctrl-val"><input type="number" id="admImgTempN" step="5" min="-100" max="100"></span></div>
-          <input type="range" id="admImgTemp" min="-100" max="100" step="1" value="0">
-        </div>
-        <div class="ctrl">
-          <div class="ctrl-top"><span class="ctrl-name">Teinte</span>
-            <span class="ctrl-val"><input type="number" id="admImgTintN" step="5" min="-100" max="100"></span></div>
-          <input type="range" id="admImgTint" min="-100" max="100" step="1" value="0">
-        </div>
-        <button id="admImgReset" class="reset" type="button" style="width:auto;padding:8px 14px">Réinitialiser l'affichage</button>
-        <p class="note" style="margin-top:10px">Ces réglages n'affectent que l'affichage dans ce navigateur — l'image téléchargée reste celle calculée par le serveur, sans retouche.</p>
-      </div>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start">
+        <div style="flex:1 1 480px;min-width:320px">
 
-      <div style="margin-top:8px">
-        <a id="adminDownloadLink" download="simulation_admin.png" class="reset"
-          style="display:inline-block;width:auto;padding:8px 14px;text-decoration:none">Télécharger l'image</a>
+          <div id="adminHeadline" style="display:flex;gap:1px;background:var(--line-soft);
+            border:1px solid var(--line-soft);border-radius:4px;overflow:hidden;margin-bottom:14px">
+            <div style="flex:1;background:var(--panel);padding:14px 16px">
+              <div class="hl-v" id="adm-m-gsd">—</div>
+              <div class="hl-k">Résolution au sol</div>
+            </div>
+            <div style="flex:1;background:var(--panel);padding:14px 16px">
+              <div class="hl-v cool" id="adm-m-snr">—</div>
+              <div class="hl-k">SNR moyen (3 bandes)</div>
+            </div>
+          </div>
+
+          <div id="adminImgWrap" style="max-width:100%;overflow:auto;border:1px solid var(--line-soft);
+            border-radius:3px;background:var(--void)">
+            <img id="adminResultImg" style="display:block;max-width:none;
+              image-rendering:pixelated;transform-origin:top left">
+          </div>
+
+          <div style="margin-top:8px">
+            <a id="adminDownloadLink" download="simulation_admin.png" class="reset"
+              style="display:inline-block;width:auto;padding:8px 14px;text-decoration:none">Télécharger l'image</a>
+          </div>
+          <p class="ctrl-name" style="margin-top:18px">Diagnostics par bande</p>
+          <div id="adminBandsTable" style="margin-top:8px;font-family:var(--mono);font-size:11.5px"></div>
+        </div>
+
+        <div style="width:280px;flex:none">
+          <div class="panel">
+            <p class="grouphead" style="margin-bottom:14px"><span class="dot cool"></span>Affichage — zoom &amp; rendu</p>
+            <div class="ctrl">
+              <div class="ctrl-top"><span class="ctrl-name">Zoom</span>
+                <span class="ctrl-val"><input type="number" id="admImgZoomN" step="10" min="25" max="800"><em>%</em></span></div>
+              <input type="range" id="admImgZoom" min="25" max="800" step="5" value="100">
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-top"><span class="ctrl-name">Luminosité</span>
+                <span class="ctrl-val"><input type="number" id="admImgBrightN" step="5" min="30" max="250"><em>%</em></span></div>
+              <input type="range" id="admImgBright" min="30" max="250" step="1" value="100">
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-top"><span class="ctrl-name">Contraste</span>
+                <span class="ctrl-val"><input type="number" id="admImgContrastN" step="5" min="30" max="300"><em>%</em></span></div>
+              <input type="range" id="admImgContrast" min="30" max="300" step="1" value="100">
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-top"><span class="ctrl-name">Saturation</span>
+                <span class="ctrl-val"><input type="number" id="admImgSatN" step="5" min="0" max="300"><em>%</em></span></div>
+              <input type="range" id="admImgSat" min="0" max="300" step="1" value="100">
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-top"><span class="ctrl-name">Température</span>
+                <span class="ctrl-val"><input type="number" id="admImgTempN" step="5" min="-100" max="100"></span></div>
+              <input type="range" id="admImgTemp" min="-100" max="100" step="1" value="0">
+            </div>
+            <div class="ctrl">
+              <div class="ctrl-top"><span class="ctrl-name">Teinte</span>
+                <span class="ctrl-val"><input type="number" id="admImgTintN" step="5" min="-100" max="100"></span></div>
+              <input type="range" id="admImgTint" min="-100" max="100" step="1" value="0">
+            </div>
+            <button id="admImgReset" class="reset" type="button" style="width:100%;padding:8px 14px">Réinitialiser l'affichage</button>
+            <p class="note" style="margin-top:10px">Ces réglages n'affectent que l'affichage dans ce navigateur — l'image téléchargée reste celle calculée par le serveur, sans retouche.</p>
+          </div>
+        </div>
       </div>
-      <p class="ctrl-name" style="margin-top:18px">Diagnostics par bande</p>
-      <div id="adminBandsTable" style="margin-top:8px;font-family:var(--mono);font-size:11.5px"></div>
     </div>
 
     <div class="tabpanel" id="admtp-graphs" role="tabpanel" aria-labelledby="admtab-graphs" hidden>
-      <p class="note">Visualisations PSF, pupille et budget MTF — pas encore disponibles dans ce panneau (à venir).</p>
+      <div id="adminGraphsContent">
+        <p class="note">Lance une simulation pour voir les graphes PSF et budget MTF par bande.</p>
+      </div>
     </div>
 
     <div class="tabpanel" id="admtp-logs" role="tabpanel" aria-labelledby="admtab-logs" hidden>
@@ -2301,6 +2323,57 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
       var dataUrl = "data:image/png;base64," + data.image_b64;
       resultImg.src = dataUrl;
       downloadLink.href = dataUrl;
+
+      // GSD (calculé côté client à partir du JSON soumis — mêmes valeurs
+      // que celles envoyées au serveur, iFoV en rad, altitude en m) et SNR
+      // moyen sur les 3 bandes (déjà renvoyé par le serveur dans data.bands).
+      var gsdEl = document.getElementById("adm-m-gsd");
+      var snrEl = document.getElementById("adm-m-snr");
+      if(gsdEl){
+        var D_ = paramFileOverride.Telescope && paramFileOverride.Telescope.D;
+        var iFoV_ = paramFileOverride.Telescope && paramFileOverride.Telescope.iFoV;
+        var alt_ = paramFileOverride.Acquisition_scenario && paramFileOverride.Acquisition_scenario.altitude;
+        if(iFoV_ && alt_){
+          var gsdVal = iFoV_ * alt_;
+          gsdEl.innerHTML = (gsdVal < 1 ? gsdVal.toFixed(2) : gsdVal.toFixed(1)) + "<u style='font-size:15px;color:var(--muted);margin-left:3px'>m</u>";
+        } else {
+          gsdEl.textContent = "—";
+        }
+      }
+      if(snrEl){
+        var snrVals = Object.keys(data.bands || {}).map(function(b){ return data.bands[b].snr_mean; });
+        snrEl.textContent = snrVals.length
+          ? (snrVals.reduce(function(a,b){return a+b;}, 0) / snrVals.length).toFixed(1)
+          : "—";
+      }
+
+      var graphsEl = document.getElementById("adminGraphsContent");
+      if(graphsEl){
+        graphsEl.innerHTML = "";
+        var bandColors2 = {Rouge:"var(--photon)", Vert:"#8CC98A", Bleu:"var(--pixel)"};
+        var anyGraph = false;
+        Object.keys(data.bands || {}).forEach(function(bandName){
+          var d = data.bands[bandName];
+          if(!d.psf_png_b64 && !d.mtf_png_b64) return;
+          anyGraph = true;
+          var sec = document.createElement("div");
+          sec.className = "panel";
+          sec.style.marginBottom = "14px";
+          var head = "<p class='grouphead'><span class='dot warm'></span>"
+            + "<span style='color:" + (bandColors2[bandName] || "var(--paper)") + "'>" + bandName + "</span></p>";
+          var imgs = "<div style='display:flex;gap:14px;flex-wrap:wrap'>";
+          if(d.psf_png_b64) imgs += "<img src='data:image/png;base64," + d.psf_png_b64
+            + "' style='max-width:100%;flex:1 1 320px;border:1px solid var(--line-soft);border-radius:3px'>";
+          if(d.mtf_png_b64) imgs += "<img src='data:image/png;base64," + d.mtf_png_b64
+            + "' style='max-width:100%;flex:1 1 320px;border:1px solid var(--line-soft);border-radius:3px'>";
+          imgs += "</div>";
+          sec.innerHTML = head + imgs;
+          graphsEl.appendChild(sec);
+        });
+        if(!anyGraph){
+          graphsEl.innerHTML = "<p class='note'>Aucun graphe disponible pour ce calcul (échec de génération — voir l'onglet Logs pour le détail).</p>";
+        }
+      }
 
       var logsEl = document.getElementById("adminLogs");
       if(logsEl) logsEl.textContent = data.logs || "(aucun log capturé)";
