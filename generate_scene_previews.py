@@ -20,37 +20,53 @@ import rasterio
 from rasterio.windows import Window
 from PIL import Image
 
-# (nom_scene, chemin_local_du_gros_tif)
-# (nom_scene, chemin_local_du_gros_tif, centre_x_fraction, centre_y_fraction)
+# URL publique R2 (cf. échanges précédents du projet) — pas de chemin local :
+# les TIF sources font 1-2 Go chacun, pas forcément présents sur la machine
+# qui lance ce script. rasterio lit en HTTP via /vsicurl/ (lecture fenêtrée
+# par plage d'octets, ne télécharge que la zone du crop, pas le fichier
+# entier) — corrigé le 01/09/2026, la version précédente supposait un
+# fichier local.
+R2_BASE_URL = "https://pub-0ded545d97af48d39c393173a8570073.r2.dev"
+
+# (nom_scene, nom_fichier_sur_R2, centre_x_fraction, centre_y_fraction)
 # Les fractions par défaut (0.5, 0.5) supposent un export IGN centré sur le
 # point d'intérêt — pas toujours vrai (constaté sur "port", décentré) :
 # repérer la vraie position avec preview_full_scene.py si l'aperçu généré
 # ici tombe à côté, puis ajuster la fraction correspondante ci-dessous.
+#
+# IMPORTANT : ces fractions doivent rester EXACTEMENT synchronisées avec
+# SCENE_CENTER_FRAC dans eo_adapter.py (côté serveur) — sinon l'aperçu généré
+# ici et le crop réellement utilisé par l'API ne montrent plus la même zone.
+# Corrigé le 01/09/2026 : "port" utilisait (0.486, 0.508) ici contre
+# (0.48, 0.5) côté serveur — écart minime mais réel, aligné maintenant.
 SCENES = [
-    ("aix",   "assets/scenes/2023_IGN_RGB_AIX_5km.tif",   0.5,   0.5),
-    ("avion", "assets/scenes/2023_IGN_RGB_AVION_5km.tif", 0.5,   0.5),
-    ("port",  "assets/scenes/2023_IGN_RGB_PORT_5km.tif",  0.486,  0.508),
+    ("aix",   "2023_IGN_RGB_AIX_5km.tif",   0.5,  0.5),
+    ("avion", "2023_IGN_RGB_AVION_5km.tif", 0.5,  0.5),
+    ("port",  "2023_IGN_RGB_PORT_5km.tif",  0.48, 0.5),
 ]
 
 OUT_DIR = "assets/scenes"  # relatif au dossier Online_EO_Simulator
 
-# Même convention que les scènes existantes (cf. SCENES array du site) :
-# emprise 258.0 x 188.6 m, résolution native IGN 0.2 m/px.
-EXT_W_M = 258.0
-EXT_H_M = 188.6
-RES_M = 0.2
+# Emprise 200.0 x 200.0 m — DOIT correspondre exactement à CORE_FOOTPRINT_M
+# dans eo_adapter.py (empreinte physique fixe côté serveur pour le mode
+# public, quels que soient les curseurs). Corrigé le 01/09/2026 : cette
+# constante valait 258.0 x 188.6 auparavant, ne correspondant à rien de
+# précis côté serveur — d'où le décalage entre l'image source affichée et
+# le résultat /simulate (deux crops différents de la même scène).
+EXT_W_M = 200.0
+EXT_H_M = 200.0
+RES_M = 0.2  # résolution native IGN, m/px — doit rester synchronisée avec GSD_SOURCE côté serveur
 THUMB_PX = 200  # vignette carrée, un peu plus grande que les 38-92px affichés, pour rester nette
 
 
-def export_scene(name, tif_path, cx_frac=0.5, cy_frac=0.5):
-    if not os.path.isfile(tif_path):
-        print(f"[SKIP] {name} : fichier introuvable ({tif_path})")
-        return
+def export_scene(name, filename, cx_frac=0.5, cy_frac=0.5):
+    url = f"/vsicurl/{R2_BASE_URL}/{filename}"
 
     crop_w_px = int(round(EXT_W_M / RES_M))
     crop_h_px = int(round(EXT_H_M / RES_M))
 
-    with rasterio.open(tif_path) as src:
+    print(f"[...] {name} : lecture distante depuis {R2_BASE_URL}/{filename}")
+    with rasterio.open(url) as src:
         cx, cy = int(cx_frac * src.width), int(cy_frac * src.height)
         col_off = max(0, cx - crop_w_px // 2)
         row_off = max(0, cy - crop_h_px // 2)
@@ -89,5 +105,5 @@ def export_scene(name, tif_path, cx_frac=0.5, cy_frac=0.5):
 
 
 if __name__ == "__main__":
-    for scene_name, path, cx_frac, cy_frac in SCENES:
-        export_scene(scene_name, path, cx_frac, cy_frac)
+    for scene_name, filename, cx_frac, cy_frac in SCENES:
+        export_scene(scene_name, filename, cx_frac, cy_frac)
