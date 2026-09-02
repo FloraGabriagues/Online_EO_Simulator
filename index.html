@@ -732,6 +732,8 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
                 <span class="ctrl-val"><input type="number" id="admImgTintN" step="5" min="-100" max="100"></span></div>
               <input type="range" id="admImgTint" min="-100" max="100" step="1" value="0">
             </div>
+            <button id="admWbPickBtn" class="reset" type="button" style="width:100%;padding:8px 14px;margin-bottom:8px">Choisir un point blanc sur l'image</button>
+            <p class="note" id="admWbPickStatus" style="margin:0 0 10px"></p>
             <button id="admImgReset" class="reset" type="button" style="width:100%;padding:8px 14px">Réinitialiser l'affichage</button>
             <p class="note" style="margin-top:10px">Ces réglages n'affectent que l'affichage dans ce navigateur — l'image téléchargée reste celle calculée par le serveur, sans retouche.</p>
           </div>
@@ -754,6 +756,17 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
   </div>
 </div>
 
+
+<!-- Visionneuse plein écran pour les graphes du panneau admin -->
+<div id="imgLightbox" style="display:none;position:fixed;inset:0;z-index:300;
+  background:rgba(9,14,19,.94);align-items:center;justify-content:center;
+  padding:30px;cursor:zoom-out">
+  <img id="imgLightboxImg" style="max-width:100%;max-height:100%;
+    border:1px solid var(--line-soft);border-radius:3px;object-fit:contain">
+  <button id="imgLightboxClose" type="button" aria-label="Fermer" style="position:fixed;
+    top:18px;right:22px;background:transparent;border:none;color:var(--paper);
+    font-size:32px;line-height:1;cursor:pointer;padding:6px">×</button>
+</div>
 
 <footer>
   <p>Scènes réelles — orthophotographies BD ORTHO IGN 2023.</p>
@@ -2118,8 +2131,16 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
   var tintS = document.getElementById("admImgTint"), tintN = document.getElementById("admImgTintN");
   var wbMatrix = document.getElementById("admWbMatrix");
   var resetBtn = document.getElementById("admImgReset");
+  var wbPickBtn = document.getElementById("admWbPickBtn");
+  var wbPickStatus = document.getElementById("admWbPickStatus");
 
   var DEFAULTS = {zoom:100, height:420, bright:100, contrast:100, sat:100, temp:0, tint:0};
+
+  // Gains issus d'un point blanc choisi par clic (cf. plus bas) — multipliés
+  // avec ceux de Température/Teinte dans la matrice finale. 1/1/1 = neutre
+  // (aucun point choisi, ou réinitialisé).
+  var wbPickGain = {r: 1, g: 1, b: 1};
+  var wbPicking = false;
 
   // Température (-100..100) : chaud (>0) monte R / baisse B, froid (<0) l'inverse.
   // Teinte (-100..100) : magenta (>0) baisse G, vert (<0) monte G.
@@ -2128,9 +2149,9 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
   function updateWbMatrix(){
     var temp = parseFloat(tempS.value) / 100;   // -1..1
     var tint = parseFloat(tintS.value) / 100;   // -1..1
-    var rGain = 1 + temp * 0.35;
-    var bGain = 1 - temp * 0.35;
-    var gGain = 1 - tint * 0.35;
+    var rGain = (1 + temp * 0.35) * wbPickGain.r;
+    var bGain = (1 - temp * 0.35) * wbPickGain.b;
+    var gGain = (1 - tint * 0.35) * wbPickGain.g;
     wbMatrix.setAttribute("values",
       rGain + " 0 0 0 0  0 " + gGain + " 0 0 0  0 0 " + bGain + " 0 0  0 0 0 1 0");
   }
@@ -2146,6 +2167,58 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
       "contrast(" + contrastS.value + "%) " +
       "saturate(" + satS.value + "%)";
   }
+
+  // ---- Sélection d'un point blanc par clic ----
+  // Active un mode "picking" (curseur croix), lit le pixel RGB BRUT (sans
+  // aucun filtre CSS déjà appliqué — dessiné sur un canvas hors-écran à la
+  // résolution native) au clic suivant sur l'image, puis calcule les gains
+  // R/G/B qui ramèneraient CE pixel précis à un gris neutre (moyenne des 3
+  // canaux). Purement client — ne modifie jamais l'image téléchargée.
+  if(wbPickBtn){
+    wbPickBtn.addEventListener("click", function(){
+      wbPicking = !wbPicking;
+      img.style.cursor = wbPicking ? "crosshair" : "";
+      wbPickBtn.style.borderColor = wbPicking ? "var(--photon)" : "";
+      wbPickBtn.style.color = wbPicking ? "var(--photon)" : "";
+      wbPickStatus.textContent = wbPicking ? "Clique sur un pixel qui devrait être neutre (blanc/gris)…" : "";
+    });
+  }
+
+  img.addEventListener("click", function(e){
+    if(!wbPicking) return;
+    wbPicking = false;
+    img.style.cursor = "";
+    wbPickBtn.style.borderColor = ""; wbPickBtn.style.color = "";
+
+    try{
+      var rect = img.getBoundingClientRect();
+      var scaleX = img.naturalWidth / rect.width;
+      var scaleY = img.naturalHeight / rect.height;
+      var x = Math.min(img.naturalWidth - 1, Math.max(0, Math.floor((e.clientX - rect.left) * scaleX)));
+      var y = Math.min(img.naturalHeight - 1, Math.max(0, Math.floor((e.clientY - rect.top) * scaleY)));
+
+      var off = document.createElement("canvas");
+      off.width = img.naturalWidth; off.height = img.naturalHeight;
+      var octx = off.getContext("2d");
+      octx.drawImage(img, 0, 0);
+      var px = octx.getImageData(x, y, 1, 1).data;
+      var r = px[0], g = px[1], b = px[2];
+
+      if(r < 5 && g < 5 && b < 5){
+        wbPickStatus.textContent = "Pixel trop sombre (proche du noir) — choisis un point plus clair.";
+        return;
+      }
+
+      var target = (r + g + b) / 3;
+      wbPickGain = {r: target / Math.max(1, r), g: target / Math.max(1, g), b: target / Math.max(1, b)};
+      wbPickStatus.textContent =
+        "Point choisi : R" + r + " G" + g + " B" + b +
+        " → gains ×" + wbPickGain.r.toFixed(2) + " / ×" + wbPickGain.g.toFixed(2) + " / ×" + wbPickGain.b.toFixed(2);
+      apply();
+    }catch(err){
+      wbPickStatus.textContent = "Lecture du pixel impossible (" + err.message + ").";
+    }
+  });
 
   // chaque curseur/champ numérique reste synchronisé avec son jumeau
   [[zoomS, zoomN], [heightS, heightN], [brightS, brightN], [contrastS, contrastN], [satS, satN],
@@ -2180,10 +2253,42 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
     satS.value = satN.value = DEFAULTS.sat;
     tempS.value = tempN.value = DEFAULTS.temp;
     tintS.value = tintN.value = DEFAULTS.tint;
+    wbPickGain = {r: 1, g: 1, b: 1};
+    if(wbPickStatus) wbPickStatus.textContent = "";
     apply();
   });
 
   apply(); // état initial cohérent avec les valeurs par défaut des curseurs
+})();
+
+// ===================== VISIONNEUSE PLEIN ÉCRAN (graphes admin) =====================
+// Délégation d'événement sur document : les images (.admGraphImg) sont
+// créées dynamiquement à chaque résultat admin, un listener direct sur
+// chacune serait reposé/perdu à chaque re-rendu.
+(function(){
+  var lightbox = document.getElementById("imgLightbox");
+  var lightboxImg = document.getElementById("imgLightboxImg");
+  var closeBtn = document.getElementById("imgLightboxClose");
+  if(!lightbox) return;
+
+  function openLightbox(src){
+    lightboxImg.src = src;
+    lightbox.style.display = "flex";
+  }
+  function closeLightbox(){
+    lightbox.style.display = "none";
+    lightboxImg.src = "";
+  }
+
+  document.addEventListener("click", function(e){
+    var img = e.target.closest && e.target.closest(".admGraphImg");
+    if(img){ openLightbox(img.src); return; }
+    if(e.target === lightbox) closeLightbox();
+  });
+  if(closeBtn) closeBtn.addEventListener("click", closeLightbox);
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && lightbox.style.display !== "none") closeLightbox();
+  });
 })();
 
 // ===================== MODE ADMIN =====================
@@ -2298,6 +2403,53 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
   }
   var FOOTPRINT_WARN_M = 2000; // au-delà, le calcul a de bonnes chances de dépasser 300s
 
+  async function runAdminSimulation(paramFileOverride, key){
+    var MAX_ATTEMPTS = 3;
+    var lastErr = null;
+
+    for(var attempt = 1; attempt <= MAX_ATTEMPTS; attempt++){
+      var r;
+      try{
+        r = await fetch(API + "/simulate_admin", {
+          method: "POST",
+          headers: {"Content-Type": "application/json", "X-Admin-Key": key},
+          body: JSON.stringify({
+            scene: adminScene,
+            paramFile: paramFileOverride,
+            perfoCsv: csvInput.value || null,
+          }),
+        });
+      }catch(networkErr){
+        // Échec réseau pur (fetch n'a même pas obtenu de réponse HTTP) —
+        // typiquement un cold start du conteneur (min_scale:0, cf. échange
+        // du 02/09/2026) : on retente, comme le fait déjà le chemin public.
+        lastErr = networkErr;
+        if(attempt < MAX_ATTEMPTS){
+          status.textContent = "Connexion échouée, nouvelle tentative (" + (attempt + 1) + "/" + MAX_ATTEMPTS + ")…";
+          await new Promise(function(res){ setTimeout(res, 2500); });
+          continue;
+        }
+        throw new Error("Serveur injoignable après " + MAX_ATTEMPTS + " tentatives (" + networkErr.message + ").");
+      }
+
+      // Une vraie réponse HTTP est arrivée (même en erreur) — pas la peine
+      // de retenter, ce n'est pas un problème réseau/cold-start mais une
+      // erreur applicative (auth, validation, calcul).
+      if(r.status === 403){
+        sessionStorage.removeItem("adminKey");
+        throw new Error("Clé admin refusée par le serveur.");
+      }
+      var j = await r.json();
+      if(!r.ok){
+        var err = new Error(j.detail || ("Erreur serveur (" + r.status + ")."));
+        err.logs = j.logs || "";
+        throw err;
+      }
+      return j;
+    }
+    throw lastErr;
+  }
+
   simBtn2.addEventListener("click", function(){
     if(!API) return;
     var key = sessionStorage.getItem("adminKey");
@@ -2327,29 +2479,7 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
     status.className = "prog-note";
     status.textContent = "Calcul en cours…";
 
-    fetch(API + "/simulate_admin", {
-      method: "POST",
-      headers: {"Content-Type": "application/json", "X-Admin-Key": key},
-      body: JSON.stringify({
-        scene: adminScene,
-        paramFile: paramFileOverride,
-        perfoCsv: csvInput.value || null,
-      }),
-    }).then(function(r){
-      if(r.status === 403){
-        sessionStorage.removeItem("adminKey");
-        var err403 = new Error("Clé admin refusée par le serveur.");
-        throw err403;
-      }
-      return r.json().then(function(j){
-        if(!r.ok){
-          var err = new Error(j.detail || ("Erreur serveur (" + r.status + ")."));
-          err.logs = j.logs || "";
-          throw err;
-        }
-        return j;
-      });
-    }).then(function(data){
+    runAdminSimulation(paramFileOverride, key).then(function(data){
       var dataUrl = "data:image/png;base64," + data.image_b64;
       resultImg.src = dataUrl;
       downloadLink.href = dataUrl;
@@ -2383,15 +2513,14 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
         var bandColors2 = {Rouge:"var(--photon)", Vert:"#8CC98A", Bleu:"var(--pixel)"};
         var anyGraph = false;
         var GRAPH_FIELDS = [
+          ["pupil_png_b64", "Masque pupillaire"],
           ["psf_png_b64", "PSF (oversampled vs rebinnée)"],
           ["mtf_png_b64", "Budget MTF"],
           ["snr_regimes_png_b64", "SNR — régimes de bruit dominants"],
           ["snr_noise_budget_png_b64", "Budget de bruit (barres)"],
           ["snr_map_png_b64", "Carte SNR"],
-          ["snr_noise_maps_png_b64", "Cartes de bruit — analytique"],
           ["snr_noise_maps_sim_png_b64", "Cartes de bruit — simulé"],
           ["snr_image_compare_png_b64", "Image source / bruitée / résidu"],
-          ["snr_profile_1d_png_b64", "Profil 1D (signal)"],
           ["snr_histogram_png_b64", "Histogramme signal"],
         ];
         Object.keys(data.bands || {}).forEach(function(bandName){
@@ -2408,8 +2537,8 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
           GRAPH_FIELDS.forEach(function(f){
             if(!d[f[0]]) return;
             imgs += "<div style='flex:1 1 320px;max-width:480px'>"
-              + "<img src='data:image/png;base64," + d[f[0]]
-              + "' style='width:100%;display:block;border:1px solid var(--line-soft);border-radius:3px'>"
+              + "<img class='admGraphImg' src='data:image/png;base64," + d[f[0]]
+              + "' style='width:100%;display:block;border:1px solid var(--line-soft);border-radius:3px;cursor:zoom-in'>"
               + "<p class='note' style='margin-top:4px;text-align:center'>" + f[1] + "</p></div>";
           });
           imgs += "</div>";
