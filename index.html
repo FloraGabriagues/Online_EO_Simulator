@@ -681,6 +681,8 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
           <div id="adminImgWrap" style="max-width:100%;height:420px;overflow:auto;
             border:1px solid var(--line-soft);border-radius:3px;background:var(--void);
             resize:vertical">
+            <canvas id="adminResultCanvas" style="display:none;max-width:none;
+              image-rendering:pixelated;transform-origin:0 0"></canvas>
             <img id="adminResultImg" style="display:block;max-width:none;
               image-rendering:pixelated;transform-origin:top left">
           </div>
@@ -732,10 +734,11 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
                 <span class="ctrl-val"><input type="number" id="admImgTintN" step="5" min="-100" max="100"></span></div>
               <input type="range" id="admImgTint" min="-100" max="100" step="1" value="0">
             </div>
-            <!-- Mode de rendu : appliqué CÔTÉ SERVEUR, pas ici. L'image reçue est
-                 un PNG 8 bits déjà étiré ; le navigateur ne peut plus distinguer
-                 un blanc saturé d'un blanc écrêté par l'étirement. Changer ce
-                 réglage relance donc la simulation. -->
+            <!-- Mode de rendu : appliqué DANS LE NAVIGATEUR à partir des DN bruts
+                 renvoyés une seule fois par le serveur (data.dn_b64). Changer ce
+                 réglage est instantané, aucune simulation n'est relancée. Si le
+                 serveur ne renvoie pas encore les DN, on retombe sur le PNG et
+                 le sélecteur est désactivé. -->
             <div class="ctrl" style="margin-bottom:10px">
               <div class="ctrl-top"><span class="ctrl-name">Rendu de l'image</span></div>
               <select id="admRenderMode" style="width:100%;padding:7px 8px;
@@ -2129,6 +2132,14 @@ sceneReadyP[activeScene].then(function(){
 });
 window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); });
 
+// Libellés des modes de rendu, en portée globale : utilisés à la fois par le
+// panneau de réglages et par la fonction de rendu, définies dans deux IIFE.
+window.RENDER_HELP_G = {
+  physique:   "Échelle absolue : un blanc à l'écran est un pixel réellement saturé. Seul mode où le niveau est interprétable.",
+  blanc_ref:  "Normalisé sur un blanc commun : deux simulations restent comparables entre elles.",
+  percentile: "Étirement dépendant du contenu — écrête 4 % des pixels. À réserver au jugement de netteté, jamais du niveau."
+};
+
 // ===================== IMAGE ADMIN — zoom / contraste / saturation / luminosité =====================
 // Purement de l'affichage côté navigateur (filter CSS + transform scale) —
 // aucun recalcul serveur, l'image téléchargée reste toujours la brute
@@ -2174,14 +2185,19 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
 
   function apply(){
     var z = parseFloat(zoomS.value) / 100;
-    img.style.transform = "scale(" + z + ")";
     if(wrap) wrap.style.height = heightS.value + "px";
     updateWbMatrix();
-    img.style.filter =
-      "url(#admWbFilter) " +
+    var f = "url(#admWbFilter) " +
       "brightness(" + brightS.value + "%) " +
       "contrast(" + contrastS.value + "%) " +
       "saturate(" + satS.value + "%)";
+    // Le rendu peut se faire sur l'<img> (PNG serveur) ou sur le canvas
+    // (DN bruts) : les mêmes réglages doivent s'appliquer aux deux.
+    [img, document.getElementById("adminResultCanvas")].forEach(function(el){
+      if(!el) return;
+      el.style.transform = "scale(" + z + ")";
+      el.style.filter = f;
+    });
   }
 
   // ---- Sélection d'un point blanc par clic ----
@@ -2194,29 +2210,42 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
     wbPickBtn.addEventListener("click", function(){
       wbPicking = !wbPicking;
       img.style.cursor = wbPicking ? "crosshair" : "";
+      var _cv = document.getElementById("adminResultCanvas");
+      if(_cv) _cv.style.cursor = wbPicking ? "crosshair" : "";
       wbPickBtn.style.borderColor = wbPicking ? "var(--photon)" : "";
       wbPickBtn.style.color = wbPicking ? "var(--photon)" : "";
       wbPickStatus.textContent = wbPicking ? "Clique sur un pixel qui devrait être neutre (blanc/gris)…" : "";
     });
   }
 
-  img.addEventListener("click", function(e){
+  // Cible visible : canvas si les DN bruts sont disponibles, sinon l'<img>.
+  function visibleTarget(){
+    var cv = document.getElementById("adminResultCanvas");
+    return (cv && cv.style.display !== "none") ? cv : img;
+  }
+
+  function onPickClick(e){
     if(!wbPicking) return;
     wbPicking = false;
     img.style.cursor = "";
+    var _cv2 = document.getElementById("adminResultCanvas");
+    if(_cv2) _cv2.style.cursor = "";
     wbPickBtn.style.borderColor = ""; wbPickBtn.style.color = "";
 
     try{
-      var rect = img.getBoundingClientRect();
-      var scaleX = img.naturalWidth / rect.width;
-      var scaleY = img.naturalHeight / rect.height;
-      var x = Math.min(img.naturalWidth - 1, Math.max(0, Math.floor((e.clientX - rect.left) * scaleX)));
-      var y = Math.min(img.naturalHeight - 1, Math.max(0, Math.floor((e.clientY - rect.top) * scaleY)));
+      var tgt = visibleTarget();
+      var natW = tgt.naturalWidth || tgt.width;
+      var natH = tgt.naturalHeight || tgt.height;
+      var rect = tgt.getBoundingClientRect();
+      var scaleX = natW / rect.width;
+      var scaleY = natH / rect.height;
+      var x = Math.min(natW - 1, Math.max(0, Math.floor((e.clientX - rect.left) * scaleX)));
+      var y = Math.min(natH - 1, Math.max(0, Math.floor((e.clientY - rect.top) * scaleY)));
 
       var off = document.createElement("canvas");
-      off.width = img.naturalWidth; off.height = img.naturalHeight;
+      off.width = natW; off.height = natH;
       var octx = off.getContext("2d");
-      octx.drawImage(img, 0, 0);
+      octx.drawImage(tgt, 0, 0);
 
       // Moyenne sur 5x5 plutôt que sur le pixel cliqué : un pixel isolé porte
       // tout le bruit de photons et la PRNU de sa colonne, les gains sautaient
@@ -2260,7 +2289,10 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
     }catch(err){
       wbPickStatus.textContent = "Lecture du pixel impossible (" + err.message + ").";
     }
-  });
+  }
+  img.addEventListener("click", onPickClick);
+  var _cvPick = document.getElementById("adminResultCanvas");
+  if(_cvPick) _cvPick.addEventListener("click", onPickClick);
 
   // chaque curseur/champ numérique reste synchronisé avec son jumeau
   [[zoomS, zoomN], [heightS, heightN], [brightS, brightN], [contrastS, contrastN], [satS, satN],
@@ -2292,14 +2324,11 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
   // signale, sinon l'utilisateur change le sélecteur et ne voit rien bouger.
   var renderSel = document.getElementById("admRenderMode");
   var renderNote = document.getElementById("admRenderModeNote");
-  var RENDER_HELP = {
-    physique:   "Échelle absolue : un blanc à l'écran est un pixel réellement saturé. Seul mode où le niveau est interprétable.",
-    blanc_ref:  "Normalisé sur un blanc commun : deux simulations restent comparables entre elles.",
-    percentile: "Étirement dépendant du contenu — écrête 4 % des pixels. À réserver au jugement de netteté, jamais du niveau."
-  };
+  var RENDER_HELP = window.RENDER_HELP_G;
   function refreshRenderNote(){
     if(!renderSel || !renderNote) return;
-    renderNote.textContent = (RENDER_HELP[renderSel.value] || "") + " Relancer la simulation pour l'appliquer.";
+    renderNote.textContent = RENDER_HELP[renderSel.value] || "";
+    if(window.__admRenderFromDN) window.__admRenderFromDN();
   }
   if(renderSel){ renderSel.addEventListener("change", refreshRenderNote); refreshRenderNote(); }
 
@@ -2475,10 +2504,6 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
             scene: adminScene,
             paramFile: paramFileOverride,
             perfoCsv: csvInput.value || null,
-            // Mode de rendu du PNG retourné. Le serveur doit l'accepter ;
-            // s'il l'ignore, le comportement reste celui d'avant (aucune
-            // régression), simplement le sélecteur n'aura pas d'effet.
-            display_mode: (document.getElementById("admRenderMode") || {}).value || "physique",
           }),
         });
       }catch(networkErr){
@@ -2545,6 +2570,107 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
       var dataUrl = "data:image/png;base64," + data.image_b64;
       resultImg.src = dataUrl;
       downloadLink.href = dataUrl;
+
+      // ---- Rendu client à partir des DN bruts --------------------------------
+      // Le serveur envoie UNE FOIS le tableau de comptes numériques
+      // (data.dn_b64 : Uint16 little-endian, ordre H x W x bandes, plus
+      // data.dn_shape et data.dn_max). Le navigateur peut alors basculer entre
+      // les modes de rendu instantanément, sans relancer le calcul.
+      // Absent -> on garde le PNG serveur et le sélecteur est grisé.
+      (function(){
+        var sel = document.getElementById("admRenderMode");
+        var note = document.getElementById("admRenderModeNote");
+        var cv = document.getElementById("adminResultCanvas");
+        if(!cv) return;
+
+        if(!data.dn_b64 || !data.dn_shape){
+          cv.style.display = "none";
+          resultImg.style.display = "block";
+          window.__admRenderFromDN = null;
+          if(sel){
+            sel.disabled = true;
+            if(note) note.textContent =
+              "Le serveur ne renvoie pas encore les DN bruts (champs dn_b64 / dn_shape) — "
+              + "affichage du PNG tel quel.";
+          }
+          return;
+        }
+        if(sel) sel.disabled = false;
+
+        var H = data.dn_shape[0], W = data.dn_shape[1];
+        var NB = data.dn_shape.length > 2 ? data.dn_shape[2] : 1;
+        var dnMax = data.dn_max || 4095;
+
+        // base64 -> Uint16Array
+        var bin = atob(data.dn_b64);
+        var bytes = new Uint8Array(bin.length);
+        for(var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        var dn = new Uint16Array(bytes.buffer, bytes.byteOffset, bytes.byteLength >> 1);
+
+        cv.width = W; cv.height = H;
+        var ctx = cv.getContext("2d");
+
+        // Statistiques de saturation : calculées sur les DN, donc elles
+        // répondent vraiment à "est-ce le capteur ou l'affichage ?".
+        var nSat = 0, dnPeak = 0;
+        for(var k = 0; k < dn.length; k++){
+          if(dn[k] >= dnMax) nSat++;
+          if(dn[k] > dnPeak) dnPeak = dn[k];
+        }
+        var fracSat = nSat / dn.length;
+        var util = dnPeak / dnMax;
+
+        // p2/p98 communs aux bandes, calculés une fois (histogramme, O(n)).
+        var hist = new Uint32Array(dnMax + 1);
+        for(var k2 = 0; k2 < dn.length; k2++) hist[Math.min(dn[k2], dnMax)]++;
+        function pct(p){
+          var target = p * dn.length, acc = 0;
+          for(var v = 0; v <= dnMax; v++){ acc += hist[v]; if(acc >= target) return v; }
+          return dnMax;
+        }
+        var p2 = pct(0.02), p98 = pct(0.98);
+
+        var GAMMA = 1 / 2.2;   // un capteur linéaire affiché linéairement paraît toujours trop sombre
+
+        function render(){
+          var mode = sel ? sel.value : "physique";
+          var lo = 0, hi = dnMax;
+          if(mode === "percentile"){ lo = p2; hi = Math.max(p98, p2 + 1); }
+          else if(mode === "blanc_ref"){ hi = Math.max(1, window.__admWhiteRefDN || p98); }
+
+          var out = ctx.createImageData(W, H);
+          var d = out.data, span = hi - lo;
+          for(var y = 0, o = 0, s3 = 0; y < H; y++){
+            for(var x = 0; x < W; x++, o += 4, s3 += NB){
+              for(var c = 0; c < 3; c++){
+                var v = dn[s3 + (NB === 1 ? 0 : c)];
+                var t = (v - lo) / span;
+                t = t < 0 ? 0 : (t > 1 ? 1 : t);
+                d[o + c] = Math.round(Math.pow(t, GAMMA) * 255);
+              }
+              d[o + 3] = 255;
+            }
+          }
+          ctx.putImageData(out, 0, 0);
+
+          if(note){
+            var verdict;
+            if(fracSat > 0.001)
+              verdict = "Saturation CAPTEUR réelle : " + (fracSat * 100).toFixed(2) + " % des pixels au plafond ADC.";
+            else if(util < 0.5)
+              verdict = "Aucune saturation capteur — dynamique utilisée à " + (util * 100).toFixed(0)
+                      + " % (DN max " + dnPeak + "/" + dnMax + "). Scène sous-exposée.";
+            else
+              verdict = "Pas de saturation capteur — dynamique utilisée à " + (util * 100).toFixed(0) + " %.";
+            note.textContent = (RENDER_HELP_G[sel ? sel.value : "physique"] || "") + " — " + verdict;
+          }
+        }
+
+        window.__admRenderFromDN = render;
+        resultImg.style.display = "none";
+        cv.style.display = "block";
+        render();
+      })();
 
       // GSD (calculé côté client à partir du JSON soumis — mêmes valeurs
       // que celles envoyées au serveur, iFoV en rad, altitude en m) et SNR
