@@ -766,6 +766,19 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
                 <input id="admMaxDN" type="range" style="width:100%" min="0" max="1" value="1" step="1">
                 <p class="note" id="admManualBoundsNote" style="margin:6px 0 0"></p>
               </div>
+
+              <!-- Indépendant du mode de rendu choisi (physique / blanc_ref /
+                   percentile / manuel) : un simple surlignage PAR-DESSUS le
+                   rendu normal, pixel par pixel, sur les DN bruts. Contrairement
+                   au mode "manuel" poussé à l'extrême, ceci n'affecte JAMAIS la
+                   colorimétrie du reste de l'image — la balance des blancs et
+                   les filtres CSS restent pleinement actifs, y compris sur les
+                   pixels surlignés (le magenta passe simplement par-dessus). -->
+              <label style="display:flex;align-items:center;gap:6px;margin-top:10px;font-size:12.5px;cursor:pointer">
+                <input id="admSatHighlight" type="checkbox">
+                Surligner les pixels saturés (magenta)
+              </label>
+              <p class="note" id="admSatHighlightNote" style="margin:4px 0 0"></p>
             </div>
 
             <button id="admWbPickBtn" class="reset" type="button" style="width:100%;padding:8px 14px;margin-bottom:8px">Choisir un point blanc sur l'image</button>
@@ -2353,6 +2366,15 @@ window.RENDER_HELP_G = {
     if(window.__admRenderFromDN) window.__admRenderFromDN();
   }
   if(renderSel){ renderSel.addEventListener("change", refreshRenderNote); refreshRenderNote(); }
+  var satHighlightSel = document.getElementById("admSatHighlight");
+  if(satHighlightSel){
+    // Même pont que refreshRenderNote() ci-dessus : render() vit dans une autre
+    // fermeture (celle du résultat de simulation), donc on passe par la
+    // fonction globale exposée pour ça plutôt que d'appeler render() directement.
+    satHighlightSel.addEventListener("change", function(){
+      if(window.__admRenderFromDN) window.__admRenderFromDN();
+    });
+  }
   [minS, maxS].forEach(function(el){
     if(!el) return;
     el.addEventListener("input", function(){
@@ -2696,6 +2718,9 @@ window.RENDER_HELP_G = {
           manualNote.textContent = "Échelle 0–" + dnMax + " (pleine échelle ADC). "
             + "Données réelles : " + dnFloor + " – " + dnPeak + ".";
 
+        var satHighlightEl = document.getElementById("admSatHighlight");
+        var satHighlightNote = document.getElementById("admSatHighlightNote");
+
         function render(){
           var mode = sel ? sel.value : "physique";
           var lo = 0, hi = dnMax;
@@ -2704,21 +2729,44 @@ window.RENDER_HELP_G = {
           else if(mode === "manuel" && minS && maxS){
             lo = parseInt(minS.value, 10); hi = parseInt(maxS.value, 10);
           }
+          var highlight = !!(satHighlightEl && satHighlightEl.checked);
+          var nHighlighted = 0;
 
           var out = ctx.createImageData(W, H);
           var d = out.data, span = hi - lo;
           for(var y = 0, o = 0, s3 = 0; y < H; y++){
             for(var x = 0; x < W; x++, o += 4, s3 += NB){
-              for(var c = 0; c < 3; c++){
-                var v = dn[s3 + (NB === 1 ? 0 : c)];
-                var t = (v - lo) / span;
-                t = t < 0 ? 0 : (t > 1 ? 1 : t);
-                d[o + c] = Math.round(Math.pow(t, GAMMA) * 255);
+              // Test de saturation sur les DN BRUTS, avant tout mapping lo/hi —
+              // indépendant du mode choisi, donc jamais influencé par un
+              // étirement manuel extrême comme celui qui a produit l'image
+              // tout bleu/noir.
+              var pixSat = false;
+              if(highlight){
+                for(var cc = 0; cc < 3; cc++){
+                  if(dn[s3 + (NB === 1 ? 0 : cc)] >= dnMax){ pixSat = true; break; }
+                }
+              }
+              if(pixSat){
+                d[o] = 255; d[o+1] = 0; d[o+2] = 255;   // magenta, ne se confond avec aucune couleur naturelle de scène
+                nHighlighted++;
+              } else {
+                for(var c = 0; c < 3; c++){
+                  var v = dn[s3 + (NB === 1 ? 0 : c)];
+                  var t = (v - lo) / span;
+                  t = t < 0 ? 0 : (t > 1 ? 1 : t);
+                  d[o + c] = Math.round(Math.pow(t, GAMMA) * 255);
+                }
               }
               d[o + 3] = 255;
             }
           }
           ctx.putImageData(out, 0, 0);
+
+          if(satHighlightNote){
+            satHighlightNote.textContent = highlight
+              ? (nHighlighted / (W * H) * 100).toFixed(2) + " % des pixels affichés sont saturés sur au moins un canal."
+              : "";
+          }
 
           if(note){
             var verdict;
