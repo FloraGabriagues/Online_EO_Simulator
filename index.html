@@ -692,7 +692,11 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
             </div>
             <div style="flex:1;background:var(--panel);padding:14px 16px">
               <div class="hl-v cool" id="adm-m-snr">—</div>
-              <div class="hl-k">SNR moyen (3 bandes)</div>
+              <div class="hl-k" id="adm-m-snr-label">SNR moyen (3 bandes)</div>
+            </div>
+            <div style="flex:1;background:var(--panel);padding:14px 16px">
+              <div class="hl-v cool" id="adm-m-mtf">—</div>
+              <div class="hl-k" id="adm-m-mtf-label">MTF à Nyquist (moy. 3 bandes)</div>
             </div>
           </div>
 
@@ -2413,6 +2417,7 @@ window.RENDER_HELP_G = {
   if(bandSelectEl){
     bandSelectEl.addEventListener("change", function(){
       if(window.__admRenderFromDN) window.__admRenderFromDN();
+      if(window.__admRefreshHeadlineStats) window.__admRefreshHeadlineStats();
     });
   }
   [minS, maxS].forEach(function(el){
@@ -3022,10 +3027,10 @@ window.RENDER_HELP_G = {
       })();
 
       // GSD (calculé côté client à partir du JSON soumis — mêmes valeurs
-      // que celles envoyées au serveur, iFoV en rad, altitude en m) et SNR
-      // moyen sur les 3 bandes (déjà renvoyé par le serveur dans data.bands).
+      // que celles envoyées au serveur, iFoV en rad, altitude en m). GSD ne
+      // dépend pas de la bande choisie (même iFoV pour les 3), donc pas de
+      // logique de bascule ici, contrairement à SNR et MTF ci-dessous.
       var gsdEl = document.getElementById("adm-m-gsd");
-      var snrEl = document.getElementById("adm-m-snr");
       if(gsdEl){
         var D_ = paramFileOverride.Telescope && paramFileOverride.Telescope.D;
         var iFoV_ = paramFileOverride.Telescope && paramFileOverride.Telescope.iFoV;
@@ -3037,12 +3042,50 @@ window.RENDER_HELP_G = {
           gsdEl.textContent = "—";
         }
       }
-      if(snrEl){
-        var snrVals = Object.keys(data.bands || {}).map(function(b){ return data.bands[b].snr_mean; });
-        snrEl.textContent = snrVals.length
-          ? (snrVals.reduce(function(a,b){return a+b;}, 0) / snrVals.length).toFixed(1)
-          : "—";
-      }
+
+      // data.bands vit dans CETTE fermeture ; le sélecteur de bande (qui doit
+      // déclencher la mise à jour de ces cartes au changement) vit dans une
+      // AUTRE fermeture — même pont que window.__admRenderFromDN ailleurs
+      // dans ce fichier : on expose les données et une fonction de rafraî-
+      // chissement globalement plutôt que de dupliquer la logique.
+      window.__admBandsData = data.bands || {};
+
+      window.__admRefreshHeadlineStats = function(){
+        var snrEl = document.getElementById("adm-m-snr");
+        var mtfEl = document.getElementById("adm-m-mtf");
+        var snrLabel = document.getElementById("adm-m-snr-label");
+        var mtfLabel = document.getElementById("adm-m-mtf-label");
+        var bandSel = document.getElementById("admBandSelect");
+        var bands = window.__admBandsData || {};
+        // Même ordre que les <option> de admBandSelect (0=Rouge, 1=Vert, 2=Bleu).
+        var BAND_NAMES = ["Rouge", "Vert", "Bleu"];
+
+        var selected = bandSel ? bandSel.value : "rgb";
+
+        function fmt(el, val, digits){
+          if(!el) return;
+          el.textContent = (val === null || val === undefined || isNaN(val)) ? "—" : val.toFixed(digits);
+        }
+
+        if(selected === "rgb" || !selected){
+          var snrVals = BAND_NAMES.map(function(b){ return bands[b] && bands[b].snr_mean; })
+            .filter(function(v){ return typeof v === "number"; });
+          var mtfVals = BAND_NAMES.map(function(b){ return bands[b] && bands[b].mtf_at_nyquist; })
+            .filter(function(v){ return typeof v === "number"; });
+          fmt(snrEl, snrVals.length ? snrVals.reduce(function(a,b){return a+b;},0)/snrVals.length : null, 1);
+          fmt(mtfEl, mtfVals.length ? mtfVals.reduce(function(a,b){return a+b;},0)/mtfVals.length : null, 3);
+          if(snrLabel) snrLabel.textContent = "SNR moyen (3 bandes)";
+          if(mtfLabel) mtfLabel.textContent = "MTF à Nyquist (moy. 3 bandes)";
+        } else {
+          var bandName = BAND_NAMES[parseInt(selected, 10)];
+          var bd = bands[bandName];
+          fmt(snrEl, bd && bd.snr_mean, 1);
+          fmt(mtfEl, bd && bd.mtf_at_nyquist, 3);
+          if(snrLabel) snrLabel.textContent = "SNR (" + bandName + ")";
+          if(mtfLabel) mtfLabel.textContent = "MTF à Nyquist (" + bandName + ")";
+        }
+      };
+      window.__admRefreshHeadlineStats();
 
       var graphsEl = document.getElementById("adminGraphsContent");
       if(graphsEl){
