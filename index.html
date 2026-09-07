@@ -2672,10 +2672,12 @@ window.RENDER_HELP_G = {
 
         var GAMMA = 1 / 2.2;   // un capteur linéaire affiché linéairement paraît toujours trop sombre
 
-        // minS/maxS sont déclarés dans une AUTRE fermeture (le bloc de réglages
-        // d'affichage, plus haut dans le fichier) — invisibles ici. On relit le
-        // DOM directement plutôt que de compter sur cette fermeture externe.
+        // minS/maxS/minValEl/maxValEl sont déclarés dans une AUTRE fermeture (le
+        // bloc de réglages d'affichage, plus haut dans le fichier) — invisibles
+        // ici. On relit le DOM directement plutôt que de compter sur cette
+        // fermeture externe.
         var minS = document.getElementById("admMinDN"), maxS = document.getElementById("admMaxDN");
+        var minValEl = document.getElementById("admMinDNVal"), maxValEl = document.getElementById("admMaxDNVal");
 
         // Curseurs manuels : bornes de déplacement = échelle physique complète
         // (0 à dnMax), position de DÉPART = vrai min/max des données. L'utilisateur
