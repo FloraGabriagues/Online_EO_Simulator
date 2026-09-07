@@ -2861,9 +2861,17 @@ window.RENDER_HELP_G = {
               "Le serveur ne renvoie pas encore les DN bruts (champs dn_b64 / dn_shape) — "
               + "affichage du PNG tel quel.";
           }
+          // Le sélecteur de bande dépend des MÊMES DN bruts — oublié ici la
+          // première fois : il restait cliquable sans rien faire (silencieux,
+          // pas d'erreur), ce qui donnait l'impression que "la sélection ne
+          // marche pas" plutôt que de voir clairement qu'elle est indisponible.
+          var bandSelEl = document.getElementById("admBandSelect");
+          if(bandSelEl) bandSelEl.disabled = true;
           return;
         }
         if(sel) sel.disabled = false;
+        var bandSelEl2 = document.getElementById("admBandSelect");
+        if(bandSelEl2) bandSelEl2.disabled = false;
 
         var H = data.dn_shape[0], W = data.dn_shape[1];
         var NB = data.dn_shape.length > 2 ? data.dn_shape[2] : 1;
