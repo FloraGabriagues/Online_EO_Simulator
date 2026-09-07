@@ -752,6 +752,22 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
                 <span class="ctrl-val"><input type="number" id="admImgTintN" step="5" min="-100" max="100"></span></div>
               <input type="range" id="admImgTint" min="-100" max="100" step="1" value="0">
             </div>
+            <!-- Bande affichée : purement client, aucune requête. Les DN bruts
+                 (dn_b64) contiennent déjà les 3 bandes (H,W,3) — on extrait
+                 juste le canal voulu au rendu, dupliqué sur R/G/B pour un
+                 affichage en niveaux de gris. RGB reste la vue par défaut à
+                 l'arrivée sur les résultats. -->
+            <div class="ctrl" style="margin-bottom:10px">
+              <div class="ctrl-top"><span class="ctrl-name">Bande affichée</span></div>
+              <select id="admBandSelect" style="width:100%;padding:7px 8px;
+                background:var(--panel);color:var(--fg);border:1px solid var(--line-soft);
+                border-radius:3px;font-family:var(--body);font-size:12.5px">
+                <option value="rgb" selected>RGB (composite)</option>
+                <option value="0">Rouge seule (niveaux de gris)</option>
+                <option value="1">Verte seule (niveaux de gris)</option>
+                <option value="2">Bleue seule (niveaux de gris)</option>
+              </select>
+            </div>
             <!-- Mode de rendu : appliqué DANS LE NAVIGATEUR à partir des DN bruts
                  renvoyés une seule fois par le serveur (data.dn_b64). Changer ce
                  réglage est instantané, aucune simulation n'est relancée. Si le
@@ -2393,6 +2409,12 @@ window.RENDER_HELP_G = {
       if(window.__admRenderFromDN) window.__admRenderFromDN();
     });
   }
+  var bandSelectEl = document.getElementById("admBandSelect");
+  if(bandSelectEl){
+    bandSelectEl.addEventListener("change", function(){
+      if(window.__admRenderFromDN) window.__admRenderFromDN();
+    });
+  }
   [minS, maxS].forEach(function(el){
     if(!el) return;
     el.addEventListener("input", function(){
@@ -2918,6 +2940,12 @@ window.RENDER_HELP_G = {
           var highlight = !!(satHighlightEl && satHighlightEl.checked);
           var nHighlighted = 0;
 
+          // Bande affichée : "rgb" (composite, défaut) ou index de canal
+          // (0/1/2) pour une vue niveaux de gris d'une seule bande — purement
+          // client, aucun changement des DN reçus, cf. bloc HTML plus haut.
+          var bandSel = document.getElementById("admBandSelect");
+          var channelIdx = (bandSel && bandSel.value !== "rgb") ? parseInt(bandSel.value, 10) : null;
+
           var out = ctx.createImageData(W, H);
           var d = out.data, span = hi - lo;
           for(var y = 0, o = 0, s3 = 0; y < H; y++){
@@ -2925,16 +2953,27 @@ window.RENDER_HELP_G = {
               // Test de saturation sur les DN BRUTS, avant tout mapping lo/hi —
               // indépendant du mode choisi, donc jamais influencé par un
               // étirement manuel extrême comme celui qui a produit l'image
-              // tout bleu/noir.
+              // tout bleu/noir. En vue mono-bande, ne teste QUE le canal
+              // affiché — sinon une saturation invisible (autre bande) surprend.
               var pixSat = false;
               if(highlight){
-                for(var cc = 0; cc < 3; cc++){
-                  if(dn[s3 + (NB === 1 ? 0 : cc)] >= dnMax){ pixSat = true; break; }
+                if(channelIdx !== null){
+                  pixSat = dn[s3 + (NB === 1 ? 0 : channelIdx)] >= dnMax;
+                } else {
+                  for(var cc = 0; cc < 3; cc++){
+                    if(dn[s3 + (NB === 1 ? 0 : cc)] >= dnMax){ pixSat = true; break; }
+                  }
                 }
               }
               if(pixSat){
                 d[o] = 255; d[o+1] = 0; d[o+2] = 255;   // magenta, ne se confond avec aucune couleur naturelle de scène
                 nHighlighted++;
+              } else if(channelIdx !== null){
+                var vMono = dn[s3 + (NB === 1 ? 0 : channelIdx)];
+                var tMono = (vMono - lo) / span;
+                tMono = tMono < 0 ? 0 : (tMono > 1 ? 1 : tMono);
+                var gray = Math.round(Math.pow(tMono, GAMMA) * 255);
+                d[o] = gray; d[o+1] = gray; d[o+2] = gray;
               } else {
                 for(var c = 0; c < 3; c++){
                   var v = dn[s3 + (NB === 1 ? 0 : c)];
@@ -2950,7 +2989,8 @@ window.RENDER_HELP_G = {
 
           if(satHighlightNote){
             satHighlightNote.textContent = highlight
-              ? (nHighlighted / (W * H) * 100).toFixed(2) + " % des pixels affichés sont saturés sur au moins un canal."
+              ? (nHighlighted / (W * H) * 100).toFixed(2) + " % des pixels affichés sont saturés"
+                + (channelIdx !== null ? " (bande sélectionnée)." : " sur au moins un canal.")
               : "";
           }
 
