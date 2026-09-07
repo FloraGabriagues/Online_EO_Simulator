@@ -623,6 +623,15 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       font-size:12.5px;margin-top:8px;resize:vertical">{}</textarea>
 
     <p class="ctrl-name" style="margin-top:16px">CSV Zernike (Detector_ID;Band;Column;Z1..Z37 — vide = front d'onde nul)</p>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+      <label class="reset" style="padding:7px 14px;cursor:pointer;display:inline-block">
+        Choisir un fichier .csv
+        <input id="adminCsvFile" type="file" accept=".csv,text/csv" style="display:none">
+      </label>
+      <span id="adminCsvFileStatus" class="note" style="margin:0"></span>
+      <button id="adminCsvClear" class="reset" type="button"
+        style="margin-left:auto;padding:7px 12px;display:none">Effacer</button>
+    </div>
     <textarea id="adminCsvInput" spellcheck="false" style="width:100%;box-sizing:border-box;
       height:120px;background:var(--panel-2);border:1px solid var(--line-soft);
       color:var(--paper);border-radius:3px;padding:10px 12px;font-family:var(--mono);
@@ -2455,6 +2464,94 @@ window.RENDER_HELP_G = {
   var scenesHost = document.getElementById("adminScenes");
   var jsonInput = document.getElementById("adminJsonInput");
   var csvInput = document.getElementById("adminCsvInput");
+  var csvFileInput = document.getElementById("adminCsvFile");
+  var csvFileStatus = document.getElementById("adminCsvFileStatus");
+  var csvClearBtn = document.getElementById("adminCsvClear");
+
+  var CSV_MAX_BYTES = 2 * 1024 * 1024;   // 2 Mo : un CSV Zernike réaliste pèse ~50 ko
+  var CSV_REQUIRED = ["Detector_ID", "Band", "Column"];
+
+  // Validation légère CÔTÉ CLIENT : n'attrape que les erreurs évidentes
+  // (mauvais séparateur, colonnes obligatoires absentes, fichier vide) pour
+  // un retour immédiat — le serveur reste seul juge de la validité complète
+  // (types, cohérence des points de champ, etc.), cf. load_zernike_csv côté
+  // EO_Toolbox. Ne PAS dupliquer cette logique plus finement ici : le but est
+  // d'éviter un aller-retour raté, pas de réimplémenter le parseur serveur.
+  function validateCsvLight(text){
+    var warnings = [];
+    if(!text || !text.trim()) return { ok: false, error: "Fichier vide." };
+
+    var firstLine = text.split(/\r?\n/, 1)[0] || "";
+    if(firstLine.indexOf(";") === -1){
+      return { ok: false, error: "Séparateur ';' introuvable sur la première ligne — CSV mal formé ?" };
+    }
+    var headerCols = firstLine.split(";").map(function(c){ return c.trim(); });
+    var missing = CSV_REQUIRED.filter(function(c){ return headerCols.indexOf(c) === -1; });
+    if(missing.length){
+      return { ok: false, error: "Colonnes obligatoires absentes : " + missing.join(", ") };
+    }
+    var nZ = headerCols.filter(function(c){ return /^Z\d+$/.test(c); }).length;
+    if(nZ === 0){
+      warnings.push("Aucune colonne Z1..Z37 trouvée — vérifier le fichier.");
+    }
+    var nLines = text.split(/\r?\n/).filter(function(l){ return l.trim(); }).length - 1;
+    return { ok: true, warnings: warnings, nLines: Math.max(0, nLines), nZ: nZ };
+  }
+
+  function setCsvFile(filename, text){
+    csvInput.value = text;
+    var v = validateCsvLight(text);
+    if(!v.ok){
+      csvFileStatus.textContent = filename + " — " + v.error;
+      csvFileStatus.style.color = "var(--err, #e05555)";
+    } else {
+      var msg = filename + " — " + v.nLines + " ligne(s), " + v.nZ + " colonnes Zernike";
+      if(v.warnings.length) msg += " (⚠ " + v.warnings.join(" ") + ")";
+      csvFileStatus.textContent = msg;
+      csvFileStatus.style.color = v.warnings.length ? "var(--warn, #c98a2b)" : "var(--muted)";
+    }
+    csvClearBtn.style.display = "inline-block";
+  }
+
+  if(csvFileInput){
+    csvFileInput.addEventListener("change", function(){
+      var file = csvFileInput.files && csvFileInput.files[0];
+      if(!file) return;
+      if(file.size > CSV_MAX_BYTES){
+        csvFileStatus.textContent = "Fichier trop volumineux (" + (file.size/1024).toFixed(0)
+          + " ko, max " + (CSV_MAX_BYTES/1024).toFixed(0) + " ko).";
+        csvFileStatus.style.color = "var(--err, #e05555)";
+        csvFileInput.value = "";
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(e){ setCsvFile(file.name, e.target.result); };
+      reader.onerror = function(){
+        csvFileStatus.textContent = "Lecture du fichier impossible.";
+        csvFileStatus.style.color = "var(--err, #e05555)";
+      };
+      reader.readAsText(file, "utf-8");
+    });
+  }
+  if(csvClearBtn){
+    csvClearBtn.addEventListener("click", function(){
+      csvInput.value = "";
+      csvFileInput.value = "";
+      csvFileStatus.textContent = "";
+      csvClearBtn.style.display = "none";
+    });
+  }
+  // Coller/éditer directement dans le textarea reste possible : dans ce cas
+  // on efface juste le statut du fichier (le contenu ne vient plus de lui,
+  // pas la peine d'afficher un nom de fichier périmé).
+  if(csvInput){
+    csvInput.addEventListener("input", function(){
+      if(csvFileInput && csvFileInput.files && csvFileInput.files[0]) return; // évite d'écraser juste après un chargement
+      csvFileStatus.textContent = "";
+      csvClearBtn.style.display = csvInput.value.trim() ? "inline-block" : "none";
+    });
+  }
+
   var simBtn2 = document.getElementById("adminSimBtn");
   var status = document.getElementById("adminStatus");
   var resultPage = document.getElementById("adminResultPage");
