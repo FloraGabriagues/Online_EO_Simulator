@@ -747,8 +747,25 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
                 <option value="physique" selected>Physique — 0 → pleine échelle ADC</option>
                 <option value="blanc_ref">Blanc de référence — comparable entre runs</option>
                 <option value="percentile">Étirement p2/p98 — netteté seulement</option>
+                <option value="manuel">Manuel — bornes ajustables</option>
               </select>
               <p class="note" id="admRenderModeNote" style="margin:6px 0 0"></p>
+
+              <!-- Curseurs min/max : cachés hors du mode "manuel". Les bornes des
+                   sliders (min=0, max=dnMax) et les positions de départ (vrai min/max
+                   des données) sont fixées au décodage des DN — jamais un percentile
+                   arbitraire, ce sont les valeurs réelles présentes dans l'image. -->
+              <div id="admManualStretch" style="display:none;margin-top:8px">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
+                  <span>Borne basse</span><span id="admMinDNVal">—</span>
+                </div>
+                <input id="admMinDN" type="range" style="width:100%" min="0" max="1" value="0" step="1">
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px">
+                  <span>Borne haute</span><span id="admMaxDNVal">—</span>
+                </div>
+                <input id="admMaxDN" type="range" style="width:100%" min="0" max="1" value="1" step="1">
+                <p class="note" id="admManualBoundsNote" style="margin:6px 0 0"></p>
+              </div>
             </div>
 
             <button id="admWbPickBtn" class="reset" type="button" style="width:100%;padding:8px 14px;margin-bottom:8px">Choisir un point blanc sur l'image</button>
@@ -2325,12 +2342,33 @@ window.RENDER_HELP_G = {
   var renderSel = document.getElementById("admRenderMode");
   var renderNote = document.getElementById("admRenderModeNote");
   var RENDER_HELP = window.RENDER_HELP_G;
+  var manualBox = document.getElementById("admManualStretch");
+  var minS = document.getElementById("admMinDN"), maxS = document.getElementById("admMaxDN");
+  var minValEl = document.getElementById("admMinDNVal"), maxValEl = document.getElementById("admMaxDNVal");
+
   function refreshRenderNote(){
     if(!renderSel || !renderNote) return;
     renderNote.textContent = RENDER_HELP[renderSel.value] || "";
+    if(manualBox) manualBox.style.display = (renderSel.value === "manuel") ? "block" : "none";
     if(window.__admRenderFromDN) window.__admRenderFromDN();
   }
   if(renderSel){ renderSel.addEventListener("change", refreshRenderNote); refreshRenderNote(); }
+  [minS, maxS].forEach(function(el){
+    if(!el) return;
+    el.addEventListener("input", function(){
+      // Garde-fou : la borne basse ne peut pas dépasser la borne haute, sinon
+      // span devient négatif ou nul et l'image entière tourne au blanc/noir plat.
+      if(minS && maxS){
+        if(parseInt(minS.value,10) >= parseInt(maxS.value,10)){
+          if(el === minS) minS.value = Math.max(0, parseInt(maxS.value,10) - 1);
+          else maxS.value = parseInt(minS.value,10) + 1;
+        }
+      }
+      if(minValEl) minValEl.textContent = minS.value;
+      if(maxValEl) maxValEl.textContent = maxS.value;
+      if(window.__admRenderFromDN) window.__admRenderFromDN();
+    });
+  });
 
   if(resetBtn) resetBtn.addEventListener("click", function(){
     zoomS.value = zoomN.value = DEFAULTS.zoom;
@@ -2610,12 +2648,14 @@ window.RENDER_HELP_G = {
         cv.width = W; cv.height = H;
         var ctx = cv.getContext("2d");
 
-        // Statistiques de saturation : calculées sur les DN, donc elles
-        // répondent vraiment à "est-ce le capteur ou l'affichage ?".
-        var nSat = 0, dnPeak = 0;
+        // Statistiques de saturation ET vraies bornes des données (pas un
+        // percentile : le min/max réellement présents dans l'image, ceux
+        // que les curseurs manuels doivent pouvoir atteindre).
+        var nSat = 0, dnPeak = 0, dnFloor = dnMax;
         for(var k = 0; k < dn.length; k++){
           if(dn[k] >= dnMax) nSat++;
           if(dn[k] > dnPeak) dnPeak = dn[k];
+          if(dn[k] < dnFloor) dnFloor = dn[k];
         }
         var fracSat = nSat / dn.length;
         var util = dnPeak / dnMax;
@@ -2632,11 +2672,31 @@ window.RENDER_HELP_G = {
 
         var GAMMA = 1 / 2.2;   // un capteur linéaire affiché linéairement paraît toujours trop sombre
 
+        // Curseurs manuels : bornes de déplacement = échelle physique complète
+        // (0 à dnMax), position de DÉPART = vrai min/max des données. L'utilisateur
+        // voit tout de suite où se situe sa scène dans l'échelle totale, plutôt
+        // que de partir de 0/dnMax à l'aveugle.
+        if(minS && maxS){
+          minS.min = maxS.min = 0;
+          minS.max = maxS.max = dnMax;
+          minS.value = dnFloor;
+          maxS.value = dnPeak;
+          if(minValEl) minValEl.textContent = dnFloor;
+          if(maxValEl) maxValEl.textContent = dnPeak;
+        }
+        var manualNote = document.getElementById("admManualBoundsNote");
+        if(manualNote)
+          manualNote.textContent = "Échelle 0–" + dnMax + " (pleine échelle ADC). "
+            + "Données réelles : " + dnFloor + " – " + dnPeak + ".";
+
         function render(){
           var mode = sel ? sel.value : "physique";
           var lo = 0, hi = dnMax;
           if(mode === "percentile"){ lo = p2; hi = Math.max(p98, p2 + 1); }
           else if(mode === "blanc_ref"){ hi = Math.max(1, window.__admWhiteRefDN || p98); }
+          else if(mode === "manuel" && minS && maxS){
+            lo = parseInt(minS.value, 10); hi = parseInt(maxS.value, 10);
+          }
 
           var out = ctx.createImageData(W, H);
           var d = out.data, span = hi - lo;

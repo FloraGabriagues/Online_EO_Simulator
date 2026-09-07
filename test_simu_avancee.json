@@ -1,38 +1,21 @@
 {
   "Telescope": {
-    "D": 0.5,
-    "iFoV": 2.222222e-06,
+    "D": 0.700,
+    "iFoV": 15.01e-7,
     "central_obscuration": 0.3,
     "n_supports": 3,
     "support_width": 0.0476,
     "support_angle_offset": 90,
-    "T_opt_spectral": {
-      "wavelength_nm": [
-        400,
-        500,
-        600,
-        700,
-        800,
-        900,
-        1000
-      ],
-      "values": [
-        0.7,
-        0.75,
-        0.78,
-        0.8,
-        0.78,
-        0.75,
-        0.7
-      ]
-    },
     "WFE_convention": "Fringe",
-    "WFE_value": "RMS"
+    "WFE_value": "RMS",
+    "WFE_interp_points": 5
   },
+
   "Detector": {
     "nb_detectors": 1,
-    "nb_columns": 700,
-    "cross_pixels": 10,
+    "nb_columns": 300,
+    "pixel_pitch": 4.4e-6,
+    "cross_pixels": 0,
     "bands": [
       {
         "name": "Rouge",
@@ -57,46 +40,31 @@
       }
     ],
     "QE_spectral": {
-      "wavelength_nm": [
-        400,
-        500,
-        600,
-        700,
-        800,
-        900,
-        1000
-      ],
-      "values": [
-        0.6,
-        0.75,
-        0.85,
-        0.9,
-        0.88,
-        0.8,
-        0.7
-      ]
+      "wavelength_nm": [400, 450, 500, 560, 600, 700, 800, 900, 1000],
+      "values": [0.45, 0.62, 0.69, 0.72, 0.71, 0.62, 0.45, 0.25, 0.08]
     },
     "T_filter": 0.76,
-    "pixel_pitch": 4.4e-06,
-    "full_well": 50000,
-    "read_noise": 1.5,
-    "dark_current": 3.4,
+    "full_well": 5000,
+    "read_noise": 1.6,
+    "dark_current": 7,
     "bits": 12,
-    "prnu_sigma": 0.005,
-    "dsnu_sigma": 0.01
+    "prnu_sigma": 0.02,
+    "dsnu_sigma": 0.004
   },
+
   "Acquisition_scenario": {
     "altitude": 450000.0,
-    "T_int": 0.000585,
-    "solar_zenith": 30.0,
-    "Image_length": 700
+    "Image_length": 300,
+    "T_int": 9.46e-5,
+    "solar_zenith": 30.0
   },
+
   "Image_source": {
     "bands": {
       "Red": 1,
       "Green": 2,
       "Blue": 3
     },
-    "GSD_source": 0.3
+    "GSD_source": 0.2
   }
 }
