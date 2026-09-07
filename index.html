@@ -617,6 +617,15 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
     <div id="adminScenes" class="scenebar" style="margin-top:8px"></div>
 
     <p class="ctrl-name" style="margin-top:16px">paramFile (JSON — fusionné sur le template pour les champs omis)</p>
+    <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+      <label class="reset" style="padding:7px 14px;cursor:pointer;display:inline-block">
+        Choisir un fichier .json
+        <input id="adminJsonFile" type="file" accept=".json,application/json" style="display:none">
+      </label>
+      <span id="adminJsonFileStatus" class="note" style="margin:0"></span>
+      <button id="adminJsonClear" class="reset" type="button"
+        style="margin-left:auto;padding:7px 12px;display:none">Effacer</button>
+    </div>
     <textarea id="adminJsonInput" spellcheck="false" style="width:100%;box-sizing:border-box;
       height:260px;background:var(--panel-2);border:1px solid var(--line-soft);
       color:var(--paper);border-radius:3px;padding:10px 12px;font-family:var(--mono);
@@ -2463,6 +2472,86 @@ window.RENDER_HELP_G = {
   var closeBtn = document.getElementById("adminClose");
   var scenesHost = document.getElementById("adminScenes");
   var jsonInput = document.getElementById("adminJsonInput");
+  var jsonFileInput = document.getElementById("adminJsonFile");
+  var jsonFileStatus = document.getElementById("adminJsonFileStatus");
+  var jsonClearBtn = document.getElementById("adminJsonClear");
+
+  var JSON_MAX_BYTES = 2 * 1024 * 1024;
+  // paramFile peut être PARTIEL (fusionné sur le template pour les champs
+  // omis, cf. le sous-titre du panneau) — ces 4 sections ne sont donc que
+  // de l'INFORMATION affichée, jamais un motif de rejet du fichier.
+  var JSON_KNOWN_SECTIONS = ["Telescope", "Detector", "Acquisition_scenario", "Image_source"];
+
+  function validateJsonLight(text){
+    if(!text || !text.trim()) return { ok: false, error: "Fichier vide." };
+    var parsed;
+    try{ parsed = JSON.parse(text); }
+    catch(e){ return { ok: false, error: "JSON invalide : " + e.message }; }
+    if(typeof parsed !== "object" || parsed === null || Array.isArray(parsed)){
+      return { ok: false, error: "Le paramFile doit être un objet JSON ({...}), pas " +
+        (Array.isArray(parsed) ? "un tableau" : typeof parsed) + "." };
+    }
+    var present = JSON_KNOWN_SECTIONS.filter(function(k){ return k in parsed; });
+    var allKeys = Object.keys(parsed);
+    return { ok: true, present: present, nKeys: allKeys.length };
+  }
+
+  function setJsonFile(filename, text){
+    jsonInput.value = text;
+    var v = validateJsonLight(text);
+    if(!v.ok){
+      jsonFileStatus.textContent = filename + " — " + v.error;
+      jsonFileStatus.style.color = "var(--err, #e05555)";
+    } else {
+      var msg = filename + " — " + v.nKeys + " clé(s) racine";
+      if(v.present.length) msg += " (" + v.present.join(", ") + ")";
+      else msg += " — aucune section connue (Telescope/Detector/...), fusion complète sur le template";
+      jsonFileStatus.textContent = msg;
+      jsonFileStatus.style.color = "var(--muted)";
+    }
+    jsonClearBtn.style.display = "inline-block";
+  }
+
+  if(jsonFileInput){
+    jsonFileInput.addEventListener("change", function(){
+      var file = jsonFileInput.files && jsonFileInput.files[0];
+      if(!file) return;
+      if(file.size > JSON_MAX_BYTES){
+        jsonFileStatus.textContent = "Fichier trop volumineux (" + (file.size/1024).toFixed(0)
+          + " ko, max " + (JSON_MAX_BYTES/1024).toFixed(0) + " ko).";
+        jsonFileStatus.style.color = "var(--err, #e05555)";
+        jsonFileInput.value = "";
+        return;
+      }
+      var reader = new FileReader();
+      reader.onload = function(e){ setJsonFile(file.name, e.target.result); };
+      reader.onerror = function(){
+        jsonFileStatus.textContent = "Lecture du fichier impossible.";
+        jsonFileStatus.style.color = "var(--err, #e05555)";
+      };
+      reader.readAsText(file, "utf-8");
+    });
+  }
+  if(jsonClearBtn){
+    jsonClearBtn.addEventListener("click", function(){
+      jsonInput.value = "{}";
+      jsonFileInput.value = "";
+      jsonFileStatus.textContent = "";
+      jsonClearBtn.style.display = "none";
+    });
+  }
+  // Édition directe dans le textarea toujours possible — efface juste le
+  // statut du fichier, pour ne pas laisser un nom de fichier périmé affiché
+  // après une modification manuelle du contenu.
+  if(jsonInput){
+    jsonInput.addEventListener("input", function(){
+      if(jsonFileInput && jsonFileInput.files && jsonFileInput.files[0]) return;
+      jsonFileStatus.textContent = "";
+      var t = jsonInput.value.trim();
+      jsonClearBtn.style.display = (t && t !== "{}") ? "inline-block" : "none";
+    });
+  }
+
   var csvInput = document.getElementById("adminCsvInput");
   var csvFileInput = document.getElementById("adminCsvFile");
   var csvFileStatus = document.getElementById("adminCsvFileStatus");

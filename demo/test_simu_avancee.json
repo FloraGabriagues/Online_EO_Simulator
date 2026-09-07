@@ -8,7 +8,7 @@
     "support_angle_offset": 90,
     "WFE_convention": "Fringe",
     "WFE_value": "RMS",
-    "WFE_interp_points": 5
+    "WFE_interp_points": 2
   },
 
   "Detector": {
@@ -44,7 +44,7 @@
       "values": [0.45, 0.62, 0.69, 0.72, 0.71, 0.62, 0.45, 0.25, 0.08]
     },
     "T_filter": 0.76,
-    "full_well": 5000,
+    "full_well": 50000,
     "read_noise": 1.6,
     "dark_current": 7,
     "bits": 12,
@@ -56,7 +56,7 @@
     "altitude": 450000.0,
     "Image_length": 300,
     "T_int": 9.46e-5,
-    "solar_zenith": 30.0
+    "solar_zenith": 40.0
   },
 
   "Image_source": {
