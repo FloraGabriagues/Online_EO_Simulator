@@ -228,11 +228,9 @@ details.adv .inner{margin-top:16px}
   border-top:none;box-shadow:0 1px 3px rgba(0,0,0,.7)}
 .scalebar .lab{font-family:var(--mono);font-size:11px;color:var(--paper);
   text-shadow:0 1px 3px rgba(0,0,0,.95);letter-spacing:.04em;text-align:center}
-.simbar{position:fixed;right:20px;bottom:20px;z-index:80;max-width:340px;
+.simbar{margin-top:14px;width:100%;box-sizing:border-box;
   background:var(--panel);border:1px solid var(--line);border-radius:8px;
-  padding:16px 18px;box-shadow:0 12px 32px rgba(0,0,0,.55);
-  transform:translateY(12px);opacity:0;pointer-events:none;
-  transition:transform .22s ease,opacity .22s ease}
+  padding:16px 18px;box-shadow:0 12px 32px rgba(0,0,0,.35)}
 .simbar.visible{transform:translateY(0);opacity:1;pointer-events:auto;
   animation:simbar-pulse 1.8s ease-out 1}
 @keyframes simbar-pulse{
@@ -304,6 +302,13 @@ details.adv .inner{margin-top:16px}
 .headline{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;
   background:var(--line-soft);border:1px solid var(--line-soft);border-radius:4px;
   overflow:hidden;margin-top:16px}
+.headline.compact{margin-top:0;margin-bottom:14px}
+.headline.compact .hl-item{padding:9px 12px}
+.headline.compact .hl-v{font-size:18px}
+.headline.compact .hl-k{font-size:10.5px;margin-top:3px}
+.headline.compact .metric-n{font-size:10px}
+.headline.compact .hl-detail{margin-top:5px}
+.headline.compact .hl-detail summary{font-size:10px}
 .hl-item{background:var(--panel);padding:18px 20px}
 .hl-v{font-family:var(--display);font-size:clamp(28px,3.4vw,40px);font-weight:600;
   line-height:1;color:var(--paper)}
@@ -400,14 +405,32 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
 
   <!-- scène et image -->
   <div class="col-view">
-    <p class="steptitle"><span class="stepnum">1.</span> Résultat : image simulée</p>
+    <p class="steptitle"><span class="stepnum">1.</span> Choisir une image source</p>
     <div class="tabs" role="tablist" aria-label="Vue">
       <button class="tab" id="tab-image" type="button" role="tab" aria-selected="true" aria-controls="tp-image">Image simulée</button>
       <button class="tab" id="tab-graphs" type="button" role="tab" aria-selected="false" aria-controls="tp-graphs">Graphes</button>
     </div>
     <div class="tabpanel" id="tp-image" role="tabpanel" aria-labelledby="tab-image">
       <div class="viewer">
-      <div class="scenebar" id="scenes"></div>
+      <div class="headline compact">
+        <div class="hl-item">
+          <div class="hl-v" id="m-gsd">—</div>
+          <div class="hl-k">Résolution au sol</div>
+        </div>
+        <div class="hl-item">
+          <div class="hl-v warm" id="m-r15">—</div>
+          <div class="hl-k">Détail limite · FTM 15 %</div>
+          <div class="metric-n mono" id="n-r15"></div>
+        </div>
+        <div class="hl-item">
+          <div class="hl-v cool" id="m-snr">—</div>
+          <div class="hl-k">Signal / bruit <span class="snr-info" title="Réflectance, illumination et atmosphère selon scénario sélectionné — pas une mesure absolue de l'instrument.">ⓘ</span></div>
+          <details class="hl-detail"><summary>Voir le budget SNR</summary>
+            <div class="stackbar" id="stackbar"></div>
+            <div class="stacklegend" id="stacklegend"></div>
+          </details>
+        </div>
+      </div>
       <div class="compare" id="compare">
       <canvas id="truthLayer" width="1024" height="1024"></canvas>
       <canvas id="simLayer" width="1024" height="1024"></canvas>
@@ -431,41 +454,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <button class="mode zoom" data-z="4" type="button" aria-pressed="false">×4</button>
       </span>
       </div>
-
-      <div class="simbar" id="simbar">
-        <p class="previewhint" id="previewHint" hidden>Aperçu affiché</p>
-        <div class="simbar-head">
-          <button class="simbtn" id="simBtn" type="button">Lancer la simulation</button>
-          <button class="infobtn" id="engineInfoBtn" type="button" aria-label="Qu'est-ce que ça change ?">?</button>
-        </div>
-        <div class="infopop" id="engineInfoPop" hidden>
-          L'aperçu instantané est une approximation rapide. "Lancer la simulation" déclenche le calcul physique complet — optique, atmosphère et détecteur — sur les mêmes scènes.
-        </div>
-        <div class="prog" id="progWrap" hidden>
-          <div class="prog-track"><span class="prog-fill" id="progFill"></span></div>
-          <ol class="prog-steps" id="progSteps"></ol>
-          <p class="prog-note" id="progNote"></p>
-        </div>
-      </div>
-      </div>
-    </div>
-    <div class="headline">
-      <div class="hl-item">
-        <div class="hl-v" id="m-gsd">—</div>
-        <div class="hl-k">Résolution au sol</div>
-      </div>
-      <div class="hl-item">
-        <div class="hl-v warm" id="m-r15">—</div>
-        <div class="hl-k">Détail limite · FTM 15 %</div>
-        <div class="metric-n mono" id="n-r15"></div>
-      </div>
-      <div class="hl-item">
-        <div class="hl-v cool" id="m-snr">—</div>
-        <div class="hl-k">Signal / bruit <span class="snr-info" title="Réflectance, illumination et atmosphère selon scénario sélectionné — pas une mesure absolue de l'instrument.">ⓘ</span></div>
-        <details class="hl-detail"><summary>Voir le budget SNR</summary>
-          <div class="stackbar" id="stackbar"></div>
-          <div class="stacklegend" id="stacklegend"></div>
-        </details>
+      <div class="scenebar" id="scenes" style="margin-top:14px"></div>
       </div>
     </div>
     <div class="tabpanel" id="tp-graphs" role="tabpanel" aria-labelledby="tab-graphs" hidden>
@@ -492,9 +481,9 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       </div>
     </div>
     <div class="panel offer">
-    <p class="grouphead"><span class="dot warm"></span>Simulation sur mesure</p>
-    <p class="offer-body">La démo tourne sur des scènes de synthèse et une poignée de paramètres. Sur devis, la simulation porte sur <b>votre instrument et vos bandes spectrales</b>, à partir de <b>vos propres images sources</b> : études de sensibilité sur chaque paramètre, budgets FTM et SNR tracés par contributeur, et livraison des images simulées sur <b>l'ensemble du champ de vue</b>, pas seulement sur un extrait.</p>
-    <a class="offer-cta" href="mailto:contact@example.com?subject=Simulation%20qualit%C3%A9%20image%20%E2%80%94%20demande%20de%20devis">Faire simuler ma configuration</a>
+    <p class="grouphead"><span class="dot warm"></span>Vous travaillez sur votre propre instrument ?</p>
+    <p class="offer-body">Passez au simulateur complet.</p>
+    <a class="offer-cta" href="mailto:contact@example.com?subject=Simulateur%20complet%20%E2%80%94%20cr%C3%A9ation%20de%20compte">Créer un compte →</a>
     </div>
   </div>
 
@@ -519,18 +508,31 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <div class="panel params warm-ctrl" id="p-optics">
       <p class="grouphead"><span class="dot warm"></span>Optique</p>
       <div id="g-optics"></div>
-      <div class="ctrl" style="margin-top:17px">
-      <div class="ctrl-top"><span class="ctrl-name">Aberration dominante</span></div>
-      <div class="modes" id="zmodes"></div>
-      </div>
       <details class="adv"><summary>Paramètres avancés</summary>
-      <div class="inner" id="g-optics-adv"></div></details>
+      <div class="inner" id="g-optics-adv"></div>
+      </details>
       </div>
       <div class="panel params cool-ctrl" id="p-detector">
       <p class="grouphead"><span class="dot cool"></span>Détecteur</p>
       <div id="g-detector"></div>
+      <p class="note" id="detectorDerived" style="margin-top:10px"></p>
       <details class="adv"><summary>Paramètres avancés</summary>
       <div class="inner" id="g-detector-adv"></div></details>
+      </div>
+      <div class="simbar" id="simbar">
+        <p class="previewhint" id="previewHint" hidden>Aperçu affiché</p>
+        <div class="simbar-head">
+          <button class="simbtn" id="simBtn" type="button">Lancer la simulation</button>
+          <button class="infobtn" id="engineInfoBtn" type="button" aria-label="Qu'est-ce que ça change ?">?</button>
+        </div>
+        <div class="infopop" id="engineInfoPop" hidden>
+          L'aperçu instantané est une approximation rapide. "Lancer la simulation" déclenche le calcul physique complet — optique, atmosphère et détecteur — sur les mêmes scènes.
+        </div>
+        <div class="prog" id="progWrap" hidden>
+          <div class="prog-track"><span class="prog-fill" id="progFill"></span></div>
+          <ol class="prog-steps" id="progSteps"></ol>
+          <p class="prog-note" id="progNote"></p>
+        </div>
       </div>
     </div>
   </div>
@@ -840,7 +842,7 @@ var curW = Math.round(curExtW / curRes), curH = Math.round(curExtH / curRes);
 var NP = 256, DPX = 64;
 
 var st = {D:0.65, E:0.35, W:25, T:0.62, I:0.484, R:12, P:1.6, K:150, H:620, S:45,
-          TI:45, TDI:20, Z:"none"};
+          TI:45, TDI:20, PX:10, Z:"defoc"};
 
 var PARAMS = [
   {k:"D", g:"optics",   adv:false, name:"Diamètre de pupille",  unit:"m",     min:0.20, max:1.30, step:0.01, dec:2},
@@ -849,6 +851,7 @@ var PARAMS = [
   {k:"E", g:"optics",   adv:true,  name:"Obscuration centrale", unit:"m",     min:0,    max:0.5,  step:0.005, dec:3},
   {k:"T", g:"optics",   adv:true,  name:"Transmission optique", unit:"τ",     min:0.15, max:0.95, step:0.01, dec:2},
   {k:"R",   g:"detector", adv:false, name:"Bruit de lecture",     unit:"e⁻",    min:1,    max:80,   step:0.5,  dec:1},
+  {k:"PX",  g:"detector", adv:false, name:"Pitch pixel",          unit:"µm",    min:5,    max:25,   step:0.1,  dec:1},
   {k:"TI",  g:"acq", adv:false, name:"Temps d'intégration",  unit:"µs",    min:5,    max:2000, step:5,    dec:0},
   {k:"TDI", g:"acq", adv:false, name:"Étages TDI",           unit:"×",     min:1,    max:64,   step:1,    dec:0},
   {k:"P", g:"detector", adv:true,  name:"PRNU",                 unit:"%",     min:0,    max:5,    step:0.05, dec:2},
@@ -857,12 +860,6 @@ var PARAMS = [
   {k:"S", g:"orbit",    adv:false, name:"Élévation solaire",    unit:"°",     min:8,    max:80,   step:1,    dec:0}
 ];
 var PMAP = {}; PARAMS.forEach(function(p){ PMAP[p.k]=p; });
-
-var ZMODES = [
-  {id:"none",  label:"aucune"}, {id:"defoc", label:"défocus"},
-  {id:"astig", label:"astigm."}, {id:"coma",  label:"coma"},
-  {id:"spher", label:"sphérique"}, {id:"trefo", label:"trèfle"}
-];
 
 // Instruments "quick start" : voir presets.js (chargé avant ce script)
 
@@ -873,6 +870,11 @@ function gsdOf(s){ return ifovRad(s) * altM(s); }
 function cutoffOf(s){ return s.D / (LAMBDA * altM(s)); }
 function nyqOf(s){ return 1 / (2 * gsdOf(s)); }
 function qOf(s){ return LAMBDA / (s.D * ifovRad(s)); }
+// Focale et F/# dérivés du pitch pixel et de l'iFoV (pitch = focale × iFoV) —
+// purement informatif : la résolution simulée reste pilotée par l'iFoV, pas
+// par ce couple pitch/focale.
+function focalOf(s){ return (s.PX * 1e-6) / ifovRad(s); }
+function fnumOf(s){ return focalOf(s) / s.D; }
 function groundSpeed(s){ var r = RE + altM(s); return Math.sqrt(GM/r) * RE / r; }
 function tIntOf(s){ return s.TI * 1e-6; }
 // durée nominale d'un pushbroom : GSD parcouru à la vitesse sol
@@ -1059,16 +1061,27 @@ function m2px(m){ return m/TRUTH_RES; }
 // source affichée ici et le résultat /simulate ne montrent pas la même
 // zone (cf. échange du 01/09/2026, régénéré via generate_scene_previews.py
 // avec un crop de 1000x1000px source à 0.2m/px).
+//
+// srcExtH = emprise verticale RÉELLE du JPEG source (200m, carré, inchangée).
+// extH = emprise verticale effectivement AFFICHÉE ici après rognage (140m =
+// 200 - 30m en haut - 30m en bas). Le rognage se fait au chargement de
+// l'image (cf. buildScenes), à partir de la fraction srcExtH/extH — il ne
+// touche donc pas aux fichiers JPEG eux-mêmes.
+// ATTENTION : ce rognage n'existe que côté client. Le bouton "Lancer la
+// simulation" (API /simulate) renvoie l'image calculée par le serveur sur
+// l'emprise CORE_FOOTPRINT_M complète (200x200m) tant que eo_adapter.py n'a
+// pas été mis à jour en conséquence — sans ça, l'image simulée réelle
+// apparaîtra étirée verticalement par rapport à l'image source rognée.
 var SCENES = [
   {id:"aix", name:"Ville", sub:"BD ORTHO IGN 2023",
     real:true, src:"assets/scenes/aix.jpg", thumb:"assets/scenes/aix_thumb.jpg",
-    extW:200.0, extH:200.0, res:0.2},
+    extW:200.0, extH:140.0, srcExtH:200.0, res:0.2},
   {id:"avion", name:"Avion", sub:"BD ORTHO IGN 2023",
     real:true, src:"assets/scenes/avion.jpg", thumb:"assets/scenes/avion_thumb.jpg",
-    extW:200.0, extH:200.0, res:0.2},
+    extW:200.0, extH:140.0, srcExtH:200.0, res:0.2},
   {id:"port", name:"Port", sub:"BD ORTHO IGN 2023",
     real:true, src:"assets/scenes/port.jpg", thumb:"assets/scenes/port_thumb.jpg",
-    extW:200.0, extH:200.0, res:0.2}
+    extW:200.0, extH:140.0, srcExtH:200.0, res:0.2}
 ];
 var sceneCanvases = {}, sceneReadyP = {}, activeScene = "aix";
 
@@ -1092,7 +1105,14 @@ function buildScenes(){
           var g = cv.getContext("2d", {willReadFrequently:true});
           g.imageSmoothingEnabled = true;
           g.imageSmoothingQuality = "high";
-          g.drawImage(img, 0, 0, w, h);   // toute l'emprise source, à sa résolution native
+          // rognage symétrique haut/bas si srcExtH > extH (cf. note ci-dessus) —
+          // exprimé en fraction de la hauteur native du JPEG, jamais en pixels
+          // fixes, pour rester correct quelle que soit la résolution du fichier.
+          var srcExtH = sc.srcExtH || sc.extH || 102.4;
+          var sw = img.naturalWidth || img.width, sh = img.naturalHeight || img.height;
+          var cropFracY = srcExtH > sc.extH ? (srcExtH - sc.extH) / 2 / srcExtH : 0;
+          var sy = sh * cropFracY, sH = sh * (1 - 2*cropFracY);
+          g.drawImage(img, 0, sy, sw, sH, 0, 0, w, h);
           resolve();
         };
         img.onerror = function(){
@@ -1286,12 +1306,12 @@ function drawPupil(){
   }
   ctx.putImageData(img,0,0);
   document.getElementById("pupilNote").innerHTML =
-    st.Z === "none"
+    st.W <= 0
       ? "Pupille annulaire, obscuration centrale ε = " + st.E.toFixed(2) +
         ". Front d'onde plat : la PSF est une tache d'Airy."
-      : "Aberration <b>" + (ZMODES.filter(function(z){return z.id===st.Z;})[0].label) +
-        "</b> · " + st.W + " nm RMS, soit ±" + maxp.toFixed(2) +
-        " onde en crête. C'est cette carte de phase qui déforme la PSF ci-contre.";
+      : "Budget d'erreur de front d'onde de <b>" + st.W + " nm RMS</b>, soit ±" +
+        maxp.toFixed(2) + " onde en crête, modélisé par un étalement équivalent " +
+        "de la PSF. C'est cette carte de phase qui la déforme ci-contre.";
 }
 function drawPsf(){
   var cv = document.getElementById("psfCv"), ctx;
@@ -1585,6 +1605,13 @@ function updateMetrics(){
 
   document.getElementById("m-gsd").innerHTML = (g<1?g.toFixed(2):g.toFixed(1))+"<u>m</u>";
 
+  var detNote = document.getElementById("detectorDerived");
+  if(detNote){
+    var f = focalOf(st), fn = fnumOf(st);
+    detNote.innerHTML = "Focale ≈ <b>" + (f<1 ? (f*1000).toFixed(0)+" mm" : f.toFixed(2)+" m") +
+      "</b> · F/# ≈ <b>" + fn.toFixed(1) + "</b> — dérivés du pitch et de l'iFoV.";
+  }
+
   document.getElementById("m-r15").innerHTML =
     (isFinite(r15) ? (r15<10?r15.toFixed(2):r15.toFixed(1)) : "—")+"<u>m</u>";
   document.getElementById("n-r15").textContent =
@@ -1705,28 +1732,6 @@ function refresh(){
 // ===================== INITIALISATION UI =====================
 buildControls();
 
-var zc = document.getElementById("zmodes");
-ZMODES.forEach(function(z){
-  var b = document.createElement("button");
-  b.className = "mode"; b.type = "button"; b.dataset.z = z.id;
-  b.setAttribute("aria-pressed", z.id === st.Z ? "true" : "false");
-  b.textContent = z.label;
-  b.addEventListener("click", function(){
-    if(locked) setLocked(false);
-    if(st.Z === z.id) return;
-    st.Z = z.id;
-    syncZ();
-    markPreset(null);
-    refresh();
-  });
-  zc.appendChild(b);
-});
-function syncZ(){
-  zc.querySelectorAll(".mode").forEach(function(x){
-    x.setAttribute("aria-pressed", x.dataset.z === st.Z ? "true" : "false");
-  });
-}
-
 buildScenes();
 
 var sceneHost = document.getElementById("scenes");
@@ -1783,8 +1788,12 @@ var currentPresetId = null;
 function markPreset(id){ currentPresetId = id; }
 function loadPreset(p){
   Object.keys(p.v).forEach(function(k){ st[k] = p.v[k]; });
+  // le mode d'aberration n'est plus un réglage exposé : on garde toujours
+  // le "défocus" comme forme générique servant à traduire la WFE RMS en un
+  // étalement de PSF équivalent, quelle que soit la valeur donnée par le preset.
+  st.Z = "defoc";
   updateDynamicRanges();
-  syncZ(); markPreset(p.id); setLocked(true);
+  markPreset(p.id); setLocked(true);
   if(typeof cancelSim === "function") cancelSim();
   loadPresetImage(p.id);
   refresh();
