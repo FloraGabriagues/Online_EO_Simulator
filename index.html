@@ -418,17 +418,12 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
           <div class="hl-k">Résolution au sol</div>
         </div>
         <div class="hl-item">
-          <div class="hl-v warm" id="m-r15">—</div>
-          <div class="hl-k">Détail limite · FTM 15 %</div>
-          <div class="metric-n mono" id="n-r15"></div>
+          <div class="hl-v cool" id="m-snr">—</div>
+          <div class="hl-k">SNR</div>
         </div>
         <div class="hl-item">
-          <div class="hl-v cool" id="m-snr">—</div>
-          <div class="hl-k">Signal / bruit <span class="snr-info" title="Réflectance, illumination et atmosphère selon scénario sélectionné — pas une mesure absolue de l'instrument.">ⓘ</span></div>
-          <details class="hl-detail"><summary>Voir le budget SNR</summary>
-            <div class="stackbar" id="stackbar"></div>
-            <div class="stacklegend" id="stacklegend"></div>
-          </details>
+          <div class="hl-v warm" id="m-mtfnyq">—</div>
+          <div class="hl-k">MTF à Nyquist</div>
         </div>
       </div>
       <div class="compare" id="compare">
@@ -482,8 +477,8 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
     </div>
     <div class="panel offer">
     <p class="grouphead"><span class="dot warm"></span>Vous travaillez sur votre propre instrument ?</p>
-    <p class="offer-body">Passez au simulateur complet.</p>
-    <a class="offer-cta" href="mailto:contact@example.com?subject=Simulateur%20complet%20%E2%80%94%20cr%C3%A9ation%20de%20compte">Créer un compte →</a>
+    <p class="offer-body">Passez de la démonstration à la simulation complète de votre instrument.</p>
+    <a class="offer-cta" href="mailto:contact@example.com?subject=Simulateur%20complet%20%E2%80%94%20acc%C3%A8s">Accéder au simulateur complet →</a>
     </div>
   </div>
 
@@ -1601,7 +1596,7 @@ function applyChange(k, v){
 
 
 function updateMetrics(){
-  var g = gsd(), sn = snr(), q = qFactor(), r15 = periodAtMtf(0.15);
+  var g = gsd(), sn = snr(), q = qFactor();
 
   document.getElementById("m-gsd").innerHTML = (g<1?g.toFixed(2):g.toFixed(1))+"<u>m</u>";
 
@@ -1612,27 +1607,8 @@ function updateMetrics(){
       "</b> · F/# ≈ <b>" + fn.toFixed(1) + "</b> — dérivés du pitch et de l'iFoV.";
   }
 
-  document.getElementById("m-r15").innerHTML =
-    (isFinite(r15) ? (r15<10?r15.toFixed(2):r15.toFixed(1)) : "—")+"<u>m</u>";
-  document.getElementById("n-r15").textContent =
-    isFinite(r15) ? "soit " + (1/r15).toFixed(2) + " cycles/m" : "";
-
   document.getElementById("m-snr").textContent = sn.toFixed(1);
-
-  var n = noiseTerms(), tot = n.shot+n.read+n.prnu+n.dark;
-  var parts = [{k:"photonique",v:n.shot,c:"#F5AC57"},{k:"lecture",v:n.read,c:"#9BADBD"},
-               {k:"PRNU",v:n.prnu,c:"#5FDCD0"},{k:"obscurité",v:n.dark,c:"#9B7AD1"}];
-  var bar = document.getElementById("stackbar"), leg = document.getElementById("stacklegend");
-  bar.innerHTML = ""; leg.innerHTML = "";
-  parts.forEach(function(p){
-    var frac = tot>0 ? p.v/tot : 0;
-    if(frac < 0.004) return;
-    var el = document.createElement("i"); el.style.background = p.c; el.style.flex = frac;
-    bar.appendChild(el);
-    var sp = document.createElement("span");
-    sp.innerHTML = "<s style='background:"+p.c+"'></s>"+p.k+" "+Math.round(frac*100)+"%";
-    leg.appendChild(sp);
-  });
+  document.getElementById("m-mtfnyq").textContent = mtfTot(nyquist()).toFixed(3);
 
   var mtfNote = document.getElementById("mtfNote");
   if(q < 1){
