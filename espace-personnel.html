@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Espace personnel — du photon au pixel</title>
+<style>
+:root{
+  --void:#090E13; --panel:#131E27; --panel-2:#1A2833;
+  --line:#2E4152; --line-soft:#22323F;
+  --paper:#E6EEF4; --muted:#9BADBD; --muted-2:#8497AA;
+  --photon:#F5AC57; --pixel:#5FDCD0; --alert:#F0776D; --ok:#7FD88F;
+  --display:"Barlow Condensed",Impact,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--void);color:var(--paper);font-family:var(--body);
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:760px;margin:0 auto;padding:0 26px 90px}
+
+header{padding:28px 0 20px;border-bottom:1px solid var(--line-soft);margin-bottom:32px}
+.back{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;
+  letter-spacing:.04em}
+.back:hover{color:var(--pixel)}
+.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--muted);margin:14px 0 6px}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,3.2vw,30px);margin:0}
+
+.createbtn{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  width:100%;appearance:none;cursor:pointer;text-decoration:none;
+  background:var(--panel-2);border:1px solid var(--pixel);color:var(--paper);
+  border-radius:6px;padding:18px 20px;margin-bottom:36px;transition:background .14s}
+.createbtn:hover{background:#1F2E3A}
+.createbtn .lab{font-family:var(--display);font-weight:600;font-size:18px;color:var(--pixel)}
+.createbtn .plus{font-size:20px;color:var(--pixel)}
+
+.sectiontitle{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+
+.instlist{display:flex;flex-direction:column;gap:10px;margin-bottom:36px}
+.instcard{display:flex;align-items:center;justify-content:space-between;gap:14px;
+  text-decoration:none;color:var(--paper);background:transparent;
+  border:1px solid var(--line-soft);border-radius:6px;padding:15px 18px;
+  transition:border-color .14s,background .14s}
+.instcard:hover{border-color:var(--line);background:#141F28}
+.instcard .name{font-weight:500;font-size:15px}
+.instcard .type{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:3px}
+.instcard .open{font-family:var(--mono);font-size:12px;color:var(--pixel);white-space:nowrap}
+.instcard.empty{opacity:.6;justify-content:center;color:var(--muted);font-size:14px;cursor:default}
+.instcard.empty:hover{border-color:var(--line-soft);background:transparent}
+
+.activity{border-top:1px solid var(--line-soft);padding-top:20px}
+.activity ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:9px}
+.activity li{font-size:13.5px;color:var(--muted);display:flex;justify-content:space-between;gap:10px}
+.activity li span:last-child{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);white-space:nowrap}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <a class="back" href="index.html">← Retour à la démo</a>
+    <p class="eyebrow">Espace personnel</p>
+    <h1>Bonjour, Flora</h1>
+  </header>
+
+  <a class="createbtn" href="creer-instrument.html">
+    <span class="lab">Créer un instrument</span>
+    <span class="plus">+</span>
+  </a>
+
+  <p class="sectiontitle">Mes instruments</p>
+  <div class="instlist" id="instList"></div>
+
+  <div class="activity">
+    <p class="sectiontitle">Activité récente</p>
+    <ul id="activityList"></ul>
+  </div>
+
+</div>
+
+<script>
+// Pas de backend pour l'instant : liste illustrative + relecture du brouillon
+// laissé par la page de création (mêmes clés localStorage que creer-instrument.html).
+var DEMO_INSTRUMENTS = [
+  {name:"SPEO 500", type:"Multispectral"},
+  {name:"Instrument test", type:"Multispectral"}
+];
+
+function readDraft(){
+  try{
+    var name = localStorage.getItem("dpap_instrument_name_v1");
+    var values = localStorage.getItem("dpap_instrument_draft_v1");
+    if(name && values && values !== "{}") return name;
+  }catch(e){}
+  return null;
+}
+
+var list = document.getElementById("instList");
+var draftName = readDraft();
+var items = DEMO_INSTRUMENTS.slice();
+if(draftName && !items.some(function(i){ return i.name === draftName; })){
+  items.unshift({name: draftName, type: "Multispectral", draft: true});
+}
+
+if(items.length === 0){
+  list.innerHTML = "<div class='instcard empty'>Aucun instrument pour l'instant</div>";
+} else {
+  items.forEach(function(it){
+    var a = document.createElement("a");
+    a.className = "instcard";
+    a.href = "creer-instrument.html";
+    a.innerHTML = "<div><div class='name'>"+it.name+(it.draft ? " <span style='color:var(--muted-2);font-weight:400'>· brouillon</span>" : "")+"</div>"+
+      "<div class='type'>"+it.type+"</div></div><span class='open'>Ouvrir →</span>";
+    list.appendChild(a);
+  });
+}
+
+var activityEl = document.getElementById("activityList");
+var activities = draftName
+  ? [["Brouillon "+draftName+" en cours", "à l'instant"]]
+  : [["Aucune activité récente", ""]];
+activityEl.innerHTML = activities.map(function(a){
+  return "<li><span>"+a[0]+"</span><span>"+a[1]+"</span></li>";
+}).join("");
+</script>
+</body>
+</html>

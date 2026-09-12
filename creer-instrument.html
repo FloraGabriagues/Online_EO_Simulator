@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Créer un instrument — du photon au pixel</title>
+<style>
+:root{
+  --void:#090E13; --panel:#131E27; --panel-2:#1A2833;
+  --line:#2E4152; --line-soft:#22323F;
+  --paper:#E6EEF4; --muted:#9BADBD; --muted-2:#8497AA;
+  --photon:#F5AC57; --pixel:#5FDCD0; --alert:#F0776D; --ok:#7FD88F;
+  --display:"Barlow Condensed",Impact,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--void);color:var(--paper);font-family:var(--body);
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1100px;margin:0 auto;padding:0 26px 90px}
+
+header{padding:28px 0 20px;display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;gap:14px;border-bottom:1px solid var(--line-soft);margin-bottom:26px}
+.back{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;
+  letter-spacing:.04em}
+.back:hover{color:var(--pixel)}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,3.2vw,32px);
+  margin:6px 0 0;letter-spacing:.01em}
+.typewrap{display:flex;align-items:center;gap:10px}
+.typewrap label{font-family:var(--mono);font-size:11.5px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.08em}
+select,.nameinput{background:var(--panel-2);color:var(--paper);border:1px solid var(--line);
+  border-radius:3px;padding:8px 10px;font-family:var(--body);font-size:14px}
+.nameinput{width:220px}
+.headfields{display:flex;align-items:flex-end;gap:22px;flex-wrap:wrap}
+.headfields .f label{display:block;font-family:var(--mono);font-size:11.5px;color:var(--muted);
+  text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+
+.entry{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:24px}
+.entry button{appearance:none;cursor:pointer;background:var(--panel-2);
+  border:1px solid var(--line-soft);color:var(--paper);border-radius:4px;
+  padding:13px 16px;font-family:var(--body);font-size:14px;text-align:left;
+  display:flex;align-items:center;gap:10px;transition:border-color .14s,background .14s}
+.entry button:hover{border-color:var(--line);background:#1F2E3A}
+.entry button.active{border-color:var(--pixel);background:#16232B}
+.entry input[type=file]{display:none}
+@media(max-width:560px){.entry{grid-template-columns:1fr}}
+
+.progresswrap{margin-bottom:28px}
+.progresswrap .row{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;
+  color:var(--muted);margin-bottom:7px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em}
+.progresswrap .row span:last-child{font-size:13px;letter-spacing:0;text-transform:none;color:var(--pixel)}
+.progresswrap .track{height:5px;background:var(--line-soft);border-radius:3px;overflow:hidden}
+.progresswrap .fill{height:100%;background:var(--pixel);transition:width .25s ease}
+
+.layout{display:grid;grid-template-columns:280px 1fr;gap:22px;align-items:start}
+@media(max-width:800px){.layout{grid-template-columns:1fr}}
+
+.chain{display:flex;flex-direction:column;gap:0}
+.chain-arrow{display:flex;justify-content:center;color:var(--muted-2);font-size:16px;padding:2px 0}
+.ctx-node{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:4px;
+  border:1px solid var(--line-soft);opacity:.5}
+.ctx-node .dot{width:8px;height:8px;border-radius:50%;background:var(--muted-2);flex:none}
+.ctx-node .lab{font-size:13.5px;font-weight:500}
+.ctx-node .sub{font-family:var(--mono);font-size:10.5px;color:var(--muted-2)}
+
+.schemawrap{margin-bottom:26px;overflow-x:auto}
+.schemawrap svg{display:block;min-width:760px;width:100%;height:auto}
+.schema-label{font-family:var(--mono);font-size:11px;fill:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.schema-ctx{opacity:.55}
+.schema-block{cursor:pointer;transition:opacity .18s}
+.schema-block{opacity:.65}
+.schema-block:hover{opacity:.85}
+.schema-block.active{opacity:1}
+.schema-outline{stroke:var(--line);fill:var(--panel-2);transition:stroke .18s,stroke-width .18s}
+.schema-block.active .schema-outline{stroke:var(--pixel);stroke-width:2.5}
+.schema-blocklabel{font-family:var(--body);font-size:12px;fill:var(--paper);font-weight:500}
+
+.instgroup{background:transparent}
+.instgroup .grouphead{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--muted);margin:0 0 10px;display:flex;align-items:center;gap:7px}
+.instgroup .grouphead .dot{width:7px;height:7px;border-radius:50%;background:var(--pixel)}
+
+.blocklist{border:1px solid var(--line-soft);border-radius:6px;overflow:hidden}
+.blockbtn{width:100%;display:flex;align-items:center;justify-content:space-between;
+  gap:10px;padding:13px 14px;background:transparent;border:0;
+  border-bottom:1px solid var(--line-soft);color:var(--paper);cursor:pointer;
+  font-family:var(--body);font-size:14px;text-align:left;
+  border-left:2px solid transparent;
+  opacity:.68;transition:opacity .15s,border-color .15s,background .15s}
+.blocklist .blockbtn:last-child{border-bottom:0}
+.blockbtn:hover{opacity:.9}
+.blockbtn.active{opacity:1;border-left-color:var(--pixel);background:rgba(95,220,208,.06);color:var(--pixel)}
+.blockbtn .lab{font-weight:500}
+.status{font-family:var(--mono);font-size:13px;color:var(--muted-2);width:16px;text-align:center;flex:none}
+.status.ok{color:var(--ok)}
+.status.warn{color:var(--photon)}
+
+.panel{background:transparent;border:1px solid var(--line-soft);border-radius:6px;
+  padding:16px 20px}
+.panel h2{font-family:var(--display);font-weight:600;font-size:19px;margin:0 0 4px}
+.panel .desc{font-size:13px;color:var(--muted);margin:0 0 16px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+.field .row{display:flex;gap:10px;align-items:center}
+.field input[type=number],.field input[type=text]{flex:1;background:var(--panel-2);
+  border:1px solid var(--line);border-radius:3px;color:var(--paper);padding:9px 11px;
+  font-family:var(--mono);font-size:14px}
+.field .unit{font-family:var(--mono);font-size:12px;color:var(--muted-2);min-width:34px}
+.field input:focus{outline:none;border-color:var(--pixel)}
+.panel-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;
+  padding-top:16px;border-top:1px solid var(--line-soft)}
+.btn{appearance:none;cursor:pointer;border-radius:4px;padding:10px 18px;
+  font-family:var(--body);font-size:14px;font-weight:500;border:1px solid var(--line)}
+.btn.primary{background:var(--pixel);color:#052824;border-color:var(--pixel)}
+.btn.ghost{background:transparent;color:var(--paper)}
+
+.savehint{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);margin-top:10px;
+  min-height:16px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div>
+      <a class="back" href="#">← Mes objets</a>
+      <h1>Créer un instrument</h1>
+    </div>
+    <div class="headfields">
+      <div class="f">
+        <label for="instName">Nom de l'instrument</label>
+        <input class="nameinput" type="text" id="instName" placeholder="SPEO 500">
+      </div>
+      <div class="f">
+        <label for="instType">Type</label>
+        <select id="instType">
+          <option value="ms">Multispectral</option>
+          <option value="hs" disabled>Hyperspectral (bientôt)</option>
+        </select>
+      </div>
+    </div>
+  </header>
+
+  <div class="entry">
+    <button id="btnFile" type="button">📄 Charger un fichier de configuration
+      <input type="file" id="fileInput" accept="application/json">
+    </button>
+    <button id="btnManual" class="active" type="button">✎ Configurer manuellement</button>
+  </div>
+
+  <div class="progresswrap">
+    <div class="row"><span>Configuration de l'instrument</span><span id="pctLabel">0 %</span></div>
+    <div class="track"><div class="fill" id="pctFill" style="width:0%"></div></div>
+  </div>
+
+  <div class="schemawrap" id="schemaWrap"></div>
+
+  <div class="layout">
+    <div class="chain" id="chain"></div>
+    <div class="panel" id="fieldPanel"></div>
+  </div>
+
+</div>
+
+<script>
+var STORAGE_KEY = "dpap_instrument_draft_v1";
+
+var SCHEMA = [
+  {id:"paysage", kind:"ctx", label:"Paysage L", sub:"scène source"},
+  {id:"atmosphere", kind:"ctx", label:"Atmosphère", sub:"modèle atmosphérique"},
+  {id:"instrument", kind:"group", label:"Instrument", blocks:[
+    {id:"optique", label:"Optique", fields:[
+      {k:"D", label:"Diamètre de pupille", unit:"m"},
+      {k:"I", label:"iFoV", unit:"µrad"},
+      {k:"E", label:"Obscuration centrale", unit:"m"},
+      {k:"T", label:"Transmission optique", unit:"τ"},
+      {k:"W", label:"WFE RMS", unit:"nm"}
+    ]},
+    {id:"detecteur", label:"Détecteur", fields:[
+      {k:"PX", label:"Pitch pixel", unit:"µm"},
+      {k:"R",  label:"Bruit de lecture", unit:"e⁻"},
+      {k:"P",  label:"PRNU", unit:"%"},
+      {k:"K",  label:"Courant d'obscurité", unit:"e⁻/s"},
+      {k:"FW", label:"Full well", unit:"e⁻"},
+      {k:"QE", label:"Rendement quantique", unit:"%"}
+    ]},
+    {id:"electronique", label:"Électronique", fields:[
+      {k:"GAIN", label:"Gain", unit:"e⁻/DN"},
+      {k:"ADC",  label:"Résolution ADC", unit:"bits"},
+      {k:"FREQ", label:"Fréquence de lecture", unit:"MHz"}
+    ]}
+  ]},
+  {id:"image", kind:"ctx", label:"Image I", sub:"produit brut, n bits"},
+  {id:"restitution", kind:"ctx", label:"Restitution", sub:"traitement final"}
+];
+
+var state = { active:"optique", values:{} };
+
+var NAME_KEY = "dpap_instrument_name_v1";
+function load(){
+  try{
+    var raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) state.values = JSON.parse(raw);
+    var name = localStorage.getItem(NAME_KEY);
+    if(name) document.getElementById("instName").value = name;
+  }catch(e){ /* stockage indisponible ou corrompu : on repart d'un brouillon vide */ }
+}
+function persist(){
+  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.values)); }
+  catch(e){ /* quota dépassé ou stockage désactivé : le brouillon ne survivra pas au rechargement */ }
+}
+document.getElementById("instName").addEventListener("input", function(e){
+  try{ localStorage.setItem(NAME_KEY, e.target.value); }catch(err){}
+});
+
+function blockStatus(block){
+  var filled = 0;
+  block.fields.forEach(function(f){
+    var v = state.values[f.k];
+    if(v !== undefined && v !== null && v !== "") filled++;
+  });
+  if(filled === 0) return "empty";
+  if(filled < block.fields.length) return "warn";
+  return "ok";
+}
+
+function overallPct(){
+  var total = 0, done = 0;
+  SCHEMA.forEach(function(n){
+    if(n.kind !== "group") return;
+    n.blocks.forEach(function(b){
+      total += b.fields.length;
+      b.fields.forEach(function(f){
+        var v = state.values[f.k];
+        if(v !== undefined && v !== null && v !== "") done++;
+      });
+    });
+  });
+  return total ? Math.round(100 * done / total) : 0;
+}
+
+function statusMark(s){
+  if(s === "ok") return "<span class='status ok'>✓</span>";
+  if(s === "warn") return "<span class='status warn'>•</span>";
+  return "<span class='status'>—</span>";
+}
+
+var chainEl = document.getElementById("chain");
+var panelEl = document.getElementById("fieldPanel");
+var schemaEl = document.getElementById("schemaWrap");
+var instrumentNode = SCHEMA.filter(function(n){ return n.kind === "group"; })[0];
+
+function selectBlock(id){
+  state.active = id;
+  renderSchema(); renderChain(); renderPanel();
+}
+
+function renderChain(){
+  chainEl.innerHTML = "";
+  var h = document.createElement("p");
+  h.className = "grouphead";
+  h.innerHTML = "<span class='dot'></span>"+instrumentNode.label;
+  chainEl.appendChild(h);
+  var list = document.createElement("div");
+  list.className = "blocklist";
+  instrumentNode.blocks.forEach(function(b){
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "blockbtn" + (b.id === state.active ? " active" : "");
+    btn.innerHTML = "<span class='lab'>"+b.label+"</span>"+statusMark(blockStatus(b));
+    btn.addEventListener("click", function(){ selectBlock(b.id); });
+    list.appendChild(btn);
+  });
+  chainEl.appendChild(list);
+}
+
+// Reprend le schéma synoptique paysage → atmosphère → instrument → image →
+// restitution avec de vraies formes (parallélogrammes image, bande
+// atmosphérique en dégradé, cylindre optique, barrette détecteurs,
+// triangle électronique, grille n bits) plutôt que des cases de texte.
+// Seuls les 3 sous-blocs de l'instrument sont cliquables ; le reste
+// (paysage/atmosphère/image/restitution) reste en contexte, non configurable
+// pour l'instant.
+function renderSchema(){
+  var act = state.active;
+  function cls(id){ return "schema-block" + (id === act ? " active" : ""); }
+  schemaEl.innerHTML =
+  "<svg viewBox='0 0 1160 210' xmlns='http://www.w3.org/2000/svg'>"+
+  "<defs>"+
+    "<linearGradient id='atmoGrad' x1='0' y1='0' x2='0' y2='1'>"+
+      "<stop offset='0%' stop-color='var(--pixel)' stop-opacity='.55'/>"+
+      "<stop offset='100%' stop-color='var(--photon)' stop-opacity='.18'/>"+
+    "</linearGradient>"+
+    "<pattern id='hatch' width='6' height='6' patternTransform='rotate(45)' patternUnits='userSpaceOnUse'>"+
+      "<line x1='0' y1='0' x2='0' y2='6' stroke='var(--muted-2)' stroke-width='2'/>"+
+    "</pattern>"+
+    "<pattern id='gridpat' width='10' height='10' patternUnits='userSpaceOnUse'>"+
+      "<rect width='10' height='10' fill='none' stroke='var(--muted-2)' stroke-width='.75'/>"+
+    "</pattern>"+
+    "<marker id='arrB' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='7' markerHeight='7' orient='auto'>"+
+      "<path d='M0,0 L10,5 L0,10 z' fill='#5B8DEF'/></marker>"+
+    "<marker id='arrR' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='7' markerHeight='7' orient='auto'>"+
+      "<path d='M0,0 L10,5 L0,10 z' fill='var(--alert)'/></marker>"+
+    "<marker id='arrG' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='7' markerHeight='7' orient='auto'>"+
+      "<path d='M0,0 L10,5 L0,10 z' fill='#6FCF7A'/></marker>"+
+  "</defs>"+
+
+  "<g class='schema-ctx'>"+
+    "<text x='75' y='30' text-anchor='middle' class='schema-label'>Paysage L</text>"+
+    "<polygon points='30,150 130,150 115,60 45,60' fill='#3A4A38' stroke='var(--line)'/>"+
+    "<polygon points='45,95 90,90 85,110 50,112' fill='#5C6B4A' opacity='.8'/>"+
+    "<polygon points='55,120 100,116 96,140 60,142' fill='#26301F' opacity='.8'/>"+
+  "</g>"+
+  "<line x1='132' y1='105' x2='168' y2='105' stroke='#5B8DEF' stroke-width='2' marker-end='url(#arrB)'/>"+
+
+  "<g class='schema-ctx'>"+
+    "<text x='202' y='30' text-anchor='middle' class='schema-label'>Atmosphère</text>"+
+    "<rect x='172' y='50' width='60' height='120' fill='url(#atmoGrad)' stroke='var(--line)'/>"+
+  "</g>"+
+  "<line x1='234' y1='105' x2='268' y2='105' stroke='#5B8DEF' stroke-width='2' marker-end='url(#arrB)'/>"+
+
+  "<rect x='272' y='18' width='430' height='170' fill='none' stroke='var(--line-soft)' rx='4'/>"+
+  "<text x='487' y='12' text-anchor='middle' class='schema-label'>Instrument</text>"+
+
+  "<g class='"+cls("optique")+"' onclick=\"selectBlock('optique')\">"+
+    "<ellipse class='schema-outline' cx='330' cy='70' rx='34' ry='11'/>"+
+    "<rect class='schema-outline' x='296' y='70' width='68' height='55' stroke-dasharray='0' style='stroke:inherit'/>"+
+    "<ellipse class='schema-outline' cx='330' cy='125' rx='34' ry='11'/>"+
+    "<text x='330' y='102' text-anchor='middle' class='schema-blocklabel'>optique</text>"+
+  "</g>"+
+  "<line x1='368' y1='100' x2='398' y2='100' stroke='var(--alert)' stroke-width='2' marker-end='url(#arrR)'/>"+
+
+  "<g class='"+cls("detecteur")+"' onclick=\"selectBlock('detecteur')\">"+
+    "<text x='412' y='45' text-anchor='middle' class='schema-blocklabel' style='font-size:11px'>détecteurs</text>"+
+    "<rect class='schema-outline' x='402' y='55' width='16' height='100' fill='url(#hatch)'/>"+
+  "</g>"+
+  "<line x1='420' y1='100' x2='448' y2='100' stroke='var(--alert)' stroke-width='2' marker-end='url(#arrR)'/>"+
+
+  "<g class='"+cls("electronique")+"' onclick=\"selectBlock('electronique')\">"+
+    "<polygon class='schema-outline' points='452,55 452,155 552,105'/>"+
+    "<text x='478' y='180' text-anchor='middle' class='schema-blocklabel' style='font-size:11px'>électronique</text>"+
+  "</g>"+
+  "<line x1='554' y1='105' x2='700' y2='105' stroke='var(--alert)' stroke-width='2' marker-end='url(#arrR)'/>"+
+
+  "<line x1='706' y1='105' x2='730' y2='68' stroke='var(--muted-2)' stroke-width='2'/>"+
+  "<text x='740' y='55' class='schema-label'>n bits</text>"+
+  "<line x1='706' y1='105' x2='758' y2='105' stroke='#6FCF7A' stroke-width='2' marker-end='url(#arrG)'/>"+
+
+  "<g class='schema-ctx'>"+
+    "<text x='845' y='30' text-anchor='middle' class='schema-label'>Image I</text>"+
+    "<rect x='800' y='55' width='90' height='90' fill='var(--panel-2)' stroke='var(--line)'/>"+
+    "<rect x='800' y='55' width='90' height='90' fill='url(#gridpat)'/>"+
+  "</g>"+
+  "<line x1='892' y1='100' x2='926' y2='100' stroke='#5B8DEF' stroke-width='2' marker-end='url(#arrB)'/>"+
+
+  "<g class='schema-ctx'>"+
+    "<text x='1045' y='30' text-anchor='middle' class='schema-label'>Restitution</text>"+
+    "<polygon points='990,150 1090,150 1075,60 1005,60' fill='#3A4A38' stroke='var(--line)'/>"+
+    "<polygon points='1005,95 1050,90 1045,110 1010,112' fill='#5C6B4A' opacity='.8'/>"+
+    "<polygon points='1015,120 1060,116 1056,140 1020,142' fill='#26301F' opacity='.8'/>"+
+  "</g>"+
+  "</svg>";
+}
+
+function currentBlock(){
+  var found = null;
+  SCHEMA.forEach(function(n){
+    if(n.kind !== "group") return;
+    n.blocks.forEach(function(b){ if(b.id === state.active) found = b; });
+  });
+  return found;
+}
+
+function renderPanel(){
+  var block = currentBlock();
+  if(!block){ panelEl.innerHTML = ""; return; }
+  var html = "<h2>"+block.label+"</h2><p class='desc'>Renseignez les paramètres de ce bloc. Les valeurs non renseignées utilisent les valeurs par défaut du modèle.</p>";
+  block.fields.forEach(function(f){
+    var v = state.values[f.k] !== undefined ? state.values[f.k] : "";
+    html += "<div class='field'><label for='f-"+f.k+"'>"+f.label+"</label>"+
+      "<div class='row'><input type='number' step='any' id='f-"+f.k+"' value='"+v+"'>"+
+      "<span class='unit'>"+f.unit+"</span></div></div>";
+  });
+  panelEl.innerHTML = html;
+  block.fields.forEach(function(f){
+    document.getElementById("f-"+f.k).addEventListener("input", function(e){
+      state.values[f.k] = e.target.value;
+      persist();
+      updateProgress();
+      renderChain(); // met à jour le statut ✓/!/○ du bloc en cours de saisie
+      // renderChain() reconstruit les boutons : on garde le focus sur le bon champ
+      var el = document.getElementById("f-"+f.k);
+      if(el) { el.focus(); var pos = e.target.value.length; el.setSelectionRange && el.setSelectionRange(pos,pos); }
+    });
+  });
+  var actions = document.createElement("div");
+  actions.className = "panel-actions";
+  actions.innerHTML = "<button class='btn ghost' type='button' id='btnReset'>Réinitialiser ce bloc</button>"+
+    "<button class='btn primary' type='button' id='btnSave'>Enregistrer l'instrument</button>";
+  panelEl.appendChild(actions);
+  document.getElementById("btnReset").addEventListener("click", function(){
+    block.fields.forEach(function(f){ delete state.values[f.k]; });
+    persist(); updateProgress(); renderChain(); renderPanel();
+  });
+  document.getElementById("btnSave").addEventListener("click", function(){
+    persist();
+    var hint = document.createElement("p");
+    hint.className = "savehint";
+    hint.textContent = "Enregistré localement dans ce navigateur — pas encore de compte ni de serveur.";
+    panelEl.appendChild(hint);
+  });
+}
+
+function updateProgress(){
+  var pct = overallPct();
+  document.getElementById("pctLabel").textContent = pct + " %";
+  document.getElementById("pctFill").style.width = pct + "%";
+}
+
+document.getElementById("btnManual").addEventListener("click", function(){
+  document.getElementById("btnManual").classList.add("active");
+  document.getElementById("btnFile").classList.remove("active");
+});
+document.getElementById("btnFile").addEventListener("click", function(){
+  document.getElementById("fileInput").click();
+});
+document.getElementById("fileInput").addEventListener("change", function(e){
+  var file = e.target.files[0];
+  if(!file) return;
+  var reader = new FileReader();
+  reader.onload = function(){
+    try{
+      var data = JSON.parse(reader.result);
+      // Le format exact du fichier reste à définir avec le moteur EO_Toolbox —
+      // ici on accepte simplement des clés qui correspondent directement aux
+      // paramètres ci-dessus (D, I, E, T, W, PX, R, P, K, FW, QE, GAIN, ADC, FREQ).
+      Object.keys(data).forEach(function(k){ state.values[k] = data[k]; });
+      persist();
+      document.getElementById("btnFile").classList.add("active");
+      document.getElementById("btnManual").classList.remove("active");
+      updateProgress(); renderChain(); renderPanel();
+    }catch(err){
+      alert("Fichier illisible : JSON attendu.");
+    }
+  };
+  reader.readAsText(file);
+});
+
+load();
+updateProgress();
+renderSchema();
+renderChain();
+renderPanel();
+</script>
+</body>
+</html>
