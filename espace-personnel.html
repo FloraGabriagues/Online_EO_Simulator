@@ -85,13 +85,8 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
   padding:8px 13px;border-bottom:2px solid transparent;transition:color .14s,border-color .14s}
 .tab:hover{color:var(--paper)}
 .tab[aria-selected="true"]{color:var(--pixel);border-color:var(--pixel)}
-.searchbox{position:relative;flex:none;width:min(260px,60vw)}
-.searchbox input{width:100%;box-sizing:border-box;background:var(--panel-2);
-  border:1px solid var(--line-soft);color:var(--paper);border-radius:5px;
-  padding:7px 12px 7px 34px;font-family:var(--body);font-size:13px}
-.searchbox input::placeholder{color:var(--muted-2)}
-.searchbox svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);
-  width:15px;height:15px;color:var(--muted-2);pointer-events:none}
+.tab.soon,.navlist a.soon{cursor:default;opacity:.45;pointer-events:none}
+.tab.soon:hover,.navlist a.soon:hover{color:inherit;background:transparent}
 
 .instgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
   gap:14px;margin-bottom:20px}
@@ -148,11 +143,12 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
   margin:0 0 10px;display:flex;align-items:center;gap:10px;color:var(--muted)}
 .dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--pixel)}
 
-.bottomrow{display:grid;grid-template-columns:1.1fr 1fr;gap:20px}
-.activity ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px;
+.bottomrow{display:grid;grid-template-columns:1.1fr 1fr;gap:20px;align-items:stretch}
+.activity{height:210px;display:flex;flex-direction:column}
+.activity ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px;flex:1;
   background:var(--line-soft);border:1px solid var(--line-soft);border-radius:4px;overflow:hidden}
 .activity li{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:10px;
-  background:var(--panel);padding:9px 14px}
+  background:var(--panel);padding:9px 14px;flex:1}
 .activity li .adot{width:6px;height:6px;border-radius:50%;background:var(--line);flex:none}
 .activity li .alabel{color:var(--paper)}
 .activity li .asub{color:var(--muted-2);font-size:12px}
@@ -160,7 +156,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
   color:var(--muted-2);white-space:nowrap;flex:none}
 
 .hero{position:relative;background:var(--panel);border:1px solid var(--line-soft);
-  border-radius:6px;padding:18px 22px;overflow:hidden;min-height:0;display:flex;
+  border-radius:6px;padding:18px 22px;overflow:hidden;height:210px;box-sizing:border-box;display:flex;
   flex-direction:column;justify-content:center}
 .hero .earth{position:absolute;right:-60px;bottom:-70px;width:190px;height:190px;
   border-radius:50%;
@@ -207,6 +203,9 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
       <li><a class="active" href="espace-personnel.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>
         Instruments</a></li>
+      <li><a class="soon" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 4V2M15 4V2M9 22v-2M15 22v-2M4 9H2M4 15H2M22 9h-2M22 15h-2"/></svg>
+        Plateforme <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto">à venir</em></a></li>
       <li><a href="#">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 4l14 8-14 8V4z"/></svg>
         Simulations</a></li>
@@ -247,10 +246,6 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
 
       <div class="tabsrow">
         <div class="tabs" id="tabsHost" role="tablist"></div>
-        <div class="searchbox">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
-          <input type="text" id="searchInput" placeholder="Rechercher un instrument…" aria-label="Rechercher un instrument">
-        </div>
       </div>
 
       <div class="instgrid" id="instList"></div>
@@ -264,10 +259,9 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
         <div class="hero">
           <span class="earth" aria-hidden="true"></span>
           <div class="content">
-            <p class="eyebrow">Bienvenue sur EO Toolbox</p>
             <h2>Analysez la performance de vos <span class="cool">instruments d'imagerie</span></h2>
             <p>Créez vos instruments, configurez vos scénarios et obtenez des métriques détaillées sur la qualité de vos images.</p>
-            <a href="#">En savoir plus →</a>
+            <a href="hypotheses.html">Voir les hypothèses physiques du modèle →</a>
           </div>
         </div>
       </div>
@@ -321,18 +315,17 @@ function countByType(t){ return allItems.filter(function(i){ return i.type === t
 var TABS = [
   {id:"all", label:"Tous", count: allItems.length},
   {id:"Multispectral", label:"Multispectral", count: countByType("Multispectral")},
-  {id:"Hyperspectral", label:"Hyperspectral", count: countByType("Hyperspectral")},
-  {id:"Autres", label:"Autres", count: countByType("Autres")}
+  {id:"Hyperspectral", label:"Hyperspectral", soon:true}
 ];
 var activeTab = "all";
-var searchTerm = "";
 
 var tabsHost = document.getElementById("tabsHost");
 TABS.forEach(function(t){
   var b = document.createElement("button");
-  b.className = "tab"; b.type = "button"; b.dataset.id = t.id;
+  b.className = "tab" + (t.soon ? " soon" : ""); b.type = "button"; b.dataset.id = t.id;
   b.setAttribute("aria-selected", t.id === activeTab ? "true" : "false");
-  b.textContent = t.label + " (" + t.count + ")";
+  b.textContent = t.label + (t.soon ? " (à venir)" : " (" + t.count + ")");
+  if(t.soon){ tabsHost.appendChild(b); return; }  // pas d'écouteur de clic — onglet inactif
   b.addEventListener("click", function(){
     activeTab = t.id;
     tabsHost.querySelectorAll(".tab").forEach(function(x){
@@ -343,18 +336,12 @@ TABS.forEach(function(t){
   tabsHost.appendChild(b);
 });
 
-document.getElementById("searchInput").addEventListener("input", function(){
-  searchTerm = this.value.trim().toLowerCase();
-  render();
-});
-
 // ===================== Rendu des cartes =====================
 var list = document.getElementById("instList");
 
 function render(){
   var items = allItems.filter(function(it){
     if(activeTab !== "all" && it.type !== activeTab) return false;
-    if(searchTerm && it.name.toLowerCase().indexOf(searchTerm) === -1) return false;
     return true;
   });
 
@@ -382,25 +369,6 @@ function render(){
       "</div>";
     list.appendChild(a);
   });
-
-  // carte "créer" toujours en dernière position, sauf en recherche active
-  if(!searchTerm){
-    var create = document.createElement("a");
-    create.className = "instcard empty";
-    create.href = "creer-instrument.html";
-    create.innerHTML =
-      "<span class='plus'>+</span>"+
-      "<div class='elab'>Créer un instrument</div>"+
-      "<p class='esub'>Configurez un nouvel instrument d'imagerie.</p>";
-    list.appendChild(create);
-  }
-
-  if(items.length === 0 && searchTerm){
-    var empty = document.createElement("div");
-    empty.className = "instcard empty";
-    empty.innerHTML = "<p class='esub'>Aucun instrument ne correspond à « "+searchTerm+" ».</p>";
-    list.appendChild(empty);
-  }
 }
 render();
 
