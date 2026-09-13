@@ -46,6 +46,7 @@ h1 .cool{color:var(--pixel)}
   background:linear-gradient(90deg,var(--photon) 0%,#CFA268 34%,#86BCA6 66%,var(--pixel) 100%)}
 
 .stage{display:grid;grid-template-columns:1fr minmax(272px,300px);gap:18px;align-items:start}
+.col-r{position:sticky;top:20px}
 .below{margin-top:16px}
 .metricsec .metrics{margin-top:0}
 .metricsec .metric{padding:13px 15px}
@@ -374,6 +375,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
 @media(max-width:760px){
   .stage{grid-template-columns:1fr}
   .col-r,.col-view{display:flex;flex-direction:column;grid-column:1;grid-row:auto}
+  .col-r{position:static}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
