@@ -94,16 +94,6 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
   background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;overflow:hidden;
   transition:border-color .14s,transform .14s}
 .instcard:hover{border-color:var(--pixel);transform:translateY(-2px)}
-.instcard .thumb{height:52px;position:relative;overflow:hidden;flex:none;
-  background:
-    radial-gradient(circle at 78% 22%, rgba(245,172,87,.30), transparent 55%),
-    radial-gradient(circle at 20% 80%, rgba(95,220,208,.28), transparent 55%),
-    linear-gradient(135deg,#182734 0%,#0E161E 100%)}
-.instcard .thumb svg{position:absolute;right:10px;bottom:-14px;width:52px;height:52px;opacity:.9}
-.instcard .thumb::after{content:"";position:absolute;inset:0;
-  background-image:linear-gradient(rgba(230,238,244,.05) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(230,238,244,.05) 1px,transparent 1px);
-  background-size:14px 14px}
 .instcard .body{padding:12px 16px 14px;display:flex;flex-direction:column;gap:9px;flex:1}
 .instcard .titlerow{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
 .instcard .name{font-family:var(--display);font-weight:600;font-size:16.5px;
@@ -144,7 +134,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
 .dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--pixel)}
 
 .bottomrow{display:grid;grid-template-columns:1.1fr 1fr;gap:20px;align-items:stretch}
-.activity{height:210px;display:flex;flex-direction:column}
+.activity{height:230px;display:flex;flex-direction:column}
 .activity ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px;flex:1;
   background:var(--line-soft);border:1px solid var(--line-soft);border-radius:4px;overflow:hidden}
 .activity li{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:10px;
@@ -155,9 +145,10 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
 .activity li span:last-child{margin-left:auto;font-family:var(--mono);font-size:11.5px;
   color:var(--muted-2);white-space:nowrap;flex:none}
 
+.doccol{height:230px;display:flex;flex-direction:column}
 .hero{position:relative;background:var(--panel);border:1px solid var(--line-soft);
-  border-radius:6px;padding:18px 22px;overflow:hidden;height:210px;box-sizing:border-box;display:flex;
-  flex-direction:column;justify-content:center}
+  border-radius:6px;padding:18px 22px;overflow:hidden;flex:1;box-sizing:border-box;display:flex;
+  flex-direction:column;justify-content:center;gap:14px}
 .hero .earth{position:absolute;right:-60px;bottom:-70px;width:190px;height:190px;
   border-radius:50%;
   background:
@@ -256,12 +247,15 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
           <ul id="activityList"></ul>
         </div>
 
-        <div class="hero">
-          <span class="earth" aria-hidden="true"></span>
-          <div class="content">
-            <h2>Analysez la performance de vos <span class="cool">instruments d'imagerie</span></h2>
-            <p>Créez vos instruments, configurez vos scénarios et obtenez des métriques détaillées sur la qualité de vos images.</p>
-            <a href="hypotheses.html">Voir les hypothèses physiques du modèle →</a>
+        <div class="doccol">
+          <p class="grouphead"><span class="dot"></span>Documentation</p>
+          <div class="hero">
+            <span class="earth" aria-hidden="true"></span>
+            <div class="content">
+              <h2>Analysez la performance de vos <span class="cool">instruments d'imagerie</span></h2>
+              <p>Créez vos instruments, configurez vos scénarios et obtenez des métriques détaillées sur la qualité de vos images.</p>
+              <a href="hypotheses.html">Voir les hypothèses physiques du modèle →</a>
+            </div>
           </div>
         </div>
       </div>
@@ -283,11 +277,6 @@ var DEMO_INSTRUMENTS = [
     modified:"3 sept. 2026", created:"20 août 2026"}
 ];
 
-var GLYPH = "<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>"+
-  "<ellipse cx='12' cy='7' rx='7' ry='2.4' stroke='var(--pixel)' stroke-width='1.3'/>"+
-  "<path d='M5 7v6c0 1.3 3.1 2.4 7 2.4s7-1.1 7-2.4V7' stroke='var(--pixel)' stroke-width='1.3'/>"+
-  "<line x1='12' y1='15.4' x2='12' y2='19' stroke='var(--muted-2)' stroke-width='1.3'/>"+
-  "</svg>";
 var ICON_CAL = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><rect x='4' y='5' width='16' height='15' rx='1.5'/><path d='M4 9h16M8 3v4M16 3v4'/></svg>";
 var ICON_CLOCK = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><circle cx='12' cy='12' r='8.5'/><path d='M12 7.5V12l3 2'/></svg>";
 
@@ -351,7 +340,6 @@ function render(){
     a.className = "instcard";
     a.href = "creer-instrument.html";
     a.innerHTML =
-      "<div class='thumb'>" + GLYPH + "</div>"+
       "<div class='body'>"+
         "<div class='titlerow'>"+
           "<span><div class='name'>"+it.name+"</div>"+
