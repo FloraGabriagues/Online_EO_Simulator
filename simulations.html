@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Nouvelle simulation — du photon au pixel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#090E13; --panel:#131E27; --panel-2:#1A2833;
+  --line:#2E4152; --line-soft:#22323F;
+  --paper:#E6EEF4; --muted:#9BADBD; --muted-2:#8497AA;
+  --photon:#F5AC57; --pixel:#5FDCD0; --alert:#F0776D; --ok:#7FD88F;
+  --display:"Barlow Condensed",Impact,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{background:var(--void);color:var(--paper);font-family:var(--body);
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button{font-family:inherit}
+
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{flex:none;width:210px;background:var(--panel);border-right:1px solid var(--line-soft);
+  display:flex;flex-direction:column;padding:16px 14px;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:9px;padding:4px 8px 16px;border-bottom:1px solid var(--line-soft);
+  margin-bottom:12px}
+.brand .mark{flex:none;width:26px;height:26px;display:grid;grid-template-columns:repeat(2,1fr);gap:3px}
+.brand .mark i{width:100%;height:100%;border-radius:50%;background:var(--pixel)}
+.brand .mark i:nth-child(2),.brand .mark i:nth-child(3){background:var(--photon)}
+.brand .name{font-family:var(--display);font-weight:600;font-size:16.5px;letter-spacing:.02em;
+  text-transform:uppercase;line-height:1.1}
+.brand .tag{font-family:var(--mono);font-size:10.5px;color:var(--muted-2);margin-top:1px}
+.navlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.navlist a{display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:4px;
+  text-decoration:none;color:var(--muted);font-size:14px;transition:background .14s,color .14s}
+.navlist a svg{flex:none;width:17px;height:17px;opacity:.85}
+.navlist a:hover{background:var(--panel-2);color:var(--paper)}
+.navlist a.active{background:rgba(95,220,208,.10);color:var(--pixel);box-shadow:inset 2px 0 0 var(--pixel)}
+.navlist a.active svg{opacity:1}
+.navlist a.soon{cursor:default;opacity:.45;pointer-events:none}
+.sidebar-bottom{margin-top:auto;padding-top:14px;border-top:1px solid var(--line-soft)}
+
+.main{flex:1;min-width:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{display:flex;justify-content:flex-end;align-items:center;gap:16px;flex:none;
+  padding:9px 26px;border-bottom:1px solid var(--line-soft)}
+.iconbtn{width:32px;height:32px;border-radius:50%;border:1px solid var(--line-soft);
+  background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.iconbtn:hover{border-color:var(--line);color:var(--paper)}
+.userchip{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.userchip .avatar{width:28px;height:28px;border-radius:50%;background:var(--panel-2);
+  border:1px solid var(--pixel);color:var(--pixel);display:flex;align-items:center;
+  justify-content:center;font-family:var(--display);font-size:12px;font-weight:600}
+
+.wrap{max-width:1240px;margin:0 auto;padding:16px 26px 20px;width:100%;flex:1;display:flex;flex-direction:column}
+
+.eyebrow{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 5px}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
+  line-height:1.05;letter-spacing:-.005em;margin:0 0 4px;text-transform:uppercase}
+.pagesub{margin:0 0 14px;color:var(--muted);font-size:13px;max-width:64ch}
+
+.steps{display:flex;align-items:center;margin-bottom:16px;flex:none}
+.stepitem{display:flex;align-items:center;gap:8px;flex:none}
+.step-num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-family:var(--mono);font-size:11.5px;flex:none;border:1px solid var(--line);color:var(--muted);
+  background:var(--panel);transition:background .16s,border-color .16s,color .16s}
+.step-num.active{background:var(--pixel);color:#0A141A;border-color:var(--pixel)}
+.step-num.done{border-color:var(--pixel);color:var(--pixel)}
+.step-label{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);white-space:nowrap}
+.step-label.active{color:var(--paper)}
+.step-line{flex:1;height:1px;background:var(--line-soft);margin:0 12px}
+.step-line.done{background:var(--pixel);opacity:.5}
+
+.wizardgrid{display:grid;grid-template-columns:1fr 280px;gap:18px;flex:1;min-height:0}
+.wizardmain{display:flex;flex-direction:column;min-height:0}
+
+.stepview{flex:1;min-height:0;display:none;flex-direction:column}
+.stepview.current{display:flex}
+
+.stepbody{background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;
+  padding:18px 20px;flex:1;overflow-y:auto;min-height:0}
+.stephead{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.stephead .ttl{font-family:var(--display);font-weight:600;font-size:17px;text-transform:uppercase}
+.stepintro{font-size:12.5px;color:var(--muted);margin:0 0 14px}
+
+
+.scenegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.scenecard{border:2px solid var(--line-soft);border-radius:6px;overflow:hidden;cursor:pointer;
+  background:var(--panel-2);text-align:left;padding:0;transition:border-color .14s}
+.scenecard.selected{border-color:var(--pixel)}
+.scenecard .img{height:96px;position:relative;overflow:hidden;
+  background:radial-gradient(circle at 75% 20%,rgba(245,172,87,.26),transparent 55%),
+    radial-gradient(circle at 20% 80%,rgba(95,220,208,.24),transparent 55%),
+    linear-gradient(135deg,#182734 0%,#0E161E 100%)}
+.scenecard .meta{padding:9px 11px}
+.scenecard .name{font-size:12.5px;color:var(--paper);line-height:1.3;margin-bottom:5px}
+.scenecard .dims{display:flex;justify-content:space-between;align-items:center;
+  font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.badge{display:inline-block;font-family:var(--mono);font-size:9px;padding:2px 7px;border-radius:8px;
+  background:rgba(95,220,208,.14);color:var(--pixel);text-transform:uppercase;letter-spacing:.03em}
+
+.selectcard{display:flex;gap:14px;align-items:flex-start}
+.selectcard .thumb{width:86px;height:62px;border-radius:4px;flex:none;position:relative;overflow:hidden;
+  border:1px solid var(--line-soft);
+  background:radial-gradient(circle at 75% 20%,rgba(245,172,87,.26),transparent 55%),
+    radial-gradient(circle at 20% 80%,rgba(95,220,208,.24),transparent 55%),
+    linear-gradient(135deg,#182734 0%,#0E161E 100%)}
+.selectcard .info{flex:1;min-width:0}
+.selectcard .namerow{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.selectcard .name{font-family:var(--display);font-weight:600;font-size:16px;text-transform:uppercase}
+.specs{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6}
+
+.fieldsgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px}
+.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
+.field select,.field input{width:100%;box-sizing:border-box;background:var(--panel-2);
+  border:1px solid var(--line-soft);color:var(--paper);border-radius:5px;padding:8px 11px;
+  font-family:var(--body);font-size:13px;appearance:none}
+
+.backlink{color:var(--muted);font-family:var(--mono);font-size:12.5px;background:none;border:none;
+  cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:7px;padding:9px 0;
+  margin-top:10px;flex:none}
+.backlink:hover{color:var(--paper)}
+
+.summarypanel{background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;
+  padding:18px 18px;display:flex;flex-direction:column;overflow-y:auto}
+.summarypanel h2{font-family:var(--display);font-weight:600;font-size:15px;text-transform:uppercase;
+  margin:0 0 14px}
+.sumsection{padding:11px 0;border-bottom:1px solid var(--line-soft)}
+.sumsection:last-of-type{border-bottom:none}
+.sumsection .lbl{font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;
+  color:var(--muted);margin-bottom:8px}
+.sumsection .empty{color:var(--muted-2);font-size:12.5px}
+.sumfilled{display:flex;gap:10px;align-items:center}
+.sumfilled .mini{width:44px;height:32px;border-radius:3px;flex:none;
+  background:radial-gradient(circle at 75% 20%,rgba(245,172,87,.26),transparent 55%),
+    radial-gradient(circle at 20% 80%,rgba(95,220,208,.24),transparent 55%),
+    linear-gradient(135deg,#182734 0%,#0E161E 100%)}
+.sumfilled .txt .t1{font-size:12.5px;color:var(--paper);line-height:1.3}
+.sumfilled .txt .t2{font-family:var(--mono);font-size:10.5px;color:var(--muted-2);margin-top:2px}
+.sumlines{font-family:var(--mono);font-size:11.5px;color:var(--muted);line-height:1.9}
+
+.panelbtn{margin-top:auto;padding-top:14px}
+.nextbtn,.launchbtn{width:100%;border:1px solid var(--pixel);background:var(--pixel);color:#0A141A;
+  font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.03em;
+  padding:11px 18px;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
+  box-shadow:0 2px 10px rgba(95,220,208,.22);transition:background .14s}
+.nextbtn:hover,.launchbtn:hover{background:#7CE8DC}
+
+.finalgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;flex:1;min-height:0}
+.summarybox,.statuspanel{background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;
+  padding:18px 20px;display:flex;flex-direction:column;overflow-y:auto}
+.summarybox .grouphead,.statuspanel .stathead{font-family:var(--mono);font-size:10.5px;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 12px;
+  display:flex;align-items:center;gap:8px}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--pixel);flex:none}
+.sumrow{display:flex;justify-content:space-between;gap:12px;padding:9px 0;
+  border-bottom:1px solid var(--line-soft);font-size:12.5px}
+.sumrow:last-child{border-bottom:none}
+.sumrow .k{color:var(--muted)}
+.sumrow .v{color:var(--paper);text-align:right;font-family:var(--mono);font-size:12px}
+
+.stathead .pulse{width:7px;height:7px;border-radius:50%;background:var(--pixel);flex:none;
+  animation:pulse 1.8s infinite}
+@keyframes pulse{
+  0%{box-shadow:0 0 0 0 rgba(95,220,208,.5)}
+  70%{box-shadow:0 0 0 7px rgba(95,220,208,0)}
+  100%{box-shadow:0 0 0 0 rgba(95,220,208,0)}
+}
+.progresswrap{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.ptrack{flex:1;height:5px;background:var(--line-soft);border-radius:3px;overflow:hidden}
+.pfill{height:100%;background:var(--pixel);width:0%;transition:width .5s linear}
+.ppct{font-family:var(--mono);font-size:12px;color:var(--pixel);flex:none;width:36px;text-align:right}
+.etarow{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;
+  color:var(--muted);margin-bottom:12px}
+.etarow svg{width:13px;height:13px;flex:none;opacity:.8}
+
+.loglist{flex:1;overflow-y:auto;display:flex;flex-direction:column;gap:1px;min-height:0}
+.logline{display:flex;gap:9px;font-family:var(--mono);font-size:11px;padding:4px 0}
+.logline .time{color:var(--muted-2);flex:none;width:42px}
+.logline .ldot{width:5px;height:5px;border-radius:50%;background:var(--pixel);flex:none;
+  margin-top:5px;opacity:.8}
+.logline .msg{color:var(--muted)}
+
+@media(max-width:980px){
+  .wizardgrid{grid-template-columns:1fr}
+  .scenegrid{grid-template-columns:repeat(2,1fr)}
+  .finalgrid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="mark"><i></i><i></i><i></i><i></i></span>
+      <span>
+        <div class="name">EO Toolbox</div>
+        <div class="tag">Du photon au pixel</div>
+      </span>
+    </div>
+    <ul class="navlist">
+      <li><a href="espace-personnel.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>
+        Instruments</a></li>
+      <li><a class="soon" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 4V2M15 4V2M9 22v-2M15 22v-2M4 9H2M4 15H2M22 9h-2M22 15h-2"/></svg>
+        Plateforme <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto">à venir</em></a></li>
+      <li><a class="active" href="simulations.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 4l14 8-14 8V4z"/></svg>
+        Simulations</a></li>
+      <li><a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
+        Résultats</a></li>
+    </ul>
+    <div class="sidebar-bottom">
+      <ul class="navlist">
+        <li><a href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.9.3-1.2.9-1.2 1.8"/><circle cx="12" cy="16.6" r=".4" fill="currentColor" stroke="none"/></svg>
+          Aide</a></li>
+        <li><a href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V20a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.96 18.34a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.66 8.96a1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 7.09 4.2l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04z"/></svg>
+          Paramètres</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="iconbtn" aria-label="Notifications" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+      </button>
+      <span class="userchip"><span class="avatar">FG</span>Flora G.</span>
+    </div>
+
+    <div class="wrap">
+      <p class="eyebrow">Simulations</p>
+      <h1>Nouvelle simulation</h1>
+      <p class="pagesub">Configurez votre scène, votre instrument et vos conditions d'acquisition, puis lancez la simulation.</p>
+
+      <div class="steps" id="stepsHost"></div>
+
+      <div class="wizardgrid" id="wizardGrid">
+        <div class="wizardmain">
+
+          <div class="stepview current" data-step="1">
+            <div class="stepbody">
+              <div class="stephead"><span class="ttl">1. Scène</span></div>
+              <p class="stepintro">Choisissez une image dans la bibliothèque de scènes.</p>
+              <div class="scenegrid" id="sceneGrid"></div>
+            </div>
+            <a class="backlink" href="espace-personnel.html">← Retour</a>
+          </div>
+
+          <div class="stepview" data-step="2">
+            <div class="stepbody">
+              <div class="stephead"><span class="ttl">2. Instrument</span></div>
+              <p class="stepintro">Choisissez l'instrument à utiliser pour cette simulation.</p>
+              <div class="selectcard">
+                <span class="thumb"></span>
+                <div class="info">
+                  <div class="namerow">
+                    <span class="name" id="instName">SPEO 500</span>
+                    <span class="badge">Multispectral</span>
+                  </div>
+                  <p class="specs">Configuration complète</p>
+                </div>
+              </div>
+            </div>
+            <button class="backlink" type="button" data-goto="1">← Précédent</button>
+          </div>
+
+          <div class="stepview" data-step="3">
+            <div class="stepbody">
+              <div class="stephead"><span class="ttl">3. Conditions d'acquisition</span></div>
+              <p class="stepintro">Définissez le scénario d'acquisition de la scène.</p>
+              <div class="fieldsgrid">
+                <div class="field">
+                  <label>Altitude</label>
+                  <select id="fAltitude"><option>450 km</option><option>500 km</option><option>620 km</option></select>
+                </div>
+                <div class="field">
+                  <label>Atmosphère</label>
+                  <select id="fAtmo"><option>Standard (US Standard)</option><option>Tropicale</option><option>Sub-arctique hiver</option></select>
+                </div>
+                <div class="field">
+                  <label>Angle de visée</label>
+                  <select id="fAngle"><option>0°</option><option>15°</option><option>30°</option></select>
+                </div>
+                <div class="field">
+                  <label>Heure locale</label>
+                  <input type="time" id="fTime" value="12:00">
+                </div>
+              </div>
+            </div>
+            <button class="backlink" type="button" data-goto="2">← Précédent</button>
+          </div>
+
+        </div>
+
+        <div class="summarypanel">
+          <h2>Résumé de la configuration</h2>
+
+          <div class="sumsection">
+            <div class="lbl">Scène</div>
+            <div id="sumSceneSlot"><span class="empty">—</span></div>
+          </div>
+          <div class="sumsection">
+            <div class="lbl">Instrument</div>
+            <div id="sumInstSlot"><span class="empty">—</span></div>
+          </div>
+          <div class="sumsection">
+            <div class="lbl">Conditions</div>
+            <div id="sumCondSlot"><span class="empty">—</span></div>
+          </div>
+
+          <div class="panelbtn">
+            <button class="nextbtn" type="button" id="panelActionBtn">Suivant →</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="stepview" data-step="4" style="flex-direction:column">
+        <div class="finalgrid">
+          <div class="summarybox">
+            <p class="grouphead"><span class="dot"></span>Résumé des paramètres</p>
+            <div class="sumrow"><span class="k">Scène</span><span class="v" id="sumScene">—</span></div>
+            <div class="sumrow"><span class="k">Résolution</span><span class="v" id="sumRes">—</span></div>
+            <div class="sumrow"><span class="k">Instrument</span><span class="v" id="sumInst">—</span></div>
+            <div class="sumrow"><span class="k">Altitude</span><span class="v" id="sumAlt">—</span></div>
+            <div class="sumrow"><span class="k">Atmosphère</span><span class="v" id="sumAtmo">—</span></div>
+            <div class="sumrow"><span class="k">Angle de visée</span><span class="v" id="sumAngle">—</span></div>
+            <div class="sumrow"><span class="k">Heure locale</span><span class="v" id="sumTime">—</span></div>
+          </div>
+
+          <div class="statuspanel">
+            <div class="stathead"><span class="pulse"></span>Simulation en cours</div>
+            <div class="progresswrap">
+              <div class="ptrack"><div class="pfill" id="pfill"></div></div>
+              <span class="ppct" id="ppct">0 %</span>
+            </div>
+            <div class="etarow">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+              <span>Temps estimé restant : <span id="etaText">—</span></span>
+            </div>
+            <div class="loglist" id="logList"></div>
+          </div>
+        </div>
+        <button class="backlink" type="button" data-goto="3">← Précédent</button>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+var STEP_LABELS = ["Scène", "Instrument", "Conditions d'acquisition", "Lancement"];
+var stepsHost = document.getElementById("stepsHost");
+function renderSteps(current){
+  stepsHost.innerHTML = "";
+  STEP_LABELS.forEach(function(label, i){
+    var n = i + 1;
+    var cls = n === current ? "active" : (n < current ? "done" : "");
+    var item = document.createElement("div");
+    item.className = "stepitem";
+    item.innerHTML =
+      "<span class='step-num " + cls + "'>" + n + "</span>"+
+      "<span class='step-label" + (n === current ? " active" : "") + "'>" + label + "</span>";
+    stepsHost.appendChild(item);
+    if(i < STEP_LABELS.length - 1){
+      var line = document.createElement("div");
+      line.className = "step-line" + (n < current ? " done" : "");
+      stepsHost.appendChild(line);
+    }
+  });
+}
+
+var wizardGrid = document.getElementById("wizardGrid");
+var currentStep = 1;
+function showStep(n){
+  currentStep = n;
+  document.querySelectorAll(".stepview").forEach(function(v){
+    v.classList.toggle("current", Number(v.dataset.step) === n);
+  });
+  wizardGrid.style.display = n === 4 ? "none" : "grid";
+  document.querySelector(".stepview[data-step='4']").style.display = n === 4 ? "flex" : "none";
+  renderSteps(n);
+  updatePanelButton();
+  if(n === 4) startSimulation();
+}
+document.querySelectorAll("[data-goto]").forEach(function(btn){
+  btn.addEventListener("click", function(){ showStep(Number(btn.dataset.goto)); });
+});
+
+var SCENES = [
+  {name:"Ville", sub:"BD ORTHO IGN 2023", thumb:"assets/scenes/aix_thumb.jpg", w:200, h:200, res:"0.2 m/pixel", badge:"VHR"},
+  {name:"Avion", sub:"BD ORTHO IGN 2023", thumb:"assets/scenes/avion_thumb.jpg", w:200, h:200, res:"0.2 m/pixel", badge:"VHR"},
+  {name:"Port", sub:"BD ORTHO IGN 2023", thumb:"assets/scenes/port_thumb.jpg", w:200, h:200, res:"0.2 m/pixel", badge:"VHR"}
+];
+var selectedSceneIdx = 0;
+var sceneGrid = document.getElementById("sceneGrid");
+function renderScenes(){
+  sceneGrid.innerHTML = "";
+  SCENES.forEach(function(s, i){
+    var dimStr = s.w + " × " + s.h + " m";
+    var card = document.createElement("button");
+    card.type = "button";
+    card.className = "scenecard" + (i === selectedSceneIdx ? " selected" : "");
+    card.innerHTML =
+      "<span class='img' style=\"background-image:url('" + s.thumb + "');background-size:cover;background-position:center\"></span>"+
+      "<div class='meta'><div class='name'>" + s.name + "</div>"+
+      "<div class='dims'>" + s.sub + " <span class='badge'>" + s.badge + "</span></div></div>";
+    card.addEventListener("click", function(){
+      selectedSceneIdx = i;
+      renderScenes();
+      updateSummary();
+    });
+    sceneGrid.appendChild(card);
+  });
+}
+renderScenes();
+
+function updateSummary(){
+  var s = SCENES[selectedSceneIdx];
+  var dimStr = s.w + " × " + s.h + " m";
+  document.getElementById("sumSceneSlot").innerHTML =
+    "<div class='sumfilled'><span class='mini' style=\"background-image:url('" + s.thumb + "');background-size:cover;background-position:center\"></span><div class='txt'>"+
+    "<div class='t1'>" + s.name + "</div><div class='t2'>" + dimStr + " · " + s.badge + "</div>"+
+    "</div></div>";
+
+  if(currentStep >= 2){
+    document.getElementById("sumInstSlot").innerHTML =
+      "<div class='sumfilled'><span class='mini'></span><div class='txt'>"+
+      "<div class='t1'>" + document.getElementById("instName").textContent + "</div>"+
+      "<div class='t2'>Multispectral</div></div></div>";
+  } else {
+    document.getElementById("sumInstSlot").innerHTML = "<span class='empty'>—</span>";
+  }
+
+  if(currentStep >= 3){
+    document.getElementById("sumCondSlot").innerHTML =
+      "<div class='sumlines'>"+
+      document.getElementById("fAltitude").value + "<br>"+
+      document.getElementById("fAtmo").value + "<br>"+
+      document.getElementById("fAngle").value + " · " + document.getElementById("fTime").value +
+      "</div>";
+  } else {
+    document.getElementById("sumCondSlot").innerHTML = "<span class='empty'>—</span>";
+  }
+}
+function updatePanelButton(){
+  var btn = document.getElementById("panelActionBtn");
+  if(currentStep === 3){
+    btn.textContent = "▶ Lancer la simulation";
+    btn.onclick = function(){ showStep(4); };
+  } else {
+    btn.textContent = "Suivant →";
+    btn.onclick = function(){ showStep(currentStep + 1); };
+  }
+  updateSummary();
+}
+["fAltitude","fAtmo","fAngle","fTime"].forEach(function(id){
+  document.getElementById(id).addEventListener("change", updateSummary);
+});
+
+renderSteps(1);
+updatePanelButton();
+
+var LOG_MESSAGES = [
+  "Initialisation de la simulation…",
+  "Chargement de la scène…",
+  "Préparation des données d'entrée…",
+  "Application de la géométrie d'acquisition…",
+  "Calcul de la PSF (POPPY)…",
+  "Simulation optique terminée",
+  "Lancement de la chaîne radiométrique…",
+  "Correction atmosphérique (Py6S)…",
+  "Génération de l'image multispectrale…",
+  "Calcul des métriques (MTF / SNR)…",
+  "Finalisation de la simulation…"
+];
+
+var simStarted = false;
+function startSimulation(){
+  var s = SCENES[selectedSceneIdx];
+  document.getElementById("sumScene").textContent = s.name;
+  document.getElementById("sumRes").textContent = s.res;
+  document.getElementById("sumInst").textContent = document.getElementById("instName").textContent;
+  document.getElementById("sumAlt").textContent = document.getElementById("fAltitude").value;
+  document.getElementById("sumAtmo").textContent = document.getElementById("fAtmo").value;
+  document.getElementById("sumAngle").textContent = document.getElementById("fAngle").value;
+  document.getElementById("sumTime").textContent = document.getElementById("fTime").value;
+
+  if(simStarted) return;
+  simStarted = true;
+
+  var logList = document.getElementById("logList");
+  var pfill = document.getElementById("pfill");
+  var ppct = document.getElementById("ppct");
+  var etaText = document.getElementById("etaText");
+
+  function nowLabel(){
+    var d = new Date();
+    return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
+  }
+  function addLog(msg){
+    var line = document.createElement("div");
+    line.className = "logline";
+    line.innerHTML = "<span class='time'>" + nowLabel() + "</span>"+
+      "<span class='ldot'></span><span class='msg'>" + msg + "</span>";
+    logList.appendChild(line);
+    logList.scrollTop = logList.scrollHeight;
+  }
+
+  var progress = 0, totalSeconds = 180, elapsed = 0, logIndex = 0;
+  function tick(){
+    if(progress >= 100) return;
+    progress = Math.min(100, progress + (100 / (LOG_MESSAGES.length + 2)));
+    elapsed += totalSeconds / (LOG_MESSAGES.length + 2);
+    pfill.style.width = progress.toFixed(0) + "%";
+    ppct.textContent = progress.toFixed(0) + " %";
+    var remaining = Math.max(0, Math.round(totalSeconds - elapsed));
+    var m = Math.floor(remaining / 60), sSec = remaining % 60;
+    etaText.textContent = progress >= 100 ? "terminé" : (m + " min " + String(sSec).padStart(2,"0") + " s");
+    if(logIndex < LOG_MESSAGES.length){ addLog(LOG_MESSAGES[logIndex]); logIndex++; }
+    if(progress < 100) setTimeout(tick, 1200 + Math.random() * 700);
+    else addLog("Simulation terminée.");
+  }
+  addLog(LOG_MESSAGES[0]); logIndex = 1;
+  etaText.textContent = Math.floor(totalSeconds/60) + " min " + (totalSeconds%60) + " s";
+  setTimeout(tick, 1000);
+}
+</script>
+</body>
+</html>
