@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Espace personnel — du photon au pixel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
   --void:#090E13; --panel:#131E27; --panel-2:#1A2833;
@@ -18,91 +21,258 @@
 html,body{margin:0;padding:0}
 body{background:var(--void);color:var(--paper);font-family:var(--body);
   font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
-.wrap{max-width:980px;margin:0 auto;padding:0 26px 90px}
+a{color:inherit}
 
-header{padding:28px 0 18px}
-.back{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none;
-  letter-spacing:.04em}
-.back:hover{color:var(--pixel)}
-.eyebrow{font-family:var(--mono);font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--muted);margin:16px 0 6px}
-h1{font-family:var(--display);font-weight:600;font-size:clamp(28px,3.6vw,38px);margin:0}
-.rail-bar{height:4px;border-radius:2px;margin:20px 0 34px;
-  background:linear-gradient(90deg,var(--photon) 0%,#CFA268 34%,#86BCA6 66%,var(--pixel) 100%)}
+.app{display:flex;min-height:100vh}
 
-.createcard{display:flex;align-items:center;gap:20px;
-  width:100%;appearance:none;cursor:pointer;text-decoration:none;
-  background:var(--panel);border:1px solid var(--line);color:var(--paper);
-  border-radius:8px;padding:22px 26px;margin-bottom:40px;transition:border-color .14s,background .14s}
-.createcard:hover{border-color:var(--pixel);background:#16232B}
-.createcard .icon{flex:none;width:52px;height:52px;border-radius:50%;
-  background:rgba(95,220,208,.12);border:1px solid var(--pixel);
-  display:flex;align-items:center;justify-content:center;font-size:26px;color:var(--pixel);
-  font-family:var(--display)}
-.createcard .lab{font-family:var(--display);font-weight:600;font-size:20px;margin:0 0 3px}
-.createcard .sub{font-size:13.5px;color:var(--muted);margin:0}
-.createcard .arrow{margin-left:auto;font-size:20px;color:var(--muted-2)}
+.sidebar{flex:none;width:236px;background:var(--panel);border-right:1px solid var(--line-soft);
+  display:flex;flex-direction:column;padding:22px 16px}
+.brand{display:flex;align-items:center;gap:9px;padding:4px 8px 22px;border-bottom:1px solid var(--line-soft);
+  margin-bottom:18px}
+.brand .mark{flex:none;width:26px;height:26px;display:grid;grid-template-columns:repeat(2,1fr);
+  gap:3px}
+.brand .mark i{width:100%;height:100%;border-radius:50%;background:var(--pixel)}
+.brand .mark i:nth-child(2),.brand .mark i:nth-child(3){background:var(--photon)}
+.brand .name{font-family:var(--display);font-weight:600;font-size:16.5px;letter-spacing:.02em;
+  text-transform:uppercase;line-height:1.1}
+.brand .tag{font-family:var(--mono);font-size:10.5px;color:var(--muted-2);margin-top:1px}
 
-.sectiontitle{font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;
-  text-transform:uppercase;color:var(--muted);margin:0 0 14px;display:flex;align-items:center;gap:8px}
-.sectiontitle .dot{width:6px;height:6px;border-radius:50%;background:var(--pixel)}
+.navlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.navlist a{display:flex;align-items:center;gap:11px;padding:10px 12px;border-radius:4px;
+  text-decoration:none;color:var(--muted);font-size:14.5px;transition:background .14s,color .14s}
+.navlist a svg{flex:none;width:18px;height:18px;opacity:.85}
+.navlist a:hover{background:var(--panel-2);color:var(--paper)}
+.navlist a.active{background:rgba(95,220,208,.10);color:var(--pixel);
+  box-shadow:inset 2px 0 0 var(--pixel)}
+.navlist a.active svg{opacity:1}
 
-.instgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));
-  gap:14px;margin-bottom:44px}
-.instcard{display:flex;flex-direction:column;gap:14px;
-  text-decoration:none;color:var(--paper);background:var(--panel);
-  border:1px solid var(--line-soft);border-radius:8px;padding:18px 20px;
-  transition:border-color .14s,background .14s,transform .14s}
-.instcard:hover{border-color:var(--pixel);background:#16232B;transform:translateY(-2px)}
-.instcard .top{display:flex;align-items:flex-start;gap:12px}
-.instcard .glyph{flex:none;width:38px;height:38px;border-radius:6px;
-  background:var(--panel-2);border:1px solid var(--line);
-  display:flex;align-items:center;justify-content:center}
-.instcard .glyph svg{width:20px;height:20px}
-.instcard .name{font-weight:500;font-size:15.5px}
-.instcard .type{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px;
-  text-transform:uppercase;letter-spacing:.05em}
-.instcard .meta{font-size:12px;color:var(--muted-2);margin-top:auto}
+.sidebar-bottom{margin-top:auto;padding-top:14px;border-top:1px solid var(--line-soft)}
+
+.main{flex:1;min-width:0}
+.topbar{display:flex;justify-content:flex-end;align-items:center;gap:16px;
+  padding:16px 30px;border-bottom:1px solid var(--line-soft)}
+.iconbtn{width:34px;height:34px;border-radius:50%;border:1px solid var(--line-soft);
+  background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;
+  cursor:pointer}
+.iconbtn:hover{border-color:var(--line);color:var(--paper)}
+.userchip{display:flex;align-items:center;gap:10px;font-family:var(--mono);
+  font-size:13px;color:var(--muted)}
+.userchip .avatar{width:30px;height:30px;border-radius:50%;background:var(--panel-2);
+  border:1px solid var(--pixel);color:var(--pixel);display:flex;align-items:center;
+  justify-content:center;font-family:var(--display);font-size:12.5px;font-weight:600}
+
+.wrap{max-width:1180px;margin:0 auto;padding:32px 30px 90px}
+
+.pageheader{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;
+  flex-wrap:wrap;margin-bottom:26px}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 10px}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(30px,3.6vw,40px);
+  line-height:1.02;letter-spacing:-.005em;margin:0 0 6px;text-transform:uppercase}
+.pagesub{margin:0;color:var(--muted);font-size:14.5px}
+.simbtn{border:1px solid var(--photon);background:var(--photon);color:#0B1116;
+  font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.04em;
+  padding:11px 20px;border-radius:5px;cursor:pointer;text-decoration:none;
+  display:inline-flex;align-items:center;gap:8px;flex:none;
+  box-shadow:0 2px 10px rgba(245,172,87,.28);transition:background .14s,border-color .14s}
+.simbtn:hover{background:#FFBE72;border-color:#FFBE72}
+
+.tabsrow{display:flex;justify-content:space-between;align-items:center;gap:20px;
+  flex-wrap:wrap;border-bottom:1px solid var(--line-soft);margin-bottom:22px;padding-bottom:0}
+.tabs{display:flex;gap:4px}
+.tab{appearance:none;cursor:pointer;background:transparent;border:none;
+  color:var(--muted-2);font-family:var(--mono);font-size:12.5px;letter-spacing:.04em;
+  padding:11px 14px;border-bottom:2px solid transparent;transition:color .14s,border-color .14s}
+.tab:hover{color:var(--paper)}
+.tab[aria-selected="true"]{color:var(--pixel);border-color:var(--pixel)}
+.searchbox{position:relative;flex:none;width:min(260px,60vw)}
+.searchbox input{width:100%;box-sizing:border-box;background:var(--panel-2);
+  border:1px solid var(--line-soft);color:var(--paper);border-radius:5px;
+  padding:9px 12px 9px 34px;font-family:var(--body);font-size:13.5px}
+.searchbox input::placeholder{color:var(--muted-2)}
+.searchbox svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  width:15px;height:15px;color:var(--muted-2);pointer-events:none}
+
+.instgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:16px;margin-bottom:48px}
+.instcard{display:flex;flex-direction:column;text-decoration:none;color:var(--paper);
+  background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;overflow:hidden;
+  transition:border-color .14s,transform .14s}
+.instcard:hover{border-color:var(--pixel);transform:translateY(-2px)}
+.instcard .thumb{height:96px;position:relative;overflow:hidden;flex:none;
+  background:
+    radial-gradient(circle at 78% 22%, rgba(245,172,87,.30), transparent 55%),
+    radial-gradient(circle at 20% 80%, rgba(95,220,208,.28), transparent 55%),
+    linear-gradient(135deg,#182734 0%,#0E161E 100%)}
+.instcard .thumb svg{position:absolute;right:14px;bottom:-6px;width:72px;height:72px;opacity:.9}
+.instcard .thumb::after{content:"";position:absolute;inset:0;
+  background-image:linear-gradient(rgba(230,238,244,.05) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(230,238,244,.05) 1px,transparent 1px);
+  background-size:14px 14px}
+.instcard .body{padding:16px 18px 18px;display:flex;flex-direction:column;gap:13px;flex:1}
+.instcard .titlerow{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.instcard .name{font-family:var(--display);font-weight:600;font-size:19px;
+  text-transform:uppercase;letter-spacing:.01em;line-height:1.15}
+.instcard .type{display:flex;align-items:center;gap:6px;font-size:12.5px;color:var(--muted);margin-top:4px}
+.instcard .type i{width:6px;height:6px;border-radius:50%;background:var(--pixel);flex:none}
+.instcard .menubtn{flex:none;background:transparent;border:none;color:var(--muted-2);
+  cursor:pointer;font-size:16px;padding:2px 6px;line-height:1}
+.instcard .menubtn:hover{color:var(--paper)}
+.instcard .desc{font-size:13px;color:var(--muted);margin:0;line-height:1.5}
 .instcard .pctrow{display:flex;justify-content:space-between;font-family:var(--mono);
-  font-size:11px;color:var(--muted);margin-bottom:5px}
-.instcard .track{height:4px;background:var(--line-soft);border-radius:2px;overflow:hidden}
+  font-size:11px;color:var(--muted);margin-bottom:6px}
+.instcard .track{height:5px;background:var(--line-soft);border-radius:2px;overflow:hidden}
 .instcard .fill{height:100%;background:var(--pixel)}
-.instcard.empty{align-items:center;justify-content:center;color:var(--muted);
-  font-size:14px;cursor:default;border-style:dashed}
-.instcard.empty:hover{border-color:var(--line-soft);background:var(--panel);transform:none}
+.instcard .datesrow{display:flex;flex-direction:column;gap:4px;font-family:var(--mono);
+  font-size:11px;color:var(--muted-2)}
+.instcard .datesrow span{display:flex;align-items:center;gap:6px}
+.instcard .datesrow svg{width:12px;height:12px;flex:none;opacity:.75}
+.instcard .openrow{display:flex;justify-content:flex-end;margin-top:2px}
+.instcard .openbtn{display:inline-flex;align-items:center;gap:7px;background:transparent;
+  border:1px solid var(--line);color:var(--paper);border-radius:4px;font-family:var(--mono);
+  font-size:12px;padding:7px 13px;transition:border-color .14s,color .14s}
+.instcard:hover .openbtn{border-color:var(--pixel);color:var(--pixel)}
 
-.activity{border-top:1px solid var(--line-soft);padding-top:22px}
-.activity ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px}
-.activity li{font-size:13.5px;color:var(--muted);display:flex;align-items:center;gap:10px}
+.instcard.empty{align-items:center;justify-content:center;text-align:center;color:var(--muted);
+  border-style:dashed;cursor:pointer;padding:30px 20px;gap:10px}
+.instcard.empty:hover{border-color:var(--photon)}
+.instcard.empty .plus{width:44px;height:44px;border-radius:50%;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:20px;color:var(--muted);
+  margin:8px auto 6px;transition:border-color .14s,color .14s}
+.instcard.empty:hover .plus{border-color:var(--photon);color:var(--photon)}
+.instcard.empty .elab{font-family:var(--display);font-weight:600;font-size:16px;
+  text-transform:uppercase;color:var(--paper)}
+.instcard.empty .esub{font-size:12.5px;color:var(--muted);max-width:190px}
+
+.grouphead{font-family:var(--mono);font-size:11.5px;letter-spacing:.13em;text-transform:uppercase;
+  margin:0 0 16px;display:flex;align-items:center;gap:10px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--pixel)}
+
+.bottomrow{display:grid;grid-template-columns:1.1fr 1fr;gap:20px}
+.activity ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px;
+  background:var(--line-soft);border:1px solid var(--line-soft);border-radius:4px;overflow:hidden}
+.activity li{font-size:13.5px;color:var(--muted);display:flex;align-items:center;gap:10px;
+  background:var(--panel);padding:13px 16px}
 .activity li .adot{width:6px;height:6px;border-radius:50%;background:var(--line);flex:none}
-.activity li span:last-child{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--muted-2);white-space:nowrap}
+.activity li .alabel{color:var(--paper)}
+.activity li .asub{color:var(--muted-2);font-size:12px}
+.activity li span:last-child{margin-left:auto;font-family:var(--mono);font-size:11.5px;
+  color:var(--muted-2);white-space:nowrap;flex:none}
+
+.hero{position:relative;background:var(--panel);border:1px solid var(--line-soft);
+  border-radius:6px;padding:26px 28px;overflow:hidden;min-height:230px;display:flex;
+  flex-direction:column;justify-content:center}
+.hero .earth{position:absolute;right:-70px;bottom:-90px;width:260px;height:260px;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 32% 30%, #2c5f7a 0%, #163449 38%, #081522 68%, #050d16 100%);
+  box-shadow:0 0 46px rgba(95,220,208,.10),inset -14px -10px 30px rgba(0,0,0,.55)}
+.hero .earth::before{content:"";position:absolute;inset:-6px;border-radius:50%;
+  border:1px solid rgba(95,220,208,.35);filter:blur(1px)}
+.hero .earth::after{content:"";position:absolute;top:14%;left:8%;width:36%;height:20%;
+  background:rgba(230,238,244,.10);border-radius:50%;filter:blur(6px);transform:rotate(-18deg)}
+.hero .content{position:relative;max-width:60%}
+.hero .eyebrow{margin-bottom:10px}
+.hero h2{font-family:var(--display);font-weight:600;font-size:23px;line-height:1.12;
+  text-transform:uppercase;margin:0 0 10px}
+.hero h2 .cool{color:var(--pixel)}
+.hero p{margin:0 0 14px;font-size:13.5px;color:var(--muted);line-height:1.55}
+.hero a{font-family:var(--mono);font-size:12.5px;color:var(--photon);text-decoration:none;
+  display:inline-flex;align-items:center;gap:6px}
+.hero a:hover{color:#FFBE72}
+
+@media(max-width:900px){
+  .bottomrow{grid-template-columns:1fr}
+  .hero .content{max-width:100%}
+}
+@media(max-width:760px){
+  .sidebar{position:fixed;inset:0 auto 0 0;transform:translateX(-100%);z-index:50;
+    transition:transform .18s ease;box-shadow:10px 0 30px rgba(0,0,0,.4)}
+  .app{display:block}
+}
 </style>
 </head>
 <body>
-<div class="wrap">
+<div class="app">
 
-  <header>
-    <a class="back" href="index.html">← Retour à la démo</a>
-    <p class="eyebrow">Espace personnel</p>
-    <h1>Bonjour, Flora</h1>
-    <div class="rail-bar"></div>
-  </header>
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="mark"><i></i><i></i><i></i><i></i></span>
+      <span>
+        <div class="name">EO Toolbox</div>
+        <div class="tag">Du photon au pixel</div>
+      </span>
+    </div>
+    <ul class="navlist">
+      <li><a class="active" href="espace-personnel.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>
+        Instruments</a></li>
+      <li><a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 4l14 8-14 8V4z"/></svg>
+        Simulations</a></li>
+      <li><a href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
+        Résultats</a></li>
+    </ul>
+    <div class="sidebar-bottom">
+      <ul class="navlist">
+        <li><a href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.9.3-1.2.9-1.2 1.8"/><circle cx="12" cy="16.6" r=".4" fill="currentColor" stroke="none"/></svg>
+          Aide</a></li>
+        <li><a href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V20a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.96 18.34a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.66 8.96a1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 7.09 4.2l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04z"/></svg>
+          Paramètres</a></li>
+      </ul>
+    </div>
+  </aside>
 
-  <a class="createcard" href="creer-instrument.html">
-    <span class="icon">+</span>
-    <span>
-      <p class="lab">Créer un instrument</p>
-      <p class="sub">Multispectral, à partir d'un fichier ou renseigné manuellement</p>
-    </span>
-    <span class="arrow">→</span>
-  </a>
+  <div class="main">
+    <div class="topbar">
+      <button class="iconbtn" aria-label="Notifications" type="button">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+      </button>
+      <span class="userchip"><span class="avatar">FG</span>Flora G.</span>
+    </div>
 
-  <p class="sectiontitle"><span class="dot"></span>Mes instruments</p>
-  <div class="instgrid" id="instList"></div>
+    <div class="wrap">
 
-  <div class="activity">
-    <p class="sectiontitle"><span class="dot"></span>Activité récente</p>
-    <ul id="activityList"></ul>
+      <div class="pageheader">
+        <div>
+          <p class="eyebrow">Instruments</p>
+          <h1>Mes instruments</h1>
+          <p class="pagesub">Créez, configurez et gérez vos instruments d'imagerie.</p>
+        </div>
+        <a class="simbtn" href="creer-instrument.html">+ Créer un instrument</a>
+      </div>
+
+      <div class="tabsrow">
+        <div class="tabs" id="tabsHost" role="tablist"></div>
+        <div class="searchbox">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input type="text" id="searchInput" placeholder="Rechercher un instrument…" aria-label="Rechercher un instrument">
+        </div>
+      </div>
+
+      <div class="instgrid" id="instList"></div>
+
+      <div class="bottomrow">
+        <div class="activity">
+          <p class="grouphead"><span class="dot"></span>Activité récente</p>
+          <ul id="activityList"></ul>
+        </div>
+
+        <div class="hero">
+          <span class="earth" aria-hidden="true"></span>
+          <div class="content">
+            <p class="eyebrow">Bienvenue sur EO Toolbox</p>
+            <h2>Analysez la performance de vos <span class="cool">instruments d'imagerie</span></h2>
+            <p>Créez vos instruments, configurez vos scénarios et obtenez des métriques détaillées sur la qualité de vos images.</p>
+            <a href="#">En savoir plus →</a>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
 </div>
@@ -111,15 +281,21 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(28px,3.6vw,38px);m
 // Pas de backend pour l'instant : liste illustrative + relecture du brouillon
 // laissé par la page de création (mêmes clés localStorage que creer-instrument.html).
 var DEMO_INSTRUMENTS = [
-  {name:"SPEO 500", type:"Multispectral", pct:82, meta:"Modifié le 12/09/2026"},
-  {name:"Instrument test", type:"Multispectral", pct:35, meta:"Modifié le 03/09/2026"}
+  {name:"SPEO 500", type:"Multispectral", pct:100,
+    desc:"Instrument optique multispectral à haute résolution.",
+    modified:"12 sept. 2026", created:"28 août 2026"},
+  {name:"Instrument test", type:"Multispectral", pct:72,
+    desc:"Configuration pour test et validation des paramètres optiques.",
+    modified:"3 sept. 2026", created:"20 août 2026"}
 ];
 
 var GLYPH = "<svg viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'>"+
-  "<ellipse cx='12' cy='7' rx='7' ry='2.4' stroke='var(--pixel)' stroke-width='1.4'/>"+
-  "<path d='M5 7v6c0 1.3 3.1 2.4 7 2.4s7-1.1 7-2.4V7' stroke='var(--pixel)' stroke-width='1.4'/>"+
-  "<line x1='12' y1='15.4' x2='12' y2='19' stroke='var(--muted-2)' stroke-width='1.4'/>"+
+  "<ellipse cx='12' cy='7' rx='7' ry='2.4' stroke='var(--pixel)' stroke-width='1.3'/>"+
+  "<path d='M5 7v6c0 1.3 3.1 2.4 7 2.4s7-1.1 7-2.4V7' stroke='var(--pixel)' stroke-width='1.3'/>"+
+  "<line x1='12' y1='15.4' x2='12' y2='19' stroke='var(--muted-2)' stroke-width='1.3'/>"+
   "</svg>";
+var ICON_CAL = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><rect x='4' y='5' width='16' height='15' rx='1.5'/><path d='M4 9h16M8 3v4M16 3v4'/></svg>";
+var ICON_CLOCK = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><circle cx='12' cy='12' r='8.5'/><path d='M12 7.5V12l3 2'/></svg>";
 
 function readDraft(){
   try{
@@ -133,37 +309,113 @@ function readDraft(){
   }catch(e){ return null; }
 }
 
-var list = document.getElementById("instList");
 var draft = readDraft();
-var items = DEMO_INSTRUMENTS.slice();
-if(draft && !items.some(function(i){ return i.name === draft.name; })){
-  items.unshift({name: draft.name, type:"Multispectral", pct: Math.min(100, draft.filled * 8),
-    meta:"Brouillon local", isDraft:true});
+var allItems = DEMO_INSTRUMENTS.slice();
+if(draft && !allItems.some(function(i){ return i.name === draft.name; })){
+  allItems.unshift({name: draft.name, type:"Multispectral", pct: Math.min(100, draft.filled * 8),
+    desc:"Brouillon en cours de configuration.", modified:"à l'instant", created:"—", isDraft:true});
 }
 
-items.forEach(function(it){
-  var a = document.createElement("a");
-  a.className = "instcard";
-  a.href = "creer-instrument.html";
-  a.innerHTML =
-    "<div class='top'><span class='glyph'>"+GLYPH+"</span>"+
-    "<span><div class='name'>"+it.name+"</div><div class='type'>"+it.type+
-    (it.isDraft ? " · brouillon" : "")+"</div></span></div>"+
-    "<div><div class='pctrow'><span>Configuration</span><span>"+it.pct+" %</span></div>"+
-    "<div class='track'><div class='fill' style='width:"+it.pct+"%'></div></div></div>"+
-    "<div class='meta'>"+it.meta+"</div>";
-  list.appendChild(a);
+// ===================== Onglets (Tous / Multispectral / Hyperspectral / Autres) =====================
+function countByType(t){ return allItems.filter(function(i){ return i.type === t; }).length; }
+var TABS = [
+  {id:"all", label:"Tous", count: allItems.length},
+  {id:"Multispectral", label:"Multispectral", count: countByType("Multispectral")},
+  {id:"Hyperspectral", label:"Hyperspectral", count: countByType("Hyperspectral")},
+  {id:"Autres", label:"Autres", count: countByType("Autres")}
+];
+var activeTab = "all";
+var searchTerm = "";
+
+var tabsHost = document.getElementById("tabsHost");
+TABS.forEach(function(t){
+  var b = document.createElement("button");
+  b.className = "tab"; b.type = "button"; b.dataset.id = t.id;
+  b.setAttribute("aria-selected", t.id === activeTab ? "true" : "false");
+  b.textContent = t.label + " (" + t.count + ")";
+  b.addEventListener("click", function(){
+    activeTab = t.id;
+    tabsHost.querySelectorAll(".tab").forEach(function(x){
+      x.setAttribute("aria-selected", x.dataset.id === activeTab ? "true" : "false");
+    });
+    render();
+  });
+  tabsHost.appendChild(b);
 });
-if(items.length === 0){
-  list.innerHTML = "<div class='instcard empty'>Aucun instrument pour l'instant</div>";
-}
 
+document.getElementById("searchInput").addEventListener("input", function(){
+  searchTerm = this.value.trim().toLowerCase();
+  render();
+});
+
+// ===================== Rendu des cartes =====================
+var list = document.getElementById("instList");
+
+function render(){
+  var items = allItems.filter(function(it){
+    if(activeTab !== "all" && it.type !== activeTab) return false;
+    if(searchTerm && it.name.toLowerCase().indexOf(searchTerm) === -1) return false;
+    return true;
+  });
+
+  list.innerHTML = "";
+  items.forEach(function(it){
+    var a = document.createElement("a");
+    a.className = "instcard";
+    a.href = "creer-instrument.html";
+    a.innerHTML =
+      "<div class='thumb'>" + GLYPH + "</div>"+
+      "<div class='body'>"+
+        "<div class='titlerow'>"+
+          "<span><div class='name'>"+it.name+"</div>"+
+          "<div class='type'><i></i>"+it.type+(it.isDraft ? " · brouillon" : "")+"</div></span>"+
+          "<button class='menubtn' type='button' aria-label='Options' onclick='event.preventDefault()'>⋮</button>"+
+        "</div>"+
+        "<p class='desc'>"+it.desc+"</p>"+
+        "<div><div class='pctrow'><span>Configuration"+(it.pct>=100?" complète":"")+"</span><span>"+it.pct+" %</span></div>"+
+        "<div class='track'><div class='fill' style='width:"+it.pct+"%'></div></div></div>"+
+        "<div class='datesrow'>"+
+          "<span>"+ICON_CAL+"Modifié le "+it.modified+"</span>"+
+          "<span>"+ICON_CLOCK+"Créé le "+it.created+"</span>"+
+        "</div>"+
+        "<div class='openrow'><span class='openbtn'>Ouvrir →</span></div>"+
+      "</div>";
+    list.appendChild(a);
+  });
+
+  // carte "créer" toujours en dernière position, sauf en recherche active
+  if(!searchTerm){
+    var create = document.createElement("a");
+    create.className = "instcard empty";
+    create.href = "creer-instrument.html";
+    create.innerHTML =
+      "<span class='plus'>+</span>"+
+      "<div class='elab'>Créer un instrument</div>"+
+      "<p class='esub'>Configurez un nouvel instrument d'imagerie.</p>";
+    list.appendChild(create);
+  }
+
+  if(items.length === 0 && searchTerm){
+    var empty = document.createElement("div");
+    empty.className = "instcard empty";
+    empty.innerHTML = "<p class='esub'>Aucun instrument ne correspond à « "+searchTerm+" ».</p>";
+    list.appendChild(empty);
+  }
+}
+render();
+
+// ===================== Activité récente =====================
 var activityEl = document.getElementById("activityList");
 var activities = draft
-  ? [["Brouillon "+draft.name+" en cours", "à l'instant"]]
-  : [["Aucune activité récente", ""]];
+  ? [["Brouillon "+draft.name+" en cours", "Configuration modifiée", "à l'instant"]]
+  : [
+      ["SPEO 500", "Configuration modifiée", "Il y a 2 jours"],
+      ["Instrument test", "Simulation terminée (15 min 32 s)", "Il y a 5 jours"],
+      ["SPEO 500", "Nouveau résultat disponible", "Il y a 7 jours"]
+    ];
 activityEl.innerHTML = activities.map(function(a){
-  return "<li><span class='adot'></span><span>"+a[0]+"</span><span>"+a[1]+"</span></li>";
+  return "<li><span class='adot'></span><span><span class='alabel'>"+a[0]+"</span><br>"+
+    "<span class='asub'>"+a[1]+"</span></span><span>"+a[2]+"</span></li>";
 }).join("");
 </script>
 </body>
