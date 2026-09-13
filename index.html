@@ -1444,11 +1444,18 @@ function applyDynamicBound(k, lo, hi){
   lo = +lo.toFixed(2); hi = +hi.toFixed(2);
   if(lo > hi) lo = hi;
   p.min = lo; p.max = hi;
-  els[k].s.min = lo; els[k].s.max = hi;
-  els[k].n.min = lo; els[k].n.max = hi;
+  // els[k] peut être absent si ce paramètre n'a plus de curseur visible
+  // dans l'interface (ex: "Paramètres avancés" retiré du public le
+  // 13/09/2026, cf. lien "simulateur complet") -- on continue quand même
+  // à faire respecter la borne physique sur st[k] (utilisée par le calcul),
+  // simplement sans toucher un élément DOM qui n'existe plus.
+  if(els[k]){
+    els[k].s.min = lo; els[k].s.max = hi;
+    els[k].n.min = lo; els[k].n.max = hi;
+  }
   if(st[k] < lo || st[k] > hi){
     st[k] = Math.min(hi, Math.max(lo, st[k]));
-    syncOne(k);
+    if(els[k]) syncOne(k);
   }
 }
 function updateDynamicRanges(){
@@ -1555,6 +1562,7 @@ function buildControls(){
   });
 }
 function syncOne(k){
+  if(!els[k]) return;  // paramètre sans curseur visible (cf. applyDynamicBound) — rien à synchroniser
   var p = PMAP[k];
   els[k].s.value = st[k];
   els[k].n.value = Number(st[k]).toFixed(p.dec);
