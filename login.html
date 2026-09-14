@@ -121,6 +121,18 @@ supabaseClient.auth.getSession().then(function(res){
   if (res.data.session) window.location.href = "espace-personnel.html";
 });
 
+// Déconnecté·e automatiquement car ce compte a été utilisé ailleurs
+// (une seule session active à la fois, cf. requireAuth dans supabase-client.js).
+var urlParams = new URLSearchParams(window.location.search);
+if (urlParams.get("reason") === "other_device") {
+  var banner = document.createElement("div");
+  banner.className = "msg err";
+  banner.style.display = "block";
+  banner.style.marginBottom = "20px";
+  banner.textContent = "Tu as été déconnecté·e car ce compte a été utilisé sur un autre appareil — une seule connexion à la fois est autorisée.";
+  document.getElementById("authArea").insertBefore(banner, document.getElementById("authArea").firstChild);
+}
+
 // ===================== Bascule connexion / inscription =====================
 document.querySelectorAll(".tab").forEach(function(tab){
   tab.addEventListener("click", function(){
@@ -143,7 +155,7 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
   var email = document.getElementById("loginEmail").value.trim();
   var password = document.getElementById("loginPassword").value;
 
-  var { error } = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
+  var { data: loginData, error } = await supabaseClient.auth.signInWithPassword({ email: email, password: password });
 
   btn.disabled = false;
   if (error) {
@@ -151,6 +163,7 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
     msgEl.textContent = frenchAuthError(error);
     return;
   }
+  await registerSessionMarker(loginData.user.id);
   window.location.href = "espace-personnel.html";
 });
 
@@ -182,6 +195,7 @@ document.getElementById("signupForm").addEventListener("submit", async function(
     msgEl.textContent = "Compte créé — vérifie ta boîte mail pour confirmer ton adresse avant de te connecter.";
     return;
   }
+  await registerSessionMarker(data.user.id);
   window.location.href = "espace-personnel.html";
 });
 </script>
