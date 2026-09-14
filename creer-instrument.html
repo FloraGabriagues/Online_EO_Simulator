@@ -125,7 +125,7 @@ select,.nameinput{background:var(--panel-2);color:var(--paper);border:1px solid 
 
   <header>
     <div>
-      <a class="back" href="#">← Mes objets</a>
+      <a class="back" href="espace-personnel.html">← Mes objets</a>
       <h1>Créer un instrument</h1>
     </div>
     <div class="headfields">
@@ -164,9 +164,9 @@ select,.nameinput{background:var(--panel-2);color:var(--paper);border:1px solid 
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
 <script>
-var STORAGE_KEY = "dpap_instrument_draft_v1";
-
 var SCHEMA = [
   {id:"paysage", kind:"ctx", label:"Paysage L", sub:"scène source"},
   {id:"atmosphere", kind:"ctx", label:"Atmosphère", sub:"modèle atmosphérique"},
@@ -196,24 +196,41 @@ var SCHEMA = [
   {id:"restitution", kind:"ctx", label:"Restitution", sub:"traitement final"}
 ];
 
-var state = { active:"optique", values:{} };
+var state = { active:"optique", values:{}, instrumentId:null };
 
-var NAME_KEY = "dpap_instrument_name_v1";
-function load(){
-  try{
-    var raw = localStorage.getItem(STORAGE_KEY);
-    if(raw) state.values = JSON.parse(raw);
-    var name = localStorage.getItem(NAME_KEY);
-    if(name) document.getElementById("instName").value = name;
-  }catch(e){ /* stockage indisponible ou corrompu : on repart d'un brouillon vide */ }
+// persist() ne fait plus rien : l'état vit uniquement en mémoire
+// (state.values) pendant l'édition — la vraie sauvegarde (Supabase)
+// n'a lieu qu'au clic explicite sur "Enregistrer l'instrument"
+// (cf. saveToSupabase()), pas à chaque frappe comme avec l'ancien
+// brouillon localStorage. Le nom (STORAGE_KEY/NAME_KEY) a disparu avec
+// le même changement.
+function persist(){}
+
+/**
+ * Charge un instrument existant depuis Supabase si l'URL contient
+ * ?id=<uuid> (lien "Ouvrir" depuis espace-personnel.html) ; sinon,
+ * repart d'un formulaire vide (création).
+ */
+async function loadInstrument(){
+  var params = new URLSearchParams(window.location.search);
+  var id = params.get("id");
+  if(!id) return;
+
+  var { data, error } = await supabaseClient
+    .from("instruments")
+    .select("*")
+    .eq("id", id)
+    .single();
+
+  if(error || !data){
+    console.error("Erreur chargement instrument :", error);
+    return; // id invalide/inaccessible — on reste sur un formulaire vide plutôt que planter
+  }
+
+  state.instrumentId = data.id;
+  state.values = data.config || {};
+  document.getElementById("instName").value = data.name || "";
 }
-function persist(){
-  try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(state.values)); }
-  catch(e){ /* quota dépassé ou stockage désactivé : le brouillon ne survivra pas au rechargement */ }
-}
-document.getElementById("instName").addEventListener("input", function(e){
-  try{ localStorage.setItem(NAME_KEY, e.target.value); }catch(err){}
-});
 
 function blockStatus(block){
   var filled = 0;
@@ -404,13 +421,79 @@ function renderPanel(){
     block.fields.forEach(function(f){ delete state.values[f.k]; });
     persist(); updateProgress(); renderChain(); renderPanel();
   });
-  document.getElementById("btnSave").addEventListener("click", function(){
-    persist();
-    var hint = document.createElement("p");
-    hint.className = "savehint";
-    hint.textContent = "Enregistré localement dans ce navigateur — pas encore de compte ni de serveur.";
-    panelEl.appendChild(hint);
-  });
+  document.getElementById("btnSave").addEventListener("click", saveToSupabase);
+}
+
+/**
+ * Sauvegarde réelle dans Supabase — insertion si c'est un nouvel
+ * instrument (state.instrumentId encore vide), mise à jour sinon.
+ * Le nom est requis : impossible de sauvegarder un instrument sans nom
+ * (il deviendrait illisible dans la liste "Mes instruments").
+ */
+async function saveToSupabase(){
+  var btn = document.getElementById("btnSave");
+  var name = document.getElementById("instName").value.trim();
+
+  var oldHint = panelEl.querySelector(".savehint");
+  if(oldHint) oldHint.remove();
+
+  if(!name){
+    var errHint = document.createElement("p");
+    errHint.className = "savehint";
+    errHint.style.color = "var(--alert)";
+    errHint.textContent = "Donne un nom à l'instrument avant de l'enregistrer.";
+    panelEl.appendChild(errHint);
+    document.getElementById("instName").focus();
+    return;
+  }
+
+  btn.disabled = true;
+  var hint = document.createElement("p");
+  hint.className = "savehint";
+  hint.textContent = "Enregistrement…";
+  panelEl.appendChild(hint);
+
+  var session = await requireAuth();
+  if(!session) return; // requireAuth a déjà redirigé vers login.html
+
+  var row = { name: name, config: state.values, updated_at: new Date().toISOString() };
+
+  var result;
+  if(state.instrumentId){
+    result = await supabaseClient
+      .from("instruments")
+      .update(row)
+      .eq("id", state.instrumentId)
+      .select()
+      .single();
+  } else {
+    row.account_id = session.user.id;
+    result = await supabaseClient
+      .from("instruments")
+      .insert(row)
+      .select()
+      .single();
+  }
+
+  btn.disabled = false;
+
+  if(result.error){
+    hint.style.color = "var(--alert)";
+    hint.textContent = "Échec de l'enregistrement : " + result.error.message;
+    return;
+  }
+
+  // Premier enregistrement d'un nouvel instrument : on retient son id
+  // (les sauvegardes suivantes deviennent des mises à jour, pas de
+  // nouvelles lignes) et on reflète ça dans l'URL sans recharger la page.
+  if(!state.instrumentId && result.data){
+    state.instrumentId = result.data.id;
+    var newUrl = window.location.pathname + "?id=" + result.data.id;
+    window.history.replaceState(null, "", newUrl);
+  }
+
+  hint.style.color = "var(--ok)";
+  hint.textContent = "Enregistré.";
 }
 
 function updateProgress(){
@@ -448,11 +531,16 @@ document.getElementById("fileInput").addEventListener("change", function(e){
   reader.readAsText(file);
 });
 
-load();
-updateProgress();
-renderSchema();
-renderChain();
-renderPanel();
+(async function(){
+  var session = await requireAuth();
+  if(!session) return; // requireAuth a déjà redirigé vers login.html
+
+  await loadInstrument(); // no-op si pas de ?id= dans l'URL (création)
+  updateProgress();
+  renderSchema();
+  renderChain();
+  renderPanel();
+})();
 </script>
 </body>
 </html>
