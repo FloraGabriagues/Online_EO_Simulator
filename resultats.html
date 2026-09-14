@@ -57,7 +57,10 @@ button{font-family:inherit}
   border:1px solid var(--pixel);color:var(--pixel);display:flex;align-items:center;
   justify-content:center;font-family:var(--display);font-size:12px;font-weight:600}
 
-.wrap{max-width:1400px;margin:0 auto;padding:16px 26px 30px;width:100%}
+.wrap{max-width:1400px;margin:0 auto;padding:14px 26px 16px;width:100%;
+  flex:1;min-height:0;display:flex;flex-direction:column}
+#listView{flex:1;min-height:0;overflow-y:auto}
+#detailView{display:none;flex-direction:column;flex:1;min-height:0}
 
 /* ================= fil d'ariane + en-tête ================= */
 .crumbs{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);display:flex;align-items:center;
@@ -78,29 +81,27 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .editbtn:hover{color:var(--pixel)}
 
 /* ================= onglets Image/MTF/SNR/Logs ================= */
-.restabs{display:flex;gap:4px;border-bottom:1px solid var(--line-soft);margin-bottom:18px}
+.restabs{display:flex;gap:4px;border-bottom:1px solid var(--line-soft);margin-bottom:14px;flex:none}
 .restab{background:none;border:none;color:var(--muted-2);font-family:var(--mono);font-size:12.5px;
-  letter-spacing:.03em;padding:10px 16px;border-bottom:2px solid transparent;cursor:pointer}
+  letter-spacing:.03em;padding:9px 16px;border-bottom:2px solid transparent;cursor:pointer}
 .restab:hover{color:var(--paper)}
 .restab[aria-selected="true"]{color:var(--pixel);border-color:var(--pixel)}
 
 /* ================= mise en page principale : viewer + panneau droit ================= */
-.resgrid{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
+.resgrid{display:grid;grid-template-columns:1fr 300px;gap:16px;flex:1;min-height:0}
 .tabpanel{display:none}
-.tabpanel.current{display:block}
+.tabpanel.current{display:flex;flex-direction:column;flex:1;min-height:0}
+.tabpanel.current:not([data-tab="image"]){overflow-y:auto}
+.resgrid > div{min-height:0;overflow-y:auto;display:flex;flex-direction:column}
 
 .viewerhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px}
 .viewerhead .lab{display:flex;align-items:center;gap:10px}
 .viewerhead h2{font-family:var(--display);font-weight:600;font-size:17px;text-transform:uppercase;margin:0}
 .badge{display:inline-block;font-family:var(--mono);font-size:10px;padding:2px 9px;border-radius:10px;
   background:rgba(95,220,208,.14);color:var(--pixel);text-transform:uppercase;letter-spacing:.03em}
-.togglepair{display:flex;border:1px solid var(--line-soft);border-radius:5px;overflow:hidden}
-.togglepair button{background:transparent;border:none;color:var(--muted);font-family:var(--mono);
-  font-size:12px;padding:8px 14px;cursor:pointer}
-.togglepair button.active{background:var(--pixel);color:#0A141A}
 
 .viewerbox{position:relative;background:var(--void);border:1px solid var(--line-soft);border-radius:6px;
-  overflow:hidden;aspect-ratio:16/10}
+  overflow:hidden;height:38vh;flex:none}
 .viewer-tools{position:absolute;top:10px;left:10px;z-index:5;display:flex;flex-direction:column;gap:6px}
 .viewer-tools button{width:32px;height:32px;border-radius:5px;border:1px solid var(--line-soft);
   background:rgba(19,30,39,.85);color:var(--muted);display:flex;align-items:center;justify-content:center;
@@ -117,8 +118,8 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
   width:34px;height:34px;border-radius:50%;background:var(--void);border:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;color:var(--paper);font-size:13px}
 
-.viewerctrls{display:flex;align-items:center;gap:20px;margin-top:12px;flex-wrap:wrap;
-  background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:12px 16px}
+.viewerctrls{display:flex;align-items:center;gap:20px;margin-top:10px;flex-wrap:wrap;flex:none;
+  background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:10px 16px}
 .viewerctrls .grp{display:flex;align-items:center;gap:9px}
 .viewerctrls label{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
 .viewerctrls input[type=range]{width:110px;accent-color:var(--pixel)}
@@ -129,19 +130,15 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .smallbtn:hover{border-color:var(--pixel);color:var(--pixel)}
 
 /* ================= bandes spectrales ================= */
-.bandsrow{margin-top:22px}
-.bandsrow h3{font-family:var(--display);font-weight:600;font-size:16px;text-transform:uppercase;margin:0 0 12px}
-.bandthumbs{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
-.bandthumb{width:130px;border:2px solid var(--line-soft);border-radius:5px;overflow:hidden;cursor:pointer;
+.bandsrow{margin-top:14px;flex:none}
+.bandsrow h3{font-family:var(--display);font-weight:600;font-size:14px;text-transform:uppercase;margin:0 0 8px}
+.bandthumbs{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap}
+.bandthumb{width:104px;border:2px solid var(--line-soft);border-radius:5px;overflow:hidden;cursor:pointer;
   background:var(--panel-2)}
 .bandthumb.selected{border-color:var(--pixel)}
-.bandthumb img{width:100%;height:90px;object-fit:cover;display:block;filter:grayscale(1)}
-.bandthumb .lab{display:flex;align-items:center;gap:6px;padding:7px 9px;font-size:12px}
+.bandthumb img{width:100%;height:58px;object-fit:cover;display:block}
+.bandthumb .lab{display:flex;align-items:center;gap:6px;padding:6px 8px;font-size:11.5px}
 .bandthumb .lab i{width:8px;height:8px;border-radius:50%;flex:none}
-.bandpicker{margin-left:auto;display:flex;flex-direction:column;gap:6px}
-.bandpicker label{font-family:var(--mono);font-size:11px;color:var(--muted)}
-.bandpicker select{background:var(--panel-2);border:1px solid var(--line-soft);color:var(--paper);
-  border-radius:5px;padding:7px 11px;font-family:var(--body);font-size:12.5px}
 
 /* ================= panneau droit ================= */
 .resultcard{background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;overflow:hidden;
@@ -158,10 +155,10 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .resultsempty{color:var(--muted);font-size:13.5px;grid-column:1/-1;padding:30px 0}
 .resultsempty a{color:var(--pixel);text-decoration:none}
 
-.rpanel{background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:16px 18px;
-  margin-bottom:16px}
-.rpanel h3{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
-  color:var(--muted);margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.rpanel{background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:13px 15px;
+  margin-bottom:12px;flex:none}
+.rpanel h3{font-family:var(--mono);font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 10px;display:flex;align-items:center;gap:8px}
 .rpanel h3 .chev{margin-left:auto;color:var(--muted-2)}
 
 .srcrow{display:flex;gap:12px}
@@ -177,26 +174,100 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .comparenote{display:flex;gap:9px;font-size:11.5px;color:var(--muted);margin-top:12px;line-height:1.5}
 .comparenote svg{flex:none;width:14px;height:14px;margin-top:1px;color:var(--muted-2)}
 
-.bandctrl{padding:11px 0;border-bottom:1px solid var(--line-soft)}
-.bandctrl:last-child{border-bottom:none}
-.bandctrl .top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-.bandctrl .dot{width:9px;height:9px;border-radius:50%;flex:none}
-.bandctrl .nm{font-size:13px;flex:1}
-.bandctrl .iconbtn2{width:24px;height:24px;border:none;background:transparent;color:var(--muted-2);
-  cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:4px}
-.bandctrl .iconbtn2:hover{color:var(--paper);background:var(--panel-2)}
-.bandctrl .mmrow{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
-.bandctrl .mmrow input[type=range]{flex:1;accent-color:var(--pixel)}
-
-.dispfield{margin-bottom:14px}
-.dispfield label{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:7px}
-.dispfield select{width:100%;background:var(--panel-2);border:1px solid var(--line-soft);color:var(--paper);
-  border-radius:5px;padding:8px 11px;font-family:var(--body);font-size:12.5px}
-.checkrow{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
-
 @media(max-width:1100px){
   .resgrid{grid-template-columns:1fr}
 }
+/* ===================== Modal Paramètres ===================== */
+.modal-overlay{position:fixed;inset:0;background:rgba(5,8,11,.72);backdrop-filter:blur(2px);
+  display:none;align-items:center;justify-content:center;z-index:100;padding:24px}
+.modal-overlay.open{display:flex}
+.modal{width:100%;max-width:820px;height:min(640px,88vh);background:var(--panel);
+  border:1px solid var(--line-soft);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;
+  border-bottom:1px solid var(--line-soft);flex:none}
+.modal-head .htitle{display:flex;align-items:center;gap:11px}
+.modal-head .hicon{width:30px;height:30px;border-radius:7px;background:var(--panel-2);
+  border:1px solid var(--line-soft);color:var(--pixel);display:flex;align-items:center;justify-content:center;flex:none}
+.modal-head .hicon svg{width:16px;height:16px}
+.modal-head h2{font-family:var(--display);font-weight:600;font-size:19px;letter-spacing:.01em;
+  text-transform:uppercase;margin:0}
+.modal-close{background:transparent;border:none;color:var(--muted);font-size:19px;cursor:pointer;
+  line-height:1;padding:4px 6px;border-radius:4px}
+.modal-close:hover{color:var(--paper);background:var(--panel-2)}
+
+.modal-shell{flex:1;min-height:0;display:flex}
+.modal-rail{flex:none;width:190px;border-right:1px solid var(--line-soft);padding:14px 10px;
+  display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+.railbtn{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:6px;
+  background:transparent;border:none;color:var(--muted);font-family:var(--body);font-size:13.5px;
+  cursor:pointer;text-align:left;transition:background .14s,color .14s}
+.railbtn svg{flex:none;width:16px;height:16px;opacity:.85}
+.railbtn:hover{background:var(--panel-2);color:var(--paper)}
+.railbtn.active{background:rgba(95,220,208,.10);color:var(--pixel);box-shadow:inset 2px 0 0 var(--pixel)}
+.railbtn.active svg{opacity:1}
+
+.modal-content{flex:1;min-width:0;overflow-y:auto;padding:20px 22px 26px;
+  display:flex;flex-direction:column;gap:18px}
+
+.msection{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:8px;
+  padding:16px 18px;scroll-margin-top:8px}
+.msection-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
+.msection-head .htxt{display:flex;gap:11px;align-items:flex-start}
+.msection-head .sicon{width:32px;height:32px;border-radius:7px;background:var(--panel);
+  border:1px solid var(--line-soft);color:var(--pixel);display:flex;align-items:center;justify-content:center;flex:none}
+.msection-head .sicon svg{width:16px;height:16px}
+.msection-head h3{font-family:var(--display);font-weight:600;font-size:15.5px;text-transform:uppercase;
+  margin:0 0 2px;letter-spacing:.005em}
+.msection-head p{margin:0;font-size:12px;color:var(--muted);line-height:1.4}
+
+.msection-body{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line-soft)}
+.minfo-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;gap:12px;
+  padding:11px 0;border-bottom:1px solid var(--line-soft)}
+.minfo-row:last-child{border-bottom:none}
+.minfo-row .label{color:var(--muted)}
+.minfo-row .value{font-family:var(--mono);color:var(--paper);text-align:right}
+
+.planbadge{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+  padding:3px 9px;border-radius:5px;background:var(--pixel);color:#0A1F1C;flex:none;font-weight:600}
+.planbadge.team{background:var(--photon);color:#2E1B04}
+
+.planrow{display:flex;align-items:center;gap:12px;padding:13px 0;flex-wrap:wrap}
+.planrow .ptxt{flex:1;min-width:160px}
+.planrow .ptxt .t1{font-family:var(--display);font-weight:600;font-size:14.5px;text-transform:uppercase}
+.planrow .ptxt .t2{font-size:11.5px;color:var(--muted);margin-top:2px}
+.planrow .pstatus{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11.5px;
+  color:var(--ok);flex:none}
+.planrow .pstatus .sdot{width:6px;height:6px;border-radius:50%;background:var(--ok);flex:none}
+.planrow .pstatus.pending{color:var(--muted-2)}
+.planrow .pstatus.pending .sdot{background:var(--muted-2)}
+
+.msection-actions{display:flex;flex-direction:column;gap:8px;padding-top:14px;border-top:1px solid var(--line-soft);margin-top:2px}
+.mform-group{display:flex;flex-direction:column;gap:5px;padding:9px 0}
+.mform-group label{font-size:12.5px;color:var(--muted)}
+.mform-group input{background:var(--panel);border:1px solid var(--line-soft);border-radius:5px;
+  color:var(--paper);padding:9px 11px;font-family:var(--body);font-size:13.5px;width:100%}
+.mform-group input:focus{outline:none;border-color:var(--pixel)}
+.mbtn{border-radius:5px;padding:9px 15px;font-family:var(--mono);font-size:12px;font-weight:600;
+  letter-spacing:.03em;cursor:pointer;border:1px solid var(--line);background:transparent;
+  color:var(--paper);transition:border-color .14s,color .14s,background .14s;flex:none}
+.mbtn:hover{border-color:var(--pixel);color:var(--pixel)}
+.mbtn.primary{background:var(--photon);border-color:var(--photon);color:#0B1116}
+.mbtn.primary:hover{background:#FFBE72;border-color:#FFBE72;color:#0B1116}
+.mbtn.danger{border-color:var(--alert);color:var(--alert)}
+.mbtn.danger:hover{background:rgba(240,119,109,.12)}
+.mbtn:disabled{opacity:.5;cursor:default;border-color:var(--line);color:var(--muted)}
+.mbtn:disabled:hover{background:transparent}
+.mnote{font-size:12px;color:var(--muted-2);line-height:1.5;margin:0}
+.mnote.ok{color:var(--ok)}
+.mnote.err{color:var(--alert)}
+@media(max-width:640px){
+  .modal{max-width:100%;height:92vh}
+  .modal-shell{flex-direction:column}
+  .modal-rail{width:100%;flex-direction:row;border-right:none;border-bottom:1px solid var(--line-soft);
+    padding:8px 10px;overflow-x:auto}
+  .railbtn{white-space:nowrap}
+}
+
 </style>
 </head>
 <body>
@@ -229,7 +300,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
         <li><a href="#">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.9.3-1.2.9-1.2 1.8"/><circle cx="12" cy="16.6" r=".4" fill="currentColor" stroke="none"/></svg>
           Aide</a></li>
-        <li><a href="#">
+        <li><a href="#" id="settingsLink">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V20a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.96 18.34a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.66 8.96a1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 7.09 4.2l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04z"/></svg>
           Paramètres</a></li>
       </ul>
@@ -273,11 +344,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
         <div class="resgrid">
           <div>
             <div class="viewerhead">
-              <div class="lab"><h2>Image simulée</h2><span class="badge" id="bandsBadge">RGB</span></div>
-              <div class="togglepair">
-                <button type="button" class="active" data-view="sim">Image simulée</button>
-                <button type="button" data-view="src">Image source</button>
-              </div>
+              <div class="lab"><h2>Source ↔ Simulée</h2><span class="badge" id="bandsBadge">RGB</span></div>
             </div>
 
             <div class="viewerbox" id="viewerBox">
@@ -338,37 +405,15 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
                   Conditions : <b id="infoCond">—</b>
                 </div>
               </div>
-              <button class="srcbtn" type="button" id="toggleSrcBtn">👁 Afficher la source</button>
-            </div>
-
-            <div class="rpanel">
-              <h3>Comparaison</h3>
-              <div class="togglepair" style="width:100%">
-                <button type="button" class="active" style="flex:1" data-cmp="side">Côte à côte</button>
-                <button type="button" style="flex:1" data-cmp="overlay">Superposition</button>
-              </div>
+              <button class="srcbtn" type="button" id="toggleSrcBtn">↔ Centrer le curseur</button>
+              <p class="comparenote">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
+                <span>Fais glisser le curseur sur l'image pour comparer la scène source et le résultat simulé.</span>
+              </p>
               <p class="comparenote">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
                 <span>La comparaison quantitative détaillée (MTF, SNR) n'est pas conservée pour un résultat sauvegardé — seuls l'image et les paramètres le sont.</span>
               </p>
-            </div>
-
-            <div class="rpanel">
-              <h3>Contrôle des bandes</h3>
-              <div id="bandControls"></div>
-            </div>
-
-            <div class="rpanel">
-              <h3>Paramètres d'affichage</h3>
-              <div class="dispfield">
-                <label>Palette</label>
-                <select id="palSel"><option>Couleurs naturelles</option><option>Fausses couleurs</option><option>Niveaux de gris</option></select>
-              </div>
-              <div class="dispfield">
-                <label>Résolution d'affichage</label>
-                <select id="resSel"><option>Pleine résolution</option><option>Réduite (aperçu rapide)</option></select>
-              </div>
-              <label class="checkrow"><input type="checkbox" id="gridChk"> Afficher la grille / les coordonnées</label>
             </div>
           </div>
         </div>
@@ -389,7 +434,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
         <div class="rpanel">
           <h3>Logs</h3>
           <pre id="logsContent" style="white-space:pre-wrap;font-family:var(--mono);font-size:11.5px;
-            color:var(--muted);line-height:1.7;margin:0;max-height:60vh;overflow-y:auto">—</pre>
+            color:var(--muted);line-height:1.7;margin:0">—</pre>
         </div>
       </div>
 
@@ -398,6 +443,95 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
     </div>
   </div>
 
+</div>
+
+<div class="modal-overlay" id="settingsOverlay">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="modal-head">
+      <div class="htitle">
+        <span class="hicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V20a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.96 18.34a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.66 8.96a1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 7.09 4.2l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04z"/></svg></span>
+        <h2 id="settingsTitle">Paramètres</h2>
+      </div>
+      <button class="modal-close" id="settingsCloseBtn" type="button" aria-label="Fermer">✕</button>
+    </div>
+
+    <div class="modal-shell">
+      <nav class="modal-rail">
+        <button class="railbtn active" type="button" data-target="settingsSectionCompte">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.3-3.6 4.2-5.5 7.5-5.5s6.2 1.9 7.5 5.5"/></svg>
+          Compte
+        </button>
+        <button class="railbtn" type="button" data-target="settingsSectionPwd">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="10.5" width="14" height="9.5" rx="1.6"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>
+          Mot de passe
+        </button>
+        <button class="railbtn" type="button" data-target="settingsSectionSub">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10.5h18"/></svg>
+          Abonnement
+        </button>
+      </nav>
+
+      <div class="modal-content" id="settingsContent">
+
+        <div class="msection" id="settingsSectionCompte">
+          <div class="msection-head">
+            <div class="htxt">
+              <span class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.3-3.6 4.2-5.5 7.5-5.5s6.2 1.9 7.5 5.5"/></svg></span>
+              <div><h3>Compte</h3><p>Vos informations personnelles et votre adresse e-mail</p></div>
+            </div>
+          </div>
+          <div class="msection-body">
+            <div class="minfo-row"><span class="label">E-mail</span><span class="value" id="settingsEmail">—</span></div>
+            <div class="minfo-row"><span class="label">Membre depuis</span><span class="value" id="settingsCreated">—</span></div>
+          </div>
+        </div>
+
+        <div class="msection" id="settingsSectionPwd">
+          <div class="msection-head">
+            <div class="htxt">
+              <span class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="10.5" width="14" height="9.5" rx="1.6"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg></span>
+              <div><h3>Mot de passe</h3><p>Modifiez votre mot de passe pour sécuriser votre compte</p></div>
+            </div>
+          </div>
+          <div class="mform-group">
+            <label for="settingsNewPwd">Nouveau mot de passe</label>
+            <input type="password" id="settingsNewPwd" autocomplete="new-password" placeholder="8 caractères minimum">
+          </div>
+          <div class="mform-group">
+            <label for="settingsConfirmPwd">Confirmer le nouveau mot de passe</label>
+            <input type="password" id="settingsConfirmPwd" autocomplete="new-password">
+          </div>
+          <div class="msection-actions">
+            <p class="mnote" id="settingsPwdMsg"></p>
+            <button class="mbtn primary" id="settingsPwdBtn" type="button" style="align-self:flex-start">Mettre à jour le mot de passe</button>
+          </div>
+        </div>
+
+        <div class="msection" id="settingsSectionSub">
+          <div class="msection-head">
+            <div class="htxt">
+              <span class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10.5h18"/></svg></span>
+              <div><h3>Abonnement</h3><p>Votre offre et vos options d'abonnement</p></div>
+            </div>
+          </div>
+          <div class="planrow">
+            <span class="planbadge" id="settingsPlanBadge">—</span>
+            <div class="ptxt">
+              <div class="t1" id="settingsPlanName">—</div>
+              <div class="t2" id="settingsPlanDesc">—</div>
+            </div>
+            <span class="pstatus" id="settingsSubStatusDot"><span class="sdot"></span><span id="settingsSubStatusText">Actif</span></span>
+          </div>
+          <p class="mnote" id="settingsSubNote" style="margin:0 0 12px"></p>
+          <div class="msection-actions">
+            <button class="mbtn primary" id="settingsUpgradeBtn" type="button" style="display:none">Passer à l'offre Équipe</button>
+            <button class="mbtn danger" id="settingsCancelBtn" type="button">Résilier mon abonnement</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -486,6 +620,174 @@ async function deleteResult(r){
   renderResultsList();
 }
 
+// ===================== Paramètres (modal) =====================
+// Réutilisé sur toutes les pages authentifiées (espace-personnel,
+// simulations, résultats...). Charge la ligne "accounts" du compte
+// courant (plan + statuts de demande en attente). Ces deux derniers
+// champs (cancellation_requested, upgrade_requested) sont posés ici en
+// attendant que Stripe soit branché : aucune résiliation/upgrade réelle
+// n'a lieu, on enregistre juste la demande pour traitement manuel.
+// Migration SQL nécessaire si ces colonnes n'existent pas encore sur
+// "accounts" :
+//   alter table accounts add column if not exists cancellation_requested boolean not null default false;
+//   alter table accounts add column if not exists upgrade_requested boolean not null default false;
+//   alter table accounts add column if not exists plan text not null default 'individuel';
+async function initSettingsModal(session){
+  var account = null;
+  var { data: accountRow, error: accErr } = await supabaseClient
+    .from("accounts")
+    .select("plan, cancellation_requested, upgrade_requested")
+    .eq("id", session.user.id)
+    .single();
+  if(accErr) console.error("Erreur chargement compte :", accErr);
+  account = accountRow || { plan: "individuel", cancellation_requested: false, upgrade_requested: false };
+
+  var overlay = document.getElementById("settingsOverlay");
+  var planBadge = document.getElementById("settingsPlanBadge");
+  var planName = document.getElementById("settingsPlanName");
+  var planDesc = document.getElementById("settingsPlanDesc");
+  var subStatusDot = document.getElementById("settingsSubStatusDot");
+  var subStatusText = document.getElementById("settingsSubStatusText");
+  var subNote = document.getElementById("settingsSubNote");
+  var cancelBtn = document.getElementById("settingsCancelBtn");
+  var upgradeBtn = document.getElementById("settingsUpgradeBtn");
+
+  document.getElementById("settingsEmail").textContent = session.user.email || "";
+  document.getElementById("settingsCreated").textContent = session.user.created_at
+    ? new Date(session.user.created_at).toLocaleDateString("fr-FR", {day:"numeric", month:"short", year:"numeric"})
+    : "—";
+
+  function renderSubscription(){
+    var isTeam = account.plan === "equipe";
+    planBadge.textContent = isTeam ? "Équipe" : "Individuel";
+    planBadge.classList.toggle("team", isTeam);
+    planName.textContent = isTeam ? "Plan Équipe" : "Plan Individuel";
+    planDesc.textContent = isTeam ? "Accès complet, pensé pour un usage collectif" : "Accès complet à toutes les fonctionnalités";
+    upgradeBtn.style.display = isTeam ? "none" : "inline-flex";
+
+    if(account.cancellation_requested){
+      subStatusDot.className = "pstatus pending";
+      subStatusText.textContent = "Résiliation demandée";
+      subNote.textContent = "Elle sera effective à la fin de la période en cours.";
+      subNote.className = "mnote err";
+      cancelBtn.textContent = "Annuler la demande de résiliation";
+    } else {
+      subStatusDot.className = "pstatus";
+      subStatusText.textContent = "Actif";
+      subNote.textContent = "";
+      subNote.className = "mnote";
+      cancelBtn.textContent = "Résilier mon abonnement";
+    }
+
+    if(account.upgrade_requested){
+      upgradeBtn.textContent = "Demande envoyée — on te recontacte";
+      upgradeBtn.disabled = true;
+    } else {
+      upgradeBtn.textContent = "Passer à l'offre Équipe";
+      upgradeBtn.disabled = false;
+    }
+  }
+  renderSubscription();
+
+  // ---- Rail de navigation : défilement vers la section + surbrillance ----
+  var railBtns = document.querySelectorAll(".railbtn");
+  var contentEl = document.getElementById("settingsContent");
+  railBtns.forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var target = document.getElementById(btn.dataset.target);
+      if(target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  });
+  var sectionObserver = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(!entry.isIntersecting) return;
+      railBtns.forEach(function(btn){
+        btn.classList.toggle("active", btn.dataset.target === entry.target.id);
+      });
+    });
+  }, { root: contentEl, threshold: 0.5 });
+  document.querySelectorAll(".msection").forEach(function(sec){ sectionObserver.observe(sec); });
+
+  function openSettings(){ overlay.classList.add("open"); }
+  function closeSettings(){ overlay.classList.remove("open"); }
+
+  document.getElementById("settingsLink").addEventListener("click", function(e){
+    e.preventDefault();
+    openSettings();
+  });
+  document.getElementById("settingsCloseBtn").addEventListener("click", closeSettings);
+  overlay.addEventListener("click", function(e){
+    if(e.target === overlay) closeSettings();
+  });
+  document.addEventListener("keydown", function(e){
+    if(e.key === "Escape" && overlay.classList.contains("open")) closeSettings();
+  });
+
+  cancelBtn.addEventListener("click", async function(){
+    var requesting = !account.cancellation_requested;
+    var msg = requesting
+      ? "Confirmer la résiliation de ton abonnement ? Elle sera effective à la fin de la période en cours."
+      : "Annuler ta demande de résiliation ?";
+    if(!confirm(msg)) return;
+    cancelBtn.disabled = true;
+    var { error } = await supabaseClient.from("accounts")
+      .update({ cancellation_requested: requesting }).eq("id", session.user.id);
+    cancelBtn.disabled = false;
+    if(error){ alert("Erreur : " + error.message); return; }
+    account.cancellation_requested = requesting;
+    renderSubscription();
+  });
+
+  upgradeBtn.addEventListener("click", async function(){
+    if(!confirm("Envoyer une demande de passage à l'offre Équipe ? Nous te recontacterons pour la mise en place.")) return;
+    upgradeBtn.disabled = true;
+    var { error } = await supabaseClient.from("accounts")
+      .update({ upgrade_requested: true }).eq("id", session.user.id);
+    if(error){ alert("Erreur : " + error.message); upgradeBtn.disabled = false; return; }
+    account.upgrade_requested = true;
+    renderSubscription();
+  });
+
+  // ---- Changement de mot de passe (Supabase Auth, direct côté client) ----
+  var pwdBtn = document.getElementById("settingsPwdBtn");
+  var pwdMsg = document.getElementById("settingsPwdMsg");
+  var newPwdInput = document.getElementById("settingsNewPwd");
+  var confirmPwdInput = document.getElementById("settingsConfirmPwd");
+
+  pwdBtn.addEventListener("click", async function(){
+    var pwd = newPwdInput.value;
+    var confirmPwd = confirmPwdInput.value;
+    pwdMsg.className = "mnote";
+
+    if(pwd.length < 8){
+      pwdMsg.textContent = "8 caractères minimum.";
+      pwdMsg.className = "mnote err";
+      return;
+    }
+    if(pwd !== confirmPwd){
+      pwdMsg.textContent = "Les mots de passe ne correspondent pas.";
+      pwdMsg.className = "mnote err";
+      return;
+    }
+
+    pwdBtn.disabled = true;
+    pwdBtn.textContent = "Mise à jour…";
+    var { error } = await supabaseClient.auth.updateUser({ password: pwd });
+    pwdBtn.disabled = false;
+    pwdBtn.textContent = "Mettre à jour le mot de passe";
+
+    if(error){
+      pwdMsg.textContent = "Erreur : " + error.message;
+      pwdMsg.className = "mnote err";
+      return;
+    }
+    pwdMsg.textContent = "Mot de passe mis à jour.";
+    pwdMsg.className = "mnote ok";
+    newPwdInput.value = "";
+    confirmPwdInput.value = "";
+  });
+}
+
 (async function(){
   var session = await requireAuth();
   if(!session) return;
@@ -493,6 +795,7 @@ async function deleteResult(r){
   document.getElementById("userEmail").textContent = session.user.email || "";
   document.getElementById("userAvatar").textContent = (session.user.email || "").slice(0, 2).toUpperCase();
   document.getElementById("signOutBtn").addEventListener("click", signOut);
+  await initSettingsModal(session);
 
   var params = new URLSearchParams(window.location.search);
   var resultId = params.get("id");
@@ -502,7 +805,7 @@ async function deleteResult(r){
     return; // pas de ?id= -> vue liste uniquement, on s'arrête là
   }
   document.getElementById("listView").style.display = "none";
-  document.getElementById("detailView").style.display = "block";
+  document.getElementById("detailView").style.display = "flex";
 
   // ===================== Chargement du résultat (?id=<uuid>) =====================
   var result = null;
@@ -535,6 +838,18 @@ async function deleteResult(r){
     else console.error("Erreur génération URL signée :", signErr);
   }
 
+  // Image SOURCE réelle (scène brute, avant simulation) — même mapping
+  // nom -> vignette que sur la page de lancement de simulation. Ce n'est
+  // pas le crop exact utilisé par le calcul (non conservé séparément),
+  // mais c'est bien une image distincte de la scène d'origine, pas un
+  // doublon de l'image simulée.
+  var SCENE_THUMBS = {
+    "Ville": "assets/scenes/aix_thumb.jpg",
+    "Avion": "assets/scenes/avion_thumb.jpg",
+    "Port": "assets/scenes/port_thumb.jpg",
+  };
+  var sourceUrl = SCENE_THUMBS[sceneName] || "assets/scenes/port_thumb.jpg";
+
   var diagBands = (result && result.diagnostics && result.diagnostics.bands) || {};
   var resultLogs = (result && result.logs) || "";
 
@@ -545,9 +860,9 @@ async function deleteResult(r){
   document.getElementById("infoScene").textContent = sceneName;
   document.getElementById("infoInst").textContent = instName;
   document.getElementById("infoCond").textContent = condStr || "—";
-  document.getElementById("srcThumbImg").src = imgUrl;
+  document.getElementById("srcThumbImg").src = sourceUrl;
   document.getElementById("imgSim").src = imgUrl;
-  document.getElementById("imgSrc").src = imgUrl; // même fichier tant que la source réelle n'est pas conservée séparément
+  document.getElementById("imgSrc").src = sourceUrl;
 
   if(!result){
     document.querySelector(".comparewrap").innerHTML =
@@ -674,50 +989,101 @@ async function deleteResult(r){
     applyFilters();
   });
 
-  // ===================== Toggle Image simulée / Image source (plein cadre) =====================
-  document.querySelectorAll(".togglepair button[data-view]").forEach(function(btn){
-    btn.addEventListener("click", function(){
-      document.querySelectorAll(".togglepair button[data-view]").forEach(function(x){ x.classList.remove("active"); });
-      btn.classList.add("active");
-      // Dans cette version, les deux images sont identiques (pas de vraie
-      // source distincte conservée pour l'instant) — le bouton reste
-      // fonctionnel visuellement (recentre le curseur) sans effet réel.
-      setSplit(btn.dataset.view === "sim" ? 100 : 0);
-    });
-  });
   document.getElementById("toggleSrcBtn").addEventListener("click", function(){
     setSplit(50);
   });
 
-  // ===================== Bandes spectrales (RGB — pas de NIR réel côté pipeline actuel) =====================
+  // ===================== Bandes spectrales — affichage bande par bande =====================
+  // Chaque bande (Rouge/Vert/Bleu) est extraite en niveaux de gris à partir
+  // du canal RVB correspondant de l'image composite déjà sauvegardée (le
+  // pipeline mappe une bande sur un canal), via un canvas — pas besoin de
+  // stocker un rendu par bande séparé côté serveur. RGB = composite normal.
   var BANDS = [
-    {name:"Rouge", color:"#F0776D"},
-    {name:"Vert", color:"#7FD88F"},
-    {name:"Bleu", color:"#5FDCD0"}
+    {key:"RGB", name:"RGB", color:"var(--pixel)"},
+    {key:"R", name:"Rouge", color:"#F0776D"},
+    {key:"G", name:"Vert", color:"#7FD88F"},
+    {key:"B", name:"Bleu", color:"#5FDCD0"},
   ];
+  var CHANNEL_IDX = {R:0, G:1, B:2};
+  var bandCache = { sim:{}, src:{} }; // dataURLs mis en cache après premier calcul
+  var currentBand = "RGB";
+  var bandsBadge = document.getElementById("bandsBadge");
+
+  function extractChannel(imgEl, channelIdx){
+    try{
+      var canvas = document.createElement("canvas");
+      canvas.width = imgEl.naturalWidth;
+      canvas.height = imgEl.naturalHeight;
+      var ctx = canvas.getContext("2d");
+      ctx.drawImage(imgEl, 0, 0);
+      var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      var d = imageData.data;
+      for(var i = 0; i < d.length; i += 4){
+        var v = d[i + channelIdx];
+        d[i] = v; d[i+1] = v; d[i+2] = v;
+      }
+      ctx.putImageData(imageData, 0, 0);
+      return canvas.toDataURL("image/png");
+    }catch(e){
+      console.error("Extraction de bande impossible (CORS ?) :", e);
+      return null;
+    }
+  }
+
+  // Copies hors-DOM des deux images, chargées une fois pour servir de
+  // source aux extractions de canal (évite de re-décoder à chaque clic).
+  var simImgObj = new Image();
+  var srcImgObj = new Image();
+  simImgObj.crossOrigin = "anonymous";
+  srcImgObj.crossOrigin = "anonymous";
+  var imagesReady = Promise.all([
+    new Promise(function(res){ simImgObj.onload = res; simImgObj.onerror = res; simImgObj.src = imgUrl; }),
+    new Promise(function(res){ srcImgObj.onload = res; srcImgObj.onerror = res; srcImgObj.src = sourceUrl; }),
+  ]);
+
+  function selectBand(key){
+    currentBand = key;
+    var b = BANDS.filter(function(x){ return x.key === key; })[0];
+    bandsBadge.textContent = b.name;
+    bandsBadge.style.background = key === "RGB" ? "" : (b.color + "22");
+    bandsBadge.style.color = key === "RGB" ? "" : b.color;
+
+    if(key === "RGB"){
+      imgSim.src = imgUrl;
+      imgSrcRight.src = sourceUrl;
+      return;
+    }
+    var idx = CHANNEL_IDX[key];
+    if(bandCache.sim[key] === undefined) bandCache.sim[key] = extractChannel(simImgObj, idx);
+    if(bandCache.src[key] === undefined) bandCache.src[key] = extractChannel(srcImgObj, idx);
+    if(bandCache.sim[key]) imgSim.src = bandCache.sim[key];
+    if(bandCache.src[key]) imgSrcRight.src = bandCache.src[key];
+  }
+
   var bandThumbs = document.getElementById("bandThumbs");
-  BANDS.forEach(function(b, i){
+  var bandThumbEls = {};
+  BANDS.forEach(function(b){
     var d = document.createElement("div");
-    d.className = "bandthumb" + (i === 0 ? " selected" : "");
+    d.className = "bandthumb" + (b.key === "RGB" ? " selected" : "");
     d.innerHTML = "<img src='" + imgUrl + "' alt=''>"+
       "<div class='lab'><i style='background:" + b.color + "'></i>" + b.name + "</div>";
     d.addEventListener("click", function(){
       bandThumbs.querySelectorAll(".bandthumb").forEach(function(x){ x.classList.remove("selected"); });
       d.classList.add("selected");
+      selectBand(b.key);
     });
     bandThumbs.appendChild(d);
+    bandThumbEls[b.key] = d.querySelector("img");
   });
 
-  var bandControls = document.getElementById("bandControls");
-  BANDS.forEach(function(b){
-    var d = document.createElement("div");
-    d.className = "bandctrl";
-    d.innerHTML =
-      "<div class='top'><span class='dot' style='background:" + b.color + "'></span>"+
-      "<span class='nm'>" + b.name + "</span>"+
-      "<button class='iconbtn2' type='button' title='Visibilité'>👁</button></div>"+
-      "<div class='mmrow'><span>Min</span><input type='range' min='0' max='100' value='10'><span>Max</span><input type='range' min='0' max='100' value='95'></div>";
-    bandControls.appendChild(d);
+  // Une fois les images chargées, on précalcule les vignettes par bande
+  // (aperçu en niveaux de gris de chaque canal dans la liste de miniatures).
+  imagesReady.then(function(){
+    ["R","G","B"].forEach(function(key){
+      var idx = CHANNEL_IDX[key];
+      if(bandCache.sim[key] === undefined) bandCache.sim[key] = extractChannel(simImgObj, idx);
+      if(bandCache.sim[key] && bandThumbEls[key]) bandThumbEls[key].src = bandCache.sim[key];
+    });
   });
 
   // ===================== Zoom (simple) =====================
