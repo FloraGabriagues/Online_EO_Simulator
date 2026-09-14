@@ -514,10 +514,43 @@ document.getElementById("fileInput").addEventListener("change", function(e){
   reader.onload = function(){
     try{
       var data = JSON.parse(reader.result);
-      // Le format exact du fichier reste à définir avec le moteur EO_Toolbox —
-      // ici on accepte simplement des clés qui correspondent directement aux
-      // paramètres ci-dessus (D, I, E, T, W, PX, R, P, K, FW, QE, GAIN, ADC, FREQ).
-      Object.keys(data).forEach(function(k){ state.values[k] = data[k]; });
+
+      // Format réel du paramFile EO_Toolbox (imbriqué, Telescope/Detector/...)
+      // — même structure que produit paramfile_builder.py côté serveur.
+      // Chaque champ est optionnel : un paramFile partiel ne casse pas
+      // l'import, il remplit juste ce qu'il peut.
+      if(data.Telescope || data.Detector){
+        var tel = data.Telescope || {};
+        var det = data.Detector || {};
+
+        if(tel.D != null) state.values.D = tel.D;
+        if(tel.iFoV != null) state.values.I = tel.iFoV * 1e6;               // rad -> µrad
+        if(tel.central_obscuration != null) state.values.E = tel.central_obscuration;
+        if(tel.T_opt_spectral && tel.T_opt_spectral.values && tel.T_opt_spectral.values.length){
+          var tVals = tel.T_opt_spectral.values;
+          state.values.T = tVals.reduce(function(a,b){return a+b;}, 0) / tVals.length;
+        }
+        // W (WFE RMS) : pas de champ scalaire direct dans un paramFile — le
+        // front d'onde y est décrit par des coefficients de Zernike (CSV
+        // séparé), pas importé ici. Laissé tel quel (vide ou valeur déjà
+        // saisie), à renseigner manuellement si besoin.
+
+        if(det.pixel_pitch != null) state.values.PX = det.pixel_pitch * 1e6; // m -> µm
+        if(det.read_noise != null) state.values.R = det.read_noise;
+        if(det.prnu_sigma != null) state.values.P = det.prnu_sigma * 100;    // fraction -> %
+        if(det.dark_current != null) state.values.K = det.dark_current;
+        if(det.full_well != null) state.values.FW = det.full_well;
+        if(det.bits != null) state.values.ADC = det.bits;
+        if(det.QE_spectral && det.QE_spectral.values && det.QE_spectral.values.length){
+          var qVals = det.QE_spectral.values;
+          state.values.QE = (qVals.reduce(function(a,b){return a+b;}, 0) / qVals.length) * 100;
+        }
+      } else {
+        // Ancien format "plat" (clés directement D/I/E/T/W/PX/R/P/K/FW/QE/ADC)
+        // — gardé pour compatibilité si un tel fichier existe déjà quelque part.
+        Object.keys(data).forEach(function(k){ state.values[k] = data[k]; });
+      }
+
       persist();
       document.getElementById("btnFile").classList.add("active");
       document.getElementById("btnManual").classList.remove("active");
