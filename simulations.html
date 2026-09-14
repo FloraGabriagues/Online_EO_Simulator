@@ -120,6 +120,9 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .field select,.field input{width:100%;box-sizing:border-box;background:var(--panel-2);
   border:1px solid var(--line-soft);color:var(--paper);border-radius:5px;padding:8px 11px;
   font-family:var(--body);font-size:13px;appearance:none}
+.field .row{display:flex;gap:9px;align-items:center}
+.field .row input{flex:1}
+.field .unit{font-family:var(--mono);font-size:12px;color:var(--muted-2);flex:none;min-width:26px}
 
 .backlink{color:var(--muted);font-family:var(--mono);font-size:12.5px;background:none;border:none;
   cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:7px;padding:9px 0;
@@ -282,19 +285,30 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
               <div class="fieldsgrid">
                 <div class="field">
                   <label>Altitude</label>
-                  <select id="fAltitude"><option>450 km</option><option>500 km</option><option>620 km</option></select>
+                  <div class="row"><input type="number" id="fH" value="500" min="380" max="900" step="5"><span class="unit">km</span></div>
                 </div>
                 <div class="field">
-                  <label>Atmosphère</label>
-                  <select id="fAtmo"><option>Standard (US Standard)</option><option>Tropicale</option><option>Sub-arctique hiver</option></select>
+                  <label>Élévation solaire</label>
+                  <div class="row"><input type="number" id="fS" value="45" min="8" max="80" step="1"><span class="unit">°</span></div>
                 </div>
                 <div class="field">
-                  <label>Angle de visée</label>
-                  <select id="fAngle"><option>0°</option><option>15°</option><option>30°</option></select>
+                  <label>Temps d'intégration</label>
+                  <div class="row"><input type="number" id="fTI" value="200" min="5" max="2000" step="5"><span class="unit">µs</span></div>
                 </div>
                 <div class="field">
-                  <label>Heure locale</label>
-                  <input type="time" id="fTime" value="12:00">
+                  <label>Étages TDI</label>
+                  <div class="row"><input type="number" id="fTDI" value="8" min="1" max="64" step="1"><span class="unit">×</span></div>
+                </div>
+                <div class="field">
+                  <label>Mode d'aberration</label>
+                  <select id="fZ">
+                    <option value="none">Aucune</option>
+                    <option value="defoc">Défocalisation</option>
+                    <option value="astig">Astigmatisme</option>
+                    <option value="coma">Coma</option>
+                    <option value="spher">Aberration sphérique</option>
+                    <option value="trefo">Trefoil</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -333,9 +347,10 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
             <div class="sumrow"><span class="k">Résolution</span><span class="v" id="sumRes">—</span></div>
             <div class="sumrow"><span class="k">Instrument</span><span class="v" id="sumInst">—</span></div>
             <div class="sumrow"><span class="k">Altitude</span><span class="v" id="sumAlt">—</span></div>
-            <div class="sumrow"><span class="k">Atmosphère</span><span class="v" id="sumAtmo">—</span></div>
-            <div class="sumrow"><span class="k">Angle de visée</span><span class="v" id="sumAngle">—</span></div>
-            <div class="sumrow"><span class="k">Heure locale</span><span class="v" id="sumTime">—</span></div>
+            <div class="sumrow"><span class="k">Élévation solaire</span><span class="v" id="sumS">—</span></div>
+            <div class="sumrow"><span class="k">Temps d'intégration</span><span class="v" id="sumTI">—</span></div>
+            <div class="sumrow"><span class="k">Étages TDI</span><span class="v" id="sumTDI">—</span></div>
+            <div class="sumrow"><span class="k">Mode d'aberration</span><span class="v" id="sumZ">—</span></div>
           </div>
 
           <div class="statuspanel">
@@ -446,9 +461,9 @@ function updateSummary(){
   if(currentStep >= 3){
     document.getElementById("sumCondSlot").innerHTML =
       "<div class='sumlines'>"+
-      document.getElementById("fAltitude").value + "<br>"+
-      document.getElementById("fAtmo").value + "<br>"+
-      document.getElementById("fAngle").value + " · " + document.getElementById("fTime").value +
+      document.getElementById("fH").value + " km · " + document.getElementById("fS").value + "°<br>"+
+      "TI " + document.getElementById("fTI").value + "µs · TDI " + document.getElementById("fTDI").value + "<br>"+
+      document.getElementById("fZ").selectedOptions[0].textContent +
       "</div>";
   } else {
     document.getElementById("sumCondSlot").innerHTML = "<span class='empty'>—</span>";
@@ -465,7 +480,7 @@ function updatePanelButton(){
   }
   updateSummary();
 }
-["fAltitude","fAtmo","fAngle","fTime"].forEach(function(id){
+["fH","fS","fTI","fTDI","fZ"].forEach(function(id){
   document.getElementById(id).addEventListener("change", updateSummary);
 });
 
@@ -492,10 +507,11 @@ function startSimulation(){
   document.getElementById("sumScene").textContent = s.name;
   document.getElementById("sumRes").textContent = s.res;
   document.getElementById("sumInst").textContent = document.getElementById("instName").textContent;
-  document.getElementById("sumAlt").textContent = document.getElementById("fAltitude").value;
-  document.getElementById("sumAtmo").textContent = document.getElementById("fAtmo").value;
-  document.getElementById("sumAngle").textContent = document.getElementById("fAngle").value;
-  document.getElementById("sumTime").textContent = document.getElementById("fTime").value;
+  document.getElementById("sumAlt").textContent = document.getElementById("fH").value + " km";
+  document.getElementById("sumS").textContent = document.getElementById("fS").value + "°";
+  document.getElementById("sumTI").textContent = document.getElementById("fTI").value + " µs";
+  document.getElementById("sumTDI").textContent = document.getElementById("fTDI").value;
+  document.getElementById("sumZ").textContent = document.getElementById("fZ").selectedOptions[0].textContent;
 
   if(simStarted) return;
   simStarted = true;
