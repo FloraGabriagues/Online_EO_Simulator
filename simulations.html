@@ -115,6 +115,20 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .selectcard .name{font-family:var(--display);font-weight:600;font-size:16px;text-transform:uppercase}
 .specs{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6}
 
+.instoption{display:flex;gap:14px;align-items:center;width:100%;text-align:left;
+  background:var(--panel-2);border:2px solid var(--line-soft);border-radius:6px;
+  padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color .14s}
+.instoption.selected{border-color:var(--pixel)}
+.instoption .thumb{width:44px;height:44px;border-radius:4px;flex:none;
+  background:linear-gradient(135deg,#182734 0%,#0E161E 100%);border:1px solid var(--line-soft)}
+.instoption .name{font-family:var(--display);font-weight:600;font-size:15px;text-transform:uppercase}
+.instoption .meta{font-family:var(--mono);font-size:11px;color:var(--muted-2);margin-top:2px}
+.instoption .check{margin-left:auto;flex:none;color:var(--pixel);opacity:0}
+.instoption.selected .check{opacity:1}
+.empty-inst{font-size:13px;color:var(--muted);padding:20px 0}
+.empty-inst a{color:var(--pixel);text-decoration:none}
+.empty-inst a:hover{text-decoration:underline}
+
 .fieldsgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px}
 .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
 .field select,.field input{width:100%;box-sizing:border-box;background:var(--panel-2);
@@ -238,7 +252,10 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
       <button class="iconbtn" aria-label="Notifications" type="button">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
       </button>
-      <span class="userchip"><span class="avatar">FG</span>Flora G.</span>
+      <span class="userchip" id="userChip"><span class="avatar" id="userAvatar">…</span><span id="userEmail">—</span></span>
+      <button class="iconbtn" aria-label="Se déconnecter" type="button" id="signOutBtn" title="Se déconnecter">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
     </div>
 
     <div class="wrap">
@@ -264,16 +281,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
             <div class="stepbody">
               <div class="stephead"><span class="ttl">2. Instrument</span></div>
               <p class="stepintro">Choisissez l'instrument à utiliser pour cette simulation.</p>
-              <div class="selectcard">
-                <span class="thumb"></span>
-                <div class="info">
-                  <div class="namerow">
-                    <span class="name" id="instName">SPEO 500</span>
-                    <span class="badge">Multispectral</span>
-                  </div>
-                  <p class="specs">Configuration complète</p>
-                </div>
-              </div>
+              <div id="instList"></div>
             </div>
             <button class="backlink" type="button" data-goto="1">← Précédent</button>
           </div>
@@ -374,7 +382,16 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
 <script>
+// URL du conteneur Scaleway — à vérifier/ajuster si elle a changé depuis.
+var API_URL = "https://nssharphopper7bba2963-container-kind-mcclintock.functions.fnc.fr-par.scw.cloud";
+
+var session = null;
+var accountId = null;
+
+// ===================== Indicateur d'étapes =====================
 var STEP_LABELS = ["Scène", "Instrument", "Conditions d'acquisition", "Lancement"];
 var stepsHost = document.getElementById("stepsHost");
 function renderSteps(current){
@@ -396,6 +413,7 @@ function renderSteps(current){
   });
 }
 
+// ===================== Navigation séquentielle =====================
 var wizardGrid = document.getElementById("wizardGrid");
 var currentStep = 1;
 function showStep(n){
@@ -407,16 +425,17 @@ function showStep(n){
   document.querySelector(".stepview[data-step='4']").style.display = n === 4 ? "flex" : "none";
   renderSteps(n);
   updatePanelButton();
-  if(n === 4) startSimulation();
+  if(n === 4) launchSimulation();
 }
 document.querySelectorAll("[data-goto]").forEach(function(btn){
   btn.addEventListener("click", function(){ showStep(Number(btn.dataset.goto)); });
 });
 
+// ===================== Scènes (ids réels attendus par le serveur) =====================
 var SCENES = [
-  {name:"Ville", sub:"BD ORTHO IGN 2023", thumb:"assets/scenes/aix_thumb.jpg", w:200, h:200, res:"0.2 m/pixel", badge:"VHR"},
-  {name:"Avion", sub:"BD ORTHO IGN 2023", thumb:"assets/scenes/avion_thumb.jpg", w:200, h:200, res:"0.2 m/pixel", badge:"VHR"},
-  {name:"Port", sub:"BD ORTHO IGN 2023", thumb:"assets/scenes/port_thumb.jpg", w:200, h:200, res:"0.2 m/pixel", badge:"VHR"}
+  {id:"aix",   name:"Ville", sub:"BD ORTHO IGN 2023", thumb:"assets/scenes/aix_thumb.jpg",   w:200, h:200, res:"0.2 m/pixel", badge:"VHR"},
+  {id:"avion", name:"Avion", sub:"BD ORTHO IGN 2023", thumb:"assets/scenes/avion_thumb.jpg", w:200, h:200, res:"0.2 m/pixel", badge:"VHR"},
+  {id:"port",  name:"Port",  sub:"BD ORTHO IGN 2023", thumb:"assets/scenes/port_thumb.jpg",  w:200, h:200, res:"0.2 m/pixel", badge:"VHR"}
 ];
 var selectedSceneIdx = 0;
 var sceneGrid = document.getElementById("sceneGrid");
@@ -441,6 +460,49 @@ function renderScenes(){
 }
 renderScenes();
 
+// ===================== Instruments réels (Supabase) =====================
+var instruments = [];
+var selectedInstIdx = -1;
+var instListEl = document.getElementById("instList");
+
+async function loadInstruments(){
+  var { data, error } = await supabaseClient
+    .from("instruments")
+    .select("*")
+    .order("updated_at", { ascending: false });
+  if(error){ console.error("Erreur chargement instruments :", error); return; }
+  instruments = data || [];
+  if(instruments.length > 0) selectedInstIdx = 0;
+  renderInstruments();
+  updateSummary();
+}
+
+function renderInstruments(){
+  if(instruments.length === 0){
+    instListEl.innerHTML = "<p class='empty-inst'>Aucun instrument enregistré — "+
+      "<a href='creer-instrument.html'>crée-en un d'abord</a>.</p>";
+    return;
+  }
+  instListEl.innerHTML = "";
+  instruments.forEach(function(inst, i){
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "instoption" + (i === selectedInstIdx ? " selected" : "");
+    b.innerHTML =
+      "<span class='thumb'></span>"+
+      "<span><div class='name'>" + inst.name + "</div>"+
+      "<div class='meta'>Multispectral</div></span>"+
+      "<span class='check'>✓</span>";
+    b.addEventListener("click", function(){
+      selectedInstIdx = i;
+      renderInstruments();
+      updateSummary();
+    });
+    instListEl.appendChild(b);
+  });
+}
+
+// ===================== Résumé permanent (étapes 1-3) =====================
 function updateSummary(){
   var s = SCENES[selectedSceneIdx];
   var dimStr = s.w + " × " + s.h + " m";
@@ -449,10 +511,10 @@ function updateSummary(){
     "<div class='t1'>" + s.name + "</div><div class='t2'>" + dimStr + " · " + s.badge + "</div>"+
     "</div></div>";
 
-  if(currentStep >= 2){
+  if(currentStep >= 2 && selectedInstIdx >= 0){
     document.getElementById("sumInstSlot").innerHTML =
       "<div class='sumfilled'><span class='mini'></span><div class='txt'>"+
-      "<div class='t1'>" + document.getElementById("instName").textContent + "</div>"+
+      "<div class='t1'>" + instruments[selectedInstIdx].name + "</div>"+
       "<div class='t2'>Multispectral</div></div></div>";
   } else {
     document.getElementById("sumInstSlot").innerHTML = "<span class='empty'>—</span>";
@@ -473,9 +535,11 @@ function updatePanelButton(){
   var btn = document.getElementById("panelActionBtn");
   if(currentStep === 3){
     btn.textContent = "▶ Lancer la simulation";
+    btn.disabled = selectedInstIdx < 0;
     btn.onclick = function(){ showStep(4); };
   } else {
     btn.textContent = "Suivant →";
+    btn.disabled = (currentStep === 1 && selectedInstIdx < 0 && instruments.length === 0);
     btn.onclick = function(){ showStep(currentStep + 1); };
   }
   updateSummary();
@@ -484,74 +548,194 @@ function updatePanelButton(){
   document.getElementById(id).addEventListener("change", updateSummary);
 });
 
-renderSteps(1);
-updatePanelButton();
+// ===================== Utilitaire : base64 -> Blob (pour l'upload) =====================
+function base64ToBlob(b64, mime){
+  var byteChars = atob(b64);
+  var byteNumbers = new Array(byteChars.length);
+  for(var i = 0; i < byteChars.length; i++) byteNumbers[i] = byteChars.charCodeAt(i);
+  return new Blob([new Uint8Array(byteNumbers)], { type: mime });
+}
 
-var LOG_MESSAGES = [
-  "Initialisation de la simulation…",
-  "Chargement de la scène…",
-  "Préparation des données d'entrée…",
-  "Application de la géométrie d'acquisition…",
-  "Calcul de la PSF (POPPY)…",
-  "Simulation optique terminée",
-  "Lancement de la chaîne radiométrique…",
-  "Correction atmosphérique (Py6S)…",
-  "Génération de l'image multispectrale…",
-  "Calcul des métriques (MTF / SNR)…",
-  "Finalisation de la simulation…"
-];
+// ===================== Étape 4 : lancement réel + sauvegarde =====================
+var lastResult = null;     // réponse brute du serveur (image_b64, bands, logs)
+var lastPayload = null;    // ce qui a été envoyé (pour le résumé + la sauvegarde)
+var simRunning = false;
 
-var simStarted = false;
-function startSimulation(){
-  var s = SCENES[selectedSceneIdx];
-  document.getElementById("sumScene").textContent = s.name;
-  document.getElementById("sumRes").textContent = s.res;
-  document.getElementById("sumInst").textContent = document.getElementById("instName").textContent;
+function addLog(msg){
+  var logList = document.getElementById("logList");
+  if(!logList) return;
+  var line = document.createElement("div");
+  line.className = "logline";
+  line.innerHTML = "<span class='ldot'></span><span class='msg'>" + msg + "</span>";
+  logList.appendChild(line);
+  logList.scrollTop = logList.scrollHeight;
+}
+
+async function launchSimulation(){
+  var inst = instruments[selectedInstIdx];
+  var scene = SCENES[selectedSceneIdx];
+
+  document.getElementById("sumScene").textContent = scene.name;
+  document.getElementById("sumRes").textContent = scene.res;
+  document.getElementById("sumInst").textContent = inst ? inst.name : "—";
   document.getElementById("sumAlt").textContent = document.getElementById("fH").value + " km";
   document.getElementById("sumS").textContent = document.getElementById("fS").value + "°";
   document.getElementById("sumTI").textContent = document.getElementById("fTI").value + " µs";
   document.getElementById("sumTDI").textContent = document.getElementById("fTDI").value;
   document.getElementById("sumZ").textContent = document.getElementById("fZ").selectedOptions[0].textContent;
 
-  if(simStarted) return;
-  simStarted = true;
+  if(simRunning || !inst) return;
+  simRunning = true;
 
-  var logList = document.getElementById("logList");
   var pfill = document.getElementById("pfill");
   var ppct = document.getElementById("ppct");
   var etaText = document.getElementById("etaText");
+  var logList = document.getElementById("logList");
+  logList.innerHTML = "";
+  pfill.style.width = "30%"; pfill.style.transition = "width 8s ease-out";
+  ppct.textContent = "…";
+  etaText.textContent = "calcul en cours (peut prendre 1-2 minutes)";
+  addLog("Simulation lancée — la progression détaillée n'est visible qu'à la fin (calcul synchrone).");
 
-  function nowLabel(){
-    var d = new Date();
-    return String(d.getHours()).padStart(2,"0") + ":" + String(d.getMinutes()).padStart(2,"0");
-  }
-  function addLog(msg){
-    var line = document.createElement("div");
-    line.className = "logline";
-    line.innerHTML = "<span class='time'>" + nowLabel() + "</span>"+
-      "<span class='ldot'></span><span class='msg'>" + msg + "</span>";
-    logList.appendChild(line);
-    logList.scrollTop = logList.scrollHeight;
-  }
+  var conditions = {
+    H: Number(document.getElementById("fH").value),
+    S: Number(document.getElementById("fS").value),
+    TI: Number(document.getElementById("fTI").value),
+    TDI: Number(document.getElementById("fTDI").value),
+    Z: document.getElementById("fZ").value,
+  };
 
-  var progress = 0, totalSeconds = 180, elapsed = 0, logIndex = 0;
-  function tick(){
-    if(progress >= 100) return;
-    progress = Math.min(100, progress + (100 / (LOG_MESSAGES.length + 2)));
-    elapsed += totalSeconds / (LOG_MESSAGES.length + 2);
-    pfill.style.width = progress.toFixed(0) + "%";
-    ppct.textContent = progress.toFixed(0) + " %";
-    var remaining = Math.max(0, Math.round(totalSeconds - elapsed));
-    var m = Math.floor(remaining / 60), sSec = remaining % 60;
-    etaText.textContent = progress >= 100 ? "terminé" : (m + " min " + String(sSec).padStart(2,"0") + " s");
-    if(logIndex < LOG_MESSAGES.length){ addLog(LOG_MESSAGES[logIndex]); logIndex++; }
-    if(progress < 100) setTimeout(tick, 1200 + Math.random() * 700);
-    else addLog("Simulation terminée.");
+  var payload = Object.assign({
+    scene: scene.id,
+    D: inst.config.D, I: inst.config.I, W: inst.config.W, E: inst.config.E, T: inst.config.T,
+    R: inst.config.R, P: inst.config.P, K: inst.config.K, FW: inst.config.FW,
+    PX: inst.config.PX, QE: inst.config.QE, ADC: inst.config.ADC,
+  }, conditions);
+  lastPayload = { payload: payload, scene: scene, inst: inst, conditions: conditions };
+
+  try{
+    var resp = await fetch(API_URL + "/simulate_account", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + session.access_token,
+      },
+      body: JSON.stringify(payload),
+    });
+    var data = await resp.json();
+
+    if(!resp.ok){
+      throw new Error(data.detail || ("Erreur serveur (" + resp.status + ")"));
+    }
+
+    lastResult = data;
+    pfill.style.transition = "width .4s ease-out";
+    pfill.style.width = "100%";
+    ppct.textContent = "100 %";
+    etaText.textContent = "terminé";
+
+    (data.logs || "").split("\n").filter(function(l){ return l.trim(); }).forEach(addLog);
+    addLog("Simulation terminée.");
+    showSaveButton();
+  }catch(err){
+    ppct.textContent = "échec";
+    etaText.textContent = "—";
+    addLog("Erreur : " + err.message);
+  }finally{
+    simRunning = false;
   }
-  addLog(LOG_MESSAGES[0]); logIndex = 1;
-  etaText.textContent = Math.floor(totalSeconds/60) + " min " + (totalSeconds%60) + " s";
-  setTimeout(tick, 1000);
 }
+
+function showSaveButton(){
+  var statusPanel = document.querySelector(".statuspanel");
+  if(document.getElementById("saveResultBtn")) return; // déjà affiché
+  var btn = document.createElement("button");
+  btn.id = "saveResultBtn";
+  btn.className = "launchbtn";
+  btn.type = "button";
+  btn.style.marginTop = "12px";
+  btn.textContent = "💾 Sauvegarder ce résultat";
+  btn.addEventListener("click", saveResult);
+  statusPanel.appendChild(btn);
+}
+
+async function saveResult(){
+  var btn = document.getElementById("saveResultBtn");
+  btn.disabled = true;
+  btn.textContent = "Sauvegarde…";
+
+  var resultId = crypto.randomUUID();
+  var basePath = accountId + "/" + resultId + "/";
+
+  try{
+    // Image principale
+    var mainBlob = base64ToBlob(lastResult.image_b64, "image/png");
+    var { error: upErr } = await supabaseClient.storage.from("results").upload(basePath + "main.png", mainBlob);
+    if(upErr) throw upErr;
+
+    // Graphiques par bande — mêmes clés que la réponse de /simulate_account
+    var GRAPH_KEYS = ["pupil_png_b64","psf_png_b64","mtf_png_b64","snr_noise_maps_sim_png_b64",
+      "snr_image_compare_png_b64","snr_regimes_png_b64","snr_noise_budget_png_b64",
+      "snr_map_png_b64","snr_histogram_png_b64"];
+
+    var diagBands = {};
+    for(var bandName in lastResult.bands){
+      var d = lastResult.bands[bandName];
+      var bandDiag = {
+        rho_ref: d.rho_ref, reflectance_min: d.reflectance_min, reflectance_max: d.reflectance_max,
+        reflectance_mean: d.reflectance_mean, full_well_e: d.full_well_e, signal_mean_e: d.signal_mean_e,
+        signal_median_e: d.signal_median_e, fill_pct: d.fill_pct, snr_mean: d.snr_mean,
+        mtf_at_nyquist: d.mtf_at_nyquist, S_ref_e: d.S_ref_e, rgb_gain_applied: d.rgb_gain_applied,
+      };
+      for(var gi = 0; gi < GRAPH_KEYS.length; gi++){
+        var key = GRAPH_KEYS[gi];
+        if(!d[key]) continue;
+        var fname = bandName + "_" + key.replace("_png_b64", "") + ".png";
+        var blob = base64ToBlob(d[key], "image/png");
+        var { error: gErr } = await supabaseClient.storage.from("results").upload(basePath + fname, blob);
+        if(!gErr) bandDiag[key.replace("_b64", "_path")] = basePath + fname;
+      }
+      diagBands[bandName] = bandDiag;
+    }
+
+    var { error: insErr } = await supabaseClient.from("saved_results").insert({
+      id: resultId,
+      account_id: accountId,
+      instrument_id: lastPayload.inst.id,
+      instrument_snapshot: { name: lastPayload.inst.name, config: lastPayload.inst.config },
+      scene: lastPayload.scene.name,
+      conditions: lastPayload.conditions,
+      image_path: basePath + "main.png",
+      diagnostics: { bands: diagBands },
+      logs: lastResult.logs || "",
+    });
+    if(insErr) throw insErr;
+
+    window.location.href = "resultats.html?id=" + resultId;
+  }catch(err){
+    btn.disabled = false;
+    btn.textContent = "💾 Sauvegarder ce résultat";
+    var msg = (err.message || "").includes("Limite de")
+      ? err.message
+      : "Échec de la sauvegarde : " + (err.message || err);
+    addLog("Erreur : " + msg);
+  }
+}
+
+// ===================== Démarrage =====================
+(async function(){
+  session = await requireAuth();
+  if(!session) return;
+  accountId = session.user.id;
+
+  document.getElementById("userEmail").textContent = session.user.email || "";
+  document.getElementById("userAvatar").textContent = (session.user.email || "").slice(0, 2).toUpperCase();
+  document.getElementById("signOutBtn").addEventListener("click", signOut);
+
+  await loadInstruments();
+  renderSteps(1);
+  updatePanelButton();
+})();
 </script>
 </body>
 </html>
