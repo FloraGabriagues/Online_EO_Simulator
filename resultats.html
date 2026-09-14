@@ -103,14 +103,27 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .jumpbtn.active:hover{color:#0A141A}
 
 .viewerbox{position:relative;background:var(--void);border:1px solid var(--line-soft);border-radius:6px;
-  overflow:hidden;height:56vh;flex:1;min-height:0}
+  overflow:hidden;height:52vh;flex:1;min-height:0}
+.cornerlabel{position:absolute;top:12px;z-index:5;background:rgba(9,14,19,.8);backdrop-filter:blur(3px);
+  font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:5px 11px;
+  border-radius:4px;border:1px solid var(--line)}
+.cornerlabel.src{left:12px;color:var(--photon);border-color:var(--photon)}
+.cornerlabel.sim{right:12px;color:var(--pixel);border-color:var(--pixel)}
+.scalebar{position:absolute;bottom:12px;left:12px;background:rgba(9,14,19,.75);color:var(--paper);
+  font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:3px;z-index:5}
 .viewer-tools{position:absolute;top:10px;left:10px;z-index:5;display:flex;flex-direction:column;gap:6px}
 .viewer-tools button{width:32px;height:32px;border-radius:5px;border:1px solid var(--line-soft);
   background:rgba(19,30,39,.85);color:var(--muted);display:flex;align-items:center;justify-content:center;
   cursor:pointer;backdrop-filter:blur(3px)}
 .viewer-tools button:hover{color:var(--paper);border-color:var(--line)}
-.scalebar{position:absolute;bottom:12px;left:12px;background:rgba(9,14,19,.75);color:var(--paper);
-  font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:3px;z-index:5}
+
+.viewercaption{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:9px;flex:none}
+.viewerhint{font-size:12px;color:var(--muted-2)}
+.zoompresets{display:flex;gap:6px;flex:none}
+.zoombtn{background:transparent;border:1px solid var(--line);color:var(--paper);border-radius:4px;
+  font-family:var(--mono);font-size:11.5px;padding:6px 12px;cursor:pointer;transition:border-color .14s,color .14s}
+.zoombtn:hover{border-color:var(--pixel);color:var(--pixel)}
+.zoombtn.active{border-color:var(--photon);color:var(--photon)}
 
 .comparewrap{position:relative;width:100%;height:100%}
 .compareimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none}
@@ -367,16 +380,9 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
             </div>
 
             <div class="viewerbox" id="viewerBox">
+              <span class="cornerlabel src">Image source</span>
+              <span class="cornerlabel sim">Image simulée</span>
               <div class="viewer-tools">
-                <button type="button" title="Zoom avant" id="zoomInBtn">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg>
-                </button>
-                <button type="button" title="Zoom arrière" id="zoomOutBtn">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6"/></svg>
-                </button>
-                <button type="button" title="Ajuster à l'écran" id="fitBtn">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
-                </button>
                 <button type="button" title="Plein écran" id="fullscreenBtn">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/></svg>
                 </button>
@@ -384,9 +390,18 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
               <span class="scalebar" id="scalebar">100 m</span>
 
               <div class="comparewrap" id="compareWrap">
-                <img class="compareimg left" id="imgSim" alt="Image simulée">
-                <img class="compareimg right" id="imgSrc" alt="Image source">
+                <img class="compareimg left" id="imgSrc" alt="Image source">
+                <img class="compareimg right" id="imgSim" alt="Image simulée">
                 <div class="comparehandle" id="compareHandle"><span class="grip">‹›</span></div>
+              </div>
+            </div>
+
+            <div class="viewercaption">
+              <span class="viewerhint">Glisse sur l'image pour comparer</span>
+              <div class="zoompresets">
+                <button type="button" class="zoombtn active" id="zoomFitBtn" data-zoom="1">Ajusté</button>
+                <button type="button" class="zoombtn" id="zoom2Btn" data-zoom="2">×2</button>
+                <button type="button" class="zoombtn" id="zoom4Btn" data-zoom="4">×4</button>
               </div>
             </div>
 
@@ -1072,16 +1087,18 @@ async function initSettingsModal(session){
     tabsHost.appendChild(b);
   });
 
-  // ===================== Comparateur glissant (source/simulée) =====================
+  // ===================== Comparateur glissant (source à gauche, simulée à
+  // droite — même orientation que le simulateur public) =====================
   var handle = document.getElementById("compareHandle");
   var wrap = document.getElementById("compareWrap");
-  var imgSrcRight = document.getElementById("imgSrc");
+  var imgSrcRight = document.getElementById("imgSrc"); // couche de base, jamais clippée
+  var imgSimClip = document.getElementById("imgSim");  // couche recouvrante, clip piloté par le curseur
   var dragging = false;
 
   function setSplit(pct){
     pct = Math.max(0, Math.min(100, pct));
     handle.style.left = pct + "%";
-    imgSrcRight.style.clipPath = "inset(0 0 0 " + pct + "%)";
+    imgSimClip.style.clipPath = "inset(0 0 0 " + pct + "%)";
   }
   setSplit(50);
 
@@ -1334,23 +1351,28 @@ async function initSettingsModal(session){
   var jumpSrcBtn = document.getElementById("jumpSrcBtn");
   var jumpSimBtn = document.getElementById("jumpSimBtn");
   jumpSrcBtn.addEventListener("click", function(){
-    setSplit(0);
+    setSplit(100);
     jumpSrcBtn.classList.add("active"); jumpSimBtn.classList.remove("active");
   });
   jumpSimBtn.addEventListener("click", function(){
-    setSplit(100);
+    setSplit(0);
     jumpSimBtn.classList.add("active"); jumpSrcBtn.classList.remove("active");
   });
 
-  // ===================== Zoom (simple) =====================
+  // ===================== Zoom (presets Ajusté / ×2 / ×4) =====================
   var zoom = 1;
   function applyZoom(){
     imgSim.style.transform = "scale(" + zoom + ")";
     imgSrcRight.style.transform = "scale(" + zoom + ")";
   }
-  document.getElementById("zoomInBtn").addEventListener("click", function(){ zoom = Math.min(4, zoom + 0.25); applyZoom(); });
-  document.getElementById("zoomOutBtn").addEventListener("click", function(){ zoom = Math.max(1, zoom - 0.25); applyZoom(); });
-  document.getElementById("fitBtn").addEventListener("click", function(){ zoom = 1; applyZoom(); });
+  var zoomBtns = document.querySelectorAll(".zoombtn");
+  zoomBtns.forEach(function(btn){
+    btn.addEventListener("click", function(){
+      zoom = Number(btn.dataset.zoom);
+      zoomBtns.forEach(function(b){ b.classList.toggle("active", b === btn); });
+      applyZoom();
+    });
+  });
   document.getElementById("fullscreenBtn").addEventListener("click", function(){
     if(document.fullscreenElement) document.exitFullscreen();
     else document.getElementById("viewerBox").requestFullscreen();
