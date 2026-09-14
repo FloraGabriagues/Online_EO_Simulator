@@ -221,7 +221,10 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
       <button class="iconbtn" aria-label="Notifications" type="button">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
       </button>
-      <span class="userchip"><span class="avatar">FG</span>Flora G.</span>
+      <span class="userchip" id="userChip"><span class="avatar" id="userAvatar">…</span><span id="userEmail">—</span></span>
+      <button class="iconbtn" aria-label="Se déconnecter" type="button" id="signOutBtn" title="Se déconnecter">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
     </div>
 
     <div class="wrap">
@@ -265,114 +268,150 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
 
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
 <script>
-// Pas de backend pour l'instant : liste illustrative + relecture du brouillon
-// laissé par la page de création (mêmes clés localStorage que creer-instrument.html).
-var DEMO_INSTRUMENTS = [
-  {name:"SPEO 500", type:"Multispectral", pct:100,
-    desc:"Instrument optique multispectral à haute résolution.",
-    modified:"12 sept. 2026", created:"28 août 2026"},
-  {name:"Instrument test", type:"Multispectral", pct:72,
-    desc:"Configuration pour test et validation des paramètres optiques.",
-    modified:"3 sept. 2026", created:"20 août 2026"}
-];
+(async function(){
+  var session = await requireAuth();
+  if(!session) return; // requireAuth redirige déjà vers login.html si besoin
 
-var ICON_CAL = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><rect x='4' y='5' width='16' height='15' rx='1.5'/><path d='M4 9h16M8 3v4M16 3v4'/></svg>";
-var ICON_CLOCK = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><circle cx='12' cy='12' r='8.5'/><path d='M12 7.5V12l3 2'/></svg>";
+  // ===================== Topbar : utilisateur réel =====================
+  var email = session.user.email || "";
+  document.getElementById("userEmail").textContent = email;
+  document.getElementById("userAvatar").textContent = email.slice(0, 2).toUpperCase();
+  document.getElementById("signOutBtn").addEventListener("click", signOut);
 
-function readDraft(){
-  try{
-    var name = localStorage.getItem("dpap_instrument_name_v1");
-    var raw = localStorage.getItem("dpap_instrument_draft_v1");
-    if(!name || !raw) return null;
-    var values = JSON.parse(raw);
-    var keys = Object.keys(values).filter(function(k){ return values[k] !== "" && values[k] !== null; });
-    if(keys.length === 0) return null;
-    return {name:name, filled:keys.length};
-  }catch(e){ return null; }
-}
+  var ICON_CAL = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><rect x='4' y='5' width='16' height='15' rx='1.5'/><path d='M4 9h16M8 3v4M16 3v4'/></svg>";
+  var ICON_CLOCK = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><circle cx='12' cy='12' r='8.5'/><path d='M12 7.5V12l3 2'/></svg>";
 
-var draft = readDraft();
-var allItems = DEMO_INSTRUMENTS.slice();
-if(draft && !allItems.some(function(i){ return i.name === draft.name; })){
-  allItems.unshift({name: draft.name, type:"Multispectral", pct: Math.min(100, draft.filled * 8),
-    desc:"Brouillon en cours de configuration.", modified:"à l'instant", created:"—", isDraft:true});
-}
+  function formatDate(iso){
+    var d = new Date(iso);
+    return d.toLocaleDateString("fr-FR", {day:"numeric", month:"short", year:"numeric"});
+  }
+  function timeAgo(iso){
+    var diffMs = Date.now() - new Date(iso).getTime();
+    var days = Math.floor(diffMs / 86400000);
+    if(days <= 0) return "aujourd'hui";
+    if(days === 1) return "hier";
+    return "il y a " + days + " jours";
+  }
 
-// ===================== Onglets (Tous / Multispectral / Hyperspectral / Autres) =====================
-function countByType(t){ return allItems.filter(function(i){ return i.type === t; }).length; }
-var TABS = [
-  {id:"all", label:"Tous", count: allItems.length},
-  {id:"Multispectral", label:"Multispectral", count: countByType("Multispectral")},
-  {id:"Hyperspectral", label:"Hyperspectral", soon:true}
-];
-var activeTab = "all";
+  // ===================== Chargement des vraies données (Supabase) =====================
+  var { data: instruments, error: instErr } = await supabaseClient
+    .from("instruments")
+    .select("*")
+    .order("updated_at", { ascending: false });
+  if(instErr) console.error("Erreur chargement instruments :", instErr);
 
-var tabsHost = document.getElementById("tabsHost");
-TABS.forEach(function(t){
-  var b = document.createElement("button");
-  b.className = "tab" + (t.soon ? " soon" : ""); b.type = "button"; b.dataset.id = t.id;
-  b.setAttribute("aria-selected", t.id === activeTab ? "true" : "false");
-  b.textContent = t.label + (t.soon ? " (à venir)" : " (" + t.count + ")");
-  if(t.soon){ tabsHost.appendChild(b); return; }  // pas d'écouteur de clic — onglet inactif
-  b.addEventListener("click", function(){
-    activeTab = t.id;
-    tabsHost.querySelectorAll(".tab").forEach(function(x){
-      x.setAttribute("aria-selected", x.dataset.id === activeTab ? "true" : "false");
+  var allItems = (instruments || []).map(function(row){
+    return {
+      id: row.id,
+      name: row.name,
+      type: "Multispectral", // seul type réellement disponible en V1 (Hyperspectral = à venir)
+      pct: 100, // un instrument sauvegardé est considéré complet en V1
+      desc: (row.config && row.config.description) || "Instrument configuré.",
+      modified: formatDate(row.updated_at),
+      created: formatDate(row.created_at)
+    };
+  });
+
+  var { data: results, error: resErr } = await supabaseClient
+    .from("saved_results")
+    .select("*, instruments(name)")
+    .order("created_at", { ascending: false })
+    .limit(5);
+  if(resErr) console.error("Erreur chargement résultats :", resErr);
+  var recentResults = results || [];
+
+  // ===================== Onglets (Tous / Multispectral / Hyperspectral) =====================
+  function countByType(t){ return allItems.filter(function(i){ return i.type === t; }).length; }
+  var TABS = [
+    {id:"all", label:"Tous", count: allItems.length},
+    {id:"Multispectral", label:"Multispectral", count: countByType("Multispectral")},
+    {id:"Hyperspectral", label:"Hyperspectral", soon:true}
+  ];
+  var activeTab = "all";
+
+  var tabsHost = document.getElementById("tabsHost");
+  TABS.forEach(function(t){
+    var b = document.createElement("button");
+    b.className = "tab" + (t.soon ? " soon" : ""); b.type = "button"; b.dataset.id = t.id;
+    b.setAttribute("aria-selected", t.id === activeTab ? "true" : "false");
+    b.textContent = t.label + (t.soon ? " (à venir)" : " (" + t.count + ")");
+    if(t.soon){ tabsHost.appendChild(b); return; } // pas d'écouteur de clic — onglet inactif
+    b.addEventListener("click", function(){
+      activeTab = t.id;
+      tabsHost.querySelectorAll(".tab").forEach(function(x){
+        x.setAttribute("aria-selected", x.dataset.id === activeTab ? "true" : "false");
+      });
+      render();
     });
-    render();
-  });
-  tabsHost.appendChild(b);
-});
-
-// ===================== Rendu des cartes =====================
-var list = document.getElementById("instList");
-
-function render(){
-  var items = allItems.filter(function(it){
-    if(activeTab !== "all" && it.type !== activeTab) return false;
-    return true;
+    tabsHost.appendChild(b);
   });
 
-  list.innerHTML = "";
-  items.forEach(function(it){
-    var a = document.createElement("a");
-    a.className = "instcard";
-    a.href = "creer-instrument.html";
-    a.innerHTML =
-      "<div class='body'>"+
-        "<div class='titlerow'>"+
-          "<span><div class='name'>"+it.name+"</div>"+
-          "<div class='type'><i></i>"+it.type+(it.isDraft ? " · brouillon" : "")+"</div></span>"+
-          "<button class='menubtn' type='button' aria-label='Options' onclick='event.preventDefault()'>⋮</button>"+
-        "</div>"+
-        "<p class='desc'>"+it.desc+"</p>"+
-        "<div><div class='pctrow'><span>Configuration"+(it.pct>=100?" complète":"")+"</span><span>"+it.pct+" %</span></div>"+
-        "<div class='track'><div class='fill' style='width:"+it.pct+"%'></div></div></div>"+
-        "<div class='datesrow'>"+
-          "<span>"+ICON_CAL+"Modifié le "+it.modified+"</span>"+
-          "<span>"+ICON_CLOCK+"Créé le "+it.created+"</span>"+
-        "</div>"+
-        "<div class='openrow'><span class='openbtn'>Ouvrir →</span></div>"+
-      "</div>";
-    list.appendChild(a);
-  });
-}
-render();
+  // ===================== Rendu des cartes =====================
+  var list = document.getElementById("instList");
 
-// ===================== Activité récente =====================
-var activityEl = document.getElementById("activityList");
-var activities = draft
-  ? [["Brouillon "+draft.name+" en cours", "Configuration modifiée", "à l'instant"]]
-  : [
-      ["SPEO 500", "Configuration modifiée", "Il y a 2 jours"],
-      ["Instrument test", "Simulation terminée (15 min 32 s)", "Il y a 5 jours"],
-      ["SPEO 500", "Nouveau résultat disponible", "Il y a 7 jours"]
-    ];
-activityEl.innerHTML = activities.map(function(a){
-  return "<li><span class='adot'></span><span><span class='alabel'>"+a[0]+"</span><br>"+
-    "<span class='asub'>"+a[1]+"</span></span><span>"+a[2]+"</span></li>";
-}).join("");
+  function render(){
+    var items = allItems.filter(function(it){
+      if(activeTab !== "all" && it.type !== activeTab) return false;
+      return true;
+    });
+
+    if(items.length === 0){
+      list.innerHTML = "<div class='instcard empty'><div class='elab'>Aucun instrument</div>"+
+        "<p class='esub'>Crée ton premier instrument pour commencer.</p></div>";
+      return;
+    }
+    list.innerHTML = "";
+    items.forEach(function(it){
+      var a = document.createElement("a");
+      a.className = "instcard";
+      a.href = "creer-instrument.html?id=" + it.id;
+      a.innerHTML =
+        "<div class='body'>"+
+          "<div class='titlerow'>"+
+            "<span><div class='name'>"+it.name+"</div>"+
+            "<div class='type'><i></i>"+it.type+"</div></span>"+
+            "<button class='menubtn' type='button' aria-label='Options' onclick='event.preventDefault()'>⋮</button>"+
+          "</div>"+
+          "<p class='desc'>"+it.desc+"</p>"+
+          "<div><div class='pctrow'><span>Configuration complète</span><span>"+it.pct+" %</span></div>"+
+          "<div class='track'><div class='fill' style='width:"+it.pct+"%'></div></div></div>"+
+          "<div class='datesrow'>"+
+            "<span>"+ICON_CAL+"Modifié le "+it.modified+"</span>"+
+            "<span>"+ICON_CLOCK+"Créé le "+it.created+"</span>"+
+          "</div>"+
+          "<div class='openrow'><span class='openbtn'>Ouvrir →</span></div>"+
+        "</div>";
+      list.appendChild(a);
+    });
+  }
+  render();
+
+  // ===================== Activité récente (dérivée des vraies données — pas de table dédiée) =====================
+  var activityEl = document.getElementById("activityList");
+  var activityItems = [];
+  (instruments || []).slice(0, 3).forEach(function(row){
+    activityItems.push({label: row.name, sub: "Instrument enregistré", when: row.updated_at});
+  });
+  recentResults.forEach(function(r){
+    var instName = (r.instruments && r.instruments.name)
+      || (r.instrument_snapshot && r.instrument_snapshot.name) || "Instrument";
+    activityItems.push({label: instName, sub: "Résultat sauvegardé (" + r.scene + ")", when: r.created_at});
+  });
+  activityItems.sort(function(a, b){ return new Date(b.when) - new Date(a.when); });
+  activityItems = activityItems.slice(0, 5);
+
+  if(activityItems.length === 0){
+    activityEl.innerHTML = "<li><span class='adot'></span><span><span class='alabel'>Aucune activité pour l'instant</span></span></li>";
+  } else {
+    activityEl.innerHTML = activityItems.map(function(a){
+      return "<li><span class='adot'></span><span><span class='alabel'>"+a.label+"</span><br>"+
+        "<span class='asub'>"+a.sub+"</span></span><span>"+timeAgo(a.when)+"</span></li>";
+    }).join("");
+  }
+})();
 </script>
 </body>
 </html>
