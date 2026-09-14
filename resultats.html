@@ -144,6 +144,20 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
   border-radius:5px;padding:7px 11px;font-family:var(--body);font-size:12.5px}
 
 /* ================= panneau droit ================= */
+.resultcard{background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;overflow:hidden;
+  text-decoration:none;color:var(--paper);display:flex;flex-direction:column;transition:border-color .14s}
+.resultcard:hover{border-color:var(--pixel)}
+.resultcard .thumb{height:120px;background-size:cover;background-position:center;background-color:var(--void)}
+.resultcard .body{padding:12px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
+.resultcard .name{font-family:var(--display);font-weight:600;font-size:15px;text-transform:uppercase}
+.resultcard .meta{font-family:var(--mono);font-size:11px;color:var(--muted-2)}
+.resultcard .bottomrow{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:4px}
+.resultcard .delbtn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:4px;
+  font-family:var(--mono);font-size:11px;padding:5px 10px;cursor:pointer}
+.resultcard .delbtn:hover{border-color:var(--alert);color:var(--alert)}
+.resultsempty{color:var(--muted);font-size:13.5px;grid-column:1/-1;padding:30px 0}
+.resultsempty a{color:var(--pixel);text-decoration:none}
+
 .rpanel{background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:16px 18px;
   margin-bottom:16px}
 .rpanel h3{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
@@ -234,6 +248,17 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
     </div>
 
     <div class="wrap">
+
+      <!-- ============ Vue liste (resultats.html sans ?id=) ============ -->
+      <div id="listView">
+        <p class="eyebrow">Résultats</p>
+        <h1>Mes résultats</h1>
+        <p class="pagesub" style="margin-bottom:22px">Retrouve tes simulations sauvegardées.</p>
+        <div id="resultsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px"></div>
+      </div>
+
+      <!-- ============ Vue détail (resultats.html?id=<uuid>) ============ -->
+      <div id="detailView" style="display:none">
       <p class="crumbs"><a href="resultats.html">Résultats</a> <span>›</span> <span class="cur" id="crumbName">Résultat</span></p>
       <a class="backlink" href="resultats.html">← Retour aux résultats</a>
 
@@ -351,35 +376,23 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 
       <!-- ============ Onglet MTF ============ -->
       <div class="tabpanel" data-tab="mtf">
-        <div class="rpanel">
-          <h3>MTF</h3>
-          <p class="comparenote" style="margin-top:0">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
-            <span>Les courbes MTF détaillées ne sont pas conservées pour un résultat sauvegardé (seuls l'image et les paramètres utilisés le sont) — disponibles uniquement au moment du calcul, pas après coup.</span>
-          </p>
-        </div>
+        <div id="mtfContent"></div>
       </div>
 
       <!-- ============ Onglet SNR ============ -->
       <div class="tabpanel" data-tab="snr">
-        <div class="rpanel">
-          <h3>SNR</h3>
-          <p class="comparenote" style="margin-top:0">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
-            <span>Même remarque que pour la MTF — non conservé après sauvegarde du résultat.</span>
-          </p>
-        </div>
+        <div id="snrContent"></div>
       </div>
 
       <!-- ============ Onglet Logs ============ -->
       <div class="tabpanel" data-tab="logs">
         <div class="rpanel">
           <h3>Logs</h3>
-          <p class="comparenote" style="margin-top:0">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
-            <span>Les logs du calcul ne sont disponibles que pendant la simulation (onglet "Lancement"), pas conservés dans le résultat sauvegardé.</span>
-          </p>
+          <pre id="logsContent" style="white-space:pre-wrap;font-family:var(--mono);font-size:11.5px;
+            color:var(--muted);line-height:1.7;margin:0;max-height:60vh;overflow-y:auto">—</pre>
         </div>
+      </div>
+
       </div>
 
     </div>
@@ -390,6 +403,89 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
 <script>
+async function renderResultsList(){
+  var grid = document.getElementById("resultsGrid");
+  var { data: results, error } = await supabaseClient
+    .from("saved_results")
+    .select("*")
+    .order("created_at", { ascending: false });
+
+  if(error){
+    console.error("Erreur chargement des résultats :", error);
+    grid.innerHTML = "<p class='resultsempty'>Erreur de chargement — réessaie plus tard.</p>";
+    return;
+  }
+  if(!results || results.length === 0){
+    grid.innerHTML = "<p class='resultsempty'>Aucun résultat sauvegardé pour l'instant — "+
+      "<a href='simulations.html'>lance une simulation</a> pour en créer un.</p>";
+    return;
+  }
+
+  grid.innerHTML = "";
+  for(var i = 0; i < results.length; i++){
+    var r = results[i];
+    var thumbUrl = "";
+    if(r.image_path){
+      var { data: signed } = await supabaseClient.storage.from("results").createSignedUrl(r.image_path, 3600);
+      if(signed) thumbUrl = signed.signedUrl;
+    }
+    var dateLabel = new Date(r.created_at).toLocaleDateString("fr-FR", {day:"numeric", month:"short", year:"numeric"});
+
+    var card = document.createElement("div");
+    card.className = "resultcard";
+    card.innerHTML =
+      "<a href='resultats.html?id=" + r.id + "' style='text-decoration:none;color:inherit'>"+
+        "<span class='thumb' style='background-image:url(\"" + thumbUrl + "\")'></span>"+
+        "<div class='body'><div class='name'>" + r.scene + "</div>"+
+        "<div class='meta'>" + dateLabel + "</div></div>"+
+      "</a>";
+    var bottomRow = document.createElement("div");
+    bottomRow.className = "body bottomrow";
+    bottomRow.style.paddingTop = "0";
+    var delBtn = document.createElement("button");
+    delBtn.className = "delbtn";
+    delBtn.type = "button";
+    delBtn.textContent = "Supprimer";
+    delBtn.addEventListener("click", function(resultRow){
+      return function(){ deleteResult(resultRow); };
+    }(r));
+    bottomRow.appendChild(delBtn);
+    card.appendChild(bottomRow);
+    grid.appendChild(card);
+  }
+}
+
+async function deleteResult(r){
+  if(!confirm("Supprimer définitivement ce résultat (" + r.scene + ") ? Cette action est irréversible.")) return;
+
+  // Rassemble tous les chemins de fichiers liés (image principale + tous
+  // les graphiques de diagnostic par bande) pour ne rien laisser d'orphelin
+  // dans le bucket une fois la ligne supprimée.
+  var paths = [];
+  if(r.image_path) paths.push(r.image_path);
+  var bands = (r.diagnostics && r.diagnostics.bands) || {};
+  for(var bandName in bands){
+    for(var key in bands[bandName]){
+      if(key.endsWith("_path")) paths.push(bands[bandName][key]);
+    }
+  }
+
+  if(paths.length > 0){
+    var { error: rmErr } = await supabaseClient.storage.from("results").remove(paths);
+    if(rmErr) console.error("Erreur suppression fichiers du bucket :", rmErr);
+    // on continue quand même vers la suppression de la ligne — mieux vaut
+    // une ligne supprimée avec quelques fichiers orphelins qu'une ligne
+    // bloquée indéfiniment par un souci de stockage
+  }
+
+  var { error: delErr } = await supabaseClient.from("saved_results").delete().eq("id", r.id);
+  if(delErr){
+    alert("Échec de la suppression : " + delErr.message);
+    return;
+  }
+  renderResultsList();
+}
+
 (async function(){
   var session = await requireAuth();
   if(!session) return;
@@ -398,9 +494,17 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
   document.getElementById("userAvatar").textContent = (session.user.email || "").slice(0, 2).toUpperCase();
   document.getElementById("signOutBtn").addEventListener("click", signOut);
 
-  // ===================== Chargement du résultat (?id=<uuid>) =====================
   var params = new URLSearchParams(window.location.search);
   var resultId = params.get("id");
+
+  if(!resultId){
+    await renderResultsList();
+    return; // pas de ?id= -> vue liste uniquement, on s'arrête là
+  }
+  document.getElementById("listView").style.display = "none";
+  document.getElementById("detailView").style.display = "block";
+
+  // ===================== Chargement du résultat (?id=<uuid>) =====================
   var result = null;
 
   if(resultId){
@@ -419,7 +523,21 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
   var cond = (result && result.conditions) || {};
   var condStr = (cond.H != null ? "Alt. " + cond.H + " km" : "") +
     (cond.S != null ? " · Élév. " + cond.S + "°" : "");
-  var imgUrl = (result && result.image_url) || "assets/scenes/port_thumb.jpg";
+
+  // Le bucket "results" est privé — image_path est un CHEMIN, pas une URL
+  // utilisable directement : on génère une URL signée temporaire (1h,
+  // largement suffisant pour la durée d'une visite de cette page).
+  var imgUrl = "assets/scenes/port_thumb.jpg"; // repli si pas de résultat/erreur
+  if(result && result.image_path){
+    var { data: signedData, error: signErr } = await supabaseClient
+      .storage.from("results").createSignedUrl(result.image_path, 3600);
+    if(!signErr && signedData) imgUrl = signedData.signedUrl;
+    else console.error("Erreur génération URL signée :", signErr);
+  }
+
+  var diagBands = (result && result.diagnostics && result.diagnostics.bands) || {};
+  var resultLogs = (result && result.logs) || "";
+
   var createdLabel = result ? new Date(result.created_at).toISOString().slice(0,16).replace("T","_").replace(":","") : "—";
 
   document.getElementById("crumbName").textContent = "Résultat_" + createdLabel;
@@ -435,6 +553,63 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
     document.querySelector(".comparewrap").innerHTML =
       "<p style='padding:40px;color:var(--muted);text-align:center'>Résultat introuvable — vérifie le lien, ou reviens depuis <a href='resultats.html' style='color:var(--pixel)'>la liste des résultats</a>.</p>";
   }
+
+  // ===================== Logs (réel) =====================
+  document.getElementById("logsContent").textContent = resultLogs || "Aucun log disponible pour ce résultat.";
+
+  // ===================== MTF / SNR (réel, par bande) =====================
+  var BAND_COLORS = {Rouge:"#F0776D", Vert:"#7FD88F", Bleu:"#5FDCD0"};
+
+  async function signedUrl(path){
+    if(!path) return null;
+    var { data, error } = await supabaseClient.storage.from("results").createSignedUrl(path, 3600);
+    return error ? null : data.signedUrl;
+  }
+
+  async function buildDiagPanel(title, valueRows, graphKeys){
+    var html = "";
+    for(var bandName in diagBands){
+      var d = diagBands[bandName];
+      var color = BAND_COLORS[bandName] || "var(--pixel)";
+      html += "<div class='rpanel'><h3 style='color:" + color + "'>" + title + " — " + bandName + "</h3>";
+      html += "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px'>";
+      valueRows.forEach(function(r){
+        var v = d[r.key];
+        if(v == null) return;
+        html += "<div><div style='font-family:var(--mono);font-size:10px;color:var(--muted-2);text-transform:uppercase'>"+
+          r.label + "</div><div style='font-family:var(--mono);font-size:15px;color:var(--paper)'>"+
+          (typeof v === "number" ? v.toFixed(r.dec != null ? r.dec : 2) : v) + (r.unit || "") + "</div></div>";
+      });
+      html += "</div><div style='display:flex;gap:12px;flex-wrap:wrap'>";
+      for(var gi = 0; gi < graphKeys.length; gi++){
+        var pathKey = graphKeys[gi].replace("_b64", "_path");
+        var path = d[pathKey];
+        if(!path) continue;
+        var url = await signedUrl(path);
+        if(url) html += "<img src='" + url + "' style='max-width:320px;border:1px solid var(--line-soft);border-radius:4px'>";
+      }
+      html += "</div></div>";
+    }
+    return html || "<div class='rpanel'><p class='comparenote' style='margin-top:0'>"+
+      "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><circle cx='12' cy='12' r='9'/><path d='M12 8h.01M11 12h1v5h1'/></svg>"+
+      "<span>Aucun diagnostic disponible pour ce résultat.</span></p></div>";
+  }
+
+  document.getElementById("mtfContent").innerHTML = await buildDiagPanel(
+    "MTF",
+    [{key:"mtf_at_nyquist", label:"MTF à Nyquist", dec:3}],
+    ["psf_png_b64", "mtf_png_b64", "pupil_png_b64"],
+  );
+  document.getElementById("snrContent").innerHTML = await buildDiagPanel(
+    "SNR",
+    [
+      {key:"snr_mean", label:"SNR moyen", dec:1},
+      {key:"fill_pct", label:"Remplissage", unit:"%", dec:1},
+      {key:"S_ref_e", label:"S_ref", unit:" e⁻", dec:0},
+    ],
+    ["snr_regimes_png_b64", "snr_noise_budget_png_b64", "snr_map_png_b64",
+     "snr_noise_maps_sim_png_b64", "snr_image_compare_png_b64", "snr_histogram_png_b64"],
+  );
 
   // ===================== Onglets Image/MTF/SNR/Logs =====================
   var TABS = [
