@@ -1,0 +1,564 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Résultat — du photon au pixel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#090E13; --panel:#131E27; --panel-2:#1A2833;
+  --line:#2E4152; --line-soft:#22323F;
+  --paper:#E6EEF4; --muted:#9BADBD; --muted-2:#8497AA;
+  --photon:#F5AC57; --pixel:#5FDCD0; --alert:#F0776D; --ok:#7FD88F;
+  --display:"Barlow Condensed",Impact,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{background:var(--void);color:var(--paper);font-family:var(--body);
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button{font-family:inherit}
+
+/* ================= sidebar / topbar — identiques au reste du site ================= */
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{flex:none;width:210px;background:var(--panel);border-right:1px solid var(--line-soft);
+  display:flex;flex-direction:column;padding:16px 14px;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:9px;padding:4px 8px 16px;border-bottom:1px solid var(--line-soft);
+  margin-bottom:12px}
+.brand .mark{flex:none;width:26px;height:26px;display:grid;grid-template-columns:repeat(2,1fr);gap:3px}
+.brand .mark i{width:100%;height:100%;border-radius:50%;background:var(--pixel)}
+.brand .mark i:nth-child(2),.brand .mark i:nth-child(3){background:var(--photon)}
+.brand .name{font-family:var(--display);font-weight:600;font-size:16.5px;letter-spacing:.02em;
+  text-transform:uppercase;line-height:1.1}
+.brand .tag{font-family:var(--mono);font-size:10.5px;color:var(--muted-2);margin-top:1px}
+.navlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.navlist a{display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:4px;
+  text-decoration:none;color:var(--muted);font-size:14px;transition:background .14s,color .14s}
+.navlist a svg{flex:none;width:17px;height:17px;opacity:.85}
+.navlist a:hover{background:var(--panel-2);color:var(--paper)}
+.navlist a.active{background:rgba(95,220,208,.10);color:var(--pixel);box-shadow:inset 2px 0 0 var(--pixel)}
+.navlist a.active svg{opacity:1}
+.navlist a.soon{cursor:default;opacity:.45;pointer-events:none}
+.sidebar-bottom{margin-top:auto;padding-top:14px;border-top:1px solid var(--line-soft)}
+
+.main{flex:1;min-width:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{display:flex;justify-content:flex-end;align-items:center;gap:16px;flex:none;
+  padding:9px 26px;border-bottom:1px solid var(--line-soft)}
+.iconbtn{width:32px;height:32px;border-radius:50%;border:1px solid var(--line-soft);
+  background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.iconbtn:hover{border-color:var(--line);color:var(--paper)}
+.userchip{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.userchip .avatar{width:28px;height:28px;border-radius:50%;background:var(--panel-2);
+  border:1px solid var(--pixel);color:var(--pixel);display:flex;align-items:center;
+  justify-content:center;font-family:var(--display);font-size:12px;font-weight:600}
+
+.wrap{max-width:1400px;margin:0 auto;padding:16px 26px 30px;width:100%}
+
+/* ================= fil d'ariane + en-tête ================= */
+.crumbs{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);display:flex;align-items:center;
+  gap:7px;margin-bottom:14px}
+.crumbs a{color:var(--muted-2);text-decoration:none}
+.crumbs a:hover{color:var(--pixel)}
+.crumbs .cur{color:var(--paper)}
+
+.backlink{color:var(--muted);font-family:var(--mono);font-size:12.5px;text-decoration:none;
+  display:inline-flex;align-items:center;gap:7px;margin-bottom:10px}
+.backlink:hover{color:var(--paper)}
+
+.pageheadrow{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
+  line-height:1.05;letter-spacing:-.005em;margin:0;text-transform:uppercase}
+.editbtn{flex:none;background:transparent;border:none;color:var(--muted-2);cursor:pointer;
+  padding:4px;display:flex}
+.editbtn:hover{color:var(--pixel)}
+
+/* ================= onglets Image/MTF/SNR/Logs ================= */
+.restabs{display:flex;gap:4px;border-bottom:1px solid var(--line-soft);margin-bottom:18px}
+.restab{background:none;border:none;color:var(--muted-2);font-family:var(--mono);font-size:12.5px;
+  letter-spacing:.03em;padding:10px 16px;border-bottom:2px solid transparent;cursor:pointer}
+.restab:hover{color:var(--paper)}
+.restab[aria-selected="true"]{color:var(--pixel);border-color:var(--pixel)}
+
+/* ================= mise en page principale : viewer + panneau droit ================= */
+.resgrid{display:grid;grid-template-columns:1fr 320px;gap:20px;align-items:start}
+.tabpanel{display:none}
+.tabpanel.current{display:block}
+
+.viewerhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px}
+.viewerhead .lab{display:flex;align-items:center;gap:10px}
+.viewerhead h2{font-family:var(--display);font-weight:600;font-size:17px;text-transform:uppercase;margin:0}
+.badge{display:inline-block;font-family:var(--mono);font-size:10px;padding:2px 9px;border-radius:10px;
+  background:rgba(95,220,208,.14);color:var(--pixel);text-transform:uppercase;letter-spacing:.03em}
+.togglepair{display:flex;border:1px solid var(--line-soft);border-radius:5px;overflow:hidden}
+.togglepair button{background:transparent;border:none;color:var(--muted);font-family:var(--mono);
+  font-size:12px;padding:8px 14px;cursor:pointer}
+.togglepair button.active{background:var(--pixel);color:#0A141A}
+
+.viewerbox{position:relative;background:var(--void);border:1px solid var(--line-soft);border-radius:6px;
+  overflow:hidden;aspect-ratio:16/10}
+.viewer-tools{position:absolute;top:10px;left:10px;z-index:5;display:flex;flex-direction:column;gap:6px}
+.viewer-tools button{width:32px;height:32px;border-radius:5px;border:1px solid var(--line-soft);
+  background:rgba(19,30,39,.85);color:var(--muted);display:flex;align-items:center;justify-content:center;
+  cursor:pointer;backdrop-filter:blur(3px)}
+.viewer-tools button:hover{color:var(--paper);border-color:var(--line)}
+.scalebar{position:absolute;bottom:12px;left:12px;background:rgba(9,14,19,.75);color:var(--paper);
+  font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:3px;z-index:5}
+
+.comparewrap{position:relative;width:100%;height:100%}
+.compareimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none}
+.compareimg.right{clip-path:inset(0 0 0 50%)}
+.comparehandle{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--paper);cursor:ew-resize;z-index:4}
+.comparehandle .grip{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  width:34px;height:34px;border-radius:50%;background:var(--void);border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;color:var(--paper);font-size:13px}
+
+.viewerctrls{display:flex;align-items:center;gap:20px;margin-top:12px;flex-wrap:wrap;
+  background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:12px 16px}
+.viewerctrls .grp{display:flex;align-items:center;gap:9px}
+.viewerctrls label{font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.viewerctrls input[type=range]{width:110px;accent-color:var(--pixel)}
+.viewerctrls .val{font-family:var(--mono);font-size:11px;color:var(--muted-2);min-width:30px}
+.viewerctrls .spacer{flex:1}
+.smallbtn{display:inline-flex;align-items:center;gap:6px;background:transparent;border:1px solid var(--line);
+  color:var(--paper);border-radius:4px;font-family:var(--mono);font-size:11.5px;padding:7px 12px;cursor:pointer}
+.smallbtn:hover{border-color:var(--pixel);color:var(--pixel)}
+
+/* ================= bandes spectrales ================= */
+.bandsrow{margin-top:22px}
+.bandsrow h3{font-family:var(--display);font-weight:600;font-size:16px;text-transform:uppercase;margin:0 0 12px}
+.bandthumbs{display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.bandthumb{width:130px;border:2px solid var(--line-soft);border-radius:5px;overflow:hidden;cursor:pointer;
+  background:var(--panel-2)}
+.bandthumb.selected{border-color:var(--pixel)}
+.bandthumb img{width:100%;height:90px;object-fit:cover;display:block;filter:grayscale(1)}
+.bandthumb .lab{display:flex;align-items:center;gap:6px;padding:7px 9px;font-size:12px}
+.bandthumb .lab i{width:8px;height:8px;border-radius:50%;flex:none}
+.bandpicker{margin-left:auto;display:flex;flex-direction:column;gap:6px}
+.bandpicker label{font-family:var(--mono);font-size:11px;color:var(--muted)}
+.bandpicker select{background:var(--panel-2);border:1px solid var(--line-soft);color:var(--paper);
+  border-radius:5px;padding:7px 11px;font-family:var(--body);font-size:12.5px}
+
+/* ================= panneau droit ================= */
+.rpanel{background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:16px 18px;
+  margin-bottom:16px}
+.rpanel h3{font-family:var(--mono);font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.rpanel h3 .chev{margin-left:auto;color:var(--muted-2)}
+
+.srcrow{display:flex;gap:12px}
+.srcrow .thumb{width:64px;height:64px;border-radius:4px;flex:none;overflow:hidden;border:1px solid var(--line-soft)}
+.srcrow .thumb img{width:100%;height:100%;object-fit:cover}
+.srcrow .info{font-size:12.5px;color:var(--muted);line-height:1.7}
+.srcrow .info b{color:var(--paper);font-weight:500}
+.srcbtn{width:100%;margin-top:12px;background:transparent;border:1px solid var(--line);color:var(--paper);
+  border-radius:5px;font-family:var(--mono);font-size:12px;padding:9px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:7px}
+.srcbtn:hover{border-color:var(--pixel);color:var(--pixel)}
+
+.comparenote{display:flex;gap:9px;font-size:11.5px;color:var(--muted);margin-top:12px;line-height:1.5}
+.comparenote svg{flex:none;width:14px;height:14px;margin-top:1px;color:var(--muted-2)}
+
+.bandctrl{padding:11px 0;border-bottom:1px solid var(--line-soft)}
+.bandctrl:last-child{border-bottom:none}
+.bandctrl .top{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.bandctrl .dot{width:9px;height:9px;border-radius:50%;flex:none}
+.bandctrl .nm{font-size:13px;flex:1}
+.bandctrl .iconbtn2{width:24px;height:24px;border:none;background:transparent;color:var(--muted-2);
+  cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:4px}
+.bandctrl .iconbtn2:hover{color:var(--paper);background:var(--panel-2)}
+.bandctrl .mmrow{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;color:var(--muted)}
+.bandctrl .mmrow input[type=range]{flex:1;accent-color:var(--pixel)}
+
+.dispfield{margin-bottom:14px}
+.dispfield label{display:block;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:7px}
+.dispfield select{width:100%;background:var(--panel-2);border:1px solid var(--line-soft);color:var(--paper);
+  border-radius:5px;padding:8px 11px;font-family:var(--body);font-size:12.5px}
+.checkrow{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted)}
+
+@media(max-width:1100px){
+  .resgrid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="mark"><i></i><i></i><i></i><i></i></span>
+      <span>
+        <div class="name">EO Toolbox</div>
+        <div class="tag">Du photon au pixel</div>
+      </span>
+    </div>
+    <ul class="navlist">
+      <li><a href="espace-personnel.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>
+        Instruments</a></li>
+      <li><a class="soon" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 4V2M15 4V2M9 22v-2M15 22v-2M4 9H2M4 15H2M22 9h-2M22 15h-2"/></svg>
+        Plateforme <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto">à venir</em></a></li>
+      <li><a href="simulations.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 4l14 8-14 8V4z"/></svg>
+        Simulations</a></li>
+      <li><a class="active" href="resultats.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
+        Résultats</a></li>
+    </ul>
+    <div class="sidebar-bottom">
+      <ul class="navlist">
+        <li><a href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.9.3-1.2.9-1.2 1.8"/><circle cx="12" cy="16.6" r=".4" fill="currentColor" stroke="none"/></svg>
+          Aide</a></li>
+        <li><a href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V20a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.96 18.34a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.66 8.96a1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 7.09 4.2l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04z"/></svg>
+          Paramètres</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="iconbtn" aria-label="Notifications" type="button">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+      </button>
+      <span class="userchip" id="userChip"><span class="avatar" id="userAvatar">…</span><span id="userEmail">—</span></span>
+      <button class="iconbtn" aria-label="Se déconnecter" type="button" id="signOutBtn" title="Se déconnecter">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
+    </div>
+
+    <div class="wrap">
+      <p class="crumbs"><a href="resultats.html">Résultats</a> <span>›</span> <span class="cur" id="crumbName">Résultat</span></p>
+      <a class="backlink" href="resultats.html">← Retour aux résultats</a>
+
+      <div class="pageheadrow">
+        <h1 id="resTitle">Résultat</h1>
+      </div>
+
+      <div class="restabs" id="restabsHost"></div>
+
+      <!-- ============ Onglet Image ============ -->
+      <div class="tabpanel current" data-tab="image">
+        <div class="resgrid">
+          <div>
+            <div class="viewerhead">
+              <div class="lab"><h2>Image simulée</h2><span class="badge" id="bandsBadge">RGB</span></div>
+              <div class="togglepair">
+                <button type="button" class="active" data-view="sim">Image simulée</button>
+                <button type="button" data-view="src">Image source</button>
+              </div>
+            </div>
+
+            <div class="viewerbox" id="viewerBox">
+              <div class="viewer-tools">
+                <button type="button" title="Zoom avant" id="zoomInBtn">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M11 8v6M8 11h6"/></svg>
+                </button>
+                <button type="button" title="Zoom arrière" id="zoomOutBtn">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3M8 11h6"/></svg>
+                </button>
+                <button type="button" title="Ajuster à l'écran" id="fitBtn">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 3H5a2 2 0 0 0-2 2v3M16 3h3a2 2 0 0 1 2 2v3M8 21H5a2 2 0 0 1-2-2v-3M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+                </button>
+                <button type="button" title="Plein écran" id="fullscreenBtn">
+                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/></svg>
+                </button>
+              </div>
+              <span class="scalebar" id="scalebar">100 m</span>
+
+              <div class="comparewrap" id="compareWrap">
+                <img class="compareimg left" id="imgSim" alt="Image simulée">
+                <img class="compareimg right" id="imgSrc" alt="Image source">
+                <div class="comparehandle" id="compareHandle"><span class="grip">‹›</span></div>
+              </div>
+            </div>
+
+            <div class="viewerctrls">
+              <div class="grp">
+                <label>Luminosité</label>
+                <input type="range" id="ctrlBright" min="30" max="200" value="100">
+                <span class="val" id="valBright">100%</span>
+              </div>
+              <div class="grp">
+                <label>Contraste</label>
+                <input type="range" id="ctrlContrast" min="30" max="200" value="100">
+                <span class="val" id="valContrast">100%</span>
+              </div>
+              <span class="spacer"></span>
+              <button class="smallbtn" type="button" id="resetCtrlsBtn">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
+                Réinitialiser</button>
+            </div>
+
+            <div class="bandsrow">
+              <h3>Bandes spectrales</h3>
+              <div class="bandthumbs" id="bandThumbs"></div>
+            </div>
+          </div>
+
+          <div>
+            <div class="rpanel">
+              <h3>Source &amp; comparaison</h3>
+              <div class="srcrow">
+                <span class="thumb"><img id="srcThumbImg" alt=""></span>
+                <div class="info">
+                  Scène : <b id="infoScene">—</b><br>
+                  Instrument : <b id="infoInst">—</b><br>
+                  Conditions : <b id="infoCond">—</b>
+                </div>
+              </div>
+              <button class="srcbtn" type="button" id="toggleSrcBtn">👁 Afficher la source</button>
+            </div>
+
+            <div class="rpanel">
+              <h3>Comparaison</h3>
+              <div class="togglepair" style="width:100%">
+                <button type="button" class="active" style="flex:1" data-cmp="side">Côte à côte</button>
+                <button type="button" style="flex:1" data-cmp="overlay">Superposition</button>
+              </div>
+              <p class="comparenote">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
+                <span>La comparaison quantitative détaillée (MTF, SNR) n'est pas conservée pour un résultat sauvegardé — seuls l'image et les paramètres le sont.</span>
+              </p>
+            </div>
+
+            <div class="rpanel">
+              <h3>Contrôle des bandes</h3>
+              <div id="bandControls"></div>
+            </div>
+
+            <div class="rpanel">
+              <h3>Paramètres d'affichage</h3>
+              <div class="dispfield">
+                <label>Palette</label>
+                <select id="palSel"><option>Couleurs naturelles</option><option>Fausses couleurs</option><option>Niveaux de gris</option></select>
+              </div>
+              <div class="dispfield">
+                <label>Résolution d'affichage</label>
+                <select id="resSel"><option>Pleine résolution</option><option>Réduite (aperçu rapide)</option></select>
+              </div>
+              <label class="checkrow"><input type="checkbox" id="gridChk"> Afficher la grille / les coordonnées</label>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============ Onglet MTF ============ -->
+      <div class="tabpanel" data-tab="mtf">
+        <div class="rpanel">
+          <h3>MTF</h3>
+          <p class="comparenote" style="margin-top:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
+            <span>Les courbes MTF détaillées ne sont pas conservées pour un résultat sauvegardé (seuls l'image et les paramètres utilisés le sont) — disponibles uniquement au moment du calcul, pas après coup.</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- ============ Onglet SNR ============ -->
+      <div class="tabpanel" data-tab="snr">
+        <div class="rpanel">
+          <h3>SNR</h3>
+          <p class="comparenote" style="margin-top:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
+            <span>Même remarque que pour la MTF — non conservé après sauvegarde du résultat.</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- ============ Onglet Logs ============ -->
+      <div class="tabpanel" data-tab="logs">
+        <div class="rpanel">
+          <h3>Logs</h3>
+          <p class="comparenote" style="margin-top:0">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
+            <span>Les logs du calcul ne sont disponibles que pendant la simulation (onglet "Lancement"), pas conservés dans le résultat sauvegardé.</span>
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<script>
+(async function(){
+  var session = await requireAuth();
+  if(!session) return;
+
+  document.getElementById("userEmail").textContent = session.user.email || "";
+  document.getElementById("userAvatar").textContent = (session.user.email || "").slice(0, 2).toUpperCase();
+  document.getElementById("signOutBtn").addEventListener("click", signOut);
+
+  // ===================== Chargement du résultat (?id=<uuid>) =====================
+  var params = new URLSearchParams(window.location.search);
+  var resultId = params.get("id");
+  var result = null;
+
+  if(resultId){
+    var { data, error } = await supabaseClient
+      .from("saved_results")
+      .select("*, instruments(name)")
+      .eq("id", resultId)
+      .single();
+    if(error) console.error("Erreur chargement résultat :", error);
+    else result = data;
+  }
+
+  var sceneName = (result && result.scene) || "—";
+  var instName = (result && ((result.instruments && result.instruments.name) ||
+    (result.instrument_snapshot && result.instrument_snapshot.name))) || "—";
+  var cond = (result && result.conditions) || {};
+  var condStr = (cond.H != null ? "Alt. " + cond.H + " km" : "") +
+    (cond.S != null ? " · Élév. " + cond.S + "°" : "");
+  var imgUrl = (result && result.image_url) || "assets/scenes/port_thumb.jpg";
+  var createdLabel = result ? new Date(result.created_at).toISOString().slice(0,16).replace("T","_").replace(":","") : "—";
+
+  document.getElementById("crumbName").textContent = "Résultat_" + createdLabel;
+  document.getElementById("resTitle").textContent = "Résultat — " + sceneName + " (" + createdLabel + ")";
+  document.getElementById("infoScene").textContent = sceneName;
+  document.getElementById("infoInst").textContent = instName;
+  document.getElementById("infoCond").textContent = condStr || "—";
+  document.getElementById("srcThumbImg").src = imgUrl;
+  document.getElementById("imgSim").src = imgUrl;
+  document.getElementById("imgSrc").src = imgUrl; // même fichier tant que la source réelle n'est pas conservée séparément
+
+  if(!result){
+    document.querySelector(".comparewrap").innerHTML =
+      "<p style='padding:40px;color:var(--muted);text-align:center'>Résultat introuvable — vérifie le lien, ou reviens depuis <a href='resultats.html' style='color:var(--pixel)'>la liste des résultats</a>.</p>";
+  }
+
+  // ===================== Onglets Image/MTF/SNR/Logs =====================
+  var TABS = [
+    {id:"image", label:"Image"},
+    {id:"mtf", label:"MTF"},
+    {id:"snr", label:"SNR"},
+    {id:"logs", label:"Logs"}
+  ];
+  var tabsHost = document.getElementById("restabsHost");
+  TABS.forEach(function(t, i){
+    var b = document.createElement("button");
+    b.className = "restab"; b.type = "button";
+    b.setAttribute("aria-selected", i === 0 ? "true" : "false");
+    b.textContent = t.label;
+    b.addEventListener("click", function(){
+      tabsHost.querySelectorAll(".restab").forEach(function(x){ x.setAttribute("aria-selected", "false"); });
+      b.setAttribute("aria-selected", "true");
+      document.querySelectorAll(".tabpanel").forEach(function(p){
+        p.classList.toggle("current", p.dataset.tab === t.id);
+      });
+    });
+    tabsHost.appendChild(b);
+  });
+
+  // ===================== Comparateur glissant (source/simulée) =====================
+  var handle = document.getElementById("compareHandle");
+  var wrap = document.getElementById("compareWrap");
+  var imgSrcRight = document.getElementById("imgSrc");
+  var dragging = false;
+
+  function setSplit(pct){
+    pct = Math.max(0, Math.min(100, pct));
+    handle.style.left = pct + "%";
+    imgSrcRight.style.clipPath = "inset(0 0 0 " + pct + "%)";
+  }
+  setSplit(50);
+
+  handle.addEventListener("pointerdown", function(){ dragging = true; });
+  window.addEventListener("pointerup", function(){ dragging = false; });
+  window.addEventListener("pointermove", function(e){
+    if(!dragging) return;
+    var rect = wrap.getBoundingClientRect();
+    setSplit(((e.clientX - rect.left) / rect.width) * 100);
+  });
+
+  // ===================== Contrôles luminosité/contraste =====================
+  var imgSim = document.getElementById("imgSim");
+  function applyFilters(){
+    var b = document.getElementById("ctrlBright").value;
+    var c = document.getElementById("ctrlContrast").value;
+    document.getElementById("valBright").textContent = b + "%";
+    document.getElementById("valContrast").textContent = c + "%";
+    var f = "brightness(" + b + "%) contrast(" + c + "%)";
+    imgSim.style.filter = f;
+    imgSrcRight.style.filter = f;
+  }
+  document.getElementById("ctrlBright").addEventListener("input", applyFilters);
+  document.getElementById("ctrlContrast").addEventListener("input", applyFilters);
+  document.getElementById("resetCtrlsBtn").addEventListener("click", function(){
+    document.getElementById("ctrlBright").value = 100;
+    document.getElementById("ctrlContrast").value = 100;
+    applyFilters();
+  });
+
+  // ===================== Toggle Image simulée / Image source (plein cadre) =====================
+  document.querySelectorAll(".togglepair button[data-view]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      document.querySelectorAll(".togglepair button[data-view]").forEach(function(x){ x.classList.remove("active"); });
+      btn.classList.add("active");
+      // Dans cette version, les deux images sont identiques (pas de vraie
+      // source distincte conservée pour l'instant) — le bouton reste
+      // fonctionnel visuellement (recentre le curseur) sans effet réel.
+      setSplit(btn.dataset.view === "sim" ? 100 : 0);
+    });
+  });
+  document.getElementById("toggleSrcBtn").addEventListener("click", function(){
+    setSplit(50);
+  });
+
+  // ===================== Bandes spectrales (RGB — pas de NIR réel côté pipeline actuel) =====================
+  var BANDS = [
+    {name:"Rouge", color:"#F0776D"},
+    {name:"Vert", color:"#7FD88F"},
+    {name:"Bleu", color:"#5FDCD0"}
+  ];
+  var bandThumbs = document.getElementById("bandThumbs");
+  BANDS.forEach(function(b, i){
+    var d = document.createElement("div");
+    d.className = "bandthumb" + (i === 0 ? " selected" : "");
+    d.innerHTML = "<img src='" + imgUrl + "' alt=''>"+
+      "<div class='lab'><i style='background:" + b.color + "'></i>" + b.name + "</div>";
+    d.addEventListener("click", function(){
+      bandThumbs.querySelectorAll(".bandthumb").forEach(function(x){ x.classList.remove("selected"); });
+      d.classList.add("selected");
+    });
+    bandThumbs.appendChild(d);
+  });
+
+  var bandControls = document.getElementById("bandControls");
+  BANDS.forEach(function(b){
+    var d = document.createElement("div");
+    d.className = "bandctrl";
+    d.innerHTML =
+      "<div class='top'><span class='dot' style='background:" + b.color + "'></span>"+
+      "<span class='nm'>" + b.name + "</span>"+
+      "<button class='iconbtn2' type='button' title='Visibilité'>👁</button></div>"+
+      "<div class='mmrow'><span>Min</span><input type='range' min='0' max='100' value='10'><span>Max</span><input type='range' min='0' max='100' value='95'></div>";
+    bandControls.appendChild(d);
+  });
+
+  // ===================== Zoom (simple) =====================
+  var zoom = 1;
+  function applyZoom(){
+    imgSim.style.transform = "scale(" + zoom + ")";
+    imgSrcRight.style.transform = "scale(" + zoom + ")";
+  }
+  document.getElementById("zoomInBtn").addEventListener("click", function(){ zoom = Math.min(4, zoom + 0.25); applyZoom(); });
+  document.getElementById("zoomOutBtn").addEventListener("click", function(){ zoom = Math.max(1, zoom - 0.25); applyZoom(); });
+  document.getElementById("fitBtn").addEventListener("click", function(){ zoom = 1; applyZoom(); });
+  document.getElementById("fullscreenBtn").addEventListener("click", function(){
+    if(document.fullscreenElement) document.exitFullscreen();
+    else document.getElementById("viewerBox").requestFullscreen();
+  });
+})();
+</script>
+</body>
+</html>
