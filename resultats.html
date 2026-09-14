@@ -88,15 +88,8 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .tabpanel.current:not([data-tab="image"]){overflow-y:auto}
 .resgrid > div{min-height:0;overflow-y:auto;display:flex;flex-direction:column}
 
-.viewerhead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;flex-wrap:wrap;gap:10px}
-.viewerhead .lab{display:flex;align-items:center;gap:10px}
-.viewerhead h2{font-family:var(--display);font-weight:600;font-size:17px;text-transform:uppercase;margin:0}
-.badge{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10px;padding:3px 10px;
-  border-radius:10px;background:rgba(95,220,208,.14);color:var(--pixel);text-transform:uppercase;letter-spacing:.03em}
-.badge .bdot{width:7px;height:7px;border-radius:50%;background:currentColor;flex:none}
-
 .viewerbox{position:relative;background:var(--void);border:1px solid var(--line-soft);border-radius:6px;
-  overflow:hidden;height:52vh;flex:1;min-height:0}
+  overflow:hidden;height:64vh;flex:1;min-height:0}
 .cornerlabel{position:absolute;top:12px;z-index:5;background:rgba(9,14,19,.8);backdrop-filter:blur(3px);
   font-family:var(--mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;padding:5px 11px;
   border-radius:4px;border:1px solid var(--line)}
@@ -360,10 +353,6 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
       <div class="tabpanel current" data-tab="image">
         <div class="resgrid">
           <div>
-            <div class="viewerhead">
-              <div class="lab"><h2>Source ↔ Simulée</h2><span class="badge" id="bandsBadge"><i class="bdot"></i>Bande : RGB</span></div>
-            </div>
-
             <div class="viewerbox" id="viewerBox">
               <span class="cornerlabel src">Image source</span>
               <span class="cornerlabel sim">Image simulée</span>
@@ -1079,10 +1068,8 @@ async function initSettingsModal(session){
 
   // ===================== Contrôles d'affichage (panneau "Affichage") =====================
   var imgSim = document.getElementById("imgSim");
-  var bandsBadge = document.getElementById("bandsBadge");
   var CHANNEL_IDX = {R:0, G:1, B:2};
   var BAND_COLOR = {RGB:"var(--pixel)", R:"#F0776D", G:"#7FD88F", B:"#5FDCD0"};
-  var BAND_LABEL = {RGB:"RGB", R:"Rouge", G:"Vert", B:"Bleu"};
 
   // État des réglages d'affichage — purement côté navigateur, ne touche
   // jamais à l'image sauvegardée en base ni au fichier téléchargé. Ils ne
@@ -1180,10 +1167,6 @@ async function initSettingsModal(session){
     var simUrl = processImage(simImgObj, opts);
     if(simUrl) imgSim.src = simUrl;
     applyCssFilters();
-
-    bandsBadge.innerHTML = "<i class='bdot'></i>Bande : " + BAND_LABEL[adj.band];
-    bandsBadge.style.background = adj.band === "RGB" ? "" : (BAND_COLOR[adj.band] + "22");
-    bandsBadge.style.color = adj.band === "RGB" ? "" : BAND_COLOR[adj.band];
   }
 
   function applyCssFilters(){
