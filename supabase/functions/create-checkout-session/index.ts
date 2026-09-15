@@ -85,8 +85,8 @@ Deno.serve(async (req) => {
       mode: "subscription",
       customer: customerId,
       line_items: [{ price: PRICE_ID, quantity: 1 }],
-      success_url: `${SITE_URL}/#/compte?checkout=success`,
-      cancel_url: `${SITE_URL}/#/compte?checkout=cancel`,
+      success_url: `${SITE_URL}/espace-personnel.html?checkout=success`,
+      cancel_url: `${SITE_URL}/espace-personnel.html?checkout=cancel`,
       // Indispensable : c'est ce qui permet au webhook de retrouver le compte.
       metadata: { account_id: user.id },
       subscription_data: { metadata: { account_id: user.id } },
