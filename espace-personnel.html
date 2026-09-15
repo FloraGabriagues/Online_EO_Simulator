@@ -230,7 +230,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
 
 .planbadge{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;
   padding:3px 9px;border-radius:5px;background:var(--pixel);color:#0A1F1C;flex:none;font-weight:600}
-.planbadge.team{background:var(--photon);color:#2E1B04}
+.planbadge.free{background:var(--line);color:var(--muted)}
 
 .planrow{display:flex;align-items:center;gap:12px;padding:13px 0;flex-wrap:wrap}
 .planrow .ptxt{flex:1;min-width:160px}
@@ -241,6 +241,8 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
 .planrow .pstatus .sdot{width:6px;height:6px;border-radius:50%;background:var(--ok);flex:none}
 .planrow .pstatus.pending{color:var(--muted-2)}
 .planrow .pstatus.pending .sdot{background:var(--muted-2)}
+.planrow .pstatus.warn{color:var(--alert)}
+.planrow .pstatus.warn .sdot{background:var(--alert)}
 
 .msection-actions{display:flex;flex-direction:column;gap:8px;padding-top:14px;border-top:1px solid var(--line-soft);margin-top:2px}
 .mform-group{display:flex;flex-direction:column;gap:5px;padding:9px 0}
@@ -434,12 +436,11 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
               <div class="t1" id="settingsPlanName">—</div>
               <div class="t2" id="settingsPlanDesc">—</div>
             </div>
-            <span class="pstatus" id="settingsSubStatusDot"><span class="sdot"></span><span id="settingsSubStatusText">Actif</span></span>
+            <span class="pstatus" id="settingsSubStatusDot"><span class="sdot"></span><span id="settingsSubStatusText">—</span></span>
           </div>
           <p class="mnote" id="settingsSubNote" style="margin:0 0 12px"></p>
           <div class="msection-actions">
-            <button class="mbtn primary" id="settingsUpgradeBtn" type="button" style="display:none">Passer à l'offre Équipe</button>
-            <button class="mbtn danger" id="settingsCancelBtn" type="button">Résilier mon abonnement</button>
+            <button class="mbtn primary" id="settingsSubBtn" type="button">—</button>
           </div>
         </div>
 
@@ -454,6 +455,9 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
 (async function(){
   var session = await requireAuth();
   if(!session) return; // requireAuth redirige déjà vers login.html si besoin
+
+  // URL des Edge Functions Supabase (Stripe Checkout / portail client).
+  var FUNCTIONS_URL = "https://hmnlxbpcfqxdezucxsep.supabase.co/functions/v1";
 
   // ===================== Topbar : utilisateur réel =====================
   var email = session.user.email || "";
@@ -593,23 +597,23 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
   }
 
   // ===================== Paramètres (modal) =====================
-  // Charge la ligne "accounts" du compte courant (plan + statuts de
-  // demande en attente). Ces deux derniers champs (cancellation_requested,
-  // upgrade_requested) sont posés ici en attendant que Stripe soit branché :
-  // aucune résiliation/upgrade réelle n'a lieu, on enregistre juste la
-  // demande pour traitement manuel. Migration SQL nécessaire si ces
-  // colonnes n'existent pas encore sur "accounts" :
-  //   alter table accounts add column if not exists cancellation_requested boolean not null default false;
-  //   alter table accounts add column if not exists upgrade_requested boolean not null default false;
-  //   alter table accounts add column if not exists plan text not null default 'individuel';
-  var account = null;
-  var { data: accountRow, error: accErr } = await supabaseClient
-    .from("accounts")
-    .select("plan, cancellation_requested, upgrade_requested")
-    .eq("id", session.user.id)
-    .single();
-  if(accErr) console.error("Erreur chargement compte :", accErr);
-  account = accountRow || { plan: "individuel", cancellation_requested: false, upgrade_requested: false };
+  // L'abonnement est lu dans "account_entitlements" : table server-owned,
+  // en lecture seule pour le client (aucune policy INSERT/UPDATE pour le
+  // rôle authenticated). Seul le webhook Stripe, qui tourne avec la clé
+  // service_role, peut y écrire. Un utilisateur ne peut donc pas se
+  // passer en plan payant depuis le navigateur.
+  //
+  // ATTENTION : cet affichage n'est qu'un garde-fou d'interface. Le vrai
+  // contrôle d'accès doit être fait par l'API de simulation (FastAPI),
+  // qui doit vérifier le plan avant de lancer un calcul.
+  var entitlement = { plan: "free", subscription_status: "inactive", current_period_end: null };
+
+  var { data: entRow, error: entErr } = await supabaseClient
+    .from("account_entitlements")
+    .select("plan, subscription_status, current_period_end")
+    .maybeSingle();
+  if(entErr) console.error("Erreur chargement abonnement :", entErr);
+  if(entRow) entitlement = entRow;
 
   var overlay = document.getElementById("settingsOverlay");
   var planBadge = document.getElementById("settingsPlanBadge");
@@ -618,42 +622,56 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
   var subStatusDot = document.getElementById("settingsSubStatusDot");
   var subStatusText = document.getElementById("settingsSubStatusText");
   var subNote = document.getElementById("settingsSubNote");
-  var cancelBtn = document.getElementById("settingsCancelBtn");
-  var upgradeBtn = document.getElementById("settingsUpgradeBtn");
+  var subBtn = document.getElementById("settingsSubBtn");
 
   document.getElementById("settingsEmail").textContent = email;
   document.getElementById("settingsCreated").textContent = session.user.created_at
     ? formatDate(session.user.created_at) : "—";
 
-  function renderSubscription(){
-    var isTeam = account.plan === "equipe";
-    planBadge.textContent = isTeam ? "Équipe" : "Individuel";
-    planBadge.classList.toggle("team", isTeam);
-    planName.textContent = isTeam ? "Plan Équipe" : "Plan Individuel";
-    planDesc.textContent = isTeam ? "Accès complet, pensé pour un usage collectif" : "Accès complet à toutes les fonctionnalités";
-    upgradeBtn.style.display = isTeam ? "none" : "inline-flex";
+  function isSubscribed(){
+    return entitlement.plan !== "free" && entitlement.subscription_status === "active";
+  }
 
-    if(account.cancellation_requested){
-      subStatusDot.className = "pstatus pending";
-      subStatusText.textContent = "Résiliation demandée";
-      subNote.textContent = "Elle sera effective à la fin de la période en cours.";
-      subNote.className = "mnote err";
-      cancelBtn.textContent = "Annuler la demande de résiliation";
-    } else {
+  function renderSubscription(){
+    if(isSubscribed()){
+      planBadge.textContent = "Individuel";
+      planBadge.classList.remove("free");
+      planName.textContent = "Plan Individuel";
+      planDesc.textContent = "Accès complet — 199 €/mois";
       subStatusDot.className = "pstatus";
       subStatusText.textContent = "Actif";
-      subNote.textContent = "";
       subNote.className = "mnote";
-      cancelBtn.textContent = "Résilier mon abonnement";
-    }
+      subNote.textContent = entitlement.current_period_end
+        ? "Prochaine échéance le " + formatDate(entitlement.current_period_end) + "."
+        : "";
+      subBtn.textContent = "Gérer mon abonnement";
+      subBtn.className = "mbtn";
 
-    if(account.upgrade_requested){
-      upgradeBtn.textContent = "Demande envoyée — on te recontacte";
-      upgradeBtn.disabled = true;
+    } else if(entitlement.subscription_status === "past_due"){
+      planBadge.textContent = "Individuel";
+      planBadge.classList.remove("free");
+      planName.textContent = "Plan Individuel";
+      planDesc.textContent = "Paiement en attente";
+      subStatusDot.className = "pstatus warn";
+      subStatusText.textContent = "Paiement échoué";
+      subNote.className = "mnote err";
+      subNote.textContent = "Mets à jour ton moyen de paiement pour conserver l'accès.";
+      subBtn.textContent = "Mettre à jour le paiement";
+      subBtn.className = "mbtn primary";
+
     } else {
-      upgradeBtn.textContent = "Passer à l'offre Équipe";
-      upgradeBtn.disabled = false;
+      planBadge.textContent = "Gratuit";
+      planBadge.classList.add("free");
+      planName.textContent = "Aucun abonnement";
+      planDesc.textContent = "Passe au plan Individuel pour accéder au simulateur complet";
+      subStatusDot.className = "pstatus pending";
+      subStatusText.textContent = "Inactif";
+      subNote.className = "mnote";
+      subNote.textContent = "";
+      subBtn.textContent = "S'abonner — 199 €/mois";
+      subBtn.className = "mbtn primary";
     }
+    subBtn.disabled = false;
   }
   renderSubscription();
 
@@ -691,30 +709,74 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
     if(e.key === "Escape" && overlay.classList.contains("open")) closeSettings();
   });
 
-  cancelBtn.addEventListener("click", async function(){
-    var requesting = !account.cancellation_requested;
-    var msg = requesting
-      ? "Confirmer la résiliation de ton abonnement ? Elle sera effective à la fin de la période en cours."
-      : "Annuler ta demande de résiliation ?";
-    if(!confirm(msg)) return;
-    cancelBtn.disabled = true;
-    var { error } = await supabaseClient.from("accounts")
-      .update({ cancellation_requested: requesting }).eq("id", session.user.id);
-    cancelBtn.disabled = false;
-    if(error){ alert("Erreur : " + error.message); return; }
-    account.cancellation_requested = requesting;
-    renderSubscription();
+  // ---- Appel générique aux Edge Functions Stripe ----
+  async function callStripeFunction(name){
+    var { data: { session: s } } = await supabaseClient.auth.getSession();
+    if(!s){ window.location.href = "login.html"; return null; }
+    var res = await fetch(FUNCTIONS_URL + "/" + name, {
+      method: "POST",
+      headers: {
+        "Authorization": "Bearer " + s.access_token,
+        "Content-Type": "application/json"
+      }
+    });
+    if(!res.ok){
+      console.error(name + " :", await res.text());
+      return null;
+    }
+    return await res.json();
+  }
+
+  // Un seul bouton : Checkout si pas encore client Stripe, portail sinon.
+  subBtn.addEventListener("click", async function(){
+    var previous = subBtn.textContent;
+    subBtn.disabled = true;
+    subBtn.textContent = "Redirection…";
+
+    var neverSubscribed = entitlement.plan === "free"
+      && entitlement.subscription_status !== "past_due";
+    var fn = neverSubscribed ? "create-checkout-session" : "create-portal-session";
+
+    var out = await callStripeFunction(fn);
+    if(!out || !out.url){
+      alert("Impossible d'ouvrir la page de paiement. Réessaie dans un instant.");
+      subBtn.disabled = false;
+      subBtn.textContent = previous;
+      return;
+    }
+    window.location.href = out.url;
   });
 
-  upgradeBtn.addEventListener("click", async function(){
-    if(!confirm("Envoyer une demande de passage à l'offre Équipe ? Nous te recontacterons pour la mise en place.")) return;
-    upgradeBtn.disabled = true;
-    var { error } = await supabaseClient.from("accounts")
-      .update({ upgrade_requested: true }).eq("id", session.user.id);
-    if(error){ alert("Erreur : " + error.message); upgradeBtn.disabled = false; return; }
-    account.upgrade_requested = true;
+  // ---- Retour depuis Stripe Checkout ----
+  // Le webhook met à jour account_entitlements de façon asynchrone : il
+  // peut avoir quelques secondes de retard sur la redirection. On repolle
+  // brièvement plutôt que d'afficher un état périmé.
+  (async function handleCheckoutReturn(){
+    var params = new URLSearchParams(window.location.search);
+    if(params.get("checkout") !== "success") return;
+
+    openSettings();
+    subBtn.disabled = true;
+    subBtn.textContent = "Activation en cours…";
+
+    for(var i = 0; i < 10; i++){
+      var { data: fresh } = await supabaseClient
+        .from("account_entitlements")
+        .select("plan, subscription_status, current_period_end")
+        .maybeSingle();
+      if(fresh && fresh.plan !== "free" && fresh.subscription_status === "active"){
+        entitlement = fresh;
+        renderSubscription();
+        history.replaceState({}, "", window.location.pathname);
+        return;
+      }
+      await new Promise(function(r){ setTimeout(r, 1000); });
+    }
+    console.warn("Abonnement pas encore visible — webhook en retard ?");
+    subNote.className = "mnote";
+    subNote.textContent = "Paiement enregistré. L'activation peut prendre quelques instants — recharge la page.";
     renderSubscription();
-  });
+  })();
 
   // ---- Changement de mot de passe (Supabase Auth, direct côté client) ----
   var pwdBtn = document.getElementById("settingsPwdBtn");
