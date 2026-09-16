@@ -1013,6 +1013,11 @@ function base64ToBlob(b64, mime){
 // manuel. Les résultats sont sauvegardés par défaut ; en cas d'échec de la
 // sauvegarde (ex. limite de 20 résultats atteinte), un bouton "Réessayer"
 // permet de relancer juste cette étape sans refaire tourner la simulation.
+//
+// Migration SQL nécessaire si la colonne n'existe pas encore sur
+// "saved_results" (ajoutée pour la comparaison source/simulé plein
+// résolution, cf. resultats.html) :
+//   alter table saved_results add column if not exists source_image_path text;
 async function autoSaveResult(){
   var actions = document.getElementById("statusActions");
   actions.innerHTML = "<p class='savingnote'>Sauvegarde du résultat…</p>";
@@ -1025,6 +1030,20 @@ async function autoSaveResult(){
     var mainBlob = base64ToBlob(lastResult.image_b64, "image/png");
     var { error: upErr } = await supabaseClient.storage.from("results").upload(basePath + "main.png", mainBlob);
     if(upErr) throw upErr;
+
+    // Image source plein résolution (vrai crop utilisé en entrée du
+    // calcul, cf. source_preview_b64 dans main.py) — sans elle, la page
+    // résultats retombe sur une vignette JS générique, sans rapport avec
+    // le crop réellement simulé. Best-effort : son absence (résultat
+    // sauvegardé avant ce changement, ou vieux payload) ne doit pas faire
+    // échouer toute la sauvegarde.
+    var sourceImagePath = null;
+    if(lastResult.source_preview_b64){
+      var srcBlob = base64ToBlob(lastResult.source_preview_b64, "image/png");
+      var { error: srcErr } = await supabaseClient.storage.from("results").upload(basePath + "source.png", srcBlob);
+      if(!srcErr) sourceImagePath = basePath + "source.png";
+      else console.error("Erreur upload image source :", srcErr);
+    }
 
     // Graphiques par bande — mêmes clés que la réponse de /simulate_account
     var GRAPH_KEYS = ["pupil_png_b64","psf_png_b64","mtf_png_b64","snr_noise_maps_sim_png_b64",
@@ -1059,6 +1078,7 @@ async function autoSaveResult(){
       scene: lastPayload.scene.name,
       conditions: lastPayload.conditions,
       image_path: basePath + "main.png",
+      source_image_path: sourceImagePath,
       diagnostics: { bands: diagBands },
       logs: lastResult.logs || "",
     });

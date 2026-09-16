@@ -878,17 +878,25 @@ async function initSettingsModal(session){
     else console.error("Erreur génération URL signée :", signErr);
   }
 
-  // Image SOURCE réelle (scène brute, avant simulation) — même mapping
-  // nom -> vignette que sur la page de lancement de simulation. Ce n'est
-  // pas le crop exact utilisé par le calcul (non conservé séparément),
-  // mais c'est bien une image distincte de la scène d'origine, pas un
-  // doublon de l'image simulée.
+  // Image SOURCE réelle (vrai crop plein résolution utilisé en entrée du
+  // calcul, cf. source_image_path/source_preview_b64 dans
+  // main.py + simulations.html) — même mécanisme d'URL signée que
+  // l'image simulée. Repli sur l'ancienne vignette générique par scène
+  // UNIQUEMENT pour les résultats sauvegardés avant ce changement (pas de
+  // source_image_path enregistré) — ce n'est alors ni le bon crop ni la
+  // pleine résolution, juste pour éviter un vide dans le comparateur.
   var SCENE_THUMBS = {
     "Ville": "assets/scenes/aix_thumb.jpg",
     "Avion": "assets/scenes/avion_thumb.jpg",
     "Port": "assets/scenes/port_thumb.jpg",
   };
   var sourceUrl = SCENE_THUMBS[sceneName] || "assets/scenes/port_thumb.jpg";
+  if(result && result.source_image_path){
+    var { data: signedSrcData, error: signSrcErr } = await supabaseClient
+      .storage.from("results").createSignedUrl(result.source_image_path, 3600);
+    if(!signSrcErr && signedSrcData) sourceUrl = signedSrcData.signedUrl;
+    else console.error("Erreur génération URL signée (source) :", signSrcErr);
+  }
 
   var diagBands = (result && result.diagnostics && result.diagnostics.bands) || {};
   var resultLogs = (result && result.logs) || "";
@@ -1080,14 +1088,20 @@ async function initSettingsModal(session){
     whitePointSim:null,
   };
 
-  // Copie hors-DOM de l'image simulée, chargée une fois pour servir de
-  // source à tous les retraitements (bande, étirement, point blanc) sans
-  // avoir à re-décoder l'image à chaque changement.
+  // Copie hors-DOM des images simulée ET source, chargées une fois pour
+  // servir de base à tous les retraitements sans re-décoder à chaque
+  // changement. La bande sélectionnée s'applique désormais aux DEUX
+  // images (comparaison honnête) — contraste/étirement/point blanc
+  // restent réservés à l'image simulée (cf. applyCssFilters), la source
+  // reste la donnée brute pour ces réglages-là.
   var simImgObj = new Image();
   simImgObj.crossOrigin = "anonymous";
-  var imagesReady = new Promise(function(res){
-    simImgObj.onload = res; simImgObj.onerror = res; simImgObj.src = imgUrl;
-  });
+  var srcImgObj = new Image();
+  srcImgObj.crossOrigin = "anonymous";
+  var imagesReady = Promise.all([
+    new Promise(function(res){ simImgObj.onload = res; simImgObj.onerror = res; simImgObj.src = imgUrl; }),
+    new Promise(function(res){ srcImgObj.onload = res; srcImgObj.onerror = res; srcImgObj.src = sourceUrl; }),
+  ]);
 
   // ---- Étirement de contraste p2/p98 : calcule les percentiles 2/98 par
   // canal sur l'image entière, puis remappe linéairement vers [0,255].
@@ -1158,14 +1172,19 @@ async function initSettingsModal(session){
   }
 
   function updateDisplay(){
-    // Tous les retraitements (bande, étirement, pixels saturés, point blanc,
-    // contraste) ne s'appliquent qu'à l'image SIMULÉE — l'image source reste
-    // toujours la vignette brute, jamais retouchée.
+    // Étirement/pixels saturés/point blanc/contraste ne s'appliquent qu'à
+    // l'image SIMULÉE (cf. applyCssFilters) — mais la bande sélectionnée
+    // s'applique aux DEUX images : sans ça, comparer par exemple la bande
+    // Rouge simulée à une source restée en RGB ne veut rien dire.
     var channelIdx = adj.band === "RGB" ? null : CHANNEL_IDX[adj.band];
     var opts = { channel: channelIdx, p2p98: adj.render === "p2p98", showSaturated: adj.showSat,
       whitePoint: adj.whitePointSim };
     var simUrl = processImage(simImgObj, opts);
     if(simUrl) imgSim.src = simUrl;
+
+    var srcUrl2 = processImage(srcImgObj, { channel: channelIdx, p2p98: false, showSaturated: false, whitePoint: null });
+    if(srcUrl2) imgSrc.src = srcUrl2;
+
     applyCssFilters();
   }
 
