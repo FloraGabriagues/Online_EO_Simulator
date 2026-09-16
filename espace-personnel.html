@@ -339,7 +339,10 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
           <h1>Mes instruments</h1>
           <p class="pagesub">Créez, configurez et gérez vos instruments d'imagerie.</p>
         </div>
-        <a class="simbtn" href="creer-instrument.html">+ Créer un instrument</a>
+        <div style="display:flex;gap:10px;align-items:center">
+          <button class="mbtn danger" type="button" id="btnDeleteAllInst">Tout supprimer</button>
+          <a class="simbtn" href="creer-instrument.html">+ Créer un instrument</a>
+        </div>
       </div>
 
       <div class="tabsrow">
@@ -548,6 +551,8 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
   var list = document.getElementById("instList");
 
   function render(){
+    document.getElementById("btnDeleteAllInst").disabled = allItems.length === 0;
+
     var items = allItems.filter(function(it){
       if(activeTab !== "all" && it.type !== activeTab) return false;
       return true;
@@ -590,6 +595,34 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
     });
   }
   render();
+
+  // ===================== "Tout supprimer" =====================
+  document.getElementById("btnDeleteAllInst").addEventListener("click", async function(){
+    if(allItems.length === 0) return;
+    var ok = confirm("Supprimer les " + allItems.length + " instrument(s) de ce compte ? Cette action est irréversible.");
+    if(!ok) return;
+    // Double confirmation — action destructive et irréversible sur
+    // l'ensemble des instruments du compte, pas juste ceux affichés sous
+    // l'onglet actif.
+    var ok2 = confirm("Dernière confirmation : tous tes instruments seront définitivement supprimés. Continuer ?");
+    if(!ok2) return;
+
+    var btn = this;
+    btn.disabled = true;
+    btn.textContent = "Suppression…";
+
+    var { error } = await supabaseClient.from("instruments").delete().eq("account_id", session.user.id);
+
+    btn.textContent = "Tout supprimer";
+    if(error){
+      console.error("Erreur suppression de tous les instruments :", error);
+      alert("La suppression a échoué : " + error.message);
+      btn.disabled = allItems.length === 0;
+      return;
+    }
+    allItems = [];
+    render();
+  });
 
   // ===================== Menu "⋮" des cartes instrument (Renommer / Dupliquer / Supprimer) =====================
   function closeAllMenus(){

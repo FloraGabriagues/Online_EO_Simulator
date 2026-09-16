@@ -556,7 +556,7 @@ function wireWfeCasesUI(){
  *   returns trigger as $$
  *   begin
  *     if (select count(*) from instruments where account_id = new.account_id) >= 20 then
- *       raise exception 'Limite de 20 instruments atteinte — supprime-en un pour en créer un nouveau.';
+ *       raise exception 'Limite de 20 instruments atteinte. Supprimez-en un pour en créer un nouveau.';
  *     end if;
  *     return new;
  *   end;
