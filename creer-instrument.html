@@ -544,6 +544,28 @@ function wireWfeCasesUI(){
  * instrument (state.instrumentId encore vide), mise à jour sinon.
  * Le nom est requis : impossible de sauvegarder un instrument sans nom
  * (il deviendrait illisible dans la liste "Mes instruments").
+ *
+ * Limite de 20 instruments par compte — appliquée côté base (trigger
+ * Postgres "check_instrument_limit" sur la table "instruments", pas ici)
+ * pour ne pas pouvoir être contournée en modifiant juste le front. Rien à
+ * faire ici pour ça, sauf afficher le message d'erreur qui en revient
+ * (cf. plus bas). Migration SQL nécessaire si le trigger n'existe pas
+ * encore :
+ *
+ *   create or replace function check_instrument_limit()
+ *   returns trigger as $$
+ *   begin
+ *     if (select count(*) from instruments where account_id = new.account_id) >= 20 then
+ *       raise exception 'Limite de 20 instruments atteinte — supprime-en un pour en créer un nouveau.';
+ *     end if;
+ *     return new;
+ *   end;
+ *   $$ language plpgsql;
+ *
+ *   drop trigger if exists trg_check_instrument_limit on instruments;
+ *   create trigger trg_check_instrument_limit
+ *     before insert on instruments
+ *     for each row execute function check_instrument_limit();
  */
 async function saveToSupabase(){
   var btn = document.getElementById("btnSave");
@@ -594,7 +616,13 @@ async function saveToSupabase(){
 
   if(result.error){
     hint.style.color = "var(--alert)";
-    hint.textContent = "Échec de l'enregistrement : " + result.error.message;
+    // Cas particulier : limite de 20 instruments par compte (cf. trigger
+    // Postgres check_instrument_limit — même convention de message que la
+    // limite de 20 résultats sauvegardés côté simulations.html) — affiché
+    // tel quel, sans le préfixe générique, pour rester une info actionnable.
+    hint.textContent = result.error.message.indexOf("Limite de") === 0
+      ? result.error.message
+      : "Échec de l'enregistrement : " + result.error.message;
     return;
   }
 
