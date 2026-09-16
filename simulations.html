@@ -842,7 +842,8 @@ var FIELD_LABELS = {
   TI: "Temps d'intégration",
   TDI: "Étages TDI",
   Z: "Mode d'aberration",
-  perfoCsv: "Cas WFE (CSV Zernike)"
+  perfoCsv: "Cas WFE (CSV Zernike)",
+  perfoCsvAlign: "Cadrage du cas WFE"
 };
 
 // Traduction des messages Pydantic les plus courants — le reste est
@@ -938,9 +939,14 @@ async function launchSimulation(){
   // SimulateParams/main.py, où W/Z sont alors ignorés pour le WFE mais
   // restent requis dans le payload (valeurs de l'instrument envoyées
   // normalement, simplement sans effet sur le résultat dans ce cas).
+  // perfoCsvAlign : quelle portion du CSV garder si sa largeur ne
+  // correspond pas à celle, dépendante de l'altitude, de cette simulation
+  // (cf. _remap_perfo_csv côté serveur) — "center" par défaut si absent
+  // (cas WFE créé avant l'ajout de ce réglage).
   var wfeCase = selectedWfeCase();
   if(wfeCase){
     payload.perfoCsv = wfeCase.csv;
+    payload.perfoCsvAlign = wfeCase.align || "center";
   }
 
   lastPayload = { payload: payload, scene: scene, inst: inst, conditions: conditions, wfeCase: wfeCase };

@@ -130,6 +130,8 @@ select,.nameinput{background:var(--panel-2);color:var(--paper);border:1px solid 
   border-top:1px solid var(--line-soft)}
 .wfecases .caserow .cname{flex:1;font-size:13.5px}
 .wfecases .caserow .cfile{font-family:var(--mono);font-size:11px;color:var(--muted-2)}
+.wfecases .caserow .calign{background:var(--panel-2);color:var(--paper);border:1px solid var(--line);
+  border-radius:3px;padding:4px 6px;font-family:var(--body);font-size:11.5px;flex:none}
 .wfecases .caserow .cdel{appearance:none;cursor:pointer;background:transparent;border:none;
   color:var(--muted-2);font-size:15px;padding:2px 6px}
 .wfecases .caserow .cdel:hover{color:var(--alert)}
@@ -447,7 +449,8 @@ function renderPanel(){
 }
 
 // ===================== Cas WFE nommés (CSV Zernike réel par fichier) =====================
-// Stockés dans state.values.wfeCases : [{id, name, filename, csv:"<contenu brut>", rowCount}, ...]
+// Stockés dans state.values.wfeCases :
+//   [{id, name, filename, csv:"<contenu brut>", rowCount, align}, ...]
 // Un instrument peut porter plusieurs cas (thermique chaud/froid, etc.) ;
 // c'est au lancement de la simulation que l'un d'eux est choisi (ou aucun,
 // auquel cas le WFE RMS scalaire ci-dessus + le mode d'aberration simplifié
@@ -456,21 +459,33 @@ function renderPanel(){
 // Format CSV attendu — même format que module_MTF.load_zernike_csv côté
 // backend : séparateur ";", décimales ",", colonnes
 // Detector_ID;Band;Column;Z1;Z2;...;Z37 (une ligne par colonne détecteur/
-// bande). Le fichier est transmis TEL QUEL (texte brut) au serveur, qui le
-// parse lui-même — on ne fait ici qu'une validation légère de l'en-tête.
+// bande). Le fichier est transmis TEL QUEL (texte brut) au serveur.
+//
+// "align" (cf. échange du 16/09/2026) : la largeur détecteur réelle d'une
+// simulation dépend de l'altitude choisie (Conditions d'acquisition), donc
+// peut ne pas correspondre à la plage de colonnes du CSV source (souvent
+// plus large — swath réel). align dit au serveur QUELLE portion du CSV
+// garder : "center" (centre champ), "left" (bord gauche) ou "right" (bord
+// droit) — le serveur recadre et renumérote en conséquence avant la
+// simulation (cf. simulation_pipeline.py, _remap_perfo_csv).
+var WFE_ALIGN_LABELS = { center: "Centre champ", left: "Bord gauche", right: "Bord droit" };
 function renderWfeCasesHtml(){
   var cases = state.values.wfeCases || [];
   var rows = cases.map(function(c){
+    var alignOpts = ["center", "left", "right"].map(function(a){
+      return "<option value='"+a+"'"+(c.align === a ? " selected" : "")+">"+WFE_ALIGN_LABELS[a]+"</option>";
+    }).join("");
     return "<div class='caserow' data-case-id='"+c.id+"'>"+
       "<span class='cname'>"+c.name+"</span>"+
       "<span class='cfile'>"+(c.rowCount != null ? c.rowCount + " lignes · " + c.filename : "—")+"</span>"+
+      "<select class='calign' data-align-case='"+c.id+"'>"+alignOpts+"</select>"+
       "<button type='button' class='cdel' data-del-case='"+c.id+"' aria-label='Supprimer ce cas'>×</button>"+
     "</div>";
   }).join("");
   return "<div class='wfecases'>"+
     "<div class='wfehead'><label>Cas WFE (thermique, etc.)</label>"+
     "<button type='button' class='addcasebtn' id='btnAddWfeCase'>+ Ajouter un cas</button></div>"+
-    "<p class='wfesub'>Optionnel — CSV Zernike réel (Detector_ID;Band;Column;Z1..Z37), choisi au lancement de la simulation.</p>"+
+    "<p class='wfesub'>Optionnel — CSV Zernike réel (Detector_ID;Band;Column;Z1..Z37), choisi au lancement de la simulation. Le cadrage (centre/bord) dit quelle portion du CSV garder si sa largeur ne correspond pas exactement à la simulation.</p>"+
     (cases.length ? rows : "<p class='empty'>Aucun cas WFE défini.</p>")+
     "<input type='file' id='wfeCaseFileInput' accept='.csv,text/csv' style='display:none'>"+
   "</div>";
@@ -520,13 +535,25 @@ function wireWfeCasesUI(){
         name: pendingName,
         filename: file.name,
         csv: reader.result,
-        rowCount: meta.rowCount
+        rowCount: meta.rowCount,
+        align: "center"
       });
       pendingName = null;
       persist();
       renderPanel();
     };
     reader.readAsText(file);
+  });
+
+  panelEl.querySelectorAll("[data-align-case]").forEach(function(sel){
+    sel.addEventListener("change", function(){
+      var id = sel.dataset.alignCase;
+      var c = (state.values.wfeCases || []).find(function(x){ return x.id === id; });
+      if(c){ c.align = sel.value; persist(); }
+      // pas de renderPanel() ici : re-générer tout le panneau ferait perdre
+      // le focus du <select> qu'on vient d'utiliser, pour un changement qui
+      // n'affecte aucun autre affichage visible dans cette vue.
+    });
   });
 
   panelEl.querySelectorAll("[data-del-case]").forEach(function(btn){
