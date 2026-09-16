@@ -100,9 +100,20 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
   text-transform:uppercase;letter-spacing:.01em;line-height:1.15}
 .instcard .type{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);margin-top:2px}
 .instcard .type i{width:6px;height:6px;border-radius:50%;background:var(--pixel);flex:none}
+.instcard .menuwrap{position:relative;flex:none}
 .instcard .menubtn{flex:none;background:transparent;border:none;color:var(--muted-2);
   cursor:pointer;font-size:16px;padding:2px 6px;line-height:1}
 .instcard .menubtn:hover{color:var(--paper)}
+.instcard .dropdown{display:none;position:absolute;top:26px;right:0;z-index:20;
+  background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;
+  min-width:150px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.instcard .dropdown.open{display:block}
+.instcard .dropdown button{display:block;width:100%;text-align:left;background:none;border:none;
+  color:var(--paper);font-family:var(--body);font-size:13px;padding:8px 10px;border-radius:4px;
+  cursor:pointer}
+.instcard .dropdown button:hover{background:var(--panel)}
+.instcard .dropdown button.danger{color:var(--alert)}
+.instcard .dropdown button.danger:hover{background:rgba(240,119,109,.1)}
 .instcard .desc{font-size:12px;color:var(--muted);margin:0;line-height:1.4}
 .instcard .pctrow{display:flex;justify-content:space-between;font-family:var(--mono);
   font-size:11px;color:var(--muted);margin-bottom:6px}
@@ -557,7 +568,14 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
           "<div class='titlerow'>"+
             "<span><div class='name'>"+it.name+"</div>"+
             "<div class='type'><i></i>"+it.type+"</div></span>"+
-            "<button class='menubtn' type='button' aria-label='Options' onclick='event.preventDefault()'>⋮</button>"+
+            "<div class='menuwrap'>"+
+              "<button class='menubtn' type='button' aria-label='Options' data-menu-toggle data-id='"+it.id+"'>⋮</button>"+
+              "<div class='dropdown' data-menu='"+it.id+"'>"+
+                "<button type='button' data-action='rename' data-id='"+it.id+"'>Renommer</button>"+
+                "<button type='button' data-action='duplicate' data-id='"+it.id+"'>Dupliquer</button>"+
+                "<button type='button' class='danger' data-action='delete' data-id='"+it.id+"'>Supprimer</button>"+
+              "</div>"+
+            "</div>"+
           "</div>"+
           "<p class='desc'>"+it.desc+"</p>"+
           "<div><div class='pctrow'><span>Configuration complète</span><span>"+it.pct+" %</span></div>"+
@@ -572,6 +590,111 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
     });
   }
   render();
+
+  // ===================== Menu "⋮" des cartes instrument (Renommer / Dupliquer / Supprimer) =====================
+  function closeAllMenus(){
+    list.querySelectorAll(".dropdown.open").forEach(function(d){ d.classList.remove("open"); });
+  }
+
+  list.addEventListener("click", async function(e){
+    // Ouvrir/fermer le menu
+    var toggle = e.target.closest("[data-menu-toggle]");
+    if(toggle){
+      e.preventDefault();
+      e.stopPropagation();
+      var dd = list.querySelector(".dropdown[data-menu='"+toggle.dataset.id+"']");
+      var wasOpen = dd.classList.contains("open");
+      closeAllMenus();
+      if(!wasOpen) dd.classList.add("open");
+      return;
+    }
+
+    // Action choisie dans le menu
+    var actionBtn = e.target.closest("[data-action]");
+    if(!actionBtn){
+      closeAllMenus(); // clic ailleurs dans la liste (ex. sur la carte) → on ferme
+      return;
+    }
+    e.preventDefault();
+    e.stopPropagation();
+    closeAllMenus();
+
+    var id = actionBtn.dataset.id;
+    var action = actionBtn.dataset.action;
+
+    if(action === "delete"){
+      var toDelete = allItems.find(function(i){ return String(i.id) === String(id); });
+      var ok = confirm("Supprimer l'instrument « "+(toDelete ? toDelete.name : "")+" » ? Cette action est irréversible.");
+      if(!ok) return;
+      var { error } = await supabaseClient.from("instruments").delete().eq("id", id);
+      if(error){
+        console.error("Erreur suppression instrument :", error);
+        alert("La suppression a échoué : " + error.message);
+        return;
+      }
+      allItems = allItems.filter(function(i){ return String(i.id) !== String(id); });
+      render();
+      return;
+    }
+
+    if(action === "rename"){
+      var toRename = allItems.find(function(i){ return String(i.id) === String(id); });
+      var newName = prompt("Nouveau nom :", toRename ? toRename.name : "");
+      if(newName === null || newName.trim() === "") return;
+      newName = newName.trim();
+      var { error } = await supabaseClient
+        .from("instruments")
+        .update({ name: newName, updated_at: new Date().toISOString() })
+        .eq("id", id);
+      if(error){
+        console.error("Erreur renommage instrument :", error);
+        alert("Le renommage a échoué : " + error.message);
+        return;
+      }
+      toRename.name = newName;
+      toRename.modified = formatDate(new Date().toISOString());
+      render();
+      return;
+    }
+
+    if(action === "duplicate"){
+      // On relit la ligne complète en base pour dupliquer fidèlement sa config
+      // (allItems ne garde qu'un sous-ensemble mappé des colonnes).
+      var { data: original, error: fetchErr } = await supabaseClient
+        .from("instruments").select("*").eq("id", id).single();
+      if(fetchErr || !original){
+        console.error("Erreur lecture instrument à dupliquer :", fetchErr);
+        alert("La duplication a échoué.");
+        return;
+      }
+      var { data: inserted, error: insErr } = await supabaseClient
+        .from("instruments")
+        .insert({ name: original.name + " (copie)", config: original.config, account_id: session.user.id })
+        .select()
+        .single();
+      if(insErr){
+        console.error("Erreur duplication instrument :", insErr);
+        alert("La duplication a échoué : " + insErr.message);
+        return;
+      }
+      allItems.unshift({
+        id: inserted.id,
+        name: inserted.name,
+        type: "Multispectral",
+        pct: 100,
+        desc: (inserted.config && inserted.config.description) || "Instrument configuré.",
+        modified: formatDate(inserted.updated_at || inserted.created_at),
+        created: formatDate(inserted.created_at)
+      });
+      render();
+      return;
+    }
+  });
+
+  // Fermer les menus ouverts au clic en dehors de la liste
+  document.addEventListener("click", function(e){
+    if(!list.contains(e.target)) closeAllMenus();
+  });
 
   // ===================== Activité récente (dérivée des vraies données — pas de table dédiée) =====================
   var activityEl = document.getElementById("activityList");
