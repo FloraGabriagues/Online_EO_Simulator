@@ -419,6 +419,12 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
                   <div class="row"><input type="number" id="fTDI" value="8" min="1" max="64" step="1"><span class="unit">×</span></div>
                 </div>
                 <div class="field">
+                  <label>Cas WFE</label>
+                  <select id="fWfeCase">
+                    <option value="">Simplifié (RMS + mode d'aberration)</option>
+                  </select>
+                </div>
+                <div class="field" id="fZWrap">
                   <label>Mode d'aberration</label>
                   <select id="fZ">
                     <option value="none">Aucune</option>
@@ -469,6 +475,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
             <div class="sumrow"><span class="k">Élévation solaire</span><span class="v" id="sumS">—</span></div>
             <div class="sumrow"><span class="k">Temps d'intégration</span><span class="v" id="sumTI">—</span></div>
             <div class="sumrow"><span class="k">Étages TDI</span><span class="v" id="sumTDI">—</span></div>
+            <div class="sumrow"><span class="k">Cas WFE</span><span class="v" id="sumWfeCase">—</span></div>
             <div class="sumrow"><span class="k">Mode d'aberration</span><span class="v" id="sumZ">—</span></div>
           </div>
 
@@ -679,6 +686,7 @@ async function loadInstruments(){
   instruments = data || [];
   if(instruments.length > 0) selectedInstIdx = 0;
   renderInstruments();
+  renderWfeCaseOptions();
   updateSummary();
 }
 
@@ -701,11 +709,43 @@ function renderInstruments(){
     b.addEventListener("click", function(){
       selectedInstIdx = i;
       renderInstruments();
+      renderWfeCaseOptions();
       updateSummary();
     });
     instListEl.appendChild(b);
   });
 }
+
+// ===================== Cas WFE de l'instrument sélectionné =====================
+// Peuple le sélecteur "Cas WFE" avec les cas nommés définis pour cet
+// instrument (config.wfeCases, cf. creer-instrument.html). "" = mode
+// simplifié (RMS + mode d'aberration, comportement historique).
+function renderWfeCaseOptions(){
+  var sel = document.getElementById("fWfeCase");
+  var cases = (selectedInstIdx >= 0 && instruments[selectedInstIdx].config && instruments[selectedInstIdx].config.wfeCases) || [];
+  var current = sel.value;
+  sel.innerHTML = "<option value=\"\">Simplifié (RMS + mode d'aberration)</option>" +
+    cases.map(function(c){ return "<option value='"+c.id+"'>"+c.name+"</option>"; }).join("");
+  sel.value = cases.some(function(c){ return c.id === current; }) ? current : "";
+  toggleAberrationField();
+}
+
+function toggleAberrationField(){
+  var wfeCaseId = document.getElementById("fWfeCase").value;
+  document.getElementById("fZWrap").style.display = wfeCaseId ? "none" : "";
+}
+
+function selectedWfeCase(){
+  var wfeCaseId = document.getElementById("fWfeCase").value;
+  if(!wfeCaseId || selectedInstIdx < 0) return null;
+  var cases = (instruments[selectedInstIdx].config && instruments[selectedInstIdx].config.wfeCases) || [];
+  return cases.find(function(c){ return c.id === wfeCaseId; }) || null;
+}
+
+document.getElementById("fWfeCase").addEventListener("change", function(){
+  toggleAberrationField();
+  updateSummary();
+});
 
 // ===================== Résumé permanent (étapes 1-3) =====================
 function updateSummary(){
@@ -726,11 +766,12 @@ function updateSummary(){
   }
 
   if(currentStep >= 3){
+    var wfeCase = selectedWfeCase();
     document.getElementById("sumCondSlot").innerHTML =
       "<div class='sumlines'>"+
       document.getElementById("fH").value + " km · " + document.getElementById("fS").value + "°<br>"+
       "TI " + document.getElementById("fTI").value + "µs · TDI " + document.getElementById("fTDI").value + "<br>"+
-      document.getElementById("fZ").selectedOptions[0].textContent +
+      (wfeCase ? "Cas WFE : " + wfeCase.name : document.getElementById("fZ").selectedOptions[0].textContent) +
       "</div>";
   } else {
     document.getElementById("sumCondSlot").innerHTML = "<span class='empty'>—</span>";
@@ -780,6 +821,44 @@ function setStatus(kind, text){
   interruptBtn.style.display = kind === "running" ? "inline-flex" : "none";
 }
 
+// Libellés lisibles des champs du payload — utilisés pour traduire les
+// erreurs de validation de l'API (qui ne connaît que les codes courts).
+var FIELD_LABELS = {
+  scene: "Scène",
+  D: "Diamètre de pupille",
+  I: "iFoV",
+  E: "Obscuration centrale",
+  T: "Transmission optique",
+  W: "WFE RMS",
+  PX: "Pitch pixel",
+  R: "Bruit de lecture",
+  P: "PRNU",
+  K: "Courant d'obscurité",
+  FW: "Full well",
+  QE: "Rendement quantique",
+  ADC: "Résolution ADC",
+  H: "Altitude",
+  S: "Élévation solaire",
+  TI: "Temps d'intégration",
+  TDI: "Étages TDI",
+  Z: "Mode d'aberration",
+  perfoCsv: "Cas WFE (CSV Zernike)"
+};
+
+// Traduction des messages Pydantic les plus courants — le reste est
+// affiché tel quel plutôt que de risquer une traduction fausse.
+function translateApiMsg(msg){
+  if(!msg) return "";
+  if(msg === "Field required") return "champ requis";
+  if(msg.indexOf("none is not an allowed value") === 0) return "valeur manquante";
+  if(msg.indexOf("value is not a valid float") === 0 || msg.indexOf("value is not a valid integer") === 0) return "doit être un nombre";
+  if(msg.indexOf("ensure this value is greater than or equal to") === 0) return msg.replace("ensure this value is greater than or equal to", "doit être supérieur ou égal à");
+  if(msg.indexOf("ensure this value is less than or equal to") === 0) return msg.replace("ensure this value is less than or equal to", "doit être inférieur ou égal à");
+  if(msg.indexOf("ensure this value is greater than") === 0) return msg.replace("ensure this value is greater than", "doit être supérieur à");
+  if(msg.indexOf("ensure this value is less than") === 0) return msg.replace("ensure this value is less than", "doit être inférieur à");
+  return msg;
+}
+
 // Met en forme le champ "detail" d'une réponse d'erreur de l'API FastAPI,
 // qui peut être une simple chaîne, un tableau d'erreurs de validation
 // Pydantic ([{loc, msg, type}, ...]) ou un objet — jamais affiché tel
@@ -790,8 +869,10 @@ function formatApiError(detail, status){
   if(Array.isArray(detail)){
     return detail.map(function(d){
       if(d && typeof d === "object"){
-        var field = Array.isArray(d.loc) ? d.loc.filter(function(p){ return p !== "body"; }).join(".") : "";
-        return (field ? field + " : " : "") + (d.msg || JSON.stringify(d));
+        var fieldKey = Array.isArray(d.loc) ? d.loc.filter(function(p){ return p !== "body"; }).join(".") : "";
+        var fieldLabel = FIELD_LABELS[fieldKey];
+        var msg = translateApiMsg(d.msg) || JSON.stringify(d);
+        return fieldLabel ? (fieldLabel + " (" + fieldKey + ") : " + msg) : (fieldKey ? (fieldKey + " : " + msg) : msg);
       }
       return String(d);
     }).join(" ; ");
@@ -811,7 +892,11 @@ async function launchSimulation(){
   document.getElementById("sumS").textContent = document.getElementById("fS").value + "°";
   document.getElementById("sumTI").textContent = document.getElementById("fTI").value + " µs";
   document.getElementById("sumTDI").textContent = document.getElementById("fTDI").value;
-  document.getElementById("sumZ").textContent = document.getElementById("fZ").selectedOptions[0].textContent;
+  var wfeCaseForSummary = selectedWfeCase();
+  document.getElementById("sumWfeCase").textContent = wfeCaseForSummary ? wfeCaseForSummary.name : "—";
+  document.getElementById("sumZ").textContent = wfeCaseForSummary
+    ? "— (cas WFE actif)"
+    : document.getElementById("fZ").selectedOptions[0].textContent;
 
   if(simRunning || !inst) return;
   simRunning = true;
@@ -847,7 +932,18 @@ async function launchSimulation(){
     R: inst.config.R, P: inst.config.P, K: inst.config.K, FW: inst.config.FW,
     PX: inst.config.PX, QE: inst.config.QE, ADC: inst.config.ADC,
   }, conditions);
-  lastPayload = { payload: payload, scene: scene, inst: inst, conditions: conditions };
+
+  // Cas WFE actif (CSV Zernike réel) : remplace le mode simplifié W/Z pour
+  // cet envoi — même champ "perfoCsv" (texte brut) que côté backend
+  // SimulateParams/main.py, où W/Z sont alors ignorés pour le WFE mais
+  // restent requis dans le payload (valeurs de l'instrument envoyées
+  // normalement, simplement sans effet sur le résultat dans ce cas).
+  var wfeCase = selectedWfeCase();
+  if(wfeCase){
+    payload.perfoCsv = wfeCase.csv;
+  }
+
+  lastPayload = { payload: payload, scene: scene, inst: inst, conditions: conditions, wfeCase: wfeCase };
 
   abortController = new AbortController();
 

@@ -118,6 +118,22 @@ select,.nameinput{background:var(--panel-2);color:var(--paper);border:1px solid 
 
 .savehint{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);margin-top:10px;
   min-height:16px}
+
+.wfecases{border:1px solid var(--line-soft);border-radius:6px;padding:12px 14px;margin-bottom:14px}
+.wfecases .wfehead{display:flex;justify-content:space-between;align-items:center;margin-bottom:4px}
+.wfecases .wfehead label{font-size:13px;color:var(--muted);margin:0}
+.wfecases .wfesub{font-size:11.5px;color:var(--muted-2);margin:0 0 10px}
+.wfecases .addcasebtn{appearance:none;cursor:pointer;background:transparent;border:1px solid var(--line);
+  color:var(--pixel);border-radius:3px;padding:5px 10px;font-family:var(--mono);font-size:11.5px}
+.wfecases .addcasebtn:hover{border-color:var(--pixel)}
+.wfecases .caserow{display:flex;align-items:center;gap:10px;padding:8px 0;
+  border-top:1px solid var(--line-soft)}
+.wfecases .caserow .cname{flex:1;font-size:13.5px}
+.wfecases .caserow .cfile{font-family:var(--mono);font-size:11px;color:var(--muted-2)}
+.wfecases .caserow .cdel{appearance:none;cursor:pointer;background:transparent;border:none;
+  color:var(--muted-2);font-size:15px;padding:2px 6px}
+.wfecases .caserow .cdel:hover{color:var(--alert)}
+.wfecases .empty{font-size:12px;color:var(--muted-2);padding:8px 0 2px}
 </style>
 </head>
 <body>
@@ -131,7 +147,7 @@ select,.nameinput{background:var(--panel-2);color:var(--paper);border:1px solid 
     <div class="headfields">
       <div class="f">
         <label for="instName">Nom de l'instrument</label>
-        <input class="nameinput" type="text" id="instName" placeholder="SPEO 500">
+        <input class="nameinput" type="text" id="instName" placeholder="Mon instrument">
       </div>
       <div class="f">
         <label for="instType">Type</label>
@@ -397,6 +413,13 @@ function renderPanel(){
     html += "<div class='field'><label for='f-"+f.k+"'>"+f.label+"</label>"+
       "<div class='row'><input type='number' step='any' id='f-"+f.k+"' value='"+v+"'>"+
       "<span class='unit'>"+f.unit+"</span></div></div>";
+    // Le WFE RMS scalaire ci-dessus reste le mode simplifié (utilisé si
+    // aucun cas WFE n'est sélectionné au lancement de la simulation).
+    // Juste après, on permet d'associer des cas WFE nommés (ex. "Cas
+    // chaud", "Cas froid") avec leurs coefficients de Zernike complets,
+    // chargés par fichier — choisis au lancement, dans Conditions
+    // d'acquisition (cf. simulations.html), pas ici.
+    if(f.k === "W") html += renderWfeCasesHtml();
   });
   panelEl.innerHTML = html;
   block.fields.forEach(function(f){
@@ -410,6 +433,7 @@ function renderPanel(){
       if(el) { el.focus(); var pos = e.target.value.length; el.setSelectionRange && el.setSelectionRange(pos,pos); }
     });
   });
+  if(block.id === "optique") wireWfeCasesUI();
   var actions = document.createElement("div");
   actions.className = "panel-actions";
   actions.innerHTML = "<button class='btn ghost' type='button' id='btnReset'>Réinitialiser ce bloc</button>"+
@@ -420,6 +444,99 @@ function renderPanel(){
     persist(); updateProgress(); renderChain(); renderPanel();
   });
   document.getElementById("btnSave").addEventListener("click", saveToSupabase);
+}
+
+// ===================== Cas WFE nommés (CSV Zernike réel par fichier) =====================
+// Stockés dans state.values.wfeCases : [{id, name, filename, csv:"<contenu brut>", rowCount}, ...]
+// Un instrument peut porter plusieurs cas (thermique chaud/froid, etc.) ;
+// c'est au lancement de la simulation que l'un d'eux est choisi (ou aucun,
+// auquel cas le WFE RMS scalaire ci-dessus + le mode d'aberration simplifié
+// s'appliquent, synthétisés automatiquement côté serveur — cf. W/Z).
+//
+// Format CSV attendu — même format que module_MTF.load_zernike_csv côté
+// backend : séparateur ";", décimales ",", colonnes
+// Detector_ID;Band;Column;Z1;Z2;...;Z37 (une ligne par colonne détecteur/
+// bande). Le fichier est transmis TEL QUEL (texte brut) au serveur, qui le
+// parse lui-même — on ne fait ici qu'une validation légère de l'en-tête.
+function renderWfeCasesHtml(){
+  var cases = state.values.wfeCases || [];
+  var rows = cases.map(function(c){
+    return "<div class='caserow' data-case-id='"+c.id+"'>"+
+      "<span class='cname'>"+c.name+"</span>"+
+      "<span class='cfile'>"+(c.rowCount != null ? c.rowCount + " lignes · " + c.filename : "—")+"</span>"+
+      "<button type='button' class='cdel' data-del-case='"+c.id+"' aria-label='Supprimer ce cas'>×</button>"+
+    "</div>";
+  }).join("");
+  return "<div class='wfecases'>"+
+    "<div class='wfehead'><label>Cas WFE (thermique, etc.)</label>"+
+    "<button type='button' class='addcasebtn' id='btnAddWfeCase'>+ Ajouter un cas</button></div>"+
+    "<p class='wfesub'>Optionnel — CSV Zernike réel (Detector_ID;Band;Column;Z1..Z37), choisi au lancement de la simulation.</p>"+
+    (cases.length ? rows : "<p class='empty'>Aucun cas WFE défini.</p>")+
+    "<input type='file' id='wfeCaseFileInput' accept='.csv,text/csv' style='display:none'>"+
+  "</div>";
+}
+
+// Validation légère — on ne parse pas vraiment le CSV (le serveur le fait
+// avec pandas/le vrai séparateur), on vérifie juste que l'en-tête a la
+// bonne forme pour attraper un fichier évidemment mauvais avant l'envoi.
+function validateWfeCsv(text){
+  var firstLine = (text.split(/\r?\n/)[0] || "").trim();
+  var cols = firstLine.split(";").map(function(c){ return c.trim(); });
+  var hasCore = cols.indexOf("Detector_ID") >= 0 && cols.indexOf("Band") >= 0 && cols.indexOf("Column") >= 0;
+  var hasZ = cols.indexOf("Z1") >= 0;
+  if(!hasCore || !hasZ) return null;
+  var rowCount = text.split(/\r?\n/).filter(function(l){ return l.trim(); }).length - 1;
+  return { rowCount: Math.max(rowCount, 0) };
+}
+
+function wireWfeCasesUI(){
+  var addBtn = document.getElementById("btnAddWfeCase");
+  var fileInput = document.getElementById("wfeCaseFileInput");
+  if(!addBtn || !fileInput) return;
+
+  var pendingName = null;
+
+  addBtn.addEventListener("click", function(){
+    var name = prompt("Nom du cas WFE (ex. « Cas chaud », « Cas froid en orbite ») :");
+    if(name === null || !name.trim()) return;
+    pendingName = name.trim();
+    fileInput.value = "";
+    fileInput.click();
+  });
+
+  fileInput.addEventListener("change", function(e){
+    var file = e.target.files[0];
+    if(!file || !pendingName) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      var meta = validateWfeCsv(reader.result);
+      if(!meta){
+        alert("Fichier illisible : CSV attendu au format \"Detector_ID;Band;Column;Z1;...;Z37\" (séparateur point-virgule).");
+        return;
+      }
+      if(!state.values.wfeCases) state.values.wfeCases = [];
+      state.values.wfeCases.push({
+        id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
+        name: pendingName,
+        filename: file.name,
+        csv: reader.result,
+        rowCount: meta.rowCount
+      });
+      pendingName = null;
+      persist();
+      renderPanel();
+    };
+    reader.readAsText(file);
+  });
+
+  panelEl.querySelectorAll("[data-del-case]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var id = btn.dataset.delCase;
+      state.values.wfeCases = (state.values.wfeCases || []).filter(function(c){ return c.id !== id; });
+      persist();
+      renderPanel();
+    });
+  });
 }
 
 /**
