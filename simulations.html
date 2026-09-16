@@ -948,6 +948,20 @@ async function launchSimulation(){
   abortController = new AbortController();
 
   try{
+    // Rafraîchit la session juste avant l'appel plutôt que de réutiliser
+    // celle capturée une fois au chargement de la page (var "session",
+    // ligne ~1271) — un onglet resté ouvert plus d'une heure (durée de
+    // vie par défaut d'un jeton Supabase) finissait sinon par envoyer un
+    // jeton expiré ("Jeton invalide ou expiré : Signature has expired"),
+    // même si la session elle-même restait valide. getSession() renvoie
+    // le jeton actuel, rafraîchi automatiquement par le client Supabase
+    // si besoin.
+    var { data: freshSessionData, error: sessionErr } = await supabaseClient.auth.getSession();
+    if(sessionErr || !freshSessionData.session){
+      throw new Error("Session expirée — reconnecte-toi puis relance la simulation.");
+    }
+    session = freshSessionData.session;
+
     var resp = await fetch(API_URL + "/simulate_account", {
       method: "POST",
       headers: {
