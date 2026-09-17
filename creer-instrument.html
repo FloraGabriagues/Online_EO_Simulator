@@ -74,7 +74,8 @@ select{background:var(--panel-2);color:var(--paper);border:1px solid var(--line)
 .ctx-node .sub{font-family:var(--mono);font-size:10.5px;color:var(--muted-2)}
 
 .schemawrap{margin-bottom:18px;overflow-x:auto}
-.schemawrap svg{display:block;min-width:820px;width:100%;height:auto}
+.schemawrap svg{display:block;min-width:520px;width:100%;height:auto}
+.rightcol{display:flex;flex-direction:column;min-width:0}
 .schema-label{font-family:var(--mono);font-size:11px;fill:var(--muted);text-transform:uppercase;letter-spacing:.08em}
 .schema-block{cursor:pointer;transition:opacity .18s,filter .18s}
 .schema-block{opacity:.72}
@@ -182,11 +183,12 @@ select{background:var(--panel-2);color:var(--paper);border:1px solid var(--line)
     <div class="track"><div class="fill" id="pctFill" style="width:0%"></div></div>
   </div>
 
-  <div class="schemawrap" id="schemaWrap"></div>
-
   <div class="layout">
     <div class="chain instgroup" id="chain"></div>
-    <div class="panel" id="fieldPanel"></div>
+    <div class="rightcol">
+      <div class="schemawrap" id="schemaWrap"></div>
+      <div class="panel" id="fieldPanel"></div>
+    </div>
   </div>
 
 </div>
@@ -327,7 +329,7 @@ function renderSchema(){
   var act = state.active;
   function cls(id){ return "schema-block" + (id === act ? " active" : ""); }
   schemaEl.innerHTML =
-  "<svg viewBox='0 0 1100 220' xmlns='http://www.w3.org/2000/svg'>"+
+  "<svg viewBox='0 0 820 220' xmlns='http://www.w3.org/2000/svg'>"+
   "<defs>"+
     "<radialGradient id='lensGrad' cx='35%' cy='30%' r='75%'>"+
       "<stop offset='0%' stop-color='#BFF3ED'/>"+
@@ -348,52 +350,52 @@ function renderSchema(){
     "</filter>"+
   "</defs>"+
 
-  "<text x='550' y='22' text-anchor='middle' class='schema-label'>Instrument</text>"+
-  "<rect x='20' y='38' width='1060' height='150' rx='12' fill='var(--void)' stroke='var(--line-soft)'/>"+
+  "<text x='410' y='22' text-anchor='middle' class='schema-label'>Instrument</text>"+
+  "<rect x='16' y='38' width='788' height='150' rx='12' fill='var(--void)' stroke='var(--line-soft)'/>"+
 
   // ---- Optique : empilement de lentilles, flottant (pas de cadre) ----
-  // Centre à x=257 (1er tiers de la zone de contenu 110–990) pour occuper
-  // toute la largeur du panneau plutôt que de rester tassé à gauche.
+  // Centre à x=207 (1er tiers de la zone de contenu 106–714, largeur
+  // adaptée à la colonne de droite plutôt qu'à la pleine largeur).
   "<g class='"+cls("optique")+"' onclick=\"selectBlock('optique')\">"+
     "<g class='schema-glow' filter='url(#softGlow)'>"+
-      "<ellipse cx='235' cy='113' rx='17' ry='40' fill='url(#lensGrad)' opacity='.45'/>"+
-      "<ellipse cx='257' cy='113' rx='17' ry='40' fill='url(#lensGrad)' opacity='.7'/>"+
-      "<ellipse cx='279' cy='113' rx='17' ry='40' fill='url(#lensGrad)'/>"+
+      "<ellipse cx='185' cy='113' rx='17' ry='40' fill='url(#lensGrad)' opacity='.45'/>"+
+      "<ellipse cx='207' cy='113' rx='17' ry='40' fill='url(#lensGrad)' opacity='.7'/>"+
+      "<ellipse cx='229' cy='113' rx='17' ry='40' fill='url(#lensGrad)'/>"+
     "</g>"+
-    "<ellipse cx='235' cy='113' rx='17' ry='40' fill='none' stroke='var(--pixel)' stroke-opacity='.5'/>"+
-    "<ellipse cx='257' cy='113' rx='17' ry='40' fill='none' stroke='var(--pixel)' stroke-opacity='.7'/>"+
-    "<ellipse cx='279' cy='113' rx='17' ry='40' fill='none' stroke='var(--pixel)'/>"+
-    "<text x='257' y='178' text-anchor='middle' class='schema-blocklabel'>Optique</text>"+
+    "<ellipse cx='185' cy='113' rx='17' ry='40' fill='none' stroke='var(--pixel)' stroke-opacity='.5'/>"+
+    "<ellipse cx='207' cy='113' rx='17' ry='40' fill='none' stroke='var(--pixel)' stroke-opacity='.7'/>"+
+    "<ellipse cx='229' cy='113' rx='17' ry='40' fill='none' stroke='var(--pixel)'/>"+
+    "<text x='207' y='178' text-anchor='middle' class='schema-blocklabel'>Optique</text>"+
   "</g>"+
 
-  "<path d='M388,113 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
+  "<path d='M293,113 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
 
-  // ---- Détecteur : cadre + carré dégradé — centre à x=550 (milieu) ----
+  // ---- Détecteur : cadre + carré dégradé — centre à x=410 (milieu) ----
   "<g class='"+cls("detecteur")+"' onclick=\"selectBlock('detecteur')\">"+
-    "<rect class='schema-iconframe' x='510' y='73' width='80' height='80' rx='14'/>"+
-    "<rect class='schema-glow' x='526' y='89' width='48' height='48' rx='6' fill='url(#chipGrad)' filter='url(#softGlow)'/>"+
-    "<text x='550' y='178' text-anchor='middle' class='schema-blocklabel'>Détecteur</text>"+
+    "<rect class='schema-iconframe' x='370' y='73' width='80' height='80' rx='14'/>"+
+    "<rect class='schema-glow' x='386' y='89' width='48' height='48' rx='6' fill='url(#chipGrad)' filter='url(#softGlow)'/>"+
+    "<text x='410' y='178' text-anchor='middle' class='schema-blocklabel'>Détecteur</text>"+
   "</g>"+
 
-  "<path d='M681,113 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
+  "<path d='M496,113 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
 
-  // ---- Électronique : cadre + puce avec broches — centre à x=843 (3e tiers) ----
+  // ---- Électronique : cadre + puce avec broches — centre à x=613 (3e tiers) ----
   "<g class='"+cls("electronique")+"' onclick=\"selectBlock('electronique')\">"+
-    "<rect class='schema-iconframe' x='803' y='73' width='80' height='80' rx='14'/>"+
+    "<rect class='schema-iconframe' x='573' y='73' width='80' height='80' rx='14'/>"+
     "<g class='schema-glow' filter='url(#softGlow)'>"+
-      "<rect x='825' y='95' width='36' height='36' rx='4' fill='url(#icGrad)' stroke='var(--pixel)' stroke-opacity='.6'/>"+
+      "<rect x='595' y='95' width='36' height='36' rx='4' fill='url(#icGrad)' stroke='var(--pixel)' stroke-opacity='.6'/>"+
     "</g>"+
     "<g stroke='var(--muted-2)' stroke-width='1.5'>"+
-      "<line x1='833' y1='95' x2='833' y2='87'/><line x1='843' y1='95' x2='843' y2='87'/>"+
-      "<line x1='853' y1='95' x2='853' y2='87'/>"+
-      "<line x1='833' y1='131' x2='833' y2='139'/><line x1='843' y1='131' x2='843' y2='139'/>"+
-      "<line x1='853' y1='131' x2='853' y2='139'/>"+
-      "<line x1='825' y1='105' x2='817' y2='105'/><line x1='825' y1='113' x2='817' y2='113'/>"+
-      "<line x1='825' y1='121' x2='817' y2='121'/>"+
-      "<line x1='861' y1='105' x2='869' y2='105'/><line x1='861' y1='113' x2='869' y2='113'/>"+
-      "<line x1='861' y1='121' x2='869' y2='121'/>"+
+      "<line x1='603' y1='95' x2='603' y2='87'/><line x1='613' y1='95' x2='613' y2='87'/>"+
+      "<line x1='623' y1='95' x2='623' y2='87'/>"+
+      "<line x1='603' y1='131' x2='603' y2='139'/><line x1='613' y1='131' x2='613' y2='139'/>"+
+      "<line x1='623' y1='131' x2='623' y2='139'/>"+
+      "<line x1='595' y1='105' x2='587' y2='105'/><line x1='595' y1='113' x2='587' y2='113'/>"+
+      "<line x1='595' y1='121' x2='587' y2='121'/>"+
+      "<line x1='631' y1='105' x2='639' y2='105'/><line x1='631' y1='113' x2='639' y2='113'/>"+
+      "<line x1='631' y1='121' x2='639' y2='121'/>"+
     "</g>"+
-    "<text x='843' y='178' text-anchor='middle' class='schema-blocklabel'>Électronique</text>"+
+    "<text x='613' y='178' text-anchor='middle' class='schema-blocklabel'>Électronique</text>"+
   "</g>"+
   "</svg>";
 }
