@@ -111,6 +111,7 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .field input[type=number],.field input[type=text]{flex:1;background:var(--panel-2);
   border:1px solid var(--line);border-radius:3px;color:var(--paper);padding:9px 11px;
   font-family:var(--mono);font-size:14px}
+.field input::placeholder{color:var(--muted-2);font-family:var(--body);font-style:italic}
 .field .unit{font-family:var(--mono);font-size:12px;color:var(--muted-2);min-width:34px}
 .field input:focus{outline:none;border-color:var(--pixel)}
 .panel-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;
@@ -191,11 +192,11 @@ var SCHEMA = [
   {id:"atmosphere", kind:"ctx", label:"Atmosphère", sub:"modèle atmosphérique"},
   {id:"instrument", kind:"group", label:"Instrument", blocks:[
     {id:"optique", label:"Optique", fields:[
-      {k:"D", label:"Diamètre de pupille", unit:"m"},
-      {k:"I", label:"iFoV", unit:"µrad"},
-      {k:"E", label:"Obscuration centrale", unit:"m"},
-      {k:"T", label:"Transmission optique", unit:"τ"},
-      {k:"W", label:"WFE RMS", unit:"nm"}
+      {k:"D", label:"Diamètre de pupille", unit:"m", placeholder:"obligatoire"},
+      {k:"I", label:"iFoV", unit:"µrad", placeholder:"obligatoire"},
+      {k:"E", label:"Obscuration centrale", unit:"m", placeholder:"0 (défaut)"},
+      {k:"T", label:"Transmission optique", unit:"τ", placeholder:"1 (défaut)"},
+      {k:"W", label:"WFE RMS", unit:"nm", placeholder:"0 (défaut)"}
     ]},
     {id:"detecteur", label:"Détecteur", fields:[
       {k:"PX", label:"Pitch pixel", unit:"µm"},
@@ -400,8 +401,10 @@ function renderPanel(){
   var html = "<h2>"+block.label+"</h2><p class='desc'>Renseignez les paramètres de ce bloc. Les valeurs non renseignées utilisent les valeurs par défaut du modèle.</p>";
   block.fields.forEach(function(f){
     var v = state.values[f.k] !== undefined ? state.values[f.k] : "";
+    var valueAttr = v !== "" ? " value='"+v+"'" : "";
+    var placeholderAttr = f.placeholder ? " placeholder='"+f.placeholder+"'" : "";
     html += "<div class='field'><label for='f-"+f.k+"'>"+f.label+"</label>"+
-      "<div class='row'><input type='number' step='any' id='f-"+f.k+"' value='"+v+"'>"+
+      "<div class='row'><input type='number' step='any' id='f-"+f.k+"'"+valueAttr+placeholderAttr+">"+
       "<span class='unit'>"+f.unit+"</span></div></div>";
     // Le WFE RMS scalaire ci-dessus reste le mode simplifié (utilisé si
     // aucun cas WFE n'est sélectionné au lancement de la simulation).
