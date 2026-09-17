@@ -200,6 +200,16 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .modal-overlay{position:fixed;inset:0;background:rgba(5,8,11,.72);backdrop-filter:blur(2px);
   display:none;align-items:center;justify-content:center;z-index:100;padding:24px}
 .modal-overlay.open{display:flex}
+
+.lightbox-overlay{position:fixed;inset:0;background:rgba(5,8,11,.92);display:none;
+  align-items:center;justify-content:center;z-index:200;padding:40px;cursor:zoom-out}
+.lightbox-overlay.open{display:flex}
+.lightbox-overlay img{max-width:100%;max-height:100%;border-radius:6px;cursor:default;
+  box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.lightbox-close{position:fixed;top:20px;right:24px;background:none;border:1px solid var(--line);
+  color:var(--paper);border-radius:6px;width:38px;height:38px;font-size:22px;line-height:1;
+  cursor:pointer}
+.lightbox-close:hover{border-color:var(--pixel);color:var(--pixel)}
 .modal{width:100%;max-width:820px;height:min(640px,88vh);background:var(--panel);
   border:1px solid var(--line-soft);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
 .modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;
@@ -408,16 +418,6 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
               </div>
 
               <div class="afield">
-                <label><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 3l9 4.5-9 4.5-9-4.5L12 3z"/><path d="M3 12l9 4.5 9-4.5M3 16.5l9 4.5 9-4.5"/></svg>Bande affichée</label>
-                <select id="bandSel">
-                  <option value="RGB">RGB (composite)</option>
-                  <option value="R">Rouge</option>
-                  <option value="G">Vert</option>
-                  <option value="B">Bleu</option>
-                </select>
-              </div>
-
-              <div class="afield">
                 <label><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 15l5-5 4 4 4-6 5 7"/></svg>Rendu de l'image</label>
                 <select id="renderSel">
                   <option value="none">Aucun (brut)</option>
@@ -495,6 +495,11 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
     </div>
   </div>
 
+</div>
+
+<div class="lightbox-overlay" id="lightboxOverlay">
+  <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Fermer">×</button>
+  <img id="lightboxImg" alt="">
 </div>
 
 <div class="modal-overlay" id="settingsOverlay">
@@ -589,6 +594,25 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
 <script>
+// ===================== Lightbox (zoom plein écran sur les graphes) =====================
+// Global (pas dans une fonction async plus bas) — utilisée depuis
+// buildDiagPanel (onglets Graphes MTF/SNR) pour agrandir un graphique au
+// clic. Fermeture : clic sur le fond, sur le bouton ×, ou touche Échap.
+function openLightbox(url){
+  document.getElementById("lightboxImg").src = url;
+  document.getElementById("lightboxOverlay").classList.add("open");
+}
+function closeLightbox(){
+  document.getElementById("lightboxOverlay").classList.remove("open");
+  document.getElementById("lightboxImg").src = "";
+}
+document.getElementById("lightboxOverlay").addEventListener("click", closeLightbox);
+document.getElementById("lightboxImg").addEventListener("click", function(e){ e.stopPropagation(); });
+document.getElementById("lightboxClose").addEventListener("click", closeLightbox);
+document.addEventListener("keydown", function(e){
+  if(e.key === "Escape") closeLightbox();
+});
+
 // Migration SQL nécessaire si la colonne n'existe pas encore sur
 // "saved_results" (nom de simulation optionnel, éditable via "Renommer" —
 // cf. renameResult ci-dessous ; repli sur le nom de la scène si absent) :
@@ -1086,7 +1110,8 @@ async function initSettingsModal(session){
         var path = d[pathKey];
         if(!path) continue;
         var url = await signedUrl(path);
-        if(url) html += "<img src='" + url + "' style='display:block;width:320px;height:auto;border:1px solid var(--line-soft);border-radius:4px'>";
+        if(url) html += "<img src='" + url + "' onclick=\"openLightbox('" + url + "')\" "+
+          "style='display:block;width:320px;height:auto;border:1px solid var(--line-soft);border-radius:4px;cursor:zoom-in'>";
       }
       html += "</div></div>";
     }
@@ -1297,10 +1322,9 @@ async function initSettingsModal(session){
   }
   bindSlider("ctrlContrast", "valContrast", " %", "contrast");
 
-  // ---- Bandes spectrales (miniatures + menu déroulant, synchronisés) ----
+  // ---- Bandes spectrales (miniatures cliquables) ----
   var bandThumbs = document.getElementById("bandThumbs");
   var bandThumbEls = {};
-  var bandSel = document.getElementById("bandSel");
   var BANDS = [
     {key:"RGB", name:"RGB", color:BAND_COLOR.RGB},
     {key:"R", name:"Rouge", color:BAND_COLOR.R},
@@ -1309,7 +1333,6 @@ async function initSettingsModal(session){
   ];
   function selectBand(key){
     adj.band = key;
-    bandSel.value = key;
     bandThumbs.querySelectorAll(".bandthumb").forEach(function(x){
       x.classList.toggle("selected", x.dataset.key === key);
     });
@@ -1325,7 +1348,6 @@ async function initSettingsModal(session){
     bandThumbs.appendChild(d);
     bandThumbEls[b.key] = d.querySelector("img");
   });
-  bandSel.addEventListener("change", function(){ selectBand(bandSel.value); });
 
   // Vignettes par bande en niveaux de gris, précalculées une fois les images chargées.
   imagesReady.then(function(){
@@ -1369,7 +1391,6 @@ async function initSettingsModal(session){
     document.getElementById("ctrlContrast").value = 100; document.getElementById("valContrast").textContent = "100 %";
     document.getElementById("renderSel").value = "none";
     document.getElementById("satChk").checked = false;
-    bandSel.value = "RGB";
     bandThumbs.querySelectorAll(".bandthumb").forEach(function(x){ x.classList.toggle("selected", x.dataset.key === "RGB"); });
     updateDisplay();
   });
