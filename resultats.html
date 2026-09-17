@@ -167,9 +167,10 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .resultcard .wfebadge{display:inline-block;font-family:var(--mono);font-size:10px;color:var(--pixel);
   border:1px solid var(--line);border-radius:3px;padding:1px 6px;width:fit-content}
 .resultcard .bottomrow{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:4px}
-.resultcard .delbtn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:4px;
+.delbtn, .renbtn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:4px;
   font-family:var(--mono);font-size:11px;padding:5px 10px;cursor:pointer}
-.resultcard .delbtn:hover{border-color:var(--alert);color:var(--alert)}
+.delbtn:hover{border-color:var(--alert);color:var(--alert)}
+.renbtn:hover{border-color:var(--pixel);color:var(--pixel)}
 .resultsempty{color:var(--muted);font-size:13.5px;grid-column:1/-1;padding:30px 0}
 .resultsempty a{color:var(--pixel);text-decoration:none}
 
@@ -350,7 +351,10 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
       <div id="detailView" style="display:none">
       <div class="pageheadrow">
         <a class="backlink" href="resultats.html" style="margin:0">← Retour aux résultats</a>
-        <h1 id="resTitle">Résultat</h1>
+        <div style="display:flex;align-items:center;gap:10px">
+          <h1 id="resTitle">Résultat</h1>
+          <button type="button" id="btnRenameResult" class="renbtn" style="flex:none">Renommer</button>
+        </div>
       </div>
 
       <div class="restabs" id="restabsHost"></div>
@@ -585,6 +589,10 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
 <script>
+// Migration SQL nécessaire si la colonne n'existe pas encore sur
+// "saved_results" (nom de simulation optionnel, éditable via "Renommer" —
+// cf. renameResult ci-dessous ; repli sur le nom de la scène si absent) :
+//   alter table saved_results add column if not exists name text;
 async function renderResultsList(){
   var grid = document.getElementById("resultsGrid");
   // "instruments(name)" : jointure vers l'instrument vivant, absente si
@@ -631,6 +639,7 @@ async function renderResultsList(){
     var mtfAvg = avg(mtfVals), snrAvg = avg(snrVals);
 
     var wfeCaseName = (r.conditions && r.conditions.wfeCaseName) || null;
+    var displayName = r.name || r.scene; // "name" optionnel (cf. rename) — replie sur la scène si absent
 
     var card = document.createElement("div");
     card.className = "resultcard";
@@ -638,7 +647,7 @@ async function renderResultsList(){
       "<a href='resultats.html?id=" + r.id + "' style='text-decoration:none;color:inherit'>"+
         "<span class='thumb' style='background-image:url(\"" + thumbUrl + "\")'></span>"+
         "<div class='body'>"+
-          "<div class='name'>" + r.scene + "</div>"+
+          "<div class='name'>" + displayName + "</div>"+
           "<div class='inst'>" + instName + "</div>"+
           "<div class='meta'>" + dateLabel + "</div>"+
           (wfeCaseName ? "<span class='wfebadge'>Cas WFE : " + wfeCaseName + "</span>" : "")+
@@ -653,6 +662,13 @@ async function renderResultsList(){
     var bottomRow = document.createElement("div");
     bottomRow.className = "body bottomrow";
     bottomRow.style.paddingTop = "0";
+    var renBtn = document.createElement("button");
+    renBtn.className = "renbtn";
+    renBtn.type = "button";
+    renBtn.textContent = "Renommer";
+    renBtn.addEventListener("click", function(resultRow, cardEl){
+      return function(){ renameResult(resultRow, cardEl); };
+    }(r, card));
     var delBtn = document.createElement("button");
     delBtn.className = "delbtn";
     delBtn.type = "button";
@@ -660,10 +676,26 @@ async function renderResultsList(){
     delBtn.addEventListener("click", function(resultRow){
       return function(){ deleteResult(resultRow); };
     }(r));
+    bottomRow.appendChild(renBtn);
     bottomRow.appendChild(delBtn);
     card.appendChild(bottomRow);
     grid.appendChild(card);
   }
+}
+
+async function renameResult(r, cardEl){
+  var newName = prompt("Nom de la simulation :", r.name || r.scene);
+  if(newName === null || !newName.trim()) return;
+  newName = newName.trim();
+  var { error } = await supabaseClient.from("saved_results").update({ name: newName }).eq("id", r.id);
+  if(error){
+    console.error("Erreur renommage résultat :", error);
+    alert("Le renommage a échoué : " + error.message);
+    return;
+  }
+  r.name = newName;
+  var nameEl = cardEl.querySelector(".name");
+  if(nameEl) nameEl.textContent = newName;
 }
 
 async function deleteResult(r){
@@ -937,8 +969,27 @@ async function initSettingsModal(session){
   var resultLogs = (result && result.logs) || "";
 
   var createdLabel = result ? new Date(result.created_at).toISOString().slice(0,16).replace("T","_").replace(":","") : "—";
+  var displayName = (result && result.name) || sceneName; // "name" optionnel — replie sur la scène si absent
 
-  document.getElementById("resTitle").textContent = "Résultat — " + sceneName + " (" + createdLabel + ")";
+  document.getElementById("resTitle").textContent = displayName + " (" + createdLabel + ")";
+  var btnRename = document.getElementById("btnRenameResult");
+  if(!result){
+    btnRename.style.display = "none";
+  } else {
+    btnRename.addEventListener("click", async function(){
+      var newName = prompt("Nom de la simulation :", result.name || sceneName);
+      if(newName === null || !newName.trim()) return;
+      newName = newName.trim();
+      var { error } = await supabaseClient.from("saved_results").update({ name: newName }).eq("id", result.id);
+      if(error){
+        console.error("Erreur renommage résultat :", error);
+        alert("Le renommage a échoué : " + error.message);
+        return;
+      }
+      result.name = newName;
+      document.getElementById("resTitle").textContent = newName + " (" + createdLabel + ")";
+    });
+  }
   document.getElementById("imgSim").src = imgUrl;
   document.getElementById("imgSrc").src = sourceUrl;
 
@@ -986,7 +1037,15 @@ async function initSettingsModal(session){
   if(cond.S != null) condHtml += entTile("Élévation solaire", cond.S + "°");
   if(cond.TI != null) condHtml += entTile("Temps d'intégration", cond.TI + " µs");
   if(cond.TDI != null) condHtml += entTile("Étages TDI", cond.TDI);
-  if(cond.Z != null) condHtml += entTile("Mode d'aberration", Z_LABELS[cond.Z] || cond.Z);
+  // Cas WFE actif : remplace le mode d'aberration (sans objet dans ce cas,
+  // cf. simulations.html/toggleAberrationField) — absent des résultats
+  // sauvegardés avant l'ajout des cas WFE nommés (cf. échange du
+  // 16/09/2026), on retombe alors sur le mode d'aberration comme avant.
+  if(cond.wfeCaseName){
+    condHtml += entTile("Cas WFE", cond.wfeCaseName);
+  } else if(cond.Z != null){
+    condHtml += entTile("Mode d'aberration", Z_LABELS[cond.Z] || cond.Z);
+  }
   document.getElementById("entConditions").innerHTML = condHtml ||
     "<span style='color:var(--muted);font-size:12.5px'>Aucune condition disponible.</span>";
 
