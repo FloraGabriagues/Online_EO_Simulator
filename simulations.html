@@ -843,7 +843,8 @@ var FIELD_LABELS = {
   TDI: "Étages TDI",
   Z: "Mode d'aberration",
   perfoCsv: "Cas WFE (CSV Zernike)",
-  perfoCsvAlign: "Cadrage du cas WFE"
+  perfoCsvAlign: "Cadrage du cas WFE",
+  qeSpectral: "Courbe QE(λ)"
 };
 
 // Traduction des messages Pydantic les plus courants — le reste est
@@ -947,6 +948,25 @@ async function launchSimulation(){
   if(wfeCase){
     payload.perfoCsv = wfeCase.csv;
     payload.perfoCsvAlign = wfeCase.align || "center";
+  }
+
+  // Courbe QE(λ) réelle (cf. creer-instrument.html, state.values.qeSpectral)
+  // : remplace le QE scalaire pour cet envoi — même format que
+  // paramFile.Detector.QE_spectral côté backend (confirmé le 17/09/2026
+  // via radiometry.py) : {wavelength_nm:[...], values:[...]}, QE en
+  // fraction 0-1. Seuls les points valides (les deux champs remplis et
+  // numériques) sont envoyés ; en dessous de 2 points valides, on retombe
+  // sur le QE scalaire — cohérent avec le seuil minimum d'affichage de la
+  // courbe dans creer-instrument.html (renderQeChart).
+  var qePts = (inst.config.qeSpectral || [])
+    .filter(function(p){ return p.wl !== "" && p.qe !== "" && !isNaN(p.wl) && !isNaN(p.qe); })
+    .map(function(p){ return { wl: Number(p.wl), qe: Number(p.qe) }; })
+    .sort(function(a,b){ return a.wl - b.wl; });
+  if(qePts.length >= 2){
+    payload.qeSpectral = {
+      wavelength_nm: qePts.map(function(p){ return p.wl; }),
+      values: qePts.map(function(p){ return p.qe; }),
+    };
   }
 
   lastPayload = { payload: payload, scene: scene, inst: inst, conditions: conditions, wfeCase: wfeCase };

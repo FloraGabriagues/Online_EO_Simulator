@@ -215,12 +215,16 @@ var SCHEMA = [
       {k:"W", label:"WFE RMS", unit:"nm", placeholder:"0 (défaut)"}
     ]},
     {id:"detecteur", label:"Détecteur", fields:[
+      // QE en fraction (τ, 0–1) et non en % — confirmé le 17/09/2026 par
+      // radiometry.py : electrons = photons * QE_band, QE_band vient d'une
+      // interpolation sur paramFile.Detector.QE_spectral.values, jamais
+      // divisée par 100. Même convention que T (transmission optique).
       {k:"PX", label:"Largeur pixel", unit:"µm", placeholder:"obligatoire"},
       {k:"R",  label:"Bruit de lecture", unit:"e⁻", placeholder:"0 (défaut)"},
       {k:"P",  label:"PRNU", unit:"%", placeholder:"0 (défaut)"},
       {k:"K",  label:"Courant d'obscurité", unit:"e⁻/s", placeholder:"0 (défaut)"},
       {k:"FW", label:"Full well", unit:"e⁻", placeholder:"1 000 000 (défaut)"},
-      {k:"QE", label:"Rendement quantique", unit:"%", placeholder:"1 (défaut)"}
+      {k:"QE", label:"Rendement quantique", unit:"τ", placeholder:"1 (défaut)"}
     ]},
     {id:"electronique", label:"Électronique", fields:[
       {k:"ADC",  label:"Résolution ADC", unit:"bits"}
@@ -580,25 +584,27 @@ function wireWfeCasesUI(){
 }
 
 // ===================== QE spectral (courbe QE(λ) point par point) =====================
-// Stockée dans state.values.qeSpectral : [{wl, qe}, ...] (wl en nm, qe en %).
-// Optionnelle — coexiste avec le QE scalaire ci-dessus (mode simplifié,
-// utilisé si la courbe est vide). Simple aperçu visuel côté site pour
-// l'instant : aucun format de payload confirmé côté backend pour cette
-// courbe — voir la même remarque faite pour les cas WFE (échange du
-// 16/09/2026) avant de la brancher sur une simulation.
+// Stockée dans state.values.qeSpectral : [{wl, qe}, ...] (wl en nm, qe en
+// FRACTION 0-1 — confirmé le 17/09/2026 via radiometry.py, cf. commentaire
+// sur le champ QE scalaire ci-dessus). Optionnelle — coexiste avec le QE
+// scalaire ci-dessus (mode simplifié, utilisé si la courbe est vide).
+// Envoyée au lancement de la simulation (cf. simulations.html, payload.qeSpectral)
+// sous la forme paramFile.Detector.QE_spectral = {wavelength_nm:[...], values:[...]}
+// attendue par radiometry._integrate_radiance_to_electrons — remplace alors
+// la version synthétisée à plat depuis le QE scalaire.
 function renderQeSpectralHtml(){
   var pts = state.values.qeSpectral || [];
   var rows = pts.map(function(p, i){
     return "<div class='qerow' data-qe-idx='"+i+"'>"+
       "<input type='number' step='any' class='qewl' data-qe-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
-      "<input type='number' step='any' class='qeval' data-qe-idx='"+i+"' value='"+p.qe+"' placeholder='QE (%)'>"+
+      "<input type='number' step='any' class='qeval' data-qe-idx='"+i+"' value='"+p.qe+"' placeholder='QE (0-1)'>"+
       "<button type='button' class='qedel' data-qe-del='"+i+"' aria-label='Supprimer ce point'>×</button>"+
     "</div>";
   }).join("");
   return "<div class='wfecases qespectral'>"+
     "<div class='wfehead'><label>QE spectral (optionnel)</label>"+
     "<button type='button' class='addcasebtn' id='btnAddQePoint'>+ Ajouter un point</button></div>"+
-    "<p class='wfesub'>Un point par longueur d'onde — remplace le QE scalaire ci-dessus si renseigné.</p>"+
+    "<p class='wfesub'>Un point par longueur d'onde, QE en fraction (0-1, pas en %) — remplace le QE scalaire ci-dessus si renseigné.</p>"+
     "<div id='qeRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div>"+
     "<div id='qeChart'></div>"+
   "</div>";
