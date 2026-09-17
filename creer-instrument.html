@@ -141,6 +141,14 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
   color:var(--muted-2);font-size:15px;padding:2px 6px}
 .wfecases .caserow .cdel:hover{color:var(--alert)}
 .wfecases .empty{font-size:12px;color:var(--muted-2);padding:8px 0 2px}
+
+.qespectral .qerow{display:flex;align-items:center;gap:8px;padding:6px 0;
+  border-top:1px solid var(--line-soft)}
+.qespectral .qewl,.qespectral .qeval{flex:1;min-width:0;background:var(--panel-2);color:var(--paper);
+  border:1px solid var(--line);border-radius:3px;padding:6px 8px;font-family:var(--mono);font-size:12.5px}
+.qespectral .qedel{appearance:none;cursor:pointer;background:transparent;border:none;
+  color:var(--muted-2);font-size:15px;padding:2px 6px;flex:none}
+.qespectral .qedel:hover{color:var(--alert)}
 </style>
 </head>
 <body>
@@ -199,12 +207,12 @@ var SCHEMA = [
       {k:"W", label:"WFE RMS", unit:"nm", placeholder:"0 (défaut)"}
     ]},
     {id:"detecteur", label:"Détecteur", fields:[
-      {k:"PX", label:"Pitch pixel", unit:"µm"},
-      {k:"R",  label:"Bruit de lecture", unit:"e⁻"},
-      {k:"P",  label:"PRNU", unit:"%"},
-      {k:"K",  label:"Courant d'obscurité", unit:"e⁻/s"},
-      {k:"FW", label:"Full well", unit:"e⁻"},
-      {k:"QE", label:"Rendement quantique", unit:"%"}
+      {k:"PX", label:"Largeur pixel", unit:"µm", placeholder:"obligatoire"},
+      {k:"R",  label:"Bruit de lecture", unit:"e⁻", placeholder:"0 (défaut)"},
+      {k:"P",  label:"PRNU", unit:"%", placeholder:"0 (défaut)"},
+      {k:"K",  label:"Courant d'obscurité", unit:"e⁻/s", placeholder:"0 (défaut)"},
+      {k:"FW", label:"Full well", unit:"e⁻", placeholder:"1 000 000 (défaut)"},
+      {k:"QE", label:"Rendement quantique", unit:"%", placeholder:"1 (défaut)"}
     ]},
     {id:"electronique", label:"Électronique", fields:[
       {k:"ADC",  label:"Résolution ADC", unit:"bits"}
@@ -413,6 +421,11 @@ function renderPanel(){
     // chargés par fichier — choisis au lancement, dans Conditions
     // d'acquisition (cf. simulations.html), pas ici.
     if(f.k === "W") html += renderWfeCasesHtml();
+    // QE spectral (optionnel) : courbe QE(λ) saisie point par point, en
+    // plus du QE scalaire ci-dessus (mode simplifié, utilisé si aucune
+    // courbe n'est saisie). Juste un aperçu visuel côté site — voir
+    // renderQeChart pour ce qui est actuellement tracé.
+    if(f.k === "QE") html += renderQeSpectralHtml();
   });
   panelEl.innerHTML = html;
   block.fields.forEach(function(f){
@@ -427,6 +440,7 @@ function renderPanel(){
     });
   });
   if(block.id === "optique") wireWfeCasesUI();
+  if(block.id === "detecteur") wireQeSpectralUI();
   var actions = document.createElement("div");
   actions.className = "panel-actions";
   actions.innerHTML = "<button class='btn ghost' type='button' id='btnReset'>Réinitialiser ce bloc</button>"+
@@ -551,6 +565,96 @@ function wireWfeCasesUI(){
     btn.addEventListener("click", function(){
       var id = btn.dataset.delCase;
       state.values.wfeCases = (state.values.wfeCases || []).filter(function(c){ return c.id !== id; });
+      persist();
+      renderPanel();
+    });
+  });
+}
+
+// ===================== QE spectral (courbe QE(λ) point par point) =====================
+// Stockée dans state.values.qeSpectral : [{wl, qe}, ...] (wl en nm, qe en %).
+// Optionnelle — coexiste avec le QE scalaire ci-dessus (mode simplifié,
+// utilisé si la courbe est vide). Simple aperçu visuel côté site pour
+// l'instant : aucun format de payload confirmé côté backend pour cette
+// courbe — voir la même remarque faite pour les cas WFE (échange du
+// 16/09/2026) avant de la brancher sur une simulation.
+function renderQeSpectralHtml(){
+  var pts = state.values.qeSpectral || [];
+  var rows = pts.map(function(p, i){
+    return "<div class='qerow' data-qe-idx='"+i+"'>"+
+      "<input type='number' step='any' class='qewl' data-qe-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
+      "<input type='number' step='any' class='qeval' data-qe-idx='"+i+"' value='"+p.qe+"' placeholder='QE (%)'>"+
+      "<button type='button' class='qedel' data-qe-del='"+i+"' aria-label='Supprimer ce point'>×</button>"+
+    "</div>";
+  }).join("");
+  return "<div class='wfecases qespectral'>"+
+    "<div class='wfehead'><label>QE spectral (optionnel)</label>"+
+    "<button type='button' class='addcasebtn' id='btnAddQePoint'>+ Ajouter un point</button></div>"+
+    "<p class='wfesub'>Un point par longueur d'onde — remplace le QE scalaire ci-dessus si renseigné.</p>"+
+    "<div id='qeRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div>"+
+    "<div id='qeChart'></div>"+
+  "</div>";
+}
+
+function renderQeChart(){
+  var host = document.getElementById("qeChart");
+  if(!host) return;
+  var pts = (state.values.qeSpectral || [])
+    .filter(function(p){ return p.wl !== "" && p.qe !== "" && !isNaN(p.wl) && !isNaN(p.qe); })
+    .map(function(p){ return { wl: Number(p.wl), qe: Number(p.qe) }; })
+    .sort(function(a,b){ return a.wl - b.wl; });
+  if(pts.length < 2){
+    host.innerHTML = "<p class='empty' style='margin-top:8px'>Au moins 2 points valides pour afficher la courbe.</p>";
+    return;
+  }
+  var W = 400, H = 140, padL = 34, padR = 10, padT = 10, padB = 22;
+  var wlMin = pts[0].wl, wlMax = pts[pts.length-1].wl;
+  var qeMin = Math.min(0, Math.min.apply(null, pts.map(function(p){ return p.qe; })));
+  var qeMax = Math.max.apply(null, pts.map(function(p){ return p.qe; })) * 1.1 || 1;
+  var wlSpan = (wlMax - wlMin) || 1, qeSpan = (qeMax - qeMin) || 1;
+  function x(wl){ return padL + (wl - wlMin) / wlSpan * (W - padL - padR); }
+  function y(qe){ return H - padB - (qe - qeMin) / qeSpan * (H - padT - padB); }
+  var pathD = pts.map(function(p, i){ return (i===0?"M":"L") + x(p.wl).toFixed(1) + "," + y(p.qe).toFixed(1); }).join(" ");
+  var dots = pts.map(function(p){
+    return "<circle cx='"+x(p.wl).toFixed(1)+"' cy='"+y(p.qe).toFixed(1)+"' r='3' fill='var(--pixel)'/>";
+  }).join("");
+  host.innerHTML =
+    "<svg viewBox='0 0 "+W+" "+H+"' style='width:100%;height:auto;display:block;margin-top:10px'>"+
+      "<line x1='"+padL+"' y1='"+(H-padB)+"' x2='"+(W-padR)+"' y2='"+(H-padB)+"' stroke='var(--line-soft)'/>"+
+      "<line x1='"+padL+"' y1='"+padT+"' x2='"+padL+"' y2='"+(H-padB)+"' stroke='var(--line-soft)'/>"+
+      "<text x='"+padL+"' y='"+(H-4)+"' font-family='var(--mono)' font-size='9' fill='var(--muted-2)'>"+wlMin+" nm</text>"+
+      "<text x='"+(W-padR)+"' y='"+(H-4)+"' text-anchor='end' font-family='var(--mono)' font-size='9' fill='var(--muted-2)'>"+wlMax+" nm</text>"+
+      "<path d='"+pathD+"' fill='none' stroke='var(--pixel)' stroke-width='2'/>"+
+      dots+
+    "</svg>";
+}
+
+function wireQeSpectralUI(){
+  renderQeChart();
+
+  document.getElementById("btnAddQePoint").addEventListener("click", function(){
+    if(!state.values.qeSpectral) state.values.qeSpectral = [];
+    state.values.qeSpectral.push({ wl: "", qe: "" });
+    persist();
+    renderPanel();
+    var rows = document.querySelectorAll(".qewl");
+    if(rows.length) rows[rows.length-1].focus();
+  });
+
+  panelEl.querySelectorAll(".qewl, .qeval").forEach(function(input){
+    input.addEventListener("input", function(){
+      var i = Number(input.dataset.qeIdx);
+      var key = input.classList.contains("qewl") ? "wl" : "qe";
+      state.values.qeSpectral[i][key] = input.value;
+      persist();
+      renderQeChart(); // pas de renderPanel() ici : on garde le focus sur le champ en cours de saisie
+    });
+  });
+
+  panelEl.querySelectorAll("[data-qe-del]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var i = Number(btn.dataset.qeDel);
+      state.values.qeSpectral.splice(i, 1);
       persist();
       renderPanel();
     });
