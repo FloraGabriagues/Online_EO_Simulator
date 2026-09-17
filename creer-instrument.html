@@ -56,8 +56,10 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .chain{display:flex;flex-direction:column;gap:0;background:var(--panel);
   border:1px solid var(--line-soft);border-radius:8px;padding:20px}
 .subhead{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;
-  color:var(--muted);margin:0 0 14px;display:flex;align-items:center;gap:10px}
-.subhead .dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--photon)}
+  color:var(--muted);margin:0 0 14px;display:flex;align-items:center;gap:9px}
+.subhead svg{flex:none;color:var(--photon)}
+.subhead.cyan svg{color:var(--pixel)}
+.subhead.cyan{margin-bottom:12px}
 .chain-arrow{display:flex;justify-content:center;color:var(--muted-2);font-size:16px;padding:2px 0}
 .ctx-node{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:4px;
   border:1px solid var(--line-soft);opacity:.5}
@@ -84,25 +86,29 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
   text-transform:uppercase;color:var(--muted);margin:0 0 10px;display:flex;align-items:center;gap:7px}
 .instgroup .grouphead .dot{width:7px;height:7px;border-radius:50%;background:var(--pixel)}
 
-.blocklist{border:1px solid var(--line-soft);border-radius:6px;overflow:hidden}
+.blocklist{display:flex;flex-direction:column;gap:8px}
 .blockbtn{width:100%;display:flex;align-items:center;justify-content:space-between;
-  gap:10px;padding:13px 14px;background:transparent;border:0;
-  border-bottom:1px solid var(--line-soft);color:var(--paper);cursor:pointer;
+  gap:10px;padding:13px 14px;background:var(--panel-2);border:1px solid var(--line-soft);
+  border-radius:6px;color:var(--paper);cursor:pointer;
   font-family:var(--body);font-size:14px;text-align:left;
-  border-left:2px solid transparent;
-  opacity:.68;transition:opacity .15s,border-color .15s,background .15s}
-.blocklist .blockbtn:last-child{border-bottom:0}
-.blockbtn:hover{opacity:.9}
-.blockbtn.active{opacity:1;border-left-color:var(--pixel);background:rgba(95,220,208,.06);color:var(--pixel)}
-.blockbtn .lab{font-weight:500}
+  opacity:.75;transition:opacity .15s,border-color .15s,background .15s}
+.blockbtn:hover{opacity:.95}
+.blockbtn.active{opacity:1;border-color:var(--pixel);background:rgba(95,220,208,.08);color:var(--pixel)}
+.blockbtn .lab{font-weight:500;flex:1}
+.blockbtn .chev{flex:none;color:var(--muted-2);font-size:14px}
+.blockbtn.active .chev{color:var(--pixel)}
 .status{font-family:var(--mono);font-size:13px;color:var(--muted-2);width:16px;text-align:center;flex:none}
 .status.ok{color:var(--ok)}
 .status.warn{color:var(--photon)}
 
 .panel{background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;
   padding:16px 20px}
-.panel h2{font-family:var(--display);font-weight:600;font-size:19px;margin:0 0 4px}
-.panel .desc{font-size:13px;color:var(--muted);margin:0 0 16px}
+.panelhead{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.panelicon{flex:none;color:var(--pixel);background:rgba(95,220,208,.1);border-radius:6px;padding:4px;
+  width:30px;height:30px;box-sizing:border-box}
+.panel h2{font-family:var(--display);font-weight:600;font-size:19px;margin:0}
+.panel .desc{font-size:13px;color:var(--muted);margin:0 0 14px}
+.panelrule{border:none;border-top:1px solid var(--line-soft);margin:0 0 18px}
 .field{margin-bottom:14px}
 .field label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
 .field .row{display:flex;gap:10px;align-items:center}
@@ -154,7 +160,7 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 
   <div class="layout">
     <div class="chain instgroup" id="chain">
-      <p class="subhead"><span class="dot"></span>Paramètres</p>
+      <p class="subhead"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="6" x2="20" y2="6"/><circle cx="9" cy="6" r="2" fill="var(--void)"/><line x1="4" y1="12" x2="20" y2="12"/><circle cx="15" cy="12" r="2" fill="var(--void)"/><line x1="4" y1="18" x2="20" y2="18"/><circle cx="11" cy="18" r="2" fill="var(--void)"/></svg>Paramètres</p>
       <div class="sidefield">
         <label for="instName">Nom de l'instrument</label>
         <input type="text" id="instName" placeholder="Mon instrument">
@@ -172,6 +178,7 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
       <div id="chainList"></div>
     </div>
     <div class="rightcol">
+      <p class="subhead cyan"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor" stroke="none"/></svg>Instrument</p>
       <div class="schemawrap" id="schemaWrap"></div>
       <div class="panel" id="fieldPanel"></div>
     </div>
@@ -299,7 +306,7 @@ function renderChain(){
     var btn = document.createElement("button");
     btn.type = "button";
     btn.className = "blockbtn" + (b.id === state.active ? " active" : "");
-    btn.innerHTML = "<span class='lab'>"+(i+1)+". "+b.label+"</span>"+statusMark(blockStatus(b));
+    btn.innerHTML = "<span class='lab'>"+(i+1)+". "+b.label+"</span>"+statusMark(blockStatus(b))+"<span class='chev'>›</span>";
     btn.addEventListener("click", function(){ selectBlock(b.id); });
     list.appendChild(btn);
   });
@@ -336,8 +343,7 @@ function renderSchema(){
     "</filter>"+
   "</defs>"+
 
-  "<text x='410' y='22' text-anchor='middle' class='schema-label'>Instrument</text>"+
-  "<rect x='16' y='38' width='788' height='150' rx='12' fill='var(--panel)' stroke='var(--line-soft)'/>"+
+  "<rect x='16' y='20' width='788' height='168' rx='12' fill='var(--panel)' stroke='var(--line-soft)'/>"+
 
   // ---- Optique : empilement de lentilles, flottant (pas de cadre) ----
   // Centre à x=207 (1er tiers de la zone de contenu 106–714, largeur
@@ -398,7 +404,15 @@ function currentBlock(){
 function renderPanel(){
   var block = currentBlock();
   if(!block){ panelEl.innerHTML = ""; return; }
-  var html = "<h2>"+block.label+"</h2><p class='desc'>Renseignez les paramètres de ce bloc. Les valeurs non renseignées utilisent les valeurs par défaut du modèle.</p>";
+  var PANEL_ICONS = {
+    optique: "<circle cx='12' cy='12' r='8'/><circle cx='12' cy='12' r='3'/>",
+    detecteur: "<rect x='5' y='5' width='14' height='14' rx='2'/><rect x='9' y='9' width='6' height='6'/>",
+    electronique: "<rect x='7' y='7' width='10' height='10' rx='1'/><path d='M9 3v4M15 3v4M9 17v4M15 17v4M3 9h4M3 15h4M17 9h4M17 15h4'/>"
+  };
+  var icon = "<svg class='panelicon' width='22' height='22' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'>"+
+    (PANEL_ICONS[block.id]||"")+"</svg>";
+  var html = "<div class='panelhead'>"+icon+"<h2>"+block.label+"</h2></div>"+
+    "<p class='desc'>Renseignez les paramètres de ce bloc. Les valeurs non renseignées utilisent les valeurs par défaut du modèle.</p><hr class='panelrule'>";
   block.fields.forEach(function(f){
     var v = state.values[f.k] !== undefined ? state.values[f.k] : "";
     html += "<div class='field'><label for='f-"+f.k+"'>"+f.label+"</label>"+
