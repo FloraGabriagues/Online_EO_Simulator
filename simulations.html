@@ -1096,7 +1096,12 @@ async function autoSaveResult(){
       instrument_id: lastPayload.inst.id,
       instrument_snapshot: { name: lastPayload.inst.name, config: lastPayload.inst.config },
       scene: lastPayload.scene.name,
-      conditions: lastPayload.conditions,
+      // wfeCaseName ajouté ici (pas de colonne dédiée) pour l'afficher sur
+      // la brique résultat (cf. resultats.html, renderResultsList) sans
+      // dépendre de l'instrument encore vivant — null si mode simplifié.
+      conditions: Object.assign({}, lastPayload.conditions, {
+        wfeCaseName: lastPayload.wfeCase ? lastPayload.wfeCase.name : null,
+      }),
       image_path: basePath + "main.png",
       source_image_path: sourceImagePath,
       diagnostics: { bands: diagBands },

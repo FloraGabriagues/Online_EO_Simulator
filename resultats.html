@@ -156,10 +156,16 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .resultcard{background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;overflow:hidden;
   text-decoration:none;color:var(--paper);display:flex;flex-direction:column;transition:border-color .14s}
 .resultcard:hover{border-color:var(--pixel)}
-.resultcard .thumb{height:120px;background-size:cover;background-position:center;background-color:var(--void)}
+.resultcard .thumb{display:block;height:120px;background-size:cover;background-position:center;background-color:var(--void)}
 .resultcard .body{padding:12px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
 .resultcard .name{font-family:var(--display);font-weight:600;font-size:15px;text-transform:uppercase}
+.resultcard .inst{font-size:12.5px;color:var(--muted)}
 .resultcard .meta{font-family:var(--mono);font-size:11px;color:var(--muted-2)}
+.resultcard .metrics{display:flex;gap:12px;font-family:var(--mono);font-size:11px;color:var(--muted-2);
+  border-top:1px solid var(--line-soft);padding-top:8px;margin-top:2px}
+.resultcard .metrics b{color:var(--paper);font-weight:500}
+.resultcard .wfebadge{display:inline-block;font-family:var(--mono);font-size:10px;color:var(--pixel);
+  border:1px solid var(--line);border-radius:3px;padding:1px 6px;width:fit-content}
 .resultcard .bottomrow{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:4px}
 .resultcard .delbtn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:4px;
   font-family:var(--mono);font-size:11px;padding:5px 10px;cursor:pointer}
@@ -581,9 +587,12 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 <script>
 async function renderResultsList(){
   var grid = document.getElementById("resultsGrid");
+  // "instruments(name)" : jointure vers l'instrument vivant, absente si
+  // supprimé depuis (cf. migration ON DELETE SET NULL) — on retombe alors
+  // sur instrument_snapshot.name, sauvegardé au moment du résultat.
   var { data: results, error } = await supabaseClient
     .from("saved_results")
-    .select("*")
+    .select("*, instruments(name)")
     .order("created_at", { ascending: false });
 
   if(error){
@@ -606,14 +615,40 @@ async function renderResultsList(){
       if(signed) thumbUrl = signed.signedUrl;
     }
     var dateLabel = new Date(r.created_at).toLocaleDateString("fr-FR", {day:"numeric", month:"short", year:"numeric"});
+    var instName = (r.instruments && r.instruments.name) || (r.instrument_snapshot && r.instrument_snapshot.name) || "Instrument";
+
+    // Résumé des métriques — moyenne sur les bandes disponibles (RGB/NIR),
+    // pour donner un ordre de grandeur sur la carte sans avoir à ouvrir
+    // chaque résultat. Valeur absente si le résultat n'a pas de
+    // diagnostics par bande (ex. très ancien résultat, avant leur ajout).
+    var bands = (r.diagnostics && r.diagnostics.bands) || {};
+    var mtfVals = [], snrVals = [];
+    for(var bandName in bands){
+      if(bands[bandName].mtf_at_nyquist != null) mtfVals.push(bands[bandName].mtf_at_nyquist);
+      if(bands[bandName].snr_mean != null) snrVals.push(bands[bandName].snr_mean);
+    }
+    var avg = function(arr){ return arr.length ? arr.reduce(function(a,b){return a+b;}, 0) / arr.length : null; };
+    var mtfAvg = avg(mtfVals), snrAvg = avg(snrVals);
+
+    var wfeCaseName = (r.conditions && r.conditions.wfeCaseName) || null;
 
     var card = document.createElement("div");
     card.className = "resultcard";
     card.innerHTML =
       "<a href='resultats.html?id=" + r.id + "' style='text-decoration:none;color:inherit'>"+
         "<span class='thumb' style='background-image:url(\"" + thumbUrl + "\")'></span>"+
-        "<div class='body'><div class='name'>" + r.scene + "</div>"+
-        "<div class='meta'>" + dateLabel + "</div></div>"+
+        "<div class='body'>"+
+          "<div class='name'>" + r.scene + "</div>"+
+          "<div class='inst'>" + instName + "</div>"+
+          "<div class='meta'>" + dateLabel + "</div>"+
+          (wfeCaseName ? "<span class='wfebadge'>Cas WFE : " + wfeCaseName + "</span>" : "")+
+          (mtfAvg != null || snrAvg != null
+            ? "<div class='metrics'>"+
+                (mtfAvg != null ? "<span>MTF@Nyq <b>" + mtfAvg.toFixed(2) + "</b></span>" : "")+
+                (snrAvg != null ? "<span>SNR <b>" + snrAvg.toFixed(1) + "</b></span>" : "")+
+              "</div>"
+            : "")+
+        "</div>"+
       "</a>";
     var bottomRow = document.createElement("div");
     bottomRow.className = "body bottomrow";
