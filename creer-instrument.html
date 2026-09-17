@@ -54,14 +54,10 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 
 .leftcol{display:flex;flex-direction:column;gap:20px;min-width:0}
 .chain{display:flex;flex-direction:column;gap:0;background:var(--panel);
-  border:1px solid var(--line-soft);border-radius:8px;padding:20px;margin-bottom:22px}
-.configrow{display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap}
-.configrow .sidefield{flex:1;min-width:180px;margin-bottom:0}
-.configrow .filebtn{flex:none;width:auto;white-space:nowrap;margin-bottom:0}
-@media(max-width:700px){
-  .configrow{flex-direction:column;align-items:stretch}
-  .configrow .filebtn{width:100%;white-space:normal}
-}
+  border:1px solid var(--line-soft);border-radius:8px;padding:20px}
+.configrow{display:flex;flex-direction:column}
+.configrow .sidefield{margin-bottom:16px}
+.configrow .filebtn{width:100%}
 .chainlistcard{background:var(--panel);border:1px solid var(--line-soft);border-radius:8px;padding:20px}
 .subhead{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;
   color:var(--muted);margin:0 0 14px;display:flex;align-items:center;gap:10px}
@@ -164,32 +160,31 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
     <a class="back" href="espace-personnel.html">← Mes objets</a>
   </header>
 
-  <div class="chain instgroup" id="chain">
-    <div class="progresswrap">
-      <div class="row"><span>Configuration de l'instrument</span><span id="pctLabel">0 %</span></div>
-      <div class="track"><div class="fill" id="pctFill" style="width:0%"></div></div>
-    </div>
-    <p class="subhead"><span class="dot"></span>Configuration</p>
-    <div class="configrow">
-      <div class="sidefield">
-        <label for="instName">Nom de l'instrument</label>
-        <input type="text" id="instName" placeholder="Mon instrument">
-      </div>
-      <div class="sidefield">
-        <label for="instType">Type</label>
-        <select id="instType">
-          <option value="ms">Multispectral</option>
-          <option value="hs" disabled>Hyperspectral (bientôt)</option>
-        </select>
-      </div>
-      <button class="filebtn" id="btnFile" type="button">📄 Charger un fichier de configuration
-        <input type="file" id="fileInput" accept="application/json">
-      </button>
-    </div>
-  </div>
-
   <div class="layout">
     <div class="leftcol">
+      <div class="chain instgroup" id="chain">
+        <div class="progresswrap">
+          <div class="row"><span>Configuration de l'instrument</span><span id="pctLabel">0 %</span></div>
+          <div class="track"><div class="fill" id="pctFill" style="width:0%"></div></div>
+        </div>
+        <p class="subhead"><span class="dot"></span>Configuration</p>
+        <div class="configrow">
+          <div class="sidefield">
+            <label for="instName">Nom de l'instrument</label>
+            <input type="text" id="instName" placeholder="Mon instrument">
+          </div>
+          <div class="sidefield">
+            <label for="instType">Type</label>
+            <select id="instType">
+              <option value="ms">Multispectral</option>
+              <option value="hs" disabled>Hyperspectral (bientôt)</option>
+            </select>
+          </div>
+          <button class="filebtn" id="btnFile" type="button">📄 Charger un fichier de configuration
+            <input type="file" id="fileInput" accept="application/json">
+          </button>
+        </div>
+      </div>
       <div class="chainlistcard instgroup" id="chainList"></div>
     </div>
     <div class="rightcol">
@@ -336,7 +331,7 @@ function renderSchema(){
   var act = state.active;
   function cls(id){ return "schema-block" + (id === act ? " active" : ""); }
   schemaEl.innerHTML =
-  "<svg viewBox='0 0 820 220' xmlns='http://www.w3.org/2000/svg'>"+
+  "<svg viewBox='0 0 820 190' xmlns='http://www.w3.org/2000/svg'>"+
   "<defs>"+
     "<radialGradient id='lensGrad' cx='35%' cy='30%' r='75%'>"+
       "<stop offset='0%' stop-color='#BFF3ED'/>"+
@@ -357,51 +352,53 @@ function renderSchema(){
     "</filter>"+
   "</defs>"+
 
-  "<rect x='2' y='10' width='816' height='200' rx='12' fill='var(--panel)' stroke='var(--line-soft)'/>"+
+  "<rect x='2' y='8' width='816' height='174' rx='12' fill='var(--panel)' stroke='var(--line-soft)'/>"+
 
   // ---- Optique : empilement de lentilles, flottant (pas de cadre) ----
   // Centre à x=207 (1er tiers de la zone de contenu 106–714, largeur
   // adaptée à la colonne de droite plutôt qu'à la pleine largeur).
+  // Hauteur réduite (échange du 17/09/2026) : viewBox 190 au lieu de 220,
+  // toutes les cotes verticales resserrées en proportion (~0.85).
   "<g class='"+cls("optique")+"' onclick=\"selectBlock('optique')\">"+
     "<g class='schema-glow' filter='url(#softGlow)'>"+
-      "<ellipse cx='185' cy='113' rx='17' ry='40' fill='url(#lensGrad)' opacity='.45'/>"+
-      "<ellipse cx='207' cy='113' rx='17' ry='40' fill='url(#lensGrad)' opacity='.7'/>"+
-      "<ellipse cx='229' cy='113' rx='17' ry='40' fill='url(#lensGrad)'/>"+
+      "<ellipse cx='185' cy='95' rx='17' ry='34' fill='url(#lensGrad)' opacity='.45'/>"+
+      "<ellipse cx='207' cy='95' rx='17' ry='34' fill='url(#lensGrad)' opacity='.7'/>"+
+      "<ellipse cx='229' cy='95' rx='17' ry='34' fill='url(#lensGrad)'/>"+
     "</g>"+
-    "<ellipse cx='185' cy='113' rx='17' ry='40' fill='none' stroke='var(--pixel)' stroke-opacity='.5'/>"+
-    "<ellipse cx='207' cy='113' rx='17' ry='40' fill='none' stroke='var(--pixel)' stroke-opacity='.7'/>"+
-    "<ellipse cx='229' cy='113' rx='17' ry='40' fill='none' stroke='var(--pixel)'/>"+
-    "<text x='207' y='178' text-anchor='middle' class='schema-blocklabel'>Optique</text>"+
+    "<ellipse cx='185' cy='95' rx='17' ry='34' fill='none' stroke='var(--pixel)' stroke-opacity='.5'/>"+
+    "<ellipse cx='207' cy='95' rx='17' ry='34' fill='none' stroke='var(--pixel)' stroke-opacity='.7'/>"+
+    "<ellipse cx='229' cy='95' rx='17' ry='34' fill='none' stroke='var(--pixel)'/>"+
+    "<text x='207' y='154' text-anchor='middle' class='schema-blocklabel'>Optique</text>"+
   "</g>"+
 
-  "<path d='M293,113 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
+  "<path d='M293,95 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
 
   // ---- Détecteur : cadre + carré dégradé — centre à x=410 (milieu) ----
   "<g class='"+cls("detecteur")+"' onclick=\"selectBlock('detecteur')\">"+
-    "<rect class='schema-iconframe' x='370' y='73' width='80' height='80' rx='14'/>"+
-    "<rect class='schema-glow' x='386' y='89' width='48' height='48' rx='6' fill='url(#chipGrad)' filter='url(#softGlow)'/>"+
-    "<text x='410' y='178' text-anchor='middle' class='schema-blocklabel'>Détecteur</text>"+
+    "<rect class='schema-iconframe' x='370' y='61' width='80' height='68' rx='14'/>"+
+    "<rect class='schema-glow' x='386' y='75' width='48' height='40' rx='6' fill='url(#chipGrad)' filter='url(#softGlow)'/>"+
+    "<text x='410' y='154' text-anchor='middle' class='schema-blocklabel'>Détecteur</text>"+
   "</g>"+
 
-  "<path d='M496,113 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
+  "<path d='M496,95 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
 
   // ---- Électronique : cadre + puce avec broches — centre à x=613 (3e tiers) ----
   "<g class='"+cls("electronique")+"' onclick=\"selectBlock('electronique')\">"+
-    "<rect class='schema-iconframe' x='573' y='73' width='80' height='80' rx='14'/>"+
+    "<rect class='schema-iconframe' x='573' y='61' width='80' height='68' rx='14'/>"+
     "<g class='schema-glow' filter='url(#softGlow)'>"+
-      "<rect x='595' y='95' width='36' height='36' rx='4' fill='url(#icGrad)' stroke='var(--pixel)' stroke-opacity='.6'/>"+
+      "<rect x='595' y='80' width='36' height='30' rx='4' fill='url(#icGrad)' stroke='var(--pixel)' stroke-opacity='.6'/>"+
     "</g>"+
     "<g stroke='var(--muted-2)' stroke-width='1.5'>"+
-      "<line x1='603' y1='95' x2='603' y2='87'/><line x1='613' y1='95' x2='613' y2='87'/>"+
-      "<line x1='623' y1='95' x2='623' y2='87'/>"+
-      "<line x1='603' y1='131' x2='603' y2='139'/><line x1='613' y1='131' x2='613' y2='139'/>"+
-      "<line x1='623' y1='131' x2='623' y2='139'/>"+
-      "<line x1='595' y1='105' x2='587' y2='105'/><line x1='595' y1='113' x2='587' y2='113'/>"+
-      "<line x1='595' y1='121' x2='587' y2='121'/>"+
-      "<line x1='631' y1='105' x2='639' y2='105'/><line x1='631' y1='113' x2='639' y2='113'/>"+
-      "<line x1='631' y1='121' x2='639' y2='121'/>"+
+      "<line x1='603' y1='80' x2='603' y2='73'/><line x1='613' y1='80' x2='613' y2='73'/>"+
+      "<line x1='623' y1='80' x2='623' y2='73'/>"+
+      "<line x1='603' y1='110' x2='603' y2='117'/><line x1='613' y1='110' x2='613' y2='117'/>"+
+      "<line x1='623' y1='110' x2='623' y2='117'/>"+
+      "<line x1='595' y1='88' x2='587' y2='88'/><line x1='595' y1='95' x2='587' y2='95'/>"+
+      "<line x1='595' y1='102' x2='587' y2='102'/>"+
+      "<line x1='631' y1='88' x2='639' y2='88'/><line x1='631' y1='95' x2='639' y2='95'/>"+
+      "<line x1='631' y1='102' x2='639' y2='102'/>"+
     "</g>"+
-    "<text x='613' y='178' text-anchor='middle' class='schema-blocklabel'>Électronique</text>"+
+    "<text x='613' y='154' text-anchor='middle' class='schema-blocklabel'>Électronique</text>"+
   "</g>"+
   "</svg>";
 }
