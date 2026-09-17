@@ -33,6 +33,7 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .filebtn:hover{background:#FFBE72;border-color:#FFBE72}
 .filebtn input[type=file]{display:none}
 .sidefield{margin-bottom:16px}
+#chainList{margin-top:4px;padding-top:18px;border-top:1px solid var(--line-soft)}
 .sidefield label{display:block;font-family:var(--mono);font-size:11.5px;color:var(--muted);
   text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
 .sidefield input,.sidefield select{width:100%;background:var(--panel-2);color:var(--paper);
@@ -41,7 +42,8 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .sidefield input::placeholder{color:var(--muted-2)}
 
 
-.progresswrap{margin-bottom:28px}
+.progresswrap{margin-bottom:22px;background:var(--panel);border:1px solid var(--line-soft);
+  border-radius:8px;padding:16px 20px}
 .progresswrap .row{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;
   color:var(--muted);margin-bottom:7px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em}
 .progresswrap .row span:last-child{font-size:13px;letter-spacing:0;text-transform:none;color:var(--pixel)}
@@ -51,7 +53,11 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .layout{display:grid;grid-template-columns:280px 1fr;gap:22px;align-items:start}
 @media(max-width:800px){.layout{grid-template-columns:1fr}}
 
-.chain{display:flex;flex-direction:column;gap:0}
+.chain{display:flex;flex-direction:column;gap:0;background:var(--panel);
+  border:1px solid var(--line-soft);border-radius:8px;padding:20px}
+.subhead{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 14px;display:flex;align-items:center;gap:10px}
+.subhead .dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--photon)}
 .chain-arrow{display:flex;justify-content:center;color:var(--muted-2);font-size:16px;padding:2px 0}
 .ctx-node{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:4px;
   border:1px solid var(--line-soft);opacity:.5}
@@ -93,7 +99,7 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .status.ok{color:var(--ok)}
 .status.warn{color:var(--photon)}
 
-.panel{background:transparent;border:1px solid var(--line-soft);border-radius:6px;
+.panel{background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;
   padding:16px 20px}
 .panel h2{font-family:var(--display);font-weight:600;font-size:19px;margin:0 0 4px}
 .panel .desc{font-size:13px;color:var(--muted);margin:0 0 16px}
@@ -148,6 +154,7 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 
   <div class="layout">
     <div class="chain instgroup" id="chain">
+      <p class="subhead"><span class="dot"></span>Paramètres</p>
       <div class="sidefield">
         <label for="instName">Nom de l'instrument</label>
         <input type="text" id="instName" placeholder="Mon instrument">
@@ -330,7 +337,7 @@ function renderSchema(){
   "</defs>"+
 
   "<text x='410' y='22' text-anchor='middle' class='schema-label'>Instrument</text>"+
-  "<rect x='16' y='38' width='788' height='150' rx='12' fill='var(--void)' stroke='var(--line-soft)'/>"+
+  "<rect x='16' y='38' width='788' height='150' rx='12' fill='var(--panel)' stroke='var(--line-soft)'/>"+
 
   // ---- Optique : empilement de lentilles, flottant (pas de cadre) ----
   // Centre à x=207 (1er tiers de la zone de contenu 106–714, largeur
