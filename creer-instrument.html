@@ -42,8 +42,7 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .sidefield input::placeholder{color:var(--muted-2)}
 
 
-.progresswrap{margin-bottom:22px;background:var(--panel);border:1px solid var(--line-soft);
-  border-radius:8px;padding:16px 20px}
+.progresswrap{margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid var(--line-soft)}
 .progresswrap .row{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;
   color:var(--muted);margin-bottom:7px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em}
 .progresswrap .row span:last-child{font-size:13px;letter-spacing:0;text-transform:none;color:var(--pixel)}
@@ -55,7 +54,14 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 
 .leftcol{display:flex;flex-direction:column;gap:20px;min-width:0}
 .chain{display:flex;flex-direction:column;gap:0;background:var(--panel);
-  border:1px solid var(--line-soft);border-radius:8px;padding:20px}
+  border:1px solid var(--line-soft);border-radius:8px;padding:20px;margin-bottom:22px}
+.configrow{display:flex;gap:20px;align-items:flex-end;flex-wrap:wrap}
+.configrow .sidefield{flex:1;min-width:180px;margin-bottom:0}
+.configrow .filebtn{flex:none;width:auto;white-space:nowrap;margin-bottom:0}
+@media(max-width:700px){
+  .configrow{flex-direction:column;align-items:stretch}
+  .configrow .filebtn{width:100%;white-space:normal}
+}
 .chainlistcard{background:var(--panel);border:1px solid var(--line-soft);border-radius:8px;padding:20px}
 .subhead{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;
   color:var(--muted);margin:0 0 14px;display:flex;align-items:center;gap:10px}
@@ -158,30 +164,32 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
     <a class="back" href="espace-personnel.html">← Mes objets</a>
   </header>
 
-  <div class="progresswrap">
-    <div class="row"><span>Configuration de l'instrument</span><span id="pctLabel">0 %</span></div>
-    <div class="track"><div class="fill" id="pctFill" style="width:0%"></div></div>
+  <div class="chain instgroup" id="chain">
+    <div class="progresswrap">
+      <div class="row"><span>Configuration de l'instrument</span><span id="pctLabel">0 %</span></div>
+      <div class="track"><div class="fill" id="pctFill" style="width:0%"></div></div>
+    </div>
+    <p class="subhead"><span class="dot"></span>Configuration</p>
+    <div class="configrow">
+      <div class="sidefield">
+        <label for="instName">Nom de l'instrument</label>
+        <input type="text" id="instName" placeholder="Mon instrument">
+      </div>
+      <div class="sidefield">
+        <label for="instType">Type</label>
+        <select id="instType">
+          <option value="ms">Multispectral</option>
+          <option value="hs" disabled>Hyperspectral (bientôt)</option>
+        </select>
+      </div>
+      <button class="filebtn" id="btnFile" type="button">📄 Charger un fichier de configuration
+        <input type="file" id="fileInput" accept="application/json">
+      </button>
+    </div>
   </div>
 
   <div class="layout">
     <div class="leftcol">
-      <div class="chain instgroup" id="chain">
-        <p class="subhead"><span class="dot"></span>Configuration</p>
-        <div class="sidefield">
-          <label for="instName">Nom de l'instrument</label>
-          <input type="text" id="instName" placeholder="Mon instrument">
-        </div>
-        <div class="sidefield">
-          <label for="instType">Type</label>
-          <select id="instType">
-            <option value="ms">Multispectral</option>
-            <option value="hs" disabled>Hyperspectral (bientôt)</option>
-          </select>
-        </div>
-        <button class="filebtn" id="btnFile" type="button">📄 Charger un fichier de configuration
-          <input type="file" id="fileInput" accept="application/json">
-        </button>
-      </div>
       <div class="chainlistcard instgroup" id="chainList"></div>
     </div>
     <div class="rightcol">
