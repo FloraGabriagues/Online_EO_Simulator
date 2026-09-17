@@ -986,13 +986,13 @@ async function initSettingsModal(session){
           r.label + "</div><div style='font-family:var(--mono);font-size:15px;color:var(--paper)'>"+
           (typeof v === "number" ? v.toFixed(r.dec != null ? r.dec : 2) : v) + (r.unit || "") + "</div></div>";
       });
-      html += "</div><div style='display:flex;gap:12px;flex-wrap:wrap'>";
+      html += "</div><div style='display:flex;gap:12px;flex-wrap:wrap;align-items:flex-start'>";
       for(var gi = 0; gi < graphKeys.length; gi++){
         var pathKey = graphKeys[gi].replace("_b64", "_path");
         var path = d[pathKey];
         if(!path) continue;
         var url = await signedUrl(path);
-        if(url) html += "<img src='" + url + "' style='max-width:320px;border:1px solid var(--line-soft);border-radius:4px'>";
+        if(url) html += "<img src='" + url + "' style='display:block;width:320px;height:auto;border:1px solid var(--line-soft);border-radius:4px'>";
       }
       html += "</div></div>";
     }
@@ -1020,8 +1020,8 @@ async function initSettingsModal(session){
   // ===================== Onglets Image/MTF/SNR/Entrées/Logs =====================
   var TABS = [
     {id:"image", label:"Image"},
-    {id:"mtf", label:"MTF"},
-    {id:"snr", label:"SNR"},
+    {id:"mtf", label:"Graphes MTF"},
+    {id:"snr", label:"Graphes SNR"},
     {id:"entrees", label:"Entrées"},
     {id:"logs", label:"Logs"}
   ];
