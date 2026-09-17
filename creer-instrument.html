@@ -66,16 +66,17 @@ select,.nameinput{background:var(--panel-2);color:var(--paper);border:1px solid 
 .ctx-node .sub{font-family:var(--mono);font-size:10.5px;color:var(--muted-2)}
 
 .schemawrap{margin-bottom:26px;overflow-x:auto}
-.schemawrap svg{display:block;min-width:760px;width:100%;height:auto}
-.schema-label{font-family:var(--mono);font-size:11px;fill:var(--muted);text-transform:uppercase;letter-spacing:.04em}
-.schema-ctx{opacity:.55}
-.schema-block{cursor:pointer;transition:opacity .18s}
-.schema-block{opacity:.65}
-.schema-block:hover{opacity:.85}
+.schemawrap svg{display:block;min-width:640px;max-width:700px;margin:0 auto;width:100%;height:auto}
+.schema-label{font-family:var(--mono);font-size:11px;fill:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.schema-block{cursor:pointer;transition:opacity .18s,filter .18s}
+.schema-block{opacity:.72}
+.schema-block:hover{opacity:.92}
 .schema-block.active{opacity:1}
-.schema-outline{stroke:var(--line);fill:var(--panel-2);transition:stroke .18s,stroke-width .18s}
-.schema-block.active .schema-outline{stroke:var(--pixel);stroke-width:2.5}
-.schema-blocklabel{font-family:var(--body);font-size:12px;fill:var(--paper);font-weight:500}
+.schema-iconframe{stroke:var(--line);fill:var(--panel-2);transition:stroke .18s,stroke-width .18s}
+.schema-block.active .schema-iconframe{stroke:var(--pixel);stroke-width:2}
+.schema-block .schema-glow{opacity:.5;transition:opacity .18s}
+.schema-block.active .schema-glow{opacity:1}
+.schema-blocklabel{font-family:var(--body);font-size:13px;fill:var(--paper);font-weight:500}
 
 .instgroup{background:transparent}
 .instgroup .grouphead{font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;
@@ -309,90 +310,80 @@ function renderChain(){
   chainEl.appendChild(list);
 }
 
-// Reprend le schéma synoptique paysage → atmosphère → instrument → image →
-// restitution avec de vraies formes (parallélogrammes image, bande
-// atmosphérique en dégradé, cylindre optique, barrette détecteurs,
-// triangle électronique, grille n bits) plutôt que des cases de texte.
-// Seuls les 3 sous-blocs de l'instrument sont cliquables ; le reste
-// (paysage/atmosphère/image/restitution) reste en contexte, non configurable
-// pour l'instant.
+// Panneau "Instrument" épuré — 3 icônes glassy (empilement de lentilles,
+// détecteur, puce électronique) reliées par des flèches, plutôt que
+// l'ancien synoptique complet paysage → atmosphère → image → restitution
+// (jugé trop chargé, cf. échange du 17/09/2026). Seuls les 3 blocs
+// restent cliquables/configurables, comme avant.
 function renderSchema(){
   var act = state.active;
   function cls(id){ return "schema-block" + (id === act ? " active" : ""); }
   schemaEl.innerHTML =
-  "<svg viewBox='0 0 1160 210' xmlns='http://www.w3.org/2000/svg'>"+
+  "<svg viewBox='0 0 700 220' xmlns='http://www.w3.org/2000/svg'>"+
   "<defs>"+
-    "<linearGradient id='atmoGrad' x1='0' y1='0' x2='0' y2='1'>"+
-      "<stop offset='0%' stop-color='var(--pixel)' stop-opacity='.55'/>"+
-      "<stop offset='100%' stop-color='var(--photon)' stop-opacity='.18'/>"+
+    "<radialGradient id='lensGrad' cx='35%' cy='30%' r='75%'>"+
+      "<stop offset='0%' stop-color='#BFF3ED'/>"+
+      "<stop offset='45%' stop-color='var(--pixel)'/>"+
+      "<stop offset='100%' stop-color='#0F3B3F'/>"+
+    "</radialGradient>"+
+    "<linearGradient id='chipGrad' x1='0' y1='0' x2='1' y2='1'>"+
+      "<stop offset='0%' stop-color='var(--pixel)'/>"+
+      "<stop offset='100%' stop-color='#8A6CF2'/>"+
     "</linearGradient>"+
-    "<pattern id='hatch' width='6' height='6' patternTransform='rotate(45)' patternUnits='userSpaceOnUse'>"+
-      "<line x1='0' y1='0' x2='0' y2='6' stroke='var(--muted-2)' stroke-width='2'/>"+
-    "</pattern>"+
-    "<pattern id='gridpat' width='10' height='10' patternUnits='userSpaceOnUse'>"+
-      "<rect width='10' height='10' fill='none' stroke='var(--muted-2)' stroke-width='.75'/>"+
-    "</pattern>"+
-    "<marker id='arrB' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='7' markerHeight='7' orient='auto'>"+
-      "<path d='M0,0 L10,5 L0,10 z' fill='#5B8DEF'/></marker>"+
-    "<marker id='arrR' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='7' markerHeight='7' orient='auto'>"+
-      "<path d='M0,0 L10,5 L0,10 z' fill='var(--alert)'/></marker>"+
-    "<marker id='arrG' viewBox='0 0 10 10' refX='9' refY='5' markerWidth='7' markerHeight='7' orient='auto'>"+
-      "<path d='M0,0 L10,5 L0,10 z' fill='#6FCF7A'/></marker>"+
+    "<linearGradient id='icGrad' x1='0' y1='0' x2='1' y2='1'>"+
+      "<stop offset='0%' stop-color='#3A5A78'/>"+
+      "<stop offset='100%' stop-color='#1B2A3A'/>"+
+    "</linearGradient>"+
+    "<filter id='softGlow' x='-60%' y='-60%' width='220%' height='220%'>"+
+      "<feGaussianBlur stdDeviation='6' result='blur'/>"+
+      "<feMerge><feMergeNode in='blur'/><feMergeNode in='SourceGraphic'/></feMerge>"+
+    "</filter>"+
   "</defs>"+
 
-  "<g class='schema-ctx'>"+
-    "<text x='75' y='30' text-anchor='middle' class='schema-label'>Paysage L</text>"+
-    "<polygon points='30,150 130,150 115,60 45,60' fill='#3A4A38' stroke='var(--line)'/>"+
-    "<polygon points='45,95 90,90 85,110 50,112' fill='#5C6B4A' opacity='.8'/>"+
-    "<polygon points='55,120 100,116 96,140 60,142' fill='#26301F' opacity='.8'/>"+
-  "</g>"+
-  "<line x1='132' y1='105' x2='168' y2='105' stroke='#5B8DEF' stroke-width='2' marker-end='url(#arrB)'/>"+
+  "<text x='350' y='22' text-anchor='middle' class='schema-label'>Instrument</text>"+
+  "<rect x='16' y='38' width='668' height='150' rx='12' fill='var(--void)' stroke='var(--line-soft)'/>"+
 
-  "<g class='schema-ctx'>"+
-    "<text x='202' y='30' text-anchor='middle' class='schema-label'>Atmosphère</text>"+
-    "<rect x='172' y='50' width='60' height='120' fill='url(#atmoGrad)' stroke='var(--line)'/>"+
-  "</g>"+
-  "<line x1='234' y1='105' x2='268' y2='105' stroke='#5B8DEF' stroke-width='2' marker-end='url(#arrB)'/>"+
-
-  "<rect x='272' y='18' width='430' height='170' fill='none' stroke='var(--line-soft)' rx='4'/>"+
-  "<text x='487' y='12' text-anchor='middle' class='schema-label'>Instrument</text>"+
-
+  // ---- Optique : empilement de lentilles, flottant (pas de cadre) ----
   "<g class='"+cls("optique")+"' onclick=\"selectBlock('optique')\">"+
-    "<ellipse class='schema-outline' cx='330' cy='70' rx='34' ry='11'/>"+
-    "<rect class='schema-outline' x='296' y='70' width='68' height='55' stroke-dasharray='0' style='stroke:inherit'/>"+
-    "<ellipse class='schema-outline' cx='330' cy='125' rx='34' ry='11'/>"+
-    "<text x='330' y='102' text-anchor='middle' class='schema-blocklabel'>optique</text>"+
+    "<g class='schema-glow' filter='url(#softGlow)'>"+
+      "<ellipse cx='128' cy='113' rx='17' ry='40' fill='url(#lensGrad)' opacity='.45'/>"+
+      "<ellipse cx='150' cy='113' rx='17' ry='40' fill='url(#lensGrad)' opacity='.7'/>"+
+      "<ellipse cx='172' cy='113' rx='17' ry='40' fill='url(#lensGrad)'/>"+
+    "</g>"+
+    "<ellipse cx='128' cy='113' rx='17' ry='40' fill='none' stroke='var(--pixel)' stroke-opacity='.5'/>"+
+    "<ellipse cx='150' cy='113' rx='17' ry='40' fill='none' stroke='var(--pixel)' stroke-opacity='.7'/>"+
+    "<ellipse cx='172' cy='113' rx='17' ry='40' fill='none' stroke='var(--pixel)'/>"+
+    "<text x='150' y='178' text-anchor='middle' class='schema-blocklabel'>Optique</text>"+
   "</g>"+
-  "<line x1='368' y1='100' x2='398' y2='100' stroke='var(--alert)' stroke-width='2' marker-end='url(#arrR)'/>"+
 
+  "<path d='M225,113 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
+
+  // ---- Détecteur : cadre + carré dégradé ----
   "<g class='"+cls("detecteur")+"' onclick=\"selectBlock('detecteur')\">"+
-    "<text x='412' y='45' text-anchor='middle' class='schema-blocklabel' style='font-size:11px'>détecteurs</text>"+
-    "<rect class='schema-outline' x='402' y='55' width='16' height='100' fill='url(#hatch)'/>"+
+    "<rect class='schema-iconframe' x='300' y='73' width='80' height='80' rx='14'/>"+
+    "<rect class='schema-glow' x='316' y='89' width='48' height='48' rx='6' fill='url(#chipGrad)' filter='url(#softGlow)'/>"+
+    "<text x='340' y='178' text-anchor='middle' class='schema-blocklabel'>Détecteur</text>"+
   "</g>"+
-  "<line x1='420' y1='100' x2='448' y2='100' stroke='var(--alert)' stroke-width='2' marker-end='url(#arrR)'/>"+
 
+  "<path d='M400,113 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
+
+  // ---- Électronique : cadre + puce avec broches ----
   "<g class='"+cls("electronique")+"' onclick=\"selectBlock('electronique')\">"+
-    "<polygon class='schema-outline' points='452,55 452,155 552,105'/>"+
-    "<text x='478' y='180' text-anchor='middle' class='schema-blocklabel' style='font-size:11px'>électronique</text>"+
-  "</g>"+
-  "<line x1='554' y1='105' x2='700' y2='105' stroke='var(--alert)' stroke-width='2' marker-end='url(#arrR)'/>"+
-
-  "<line x1='706' y1='105' x2='730' y2='68' stroke='var(--muted-2)' stroke-width='2'/>"+
-  "<text x='740' y='55' class='schema-label'>n bits</text>"+
-  "<line x1='706' y1='105' x2='758' y2='105' stroke='#6FCF7A' stroke-width='2' marker-end='url(#arrG)'/>"+
-
-  "<g class='schema-ctx'>"+
-    "<text x='845' y='30' text-anchor='middle' class='schema-label'>Image I</text>"+
-    "<rect x='800' y='55' width='90' height='90' fill='var(--panel-2)' stroke='var(--line)'/>"+
-    "<rect x='800' y='55' width='90' height='90' fill='url(#gridpat)'/>"+
-  "</g>"+
-  "<line x1='892' y1='100' x2='926' y2='100' stroke='#5B8DEF' stroke-width='2' marker-end='url(#arrB)'/>"+
-
-  "<g class='schema-ctx'>"+
-    "<text x='1045' y='30' text-anchor='middle' class='schema-label'>Restitution</text>"+
-    "<polygon points='990,150 1090,150 1075,60 1005,60' fill='#3A4A38' stroke='var(--line)'/>"+
-    "<polygon points='1005,95 1050,90 1045,110 1010,112' fill='#5C6B4A' opacity='.8'/>"+
-    "<polygon points='1015,120 1060,116 1056,140 1020,142' fill='#26301F' opacity='.8'/>"+
+    "<rect class='schema-iconframe' x='475' y='73' width='80' height='80' rx='14'/>"+
+    "<g class='schema-glow' filter='url(#softGlow)'>"+
+      "<rect x='497' y='95' width='36' height='36' rx='4' fill='url(#icGrad)' stroke='var(--pixel)' stroke-opacity='.6'/>"+
+    "</g>"+
+    "<g stroke='var(--muted-2)' stroke-width='1.5'>"+
+      "<line x1='505' y1='95' x2='505' y2='87'/><line x1='515' y1='95' x2='515' y2='87'/>"+
+      "<line x1='525' y1='95' x2='525' y2='87'/>"+
+      "<line x1='505' y1='131' x2='505' y2='139'/><line x1='515' y1='131' x2='515' y2='139'/>"+
+      "<line x1='525' y1='131' x2='525' y2='139'/>"+
+      "<line x1='497' y1='105' x2='489' y2='105'/><line x1='497' y1='113' x2='489' y2='113'/>"+
+      "<line x1='497' y1='121' x2='489' y2='121'/>"+
+      "<line x1='533' y1='105' x2='541' y2='105'/><line x1='533' y1='113' x2='541' y2='113'/>"+
+      "<line x1='533' y1='121' x2='541' y2='121'/>"+
+    "</g>"+
+    "<text x='515' y='178' text-anchor='middle' class='schema-blocklabel'>Électronique</text>"+
   "</g>"+
   "</svg>";
 }
