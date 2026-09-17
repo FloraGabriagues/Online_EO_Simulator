@@ -33,7 +33,7 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .filebtn:hover{background:#FFBE72;border-color:#FFBE72}
 .filebtn input[type=file]{display:none}
 .sidefield{margin-bottom:16px}
-#chainList{margin-top:4px;padding-top:18px;border-top:1px solid var(--line-soft)}
+
 .sidefield label{display:block;font-family:var(--mono);font-size:11.5px;color:var(--muted);
   text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
 .sidefield input,.sidefield select{width:100%;background:var(--panel-2);color:var(--paper);
@@ -53,8 +53,10 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .layout{display:grid;grid-template-columns:280px 1fr;gap:22px;align-items:start}
 @media(max-width:800px){.layout{grid-template-columns:1fr}}
 
+.leftcol{display:flex;flex-direction:column;gap:20px;min-width:0}
 .chain{display:flex;flex-direction:column;gap:0;background:var(--panel);
   border:1px solid var(--line-soft);border-radius:8px;padding:20px}
+.chainlistcard{background:var(--panel);border:1px solid var(--line-soft);border-radius:8px;padding:20px}
 .subhead{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;
   color:var(--muted);margin:0 0 14px;display:flex;align-items:center;gap:10px}
 .subhead .dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--photon)}
@@ -153,23 +155,25 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
   </div>
 
   <div class="layout">
-    <div class="chain instgroup" id="chain">
-      <p class="subhead"><span class="dot"></span>Paramètres</p>
-      <div class="sidefield">
-        <label for="instName">Nom de l'instrument</label>
-        <input type="text" id="instName" placeholder="Mon instrument">
+    <div class="leftcol">
+      <div class="chain instgroup" id="chain">
+        <p class="subhead"><span class="dot"></span>Configuration</p>
+        <div class="sidefield">
+          <label for="instName">Nom de l'instrument</label>
+          <input type="text" id="instName" placeholder="Mon instrument">
+        </div>
+        <div class="sidefield">
+          <label for="instType">Type</label>
+          <select id="instType">
+            <option value="ms">Multispectral</option>
+            <option value="hs" disabled>Hyperspectral (bientôt)</option>
+          </select>
+        </div>
+        <button class="filebtn" id="btnFile" type="button">📄 Charger un fichier de configuration
+          <input type="file" id="fileInput" accept="application/json">
+        </button>
       </div>
-      <div class="sidefield">
-        <label for="instType">Type</label>
-        <select id="instType">
-          <option value="ms">Multispectral</option>
-          <option value="hs" disabled>Hyperspectral (bientôt)</option>
-        </select>
-      </div>
-      <button class="filebtn" id="btnFile" type="button">📄 Charger un fichier de configuration
-        <input type="file" id="fileInput" accept="application/json">
-      </button>
-      <div id="chainList"></div>
+      <div class="chainlistcard instgroup" id="chainList"></div>
     </div>
     <div class="rightcol">
       <div class="schemawrap" id="schemaWrap"></div>
@@ -289,10 +293,6 @@ function selectBlock(id){
 
 function renderChain(){
   chainEl.innerHTML = "";
-  var h = document.createElement("p");
-  h.className = "grouphead";
-  h.innerHTML = "<span class='dot'></span>"+instrumentNode.label;
-  chainEl.appendChild(h);
   var list = document.createElement("div");
   list.className = "blocklist";
   instrumentNode.blocks.forEach(function(b, i){
@@ -336,8 +336,7 @@ function renderSchema(){
     "</filter>"+
   "</defs>"+
 
-  "<text x='410' y='22' text-anchor='middle' class='schema-label'>Instrument</text>"+
-  "<rect x='16' y='38' width='788' height='150' rx='12' fill='var(--panel)' stroke='var(--line-soft)'/>"+
+  "<rect x='2' y='10' width='816' height='200' rx='12' fill='var(--panel)' stroke='var(--line-soft)'/>"+
 
   // ---- Optique : empilement de lentilles, flottant (pas de cadre) ----
   // Centre à x=207 (1er tiers de la zone de contenu 106–714, largeur
