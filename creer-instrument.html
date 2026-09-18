@@ -214,8 +214,8 @@ var SCHEMA = [
       // NSUP/ESUP : confirmés le 17/09/2026 (paramFile.Telescope.n_supports/
       // support_width, cf. module_MTF.py) — envoyés au payload de
       // simulation comme PX/QE/ADC (cf. simulations.html).
-      {k:"NSUP", label:"Nombre de supports", unit:"", placeholder:"obligatoire"},
-      {k:"ESUP", label:"Épaisseur des supports", unit:"m", placeholder:"obligatoire"},
+      {k:"NSUP", label:"Nombre de supports", unit:"", placeholder:"0 (défaut)"},
+      {k:"ESUP", label:"Épaisseur des supports", unit:"m", placeholder:"0 (défaut)"},
       {k:"T", label:"Transmission optique", unit:"τ", placeholder:"1 (défaut)"}
     ]},
     {id:"detecteur", label:"Détecteur", fields:[
@@ -437,7 +437,11 @@ function renderPanel(){
   block.fields.forEach(function(f){
     var v = state.values[f.k] !== undefined ? state.values[f.k] : "";
     var valueAttr = v !== "" ? " value='"+v+"'" : "";
-    var placeholderAttr = f.placeholder ? " placeholder='"+f.placeholder+"'" : "";
+    // ESUP : obligatoire seulement si des supports sont renseignés
+    // (NSUP > 0) — sinon 0 par défaut, comme NSUP lui-même.
+    var placeholder = f.placeholder;
+    if(f.k === "ESUP") placeholder = (Number(state.values.NSUP) > 0) ? "obligatoire" : "0 (défaut)";
+    var placeholderAttr = placeholder ? " placeholder='"+placeholder+"'" : "";
     html += "<div class='field'><label for='f-"+f.k+"'>"+f.label+"</label>"+
       "<div class='row'><input type='number' step='any' id='f-"+f.k+"'"+valueAttr+placeholderAttr+">"+
       "<span class='unit'>"+f.unit+"</span></div></div>";
@@ -462,6 +466,14 @@ function renderPanel(){
       updateProgress();
       renderChain(); // met à jour le statut ✓/!/○ du bloc en cours de saisie
       if(block.id === "optique") renderOpticsGeometry(); // aperçu géométrique en direct
+      // NSUP change : le placeholder d'ESUP ("obligatoire" ou "0 (défaut)")
+      // en dépend — mis à jour directement sur l'input existant plutôt
+      // qu'avec un renderPanel() complet, pour ne pas perdre le focus en
+      // cours de frappe sur NSUP.
+      if(f.k === "NSUP"){
+        var esupEl = document.getElementById("f-ESUP");
+        if(esupEl) esupEl.placeholder = (Number(state.values.NSUP) > 0) ? "obligatoire" : "0 (défaut)";
+      }
       // renderChain() reconstruit les boutons : on garde le focus sur le bon champ
       var el = document.getElementById("f-"+f.k);
       if(el) { el.focus(); var pos = e.target.value.length; el.setSelectionRange && el.setSelectionRange(pos,pos); }
