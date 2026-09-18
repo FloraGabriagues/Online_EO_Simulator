@@ -145,9 +145,18 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .wfecases .caserow .cdel:hover{color:var(--alert)}
 .wfecases .empty{font-size:12px;color:var(--muted-2);padding:8px 0 2px}
 
-.opticsgeo{border:1px solid var(--line-soft);border-radius:6px;padding:18px 14px;margin-bottom:18px;
-  background:var(--panel-2)}
 .geo-dim{font-family:var(--mono);font-size:10px;fill:var(--muted-2)}
+.optique-grid{display:flex;gap:22px;align-items:flex-start;margin-bottom:14px}
+.optique-geo-col{flex:1;min-width:0;border:1px solid var(--line-soft);border-radius:6px;
+  padding:18px 14px 14px;background:var(--panel-2)}
+.geo-viewlabel{display:flex;align-items:center;gap:7px;margin-top:10px;
+  font-family:var(--mono);font-size:11px;color:var(--muted-2)}
+.geo-viewlabel svg{flex:none}
+.optique-fields-col{flex:1;min-width:0}
+.optique-fields-col .field:last-child{margin-bottom:0}
+.opticsgeo-note{display:flex;gap:8px;font-size:12.5px;color:var(--muted);line-height:1.5;
+  padding-top:14px;border-top:1px solid var(--line-soft)}
+@media(max-width:720px){.optique-grid{flex-direction:column}}
 
 .qespectral .qerow{display:flex;align-items:center;gap:8px;padding:6px 0;
   border-top:1px solid var(--line-soft)}
@@ -428,12 +437,8 @@ function currentBlock(){
 function renderPanel(){
   var block = currentBlock();
   if(!block){ panelEl.innerHTML = ""; return; }
-  var html = "<h2>"+block.label+"</h2><p class='desc'>Renseignez les paramètres de ce bloc. Les valeurs non renseignées utilisent les valeurs par défaut du modèle.</p>";
-  // Aperçu géométrique du plan pupille (diamètre, obscuration, supports)
-  // — placé avant les champs eux-mêmes, mis à jour en direct à chaque
-  // frappe (cf. l'appel à renderOpticsGeometry() dans le listener input
-  // ci-dessous, et wireOpticsGeometry pour le rendu initial).
-  if(block.id === "optique") html += renderOpticsGeometryHtml();
+  var head = "<h2>"+block.label+"</h2><p class='desc'>Renseignez les paramètres de ce bloc. Les valeurs non renseignées utilisent les valeurs par défaut du modèle.</p>";
+  var fieldsHtml = "";
   block.fields.forEach(function(f){
     var v = state.values[f.k] !== undefined ? state.values[f.k] : "";
     var valueAttr = v !== "" ? " value='"+v+"'" : "";
@@ -442,7 +447,7 @@ function renderPanel(){
     var placeholder = f.placeholder;
     if(f.k === "ESUP") placeholder = (Number(state.values.NSUP) > 0) ? "obligatoire" : "0 (défaut)";
     var placeholderAttr = placeholder ? " placeholder='"+placeholder+"'" : "";
-    html += "<div class='field'><label for='f-"+f.k+"'>"+f.label+"</label>"+
+    fieldsHtml += "<div class='field'><label for='f-"+f.k+"'>"+f.label+"</label>"+
       "<div class='row'><input type='number' step='any' id='f-"+f.k+"'"+valueAttr+placeholderAttr+">"+
       "<span class='unit'>"+f.unit+"</span></div></div>";
     // Le WFE RMS scalaire ci-dessus reste le mode simplifié (utilisé si
@@ -451,13 +456,32 @@ function renderPanel(){
     // chaud", "Cas froid") avec leurs coefficients de Zernike complets,
     // chargés par fichier — choisis au lancement, dans Conditions
     // d'acquisition (cf. simulations.html), pas ici.
-    if(f.k === "W") html += renderWfeCasesHtml();
+    if(f.k === "W") fieldsHtml += renderWfeCasesHtml();
     // QE spectral (optionnel) : courbe QE(λ) saisie point par point, en
     // plus du QE scalaire ci-dessus (mode simplifié, utilisé si aucune
     // courbe n'est saisie). Juste un aperçu visuel côté site — voir
     // renderQeChart pour ce qui est actuellement tracé.
-    if(f.k === "QE") html += renderQeSpectralHtml();
+    if(f.k === "QE") fieldsHtml += renderQeSpectralHtml();
   });
+  // Bloc Optique : mise en page 2 colonnes (plan à gauche, champs à
+  // droite), reprenant le style de référence partagé le 18/09/2026 —
+  // les autres blocs gardent la disposition simple, verticale.
+  var html = head;
+  if(block.id === "optique"){
+    html += "<div class='optique-grid'>"+
+      "<div class='optique-geo-col'>"+
+        "<div id='opticsGeoSvg'></div>"+
+        "<div class='geo-viewlabel'>"+
+          "<svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><circle cx='12' cy='12' r='9'/><circle cx='12' cy='12' r='1.5' fill='currentColor'/><line x1='12' y1='1' x2='12' y2='5'/><line x1='12' y1='19' x2='12' y2='23'/><line x1='1' y1='12' x2='5' y2='12'/><line x1='19' y1='12' x2='23' y2='12'/></svg>"+
+          "Vue de face"+
+        "</div>"+
+      "</div>"+
+      "<div class='optique-fields-col'>"+fieldsHtml+"</div>"+
+    "</div>"+
+    "<p class='opticsgeo-note'>Ces paramètres définissent la géométrie de l'ouverture et influencent la résolution, la lumière collectée et les performances globales du système.</p>";
+  } else {
+    html += fieldsHtml;
+  }
   panelEl.innerHTML = html;
   block.fields.forEach(function(f){
     document.getElementById("f-"+f.k).addEventListener("input", function(e){
@@ -618,19 +642,9 @@ function wireWfeCasesUI(){
 // un rayon — cf. presets.js, ex. Pléiades Neo D:0.91/E:0.3185), traits
 // radiaux = supports du secondaire (NSUP compte, ESUP épaisseur). Mis à
 // jour en direct à chaque frappe sur D/E/NSUP/ESUP (cf. l'appel dans le
-// listener "input" de renderPanel).
-//
-// ⚠️ Purement visuel pour l'instant : NSUP/ESUP sont de nouveaux champs
-// dont je n'ai aucune confirmation de prise en compte réelle côté backend
-// (contrairement à QE_spectral ou perfoCsv, jamais vus dans les fichiers
-// backend partagés jusqu'ici) — à vérifier avant de les considérer comme
-// autre chose qu'un aperçu.
-function renderOpticsGeometryHtml(){
-  return "<div class='opticsgeo'>"+
-    "<div id='opticsGeoSvg'></div>"+
-  "</div>";
-}
-
+// listener "input" de renderPanel). Rendu inline dans renderPanel (bloc
+// .optique-geo-col, mise en page 2 colonnes) plutôt que via une fonction
+// -Html dédiée depuis le 18/09/2026.
 function renderOpticsGeometry(){
   var host = document.getElementById("opticsGeoSvg");
   if(!host) return;
@@ -670,7 +684,7 @@ function renderOpticsGeometry(){
     "</g>"+
     "<path d='M"+xL+","+dimY+" l8,-3.5 v7 z' fill='var(--muted-2)'/>"+
     "<path d='M"+xR+","+dimY+" l-8,-3.5 v7 z' fill='var(--muted-2)'/>"+
-    "<text x='"+cx+"' y='"+(dimY-7)+"' text-anchor='middle' class='geo-dim'>⌀ "+(D || "—")+" m</text>";
+    "<text x='"+cx+"' y='"+(dimY-7)+"' text-anchor='middle' class='geo-dim'>D = "+(D || "—")+" m</text>";
 
   // ---- Appel de cote pour l'obscuration centrale, en diagonale ----
   var obscLabel = "";
@@ -681,7 +695,7 @@ function renderOpticsGeometry(){
     obscLabel =
       "<circle cx='"+lx1.toFixed(1)+"' cy='"+ly1.toFixed(1)+"' r='2' fill='var(--muted-2)'/>"+
       "<path d='M"+lx1.toFixed(1)+","+ly1.toFixed(1)+" L"+lx2+","+ly2+" h14' fill='none' stroke='var(--muted-2)' stroke-width='1'/>"+
-      "<text x='"+(lx2+18)+"' y='"+(ly2+4)+"' class='geo-dim'>⌀ "+(E || 0)+" m</text>";
+      "<text x='"+(lx2+18)+"' y='"+(ly2+4)+"' class='geo-dim'>d = "+(E || 0)+" m</text>";
   }
 
   // ---- Appel de cote pour les supports, en diagonale basse ----
