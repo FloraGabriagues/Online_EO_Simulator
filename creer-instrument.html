@@ -342,7 +342,7 @@ function renderSchema(){
   var act = state.active;
   function cls(id){ return "schema-block" + (id === act ? " active" : ""); }
   schemaEl.innerHTML =
-  "<svg viewBox='0 0 820 115' xmlns='http://www.w3.org/2000/svg'>"+
+  "<svg viewBox='0 0 820 121' xmlns='http://www.w3.org/2000/svg'>"+
   "<defs>"+
     "<radialGradient id='lensGrad' cx='35%' cy='30%' r='75%'>"+
       "<stop offset='0%' stop-color='#BFF3ED'/>"+
@@ -363,54 +363,54 @@ function renderSchema(){
     "</filter>"+
   "</defs>"+
 
-  "<rect x='2' y='5' width='816' height='105' rx='12' fill='var(--panel)' stroke='var(--line-soft)'/>"+
+  "<rect x='2' y='5' width='816' height='111' rx='12' fill='var(--panel)' stroke='var(--line-soft)'/>"+
 
   // ---- Optique : empilement de lentilles, flottant (pas de cadre) ----
   // Centre à x=207 (1er tiers de la zone de contenu 106–714, largeur
   // adaptée à la colonne de droite plutôt qu'à la pleine largeur).
-  // Marges internes resserrées encore une fois (échange du 17/09/2026,
-  // espace marqué au stylo rouge) : viewBox 115 au lieu de 140, tailles
-  // d'icônes INCHANGÉES, juste la marge haut/bas réduite au minimum.
+  // Marge du haut réajustée (échange du 18/09/2026) : +6 units de marge
+  // avant le contenu (tout décalé vers le bas de 6, boîte agrandie
+  // d'autant), tailles d'icônes toujours inchangées.
   "<g class='"+cls("optique")+"' onclick=\"selectBlock('optique')\">"+
     "<g class='schema-glow' filter='url(#softGlow)'>"+
-      "<ellipse cx='185' cy='47' rx='17' ry='34' fill='url(#lensGrad)' opacity='.45'/>"+
-      "<ellipse cx='207' cy='47' rx='17' ry='34' fill='url(#lensGrad)' opacity='.7'/>"+
-      "<ellipse cx='229' cy='47' rx='17' ry='34' fill='url(#lensGrad)'/>"+
+      "<ellipse cx='185' cy='53' rx='17' ry='34' fill='url(#lensGrad)' opacity='.45'/>"+
+      "<ellipse cx='207' cy='53' rx='17' ry='34' fill='url(#lensGrad)' opacity='.7'/>"+
+      "<ellipse cx='229' cy='53' rx='17' ry='34' fill='url(#lensGrad)'/>"+
     "</g>"+
-    "<ellipse cx='185' cy='47' rx='17' ry='34' fill='none' stroke='var(--pixel)' stroke-opacity='.5'/>"+
-    "<ellipse cx='207' cy='47' rx='17' ry='34' fill='none' stroke='var(--pixel)' stroke-opacity='.7'/>"+
-    "<ellipse cx='229' cy='47' rx='17' ry='34' fill='none' stroke='var(--pixel)'/>"+
-    "<text x='207' y='95' text-anchor='middle' class='schema-blocklabel'>Optique</text>"+
+    "<ellipse cx='185' cy='53' rx='17' ry='34' fill='none' stroke='var(--pixel)' stroke-opacity='.5'/>"+
+    "<ellipse cx='207' cy='53' rx='17' ry='34' fill='none' stroke='var(--pixel)' stroke-opacity='.7'/>"+
+    "<ellipse cx='229' cy='53' rx='17' ry='34' fill='none' stroke='var(--pixel)'/>"+
+    "<text x='207' y='101' text-anchor='middle' class='schema-blocklabel'>Optique</text>"+
   "</g>"+
 
-  "<path d='M293,47 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
+  "<path d='M293,53 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
 
   // ---- Détecteur : cadre + carré dégradé — centre à x=410 (milieu) ----
   "<g class='"+cls("detecteur")+"' onclick=\"selectBlock('detecteur')\">"+
-    "<rect class='schema-iconframe' x='370' y='13' width='80' height='68' rx='14'/>"+
-    "<rect class='schema-glow' x='386' y='27' width='48' height='40' rx='6' fill='url(#chipGrad)' filter='url(#softGlow)'/>"+
-    "<text x='410' y='95' text-anchor='middle' class='schema-blocklabel'>Détecteur</text>"+
+    "<rect class='schema-iconframe' x='370' y='19' width='80' height='68' rx='14'/>"+
+    "<rect class='schema-glow' x='386' y='33' width='48' height='40' rx='6' fill='url(#chipGrad)' filter='url(#softGlow)'/>"+
+    "<text x='410' y='101' text-anchor='middle' class='schema-blocklabel'>Détecteur</text>"+
   "</g>"+
 
-  "<path d='M496,47 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
+  "<path d='M496,53 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
 
   // ---- Électronique : cadre + puce avec broches — centre à x=613 (3e tiers) ----
   "<g class='"+cls("electronique")+"' onclick=\"selectBlock('electronique')\">"+
-    "<rect class='schema-iconframe' x='573' y='13' width='80' height='68' rx='14'/>"+
+    "<rect class='schema-iconframe' x='573' y='19' width='80' height='68' rx='14'/>"+
     "<g class='schema-glow' filter='url(#softGlow)'>"+
-      "<rect x='595' y='32' width='36' height='30' rx='4' fill='url(#icGrad)' stroke='var(--pixel)' stroke-opacity='.6'/>"+
+      "<rect x='595' y='38' width='36' height='30' rx='4' fill='url(#icGrad)' stroke='var(--pixel)' stroke-opacity='.6'/>"+
     "</g>"+
     "<g stroke='var(--muted-2)' stroke-width='1.5'>"+
-      "<line x1='603' y1='32' x2='603' y2='25'/><line x1='613' y1='32' x2='613' y2='25'/>"+
-      "<line x1='623' y1='32' x2='623' y2='25'/>"+
-      "<line x1='603' y1='62' x2='603' y2='69'/><line x1='613' y1='62' x2='613' y2='69'/>"+
-      "<line x1='623' y1='62' x2='623' y2='69'/>"+
-      "<line x1='595' y1='40' x2='587' y2='40'/><line x1='595' y1='47' x2='587' y2='47'/>"+
-      "<line x1='595' y1='54' x2='587' y2='54'/>"+
-      "<line x1='631' y1='40' x2='639' y2='40'/><line x1='631' y1='47' x2='639' y2='47'/>"+
-      "<line x1='631' y1='54' x2='639' y2='54'/>"+
+      "<line x1='603' y1='38' x2='603' y2='31'/><line x1='613' y1='38' x2='613' y2='31'/>"+
+      "<line x1='623' y1='38' x2='623' y2='31'/>"+
+      "<line x1='603' y1='68' x2='603' y2='75'/><line x1='613' y1='68' x2='613' y2='75'/>"+
+      "<line x1='623' y1='68' x2='623' y2='75'/>"+
+      "<line x1='595' y1='46' x2='587' y2='46'/><line x1='595' y1='53' x2='587' y2='53'/>"+
+      "<line x1='595' y1='60' x2='587' y2='60'/>"+
+      "<line x1='631' y1='46' x2='639' y2='46'/><line x1='631' y1='53' x2='639' y2='53'/>"+
+      "<line x1='631' y1='60' x2='639' y2='60'/>"+
     "</g>"+
-    "<text x='613' y='95' text-anchor='middle' class='schema-blocklabel'>Électronique</text>"+
+    "<text x='613' y='101' text-anchor='middle' class='schema-blocklabel'>Électronique</text>"+
   "</g>"+
   "</svg>";
 }
