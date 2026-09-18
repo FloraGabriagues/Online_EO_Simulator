@@ -209,16 +209,15 @@ var SCHEMA = [
   {id:"atmosphere", kind:"ctx", label:"Atmosphère", sub:"modèle atmosphérique"},
   {id:"instrument", kind:"group", label:"Instrument", blocks:[
     {id:"optique", label:"Optique", fields:[
-      {k:"D", label:"Diamètre de pupille", unit:"m", placeholder:"obligatoire"},
       {k:"I", label:"iFoV", unit:"µrad", placeholder:"obligatoire"},
+      {k:"D", label:"Diamètre de pupille", unit:"m", placeholder:"obligatoire"},
       {k:"E", label:"Obscuration centrale", unit:"m", placeholder:"0 (défaut)"},
-      {k:"T", label:"Transmission optique", unit:"τ", placeholder:"1 (défaut)"},
-      {k:"W", label:"WFE RMS", unit:"nm", placeholder:"0 (défaut)"},
       // NSUP/ESUP : confirmés le 17/09/2026 (paramFile.Telescope.n_supports/
       // support_width, cf. module_MTF.py) — envoyés au payload de
       // simulation comme PX/QE/ADC (cf. simulations.html).
       {k:"NSUP", label:"Nombre de supports", unit:"", placeholder:"obligatoire"},
-      {k:"ESUP", label:"Épaisseur des supports", unit:"m", placeholder:"obligatoire"}
+      {k:"ESUP", label:"Épaisseur des supports", unit:"m", placeholder:"obligatoire"},
+      {k:"T", label:"Transmission optique", unit:"τ", placeholder:"1 (défaut)"}
     ]},
     {id:"detecteur", label:"Détecteur", fields:[
       // QE en fraction (τ, 0–1) et non en % — confirmé le 17/09/2026 par
@@ -234,6 +233,9 @@ var SCHEMA = [
     ]},
     {id:"electronique", label:"Électronique", fields:[
       {k:"ADC",  label:"Résolution ADC", unit:"bits"}
+    ]},
+    {id:"wfe", label:"Performance WFE", fields:[
+      {k:"W", label:"WFE RMS", unit:"nm", placeholder:"0 (défaut)"}
     ]}
   ]},
   {id:"image", kind:"ctx", label:"Image I", sub:"produit brut, n bits"},
@@ -466,7 +468,8 @@ function renderPanel(){
       if(el) { el.focus(); var pos = e.target.value.length; el.setSelectionRange && el.setSelectionRange(pos,pos); }
     });
   });
-  if(block.id === "optique") { wireWfeCasesUI(); renderOpticsGeometry(); }
+  if(block.id === "optique") renderOpticsGeometry();
+  if(block.id === "wfe") wireWfeCasesUI();
   if(block.id === "detecteur") wireQeSpectralUI();
   var actions = document.createElement("div");
   actions.className = "panel-actions";
