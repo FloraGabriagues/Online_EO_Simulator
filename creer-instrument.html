@@ -136,7 +136,7 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .wfecases .addcasebtn{appearance:none;cursor:pointer;background:transparent;border:1px solid var(--line);
   color:var(--pixel);border-radius:3px;padding:5px 10px;font-family:var(--mono);font-size:11.5px}
 .wfecases .addcasebtn:hover{border-color:var(--pixel)}
-.wfecases .caserow{display:flex;align-items:center;gap:10px;padding:8px 0;
+.wfecases .caserow{display:flex;align-items:center;gap:10px;padding:8px 0;flex-wrap:wrap;
   border-top:1px solid var(--line-soft)}
 .wfecases .caserow .cname{flex:1;font-size:13.5px}
 .wfecases .caserow .cfile{font-family:var(--mono);font-size:11px;color:var(--muted-2)}
@@ -175,15 +175,16 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .zpickrow{display:flex;gap:10px;margin-bottom:10px}
 .zpickrow select{flex:1;min-width:0;background:var(--panel-2);color:var(--paper);
   border:1px solid var(--line);border-radius:3px;padding:6px 8px;font-family:var(--body);font-size:12.5px}
-.zgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:6px;
-  padding-top:8px;border-top:1px solid var(--line-soft)}
-.zcell{display:flex;flex-direction:column;align-items:center;background:var(--panel-2);
-  border:1px solid var(--line-soft);border-radius:4px;padding:4px 2px}
-.zcell .zlab{font-family:var(--mono);font-size:9px;color:var(--muted-2)}
-.zcell .zval{font-family:var(--mono);font-size:11px;color:var(--paper)}
-.zsum{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft);
-  font-size:13px;color:var(--muted)}
-.zsum b{color:var(--pixel);font-family:var(--mono)}
+.zmapwrap{display:flex;gap:16px;align-items:center;padding-top:8px;border-top:1px solid var(--line-soft)}
+.zcanvas{flex:none;border-radius:50%;border:1px solid var(--line-soft);image-rendering:pixelated}
+.zmapstats{font-family:var(--mono);font-size:12.5px;color:var(--muted);line-height:1.9}
+.zmapstats b{color:var(--paper)}
+.zterms{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:6px;
+  margin-top:12px;padding-top:10px;border-top:1px solid var(--line-soft)}
+.zterm{display:flex;justify-content:space-between;gap:8px;background:var(--panel-2);
+  border:1px solid var(--line-soft);border-radius:4px;padding:5px 8px;font-size:11.5px}
+.zterm .zk{color:var(--muted)}
+.zterm .zv{font-family:var(--mono);color:var(--pixel)}
 </style>
 </head>
 <body>
@@ -586,15 +587,26 @@ function renderPanel(){
 // droit) — le serveur recadre et renumérote en conséquence avant la
 // simulation (cf. simulation_pipeline.py, _remap_perfo_csv).
 var WFE_ALIGN_LABELS = { center: "Centre champ", left: "Bord gauche", right: "Bord droit" };
+// Convention d'indexation Zernike — donnée par cas, pas supposée fixe
+// (échange du 18/09/2026 : différents outils/sources exportent Z1..Z37
+// dans des ordres différents). N'affecte QUE l'interprétation côté site
+// (carte du front d'onde, noms des modes, cf. Détail Zernike) — le CSV
+// brut envoyé au serveur ne change pas, sa propre convention interne
+// (zernike_synth.py) reste ce qu'elle est, indépendamment de ce choix.
+var WFE_CONVENTION_LABELS = { osa: "OSA/ANSI", noll: "Noll" };
 function renderWfeCasesHtml(){
   var cases = state.values.wfeCases || [];
   var rows = cases.map(function(c){
     var alignOpts = ["center", "left", "right"].map(function(a){
       return "<option value='"+a+"'"+(c.align === a ? " selected" : "")+">"+WFE_ALIGN_LABELS[a]+"</option>";
     }).join("");
+    var convOpts = ["osa", "noll"].map(function(v){
+      return "<option value='"+v+"'"+((c.convention||"osa") === v ? " selected" : "")+">"+WFE_CONVENTION_LABELS[v]+"</option>";
+    }).join("");
     return "<div class='caserow' data-case-id='"+c.id+"'>"+
       "<span class='cname'>"+c.name+"</span>"+
       "<span class='cfile'>"+(c.rowCount != null ? c.rowCount + " lignes · " + c.filename : "—")+"</span>"+
+      "<select class='calign' data-conv-case='"+c.id+"' title='Convention Zernike'>"+convOpts+"</select>"+
       "<select class='calign' data-align-case='"+c.id+"'>"+alignOpts+"</select>"+
       "<button type='button' class='cdel' data-del-case='"+c.id+"' aria-label='Supprimer ce cas'>×</button>"+
     "</div>";
@@ -602,7 +614,7 @@ function renderWfeCasesHtml(){
   return "<div class='wfecases'>"+
     "<div class='wfehead'><label>Cas WFE (thermique, etc.)</label>"+
     "<button type='button' class='addcasebtn' id='btnAddWfeCase'>+ Ajouter un cas</button></div>"+
-    "<p class='wfesub'>Optionnel — CSV Zernike réel (Detector_ID;Band;Column;Z1..Z37), choisi au lancement de la simulation. Le cadrage (centre/bord) dit quelle portion du CSV garder si sa largeur ne correspond pas exactement à la simulation.</p>"+
+    "<p class='wfesub'>Optionnel — CSV Zernike réel (Detector_ID;Band;Column;Z1..Z37), choisi au lancement de la simulation. Le cadrage (centre/bord) dit quelle portion du CSV garder si sa largeur ne correspond pas exactement à la simulation. La convention ne sert qu'à l'aperçu ci-dessous (carte du front d'onde) — le fichier envoyé au serveur reste inchangé.</p>"+
     (cases.length ? rows : "<p class='empty'>Aucun cas WFE défini.</p>")+
     "<input type='file' id='wfeCaseFileInput' accept='.csv,text/csv' style='display:none'>"+
   "</div>"+
@@ -646,7 +658,7 @@ function parsePerfoCsvRows(text){
 function renderZernikeDetailHtml(cases){
   return "<div class='wfecases zdetail'>"+
     "<div class='wfehead'><label>Détail Zernike</label></div>"+
-    "<p class='wfesub'>Coefficients Z1 à Z37 d'une colonne donnée, pour un cas WFE chargé ci-dessus, et leur somme.</p>"+
+    "<p class='wfesub'>Front d'onde combiné (fausses couleurs) d'une colonne donnée, pour un cas WFE chargé ci-dessus.</p>"+
     (cases.length
       ? "<div class='zpickrow'>"+
           "<select id='zernCaseSel'>"+cases.map(function(c){ return "<option value='"+c.id+"'>"+c.name+"</option>"; }).join("")+"</select>"+
@@ -655,6 +667,111 @@ function renderZernikeDetailHtml(cases){
         "<div id='zernOut'></div>"
       : "<p class='empty'>Charge un cas WFE ci-dessus pour voir le détail.</p>")+
   "</div>";
+}
+
+// ---- Maths Zernike (base orthonormée), convention paramétrable ----
+// Donnée par cas WFE (cf. select "convention" dans renderWfeCasesHtml),
+// pas supposée fixe pour tout le monde — deux conventions supportées :
+// OSA/ANSI (Z1..Z37 du fichier = indices OSA 0..36) et Noll (Z1..Z37 =
+// indices Noll 1..37 directement). Chacune donne un (n,m) — donc une
+// forme de carte et des noms de modes — DIFFÉRENTS pour les mêmes valeurs
+// brutes. N'affecte que cet aperçu, jamais le CSV envoyé au serveur.
+var ZERNIKE_NAMES_OSA = {
+  1:"piston", 2:"tilt (Y)", 3:"tilt (X)", 4:"astigmatisme oblique",
+  5:"défocalisation", 6:"astigmatisme", 7:"trefoil oblique", 8:"coma (Y)",
+  9:"coma (X)", 10:"trefoil", 11:"tétrafoil oblique", 12:"astigmatisme secondaire",
+  13:"sphérique", 14:"astigmatisme secondaire", 15:"tétrafoil"
+};
+var ZERNIKE_NAMES_NOLL = {
+  1:"piston", 2:"tilt (X)", 3:"tilt (Y)", 4:"défocalisation",
+  5:"astigmatisme oblique", 6:"astigmatisme", 7:"coma (Y)", 8:"coma (X)",
+  9:"trefoil oblique", 10:"trefoil", 11:"sphérique", 12:"astigmatisme secondaire",
+  13:"astigmatisme secondaire", 14:"tétrafoil", 15:"tétrafoil"
+};
+function zernikeName(k, convention){
+  var table = convention === "noll" ? ZERNIKE_NAMES_NOLL : ZERNIKE_NAMES_OSA;
+  return table[k] || null;
+}
+function zFactorial(n){ var r = 1; for(var i = 2; i <= n; i++) r *= i; return r; }
+function zOsaNM(j){ // j : indice OSA 0-indexé
+  var n = Math.ceil((-3 + Math.sqrt(9 + 8*j)) / 2);
+  var m = 2*j - n*(n+2);
+  return { n: n, m: m };
+}
+// Vérifié point par point contre les modes connus (j=1..8 : piston, tip,
+// tilt, defocus, astigmatismes, coma Y/X — tous corrects) avant intégration.
+function zNollNM(j){ // j : indice Noll 1-indexé
+  var n = 0, j1 = j - 1;
+  while(j1 > n){ n++; j1 -= n; }
+  var m = Math.pow(-1, j) * ((n % 2) + 2 * Math.floor((j1 + ((n+1) % 2)) / 2));
+  return { n: n, m: m };
+}
+function zNM(k, convention){ // k : indice 1-indexé tel que dans le fichier (Zk)
+  return convention === "noll" ? zNollNM(k) : zOsaNM(k-1);
+}
+function zRadial(n, m, rho){
+  m = Math.abs(m);
+  var sum = 0;
+  for(var k = 0; k <= (n-m)/2; k++){
+    var c = (k % 2 === 0 ? 1 : -1) * zFactorial(n-k) /
+      (zFactorial(k) * zFactorial((n+m)/2-k) * zFactorial((n-m)/2-k));
+    sum += c * Math.pow(rho, n-2*k);
+  }
+  return sum;
+}
+function zValue(k, convention, rho, theta){ // k : indice 1-indexé du fichier (Zk), base orthonormée
+  var nm = zNM(k, convention), n = nm.n, m = nm.m;
+  var R = zRadial(n, m, rho);
+  var norm = m === 0 ? Math.sqrt(n+1) : Math.sqrt(2*(n+1));
+  if(m > 0) return norm * R * Math.cos(m*theta);
+  if(m < 0) return norm * R * Math.sin(-m*theta);
+  return norm * R;
+}
+function zJetColor(t){
+  var stops = [[10,20,110],[10,80,220],[40,200,220],[230,230,60],[220,60,30],[130,10,10]];
+  var pos = Math.max(0, Math.min(1, t)) * (stops.length-1);
+  var i = Math.min(stops.length-2, Math.floor(pos));
+  var f = pos - i, c0 = stops[i], c1 = stops[i+1];
+  return [c0[0]+(c1[0]-c0[0])*f, c0[1]+(c1[1]-c0[1])*f, c0[2]+(c1[2]-c0[2])*f];
+}
+// Trace la carte du front d'onde combiné (somme pondérée des 37 modes) sur
+// un canvas carré, masqué au disque unité. Retourne {pv, rms} — RMS calculé
+// analytiquement (base orthonormée ⇒ RMS = norme des coefficients, piston
+// exclu, indépendant de la convention), P-V lu sur la grille échantillonnée
+// (pas de formule fermée) — la FORME de la carte, elle, dépend de convention.
+function drawWavefrontMap(canvas, coeffs, convention){
+  var size = canvas.width;
+  var ctx = canvas.getContext("2d");
+  var img = ctx.createImageData(size, size);
+  var R = size/2 - 1, cx = size/2, cy = size/2;
+  var vals = new Float32Array(size*size);
+  var vmin = Infinity, vmax = -Infinity;
+  for(var y = 0; y < size; y++){
+    for(var x = 0; x < size; x++){
+      var dx = (x-cx)/R, dy = (y-cy)/R, rho = Math.sqrt(dx*dx+dy*dy);
+      var idx = y*size+x;
+      if(rho > 1){ vals[idx] = NaN; continue; }
+      var theta = Math.atan2(dy, dx), w = 0;
+      for(var k = 1; k <= coeffs.length; k++){
+        if(coeffs[k-1]) w += coeffs[k-1] * zValue(k, convention, rho, theta);
+      }
+      vals[idx] = w;
+      if(w < vmin) vmin = w;
+      if(w > vmax) vmax = w;
+    }
+  }
+  var span = (vmax - vmin) || 1;
+  for(var i = 0; i < size*size; i++){
+    var v = vals[i], p = i*4;
+    if(isNaN(v)){ img.data[p+3] = 0; continue; }
+    var c = zJetColor((v-vmin)/span);
+    img.data[p] = c[0]; img.data[p+1] = c[1]; img.data[p+2] = c[2]; img.data[p+3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+
+  var rmsSum = 0;
+  for(var k2 = 1; k2 < coeffs.length; k2++) rmsSum += coeffs[k2]*coeffs[k2]; // exclut le piston (indice 0)
+  return { pv: vmax - vmin, rms: Math.sqrt(rmsSum) };
 }
 
 function renderZernikeDetail(){
@@ -680,12 +797,33 @@ function renderZernikeDetail(){
     out.innerHTML = "<p class='empty'>CSV illisible ou vide.</p>";
     return;
   }
+  var convention = selectedCase.convention || "osa";
 
-  var sum = row.z.reduce(function(a, b){ return a + b; }, 0);
-  var cells = row.z.map(function(v, i){
-    return "<div class='zcell'><span class='zlab'>Z"+(i+1)+"</span><span class='zval'>"+v.toFixed(2)+"</span></div>";
+  // Les 5 modes dominants (hors piston), pour l'affichage façon "termes
+  // nommés" — comme sur la référence partagée (spherical+defocus, etc.),
+  // sans essayer de reproduire sa décomposition en 2 sous-cartes (choix
+  // illustratif propre à cet exemple, pas un calcul déterministe).
+  var ranked = row.z.map(function(v, i){ return { k: i+1, v: v }; })
+    .filter(function(e){ return e.k !== 1; })
+    .sort(function(a, b){ return Math.abs(b.v) - Math.abs(a.v); })
+    .slice(0, 5);
+  var termsHtml = ranked.map(function(e){
+    var nm = zernikeName(e.k, convention);
+    var name = nm ? " ("+nm+")" : "";
+    return "<div class='zterm'><span class='zk'>Z"+e.k+name+"</span><span class='zv'>"+e.v.toFixed(4)+"</span></div>";
   }).join("");
-  out.innerHTML = "<div class='zgrid'>"+cells+"</div><div class='zsum'>Somme (Z1→Z37) : <b>"+sum.toFixed(3)+"</b></div>";
+
+  out.innerHTML =
+    "<div class='zmapwrap'>"+
+      "<canvas id='zernCanvas' width='150' height='150' class='zcanvas'></canvas>"+
+      "<div class='zmapstats' id='zmapStats'></div>"+
+    "</div>"+
+    "<div class='zterms'>"+termsHtml+"</div>";
+
+  var canvas = document.getElementById("zernCanvas");
+  var stats = drawWavefrontMap(canvas, row.z, convention);
+  document.getElementById("zmapStats").innerHTML =
+    "P-V : <b>"+stats.pv.toFixed(3)+" nm</b><br>RMS : <b>"+stats.rms.toFixed(3)+" nm</b>";
 }
 
 // Validation légère — on ne parse pas vraiment le CSV (le serveur le fait
@@ -733,7 +871,8 @@ function wireWfeCasesUI(){
         filename: file.name,
         csv: reader.result,
         rowCount: meta.rowCount,
-        align: "center"
+        align: "center",
+        convention: "osa"
       });
       pendingName = null;
       persist();
@@ -750,6 +889,14 @@ function wireWfeCasesUI(){
       // pas de renderPanel() ici : re-générer tout le panneau ferait perdre
       // le focus du <select> qu'on vient d'utiliser, pour un changement qui
       // n'affecte aucun autre affichage visible dans cette vue.
+    });
+  });
+
+  panelEl.querySelectorAll("[data-conv-case]").forEach(function(sel){
+    sel.addEventListener("change", function(){
+      var id = sel.dataset.convCase;
+      var c = (state.values.wfeCases || []).find(function(x){ return x.id === id; });
+      if(c){ c.convention = sel.value; persist(); renderZernikeDetail(); }
     });
   });
 
