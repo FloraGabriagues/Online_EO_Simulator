@@ -117,12 +117,14 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .field input::placeholder{color:var(--muted-2);font-family:var(--body);font-style:italic}
 .field .unit{font-family:var(--mono);font-size:12px;color:var(--muted-2);min-width:34px}
 .field input:focus{outline:none;border-color:var(--pixel)}
-.panel-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px;
+.panel-actions{display:flex;justify-content:space-between;gap:10px;margin-top:20px;
   padding-top:16px;border-top:1px solid var(--line-soft)}
+.panel-actions .rightbtns{display:flex;gap:10px;margin-left:auto}
 .btn{appearance:none;cursor:pointer;border-radius:4px;padding:10px 18px;
   font-family:var(--body);font-size:14px;font-weight:500;border:1px solid var(--line)}
 .btn.primary{background:var(--pixel);color:#052824;border-color:var(--pixel)}
 .btn.ghost{background:transparent;color:var(--paper)}
+.btn.next{background:transparent;color:var(--pixel);border-color:var(--pixel)}
 
 .savehint{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);margin-top:10px;
   min-height:16px}
@@ -146,9 +148,6 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .wfecases .empty{font-size:12px;color:var(--muted-2);padding:8px 0 2px}
 
 .geo-dim{font-family:var(--mono);font-size:10px;fill:var(--muted-2)}
-.geo-tick{font-family:var(--mono);font-size:9px;fill:var(--muted-2)}
-.geo-title{font-family:var(--mono);font-size:10.5px;fill:var(--muted);letter-spacing:.02em}
-.geo-axislabel{font-family:var(--mono);font-size:9.5px;fill:var(--muted-2);letter-spacing:.04em}
 .optique-grid{display:flex;gap:22px;align-items:stretch;margin-bottom:14px}
 .optique-geo-col{flex:1;min-width:0;border:1px solid var(--line-soft);border-radius:6px;
   padding:14px 14px 10px;background:var(--panel-2);display:flex;flex-direction:column}
@@ -162,9 +161,7 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
    axes et "Vue de face". */
 .optique-fields-col{flex:1;min-width:0}
 .optique-fields-col .field{margin-bottom:14px}
-.opticsgeo-note{display:flex;gap:8px;font-size:12.5px;color:var(--muted);line-height:1.5;
-  padding-top:12px;border-top:1px solid var(--line-soft)}
-@media(max-width:720px){.optique-grid{flex-direction:column}.optique-fields-col{grid-template-columns:1fr}}
+@media(max-width:720px){.optique-grid{flex-direction:column}}
 
 .qespectral .qerow{display:flex;align-items:center;gap:8px;padding:6px 0;
   border-top:1px solid var(--line-soft)}
@@ -202,7 +199,7 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
               <option value="hs" disabled>Hyperspectral (bientôt)</option>
             </select>
           </div>
-          <button class="filebtn" id="btnFile" type="button">Charger un fichier de configuration
+          <button class="filebtn" id="btnFile" type="button">Charger une configuration
             <input type="file" id="fileInput" accept="application/json">
           </button>
         </div>
@@ -351,16 +348,16 @@ function renderChain(){
   chainEl.appendChild(list);
 }
 
-// Panneau "Instrument" épuré — 3 icônes glassy (empilement de lentilles,
-// détecteur, puce électronique) reliées par des flèches, plutôt que
-// l'ancien synoptique complet paysage → atmosphère → image → restitution
-// (jugé trop chargé, cf. échange du 17/09/2026). Seuls les 3 blocs
-// restent cliquables/configurables, comme avant.
+// Panneau "Instrument" épuré — 4 icônes glassy (empilement de lentilles,
+// détecteur, puce électronique, onde déformée pour la performance WFE)
+// reliées par des flèches. Icône WFE ajoutée le 18/09/2026 — viewBox
+// élargi (820→1050) pour caser les 4 sans les tasser. Les 4 blocs restent
+// cliquables/configurables.
 function renderSchema(){
   var act = state.active;
   function cls(id){ return "schema-block" + (id === act ? " active" : ""); }
   schemaEl.innerHTML =
-  "<svg viewBox='0 0 820 121' xmlns='http://www.w3.org/2000/svg'>"+
+  "<svg viewBox='0 0 1050 121' xmlns='http://www.w3.org/2000/svg'>"+
   "<defs>"+
     "<radialGradient id='lensGrad' cx='35%' cy='30%' r='75%'>"+
       "<stop offset='0%' stop-color='#BFF3ED'/>"+
@@ -381,54 +378,62 @@ function renderSchema(){
     "</filter>"+
   "</defs>"+
 
-  "<rect x='2' y='5' width='816' height='111' rx='12' fill='var(--panel)' stroke='var(--line-soft)'/>"+
+  "<rect x='2' y='5' width='1046' height='111' rx='12' fill='var(--panel)' stroke='var(--line-soft)'/>"+
 
   // ---- Optique : empilement de lentilles, flottant (pas de cadre) ----
-  // Centre à x=207 (1er tiers de la zone de contenu 106–714, largeur
-  // adaptée à la colonne de droite plutôt qu'à la pleine largeur).
-  // Marge du haut réajustée (échange du 18/09/2026) : +6 units de marge
-  // avant le contenu (tout décalé vers le bas de 6, boîte agrandie
-  // d'autant), tailles d'icônes toujours inchangées.
+  // 4 icônes centrées à 206/419/631/844 (répartition égale sur la largeur
+  // utile, marges identiques à avant).
   "<g class='"+cls("optique")+"' onclick=\"selectBlock('optique')\">"+
     "<g class='schema-glow' filter='url(#softGlow)'>"+
-      "<ellipse cx='185' cy='53' rx='17' ry='34' fill='url(#lensGrad)' opacity='.45'/>"+
-      "<ellipse cx='207' cy='53' rx='17' ry='34' fill='url(#lensGrad)' opacity='.7'/>"+
-      "<ellipse cx='229' cy='53' rx='17' ry='34' fill='url(#lensGrad)'/>"+
+      "<ellipse cx='184' cy='53' rx='17' ry='34' fill='url(#lensGrad)' opacity='.45'/>"+
+      "<ellipse cx='206' cy='53' rx='17' ry='34' fill='url(#lensGrad)' opacity='.7'/>"+
+      "<ellipse cx='228' cy='53' rx='17' ry='34' fill='url(#lensGrad)'/>"+
     "</g>"+
-    "<ellipse cx='185' cy='53' rx='17' ry='34' fill='none' stroke='var(--pixel)' stroke-opacity='.5'/>"+
-    "<ellipse cx='207' cy='53' rx='17' ry='34' fill='none' stroke='var(--pixel)' stroke-opacity='.7'/>"+
-    "<ellipse cx='229' cy='53' rx='17' ry='34' fill='none' stroke='var(--pixel)'/>"+
-    "<text x='207' y='101' text-anchor='middle' class='schema-blocklabel'>Optique</text>"+
+    "<ellipse cx='184' cy='53' rx='17' ry='34' fill='none' stroke='var(--pixel)' stroke-opacity='.5'/>"+
+    "<ellipse cx='206' cy='53' rx='17' ry='34' fill='none' stroke='var(--pixel)' stroke-opacity='.7'/>"+
+    "<ellipse cx='228' cy='53' rx='17' ry='34' fill='none' stroke='var(--pixel)'/>"+
+    "<text x='206' y='101' text-anchor='middle' class='schema-blocklabel'>Optique</text>"+
   "</g>"+
 
-  "<path d='M293,53 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
+  "<path d='M297,53 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
 
-  // ---- Détecteur : cadre + carré dégradé — centre à x=410 (milieu) ----
+  // ---- Détecteur : cadre + carré dégradé — centre à x=419 ----
   "<g class='"+cls("detecteur")+"' onclick=\"selectBlock('detecteur')\">"+
-    "<rect class='schema-iconframe' x='370' y='19' width='80' height='68' rx='14'/>"+
-    "<rect class='schema-glow' x='386' y='33' width='48' height='40' rx='6' fill='url(#chipGrad)' filter='url(#softGlow)'/>"+
-    "<text x='410' y='101' text-anchor='middle' class='schema-blocklabel'>Détecteur</text>"+
+    "<rect class='schema-iconframe' x='379' y='19' width='80' height='68' rx='14'/>"+
+    "<rect class='schema-glow' x='395' y='33' width='48' height='40' rx='6' fill='url(#chipGrad)' filter='url(#softGlow)'/>"+
+    "<text x='419' y='101' text-anchor='middle' class='schema-blocklabel'>Détecteur</text>"+
   "</g>"+
 
-  "<path d='M496,53 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
+  "<path d='M510,53 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
 
-  // ---- Électronique : cadre + puce avec broches — centre à x=613 (3e tiers) ----
+  // ---- Électronique : cadre + puce avec broches — centre à x=631 ----
   "<g class='"+cls("electronique")+"' onclick=\"selectBlock('electronique')\">"+
-    "<rect class='schema-iconframe' x='573' y='19' width='80' height='68' rx='14'/>"+
+    "<rect class='schema-iconframe' x='591' y='19' width='80' height='68' rx='14'/>"+
     "<g class='schema-glow' filter='url(#softGlow)'>"+
-      "<rect x='595' y='38' width='36' height='30' rx='4' fill='url(#icGrad)' stroke='var(--pixel)' stroke-opacity='.6'/>"+
+      "<rect x='613' y='38' width='36' height='30' rx='4' fill='url(#icGrad)' stroke='var(--pixel)' stroke-opacity='.6'/>"+
     "</g>"+
     "<g stroke='var(--muted-2)' stroke-width='1.5'>"+
-      "<line x1='603' y1='38' x2='603' y2='31'/><line x1='613' y1='38' x2='613' y2='31'/>"+
-      "<line x1='623' y1='38' x2='623' y2='31'/>"+
-      "<line x1='603' y1='68' x2='603' y2='75'/><line x1='613' y1='68' x2='613' y2='75'/>"+
-      "<line x1='623' y1='68' x2='623' y2='75'/>"+
-      "<line x1='595' y1='46' x2='587' y2='46'/><line x1='595' y1='53' x2='587' y2='53'/>"+
-      "<line x1='595' y1='60' x2='587' y2='60'/>"+
-      "<line x1='631' y1='46' x2='639' y2='46'/><line x1='631' y1='53' x2='639' y2='53'/>"+
-      "<line x1='631' y1='60' x2='639' y2='60'/>"+
+      "<line x1='621' y1='38' x2='621' y2='31'/><line x1='631' y1='38' x2='631' y2='31'/>"+
+      "<line x1='641' y1='38' x2='641' y2='31'/>"+
+      "<line x1='621' y1='68' x2='621' y2='75'/><line x1='631' y1='68' x2='631' y2='75'/>"+
+      "<line x1='641' y1='68' x2='641' y2='75'/>"+
+      "<line x1='613' y1='46' x2='605' y2='46'/><line x1='613' y1='53' x2='605' y2='53'/>"+
+      "<line x1='613' y1='60' x2='605' y2='60'/>"+
+      "<line x1='649' y1='46' x2='657' y2='46'/><line x1='649' y1='53' x2='657' y2='53'/>"+
+      "<line x1='649' y1='60' x2='657' y2='60'/>"+
     "</g>"+
-    "<text x='613' y='101' text-anchor='middle' class='schema-blocklabel'>Électronique</text>"+
+    "<text x='631' y='101' text-anchor='middle' class='schema-blocklabel'>Électronique</text>"+
+  "</g>"+
+
+  "<path d='M723,53 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
+
+  // ---- Performance WFE : cadre + onde déformée — centre à x=844 ----
+  "<g class='"+cls("wfe")+"' onclick=\"selectBlock('wfe')\">"+
+    "<rect class='schema-iconframe' x='804' y='19' width='80' height='68' rx='14'/>"+
+    "<g class='schema-glow' filter='url(#softGlow)'>"+
+      "<path d='M814,53 Q826,33 844,53 T874,53' fill='none' stroke='var(--pixel)' stroke-width='3' stroke-linecap='round'/>"+
+    "</g>"+
+    "<text x='844' y='101' text-anchor='middle' class='schema-blocklabel'>WFE</text>"+
   "</g>"+
   "</svg>";
 }
@@ -485,8 +490,7 @@ function renderPanel(){
         "</div>"+
       "</div>"+
       "<div class='optique-fields-col'>"+fieldsHtml+"</div>"+
-    "</div>"+
-    "<p class='opticsgeo-note'>Ces paramètres définissent la géométrie de l'ouverture et influencent la résolution, la lumière collectée et les performances globales du système.</p>";
+    "</div>";
   } else {
     html += fieldsHtml;
   }
@@ -516,13 +520,25 @@ function renderPanel(){
   if(block.id === "detecteur") wireQeSpectralUI();
   var actions = document.createElement("div");
   actions.className = "panel-actions";
+  // Bouton "Suivant" : avance au bloc suivant de la chaîne (Optique →
+  // Détecteur → Électronique → Performance WFE) — absent sur le dernier
+  // bloc, rien après.
+  var blockIdx = instrumentNode.blocks.indexOf(block);
+  var nextBlock = instrumentNode.blocks[blockIdx + 1];
+  var nextBtnHtml = nextBlock
+    ? "<button class='btn next' type='button' id='btnNext'>Suivant : "+nextBlock.label+"</button>"
+    : "";
   actions.innerHTML = "<button class='btn ghost' type='button' id='btnReset'>Réinitialiser ce bloc</button>"+
-    "<button class='btn primary' type='button' id='btnSave'>Enregistrer l'instrument</button>";
+    "<div class='rightbtns'>"+nextBtnHtml+
+    "<button class='btn primary' type='button' id='btnSave'>Enregistrer l'instrument</button></div>";
   panelEl.appendChild(actions);
   document.getElementById("btnReset").addEventListener("click", function(){
     block.fields.forEach(function(f){ delete state.values[f.k]; });
     persist(); updateProgress(); renderChain(); renderPanel();
   });
+  if(nextBlock){
+    document.getElementById("btnNext").addEventListener("click", function(){ selectBlock(nextBlock.id); });
+  }
   document.getElementById("btnSave").addEventListener("click", saveToSupabase);
 }
 
@@ -652,8 +668,9 @@ function wireWfeCasesUI(){
 // l'échelle réelle des données (épaisseur des supports proportionnelle à D,
 // comme un vrai tracé matplotlib/MATLAB). Mis à jour en direct à chaque
 // frappe sur D/E/NSUP/ESUP (cf. l'appel dans le listener "input" de
-// renderPanel). Style "figure scientifique" depuis le 18/09/2026 : axes
-// gradués, grille, légende — plutôt qu'un plan technique avec cotes/appels.
+// renderPanel). Grille décorative en fond (appréciée telle quelle) +
+// cotes de plan CAD (D, d, supports) pour les valeurs — pas d'axes X/Y
+// gradués, retirés le 18/09/2026 ("les axes ne sont pas bien").
 function renderOpticsGeometry(){
   var host = document.getElementById("opticsGeoSvg");
   if(!host) return;
@@ -662,49 +679,17 @@ function renderOpticsGeometry(){
   var n = Math.max(0, Math.round(Number(state.values.NSUP) || 0));
   var t = Number(state.values.ESUP) || 0;
 
-  // ---- Repère de tracé (zone graphique, en pixels écran) ----
-  var plotLeft = 48, plotTop = 20, plotW = 300, plotH = 300;
-  var plotRight = plotLeft + plotW, plotBottom = plotTop + plotH;
+  var cx = 210, cy = 155, R = 105; // rayon à l'écran (px) représentant D
+  var rObsc = D > 0 ? R * Math.min(E / D, 0.92) : 0;
+  var strokeW = D > 0 && t > 0 ? Math.max(1.2, (t / D) * R) : 1.5;
 
-  // ---- Échelle de données : rayon physique affiché + marge, en mètres ----
-  var Rphys = (D > 0 ? D : 0.7) / 2;
-  var dataR = Math.max(Rphys * 1.35, 0.08);
+  // ---- Grille décorative (texture de fond, non graduée) ----
+  var gridStep = 40;
+  var grid = "<g stroke='var(--line-soft)' stroke-width='1'>";
+  for(var gx = 20; gx <= 420; gx += gridStep) grid += "<line x1='"+gx+"' y1='0' x2='"+gx+"' y2='310'/>";
+  for(var gy = 15; gy <= 295; gy += gridStep) grid += "<line x1='0' y1='"+gy+"' x2='440' y2='"+gy+"'/>";
+  grid += "</g>";
 
-  // Pas de graduation "rond" (1/2/5 × 10^n), ~4-5 graduations par axe —
-  // même logique qu'un axe auto-scalé matplotlib.
-  function niceStep(maxAbs){
-    var raw = maxAbs / 2.3;
-    var mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
-    var norm = raw / mag;
-    var n2 = norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10;
-    return n2 * mag;
-  }
-  var step = niceStep(dataR);
-  var ticks = [-2*step, -step, 0, step, 2*step].map(function(v){ return Math.round(v*1000)/1000; });
-
-  function mapX(dx){ return plotLeft + (dx + dataR) / (2*dataR) * plotW; }
-  function mapY(dy){ return plotTop + (dataR - dy) / (2*dataR) * plotH; } // Y écran inversé vs Y données
-
-  // Rayons/épaisseurs convertis en pixels via la même échelle que les axes
-  // (px par mètre) — le tracé reste proportionnellement correct, y compris
-  // l'épaisseur des supports.
-  var pxPerM = plotW / (2*dataR);
-  var R = Rphys * pxPerM;
-  var rObsc = D > 0 ? (E/2) * pxPerM : 0;
-  var strokeW = t > 0 ? Math.max(1.2, t * pxPerM) : 1.5;
-  var cx = mapX(0), cy = mapY(0);
-
-  // ---- Grille + graduations ----
-  var grid = "", tickMarks = "";
-  ticks.forEach(function(v){
-    var px = mapX(v), py = mapY(v);
-    grid += "<line x1='"+px.toFixed(1)+"' y1='"+plotTop+"' x2='"+px.toFixed(1)+"' y2='"+plotBottom+"' stroke='var(--line-soft)' stroke-width='1'/>";
-    grid += "<line x1='"+plotLeft+"' y1='"+py.toFixed(1)+"' x2='"+plotRight+"' y2='"+py.toFixed(1)+"' stroke='var(--line-soft)' stroke-width='1'/>";
-    tickMarks += "<text x='"+px.toFixed(1)+"' y='"+(plotBottom+14)+"' text-anchor='middle' class='geo-tick'>"+v+"</text>";
-    tickMarks += "<text x='"+(plotLeft-6)+"' y='"+(py.toFixed(1))+"' text-anchor='end' dominant-baseline='middle' class='geo-tick'>"+v+"</text>";
-  });
-
-  // ---- Supports, tracés à l'échelle réelle ----
   var struts = "";
   for(var i = 0; i < n; i++){
     var angle = (2 * Math.PI * i) / n - Math.PI / 2;
@@ -714,32 +699,51 @@ function renderOpticsGeometry(){
       "' stroke='var(--muted)' stroke-width='"+strokeW.toFixed(1)+"' stroke-linecap='round'/>";
   }
 
-  // ---- Légende (façon annotation matplotlib, coin de la zone de tracé) ----
-  var legendX = plotRight - 8, legendY = plotTop + 8;
-  var legendLines = [
-    "D = " + (D || "—") + " m",
-    "d = " + (E || 0) + " m",
-    n > 0 ? n + " × " + (t || 0) + " m" : "0 support",
-  ];
-  var legend =
-    "<rect x='"+(legendX-96)+"' y='"+legendY+"' width='96' height='"+(legendLines.length*15+10)+"' rx='3' "+
-      "fill='var(--panel)' stroke='var(--line-soft)' stroke-width='1' opacity='.92'/>"+
-    legendLines.map(function(l, i){
-      return "<text x='"+(legendX-88)+"' y='"+(legendY+18+i*15)+"' class='geo-dim'>"+l+"</text>";
-    }).join("");
+  // ---- Cotation du diamètre D, ligne horizontale sous le cercle ----
+  var dimY = cy + R + 34;
+  var xL = cx - R, xR = cx + R;
+  var dimD =
+    "<g stroke='var(--muted-2)' stroke-width='1'>"+
+      "<line x1='"+xL+"' y1='"+(cy+4)+"' x2='"+xL+"' y2='"+dimY+"'/>"+
+      "<line x1='"+xR+"' y1='"+(cy+4)+"' x2='"+xR+"' y2='"+dimY+"'/>"+
+      "<line x1='"+xL+"' y1='"+dimY+"' x2='"+xR+"' y2='"+dimY+"'/>"+
+    "</g>"+
+    "<path d='M"+xL+","+dimY+" l8,-3.5 v7 z' fill='var(--muted-2)'/>"+
+    "<path d='M"+xR+","+dimY+" l-8,-3.5 v7 z' fill='var(--muted-2)'/>"+
+    "<text x='"+cx+"' y='"+(dimY-7)+"' text-anchor='middle' class='geo-dim'>D = "+(D || "—")+" m</text>";
+
+  // ---- Appel de cote pour l'obscuration centrale, en diagonale ----
+  var obscLabel = "";
+  if(rObsc > 0){
+    var a1 = -40 * Math.PI / 180;
+    var lx1 = cx + rObsc * Math.cos(a1), ly1 = cy + rObsc * Math.sin(a1);
+    var lx2 = cx + R + 34, ly2 = cy - R + 6;
+    obscLabel =
+      "<circle cx='"+lx1.toFixed(1)+"' cy='"+ly1.toFixed(1)+"' r='2' fill='var(--muted-2)'/>"+
+      "<path d='M"+lx1.toFixed(1)+","+ly1.toFixed(1)+" L"+lx2+","+ly2+" h14' fill='none' stroke='var(--muted-2)' stroke-width='1'/>"+
+      "<text x='"+(lx2+18)+"' y='"+(ly2+4)+"' class='geo-dim'>d = "+(E || 0)+" m</text>";
+  }
+
+  // ---- Appel de cote pour les supports, en diagonale basse ----
+  var supLabel = "";
+  if(n > 0){
+    var a2 = 145 * Math.PI / 180;
+    var mx1 = cx + R * 0.62 * Math.cos(a2), my1 = cy + R * 0.62 * Math.sin(a2);
+    var mx2 = cx - R - 15, my2 = cy + R + 6;
+    supLabel =
+      "<circle cx='"+mx1.toFixed(1)+"' cy='"+my1.toFixed(1)+"' r='2' fill='var(--muted-2)'/>"+
+      "<path d='M"+mx1.toFixed(1)+","+my1.toFixed(1)+" L"+mx2+","+my2+" h-14' fill='none' stroke='var(--muted-2)' stroke-width='1'/>"+
+      "<text x='"+(mx2-18)+"' y='"+(my2+4)+"' text-anchor='end' class='geo-dim'>"+n+" × "+(t || 0)+" m</text>";
+  }
 
   host.innerHTML =
-    "<svg viewBox='0 0 400 380' preserveAspectRatio='xMidYMid meet' style='width:100%;height:100%;display:block'>"+
-      "<text x='"+(plotLeft+plotW/2)+"' y='12' text-anchor='middle' class='geo-title'>Plan pupille — vue de face</text>"+
+    "<svg viewBox='0 0 440 310' preserveAspectRatio='xMidYMid meet' style='width:100%;height:100%;display:block'>"+
+      "<rect x='0' y='0' width='440' height='310' fill='var(--void)'/>"+
       grid+
-      "<rect x='"+plotLeft+"' y='"+plotTop+"' width='"+plotW+"' height='"+plotH+"' fill='none' stroke='var(--muted-2)' stroke-width='1'/>"+
-      tickMarks+
-      "<text x='"+(plotLeft+plotW/2)+"' y='"+(plotBottom+30)+"' text-anchor='middle' class='geo-axislabel'>X (m)</text>"+
-      "<text x='14' y='"+(plotTop+plotH/2)+"' text-anchor='middle' class='geo-axislabel' transform='rotate(-90,14,"+(plotTop+plotH/2)+")'>Y (m)</text>"+
-      "<circle cx='"+cx.toFixed(1)+"' cy='"+cy.toFixed(1)+"' r='"+R.toFixed(1)+"' fill='var(--void)' stroke='var(--pixel)' stroke-width='1.6'/>"+
+      "<circle cx='"+cx+"' cy='"+cy+"' r='"+R+"' fill='var(--void)' stroke='var(--pixel)' stroke-width='1.6'/>"+
       struts+
-      (rObsc > 0 ? "<circle cx='"+cx.toFixed(1)+"' cy='"+cy.toFixed(1)+"' r='"+rObsc.toFixed(1)+"' fill='var(--panel)' stroke='var(--line)' stroke-width='1.2'/>" : "")+
-      legend+
+      (rObsc > 0 ? "<circle cx='"+cx+"' cy='"+cy+"' r='"+rObsc.toFixed(1)+"' fill='var(--panel)' stroke='var(--line)' stroke-width='1.2'/>" : "")+
+      dimD + obscLabel + supLabel +
     "</svg>";
 }
 
