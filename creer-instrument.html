@@ -148,15 +148,16 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .geo-dim{font-family:var(--mono);font-size:10px;fill:var(--muted-2)}
 .optique-grid{display:flex;gap:22px;align-items:stretch;margin-bottom:14px}
 .optique-geo-col{flex:1;min-width:0;border:1px solid var(--line-soft);border-radius:6px;
-  padding:18px 14px 14px;background:var(--panel-2);display:flex;flex-direction:column}
+  padding:14px 14px 12px;background:var(--panel-2);display:flex;flex-direction:column}
 #opticsGeoSvg{flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
-.geo-viewlabel{display:flex;align-items:center;gap:7px;margin-top:10px;flex:none;
+.geo-viewlabel{display:flex;align-items:center;gap:7px;margin-top:8px;flex:none;
   font-family:var(--mono);font-size:11px;color:var(--muted-2)}
 .geo-viewlabel svg{flex:none}
-.optique-fields-col{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:space-between}
-.optique-fields-col .field{margin-bottom:0}
+.optique-fields-col{flex:1;min-width:0}
+.optique-fields-col .field{margin-bottom:10px}
+.optique-fields-col .field:last-child{margin-bottom:0}
 .opticsgeo-note{display:flex;gap:8px;font-size:12.5px;color:var(--muted);line-height:1.5;
-  padding-top:14px;border-top:1px solid var(--line-soft)}
+  padding-top:12px;border-top:1px solid var(--line-soft)}
 @media(max-width:720px){.optique-grid{flex-direction:column}}
 
 .qespectral .qerow{display:flex;align-items:center;gap:8px;padding:6px 0;
@@ -654,7 +655,7 @@ function renderOpticsGeometry(){
   var n = Math.max(0, Math.round(Number(state.values.NSUP) || 0));
   var t = Number(state.values.ESUP) || 0;
 
-  var cx = 200, cy = 105, R = 78; // rayon à l'écran (px) représentant D
+  var cx = 210, cy = 155, R = 105; // rayon à l'écran (px) représentant D — agrandi le 18/09/2026
   var rObsc = D > 0 ? R * Math.min(E / D, 0.92) : 0;
   var strokeW = D > 0 && t > 0 ? Math.max(1.2, (t / D) * R) : 1.5;
 
@@ -704,7 +705,7 @@ function renderOpticsGeometry(){
   if(n > 0){
     var a2 = 145 * Math.PI / 180;
     var mx1 = cx + R * 0.62 * Math.cos(a2), my1 = cy + R * 0.62 * Math.sin(a2);
-    var mx2 = cx - R - 22, my2 = cy + R + 6;
+    var mx2 = cx - R - 15, my2 = cy + R + 6;
     supLabel =
       "<circle cx='"+mx1.toFixed(1)+"' cy='"+my1.toFixed(1)+"' r='2' fill='var(--muted-2)'/>"+
       "<path d='M"+mx1.toFixed(1)+","+my1.toFixed(1)+" L"+mx2+","+my2+" h-14' fill='none' stroke='var(--muted-2)' stroke-width='1'/>"+
@@ -712,7 +713,7 @@ function renderOpticsGeometry(){
   }
 
   host.innerHTML =
-    "<svg viewBox='0 0 400 230' preserveAspectRatio='xMidYMid meet' style='width:100%;height:100%;display:block'>"+
+    "<svg viewBox='0 0 440 310' preserveAspectRatio='xMidYMid meet' style='width:100%;height:100%;display:block'>"+
       axes+
       "<circle cx='"+cx+"' cy='"+cy+"' r='"+R+"' fill='var(--void)' stroke='var(--pixel)' stroke-width='1.6'/>"+
       struts+
