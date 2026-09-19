@@ -146,6 +146,9 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .wfecases .empty{font-size:12px;color:var(--muted-2);padding:8px 0 2px}
 
 .geo-dim{font-family:var(--mono);font-size:10px;fill:var(--muted-2)}
+.geo-tick{font-family:var(--mono);font-size:9px;fill:var(--muted-2)}
+.geo-title{font-family:var(--mono);font-size:10.5px;fill:var(--muted);letter-spacing:.02em}
+.geo-axislabel{font-family:var(--mono);font-size:9.5px;fill:var(--muted-2);letter-spacing:.04em}
 .optique-grid{display:flex;gap:22px;align-items:flex-start;margin-bottom:14px}
 .optique-geo-col{flex:1;min-width:0;border:1px solid var(--line-soft);border-radius:6px;
   padding:14px 14px 10px;background:var(--panel-2);height:250px;box-sizing:border-box;
@@ -647,11 +650,12 @@ function wireWfeCasesUI(){
 // Cercle extérieur = diamètre de pupille (D), cercle intérieur = obscuration
 // centrale (E, même convention que les presets existants : un diamètre, pas
 // un rayon — cf. presets.js, ex. Pléiades Neo D:0.91/E:0.3185), traits
-// radiaux = supports du secondaire (NSUP compte, ESUP épaisseur). Mis à
-// jour en direct à chaque frappe sur D/E/NSUP/ESUP (cf. l'appel dans le
-// listener "input" de renderPanel). Rendu inline dans renderPanel (bloc
-// .optique-geo-col, mise en page 2 colonnes) plutôt que via une fonction
-// -Html dédiée depuis le 18/09/2026.
+// radiaux = supports du secondaire (NSUP compte, ESUP épaisseur), tracés à
+// l'échelle réelle des données (épaisseur des supports proportionnelle à D,
+// comme un vrai tracé matplotlib/MATLAB). Mis à jour en direct à chaque
+// frappe sur D/E/NSUP/ESUP (cf. l'appel dans le listener "input" de
+// renderPanel). Style "figure scientifique" depuis le 18/09/2026 : axes
+// gradués, grille, légende — plutôt qu'un plan technique avec cotes/appels.
 function renderOpticsGeometry(){
   var host = document.getElementById("opticsGeoSvg");
   if(!host) return;
@@ -660,10 +664,49 @@ function renderOpticsGeometry(){
   var n = Math.max(0, Math.round(Number(state.values.NSUP) || 0));
   var t = Number(state.values.ESUP) || 0;
 
-  var cx = 210, cy = 155, R = 105; // rayon à l'écran (px) représentant D — agrandi le 18/09/2026
-  var rObsc = D > 0 ? R * Math.min(E / D, 0.92) : 0;
-  var strokeW = D > 0 && t > 0 ? Math.max(1.2, (t / D) * R) : 1.5;
+  // ---- Repère de tracé (zone graphique, en pixels écran) ----
+  var plotLeft = 48, plotTop = 20, plotW = 300, plotH = 300;
+  var plotRight = plotLeft + plotW, plotBottom = plotTop + plotH;
 
+  // ---- Échelle de données : rayon physique affiché + marge, en mètres ----
+  var Rphys = (D > 0 ? D : 0.7) / 2;
+  var dataR = Math.max(Rphys * 1.35, 0.08);
+
+  // Pas de graduation "rond" (1/2/5 × 10^n), ~4-5 graduations par axe —
+  // même logique qu'un axe auto-scalé matplotlib.
+  function niceStep(maxAbs){
+    var raw = maxAbs / 2.3;
+    var mag = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
+    var norm = raw / mag;
+    var n2 = norm < 1.5 ? 1 : norm < 3 ? 2 : norm < 7 ? 5 : 10;
+    return n2 * mag;
+  }
+  var step = niceStep(dataR);
+  var ticks = [-2*step, -step, 0, step, 2*step].map(function(v){ return Math.round(v*1000)/1000; });
+
+  function mapX(dx){ return plotLeft + (dx + dataR) / (2*dataR) * plotW; }
+  function mapY(dy){ return plotTop + (dataR - dy) / (2*dataR) * plotH; } // Y écran inversé vs Y données
+
+  // Rayons/épaisseurs convertis en pixels via la même échelle que les axes
+  // (px par mètre) — le tracé reste proportionnellement correct, y compris
+  // l'épaisseur des supports.
+  var pxPerM = plotW / (2*dataR);
+  var R = Rphys * pxPerM;
+  var rObsc = D > 0 ? (E/2) * pxPerM : 0;
+  var strokeW = t > 0 ? Math.max(1.2, t * pxPerM) : 1.5;
+  var cx = mapX(0), cy = mapY(0);
+
+  // ---- Grille + graduations ----
+  var grid = "", tickMarks = "";
+  ticks.forEach(function(v){
+    var px = mapX(v), py = mapY(v);
+    grid += "<line x1='"+px.toFixed(1)+"' y1='"+plotTop+"' x2='"+px.toFixed(1)+"' y2='"+plotBottom+"' stroke='var(--line-soft)' stroke-width='1'/>";
+    grid += "<line x1='"+plotLeft+"' y1='"+py.toFixed(1)+"' x2='"+plotRight+"' y2='"+py.toFixed(1)+"' stroke='var(--line-soft)' stroke-width='1'/>";
+    tickMarks += "<text x='"+px.toFixed(1)+"' y='"+(plotBottom+14)+"' text-anchor='middle' class='geo-tick'>"+v+"</text>";
+    tickMarks += "<text x='"+(plotLeft-6)+"' y='"+(py.toFixed(1))+"' text-anchor='end' dominant-baseline='middle' class='geo-tick'>"+v+"</text>";
+  });
+
+  // ---- Supports, tracés à l'échelle réelle ----
   var struts = "";
   for(var i = 0; i < n; i++){
     var angle = (2 * Math.PI * i) / n - Math.PI / 2;
@@ -673,57 +716,32 @@ function renderOpticsGeometry(){
       "' stroke='var(--muted)' stroke-width='"+strokeW.toFixed(1)+"' stroke-linecap='round'/>";
   }
 
-  // ---- Lignes d'axe (convention tiret-point, comme sur un plan) ----
-  var axes =
-    "<g stroke='var(--line)' stroke-width='1' stroke-dasharray='9,3,2,3' opacity='.7'>"+
-      "<line x1='"+(cx-R-22)+"' y1='"+cy+"' x2='"+(cx+R+22)+"' y2='"+cy+"'/>"+
-      "<line x1='"+cx+"' y1='"+(cy-R-16)+"' x2='"+cx+"' y2='"+(cy+R+16)+"'/>"+
-    "</g>";
-
-  // ---- Cotation du diamètre D, ligne horizontale sous le cercle ----
-  var dimY = cy + R + 34;
-  var xL = cx - R, xR = cx + R;
-  var dimD =
-    "<g stroke='var(--muted-2)' stroke-width='1'>"+
-      "<line x1='"+xL+"' y1='"+(cy+4)+"' x2='"+xL+"' y2='"+dimY+"'/>"+
-      "<line x1='"+xR+"' y1='"+(cy+4)+"' x2='"+xR+"' y2='"+dimY+"'/>"+
-      "<line x1='"+xL+"' y1='"+dimY+"' x2='"+xR+"' y2='"+dimY+"'/>"+
-    "</g>"+
-    "<path d='M"+xL+","+dimY+" l8,-3.5 v7 z' fill='var(--muted-2)'/>"+
-    "<path d='M"+xR+","+dimY+" l-8,-3.5 v7 z' fill='var(--muted-2)'/>"+
-    "<text x='"+cx+"' y='"+(dimY-7)+"' text-anchor='middle' class='geo-dim'>D = "+(D || "—")+" m</text>";
-
-  // ---- Appel de cote pour l'obscuration centrale, en diagonale ----
-  var obscLabel = "";
-  if(rObsc > 0){
-    var a1 = -40 * Math.PI / 180;
-    var lx1 = cx + rObsc * Math.cos(a1), ly1 = cy + rObsc * Math.sin(a1);
-    var lx2 = cx + R + 34, ly2 = cy - R + 6;
-    obscLabel =
-      "<circle cx='"+lx1.toFixed(1)+"' cy='"+ly1.toFixed(1)+"' r='2' fill='var(--muted-2)'/>"+
-      "<path d='M"+lx1.toFixed(1)+","+ly1.toFixed(1)+" L"+lx2+","+ly2+" h14' fill='none' stroke='var(--muted-2)' stroke-width='1'/>"+
-      "<text x='"+(lx2+18)+"' y='"+(ly2+4)+"' class='geo-dim'>d = "+(E || 0)+" m</text>";
-  }
-
-  // ---- Appel de cote pour les supports, en diagonale basse ----
-  var supLabel = "";
-  if(n > 0){
-    var a2 = 145 * Math.PI / 180;
-    var mx1 = cx + R * 0.62 * Math.cos(a2), my1 = cy + R * 0.62 * Math.sin(a2);
-    var mx2 = cx - R - 15, my2 = cy + R + 6;
-    supLabel =
-      "<circle cx='"+mx1.toFixed(1)+"' cy='"+my1.toFixed(1)+"' r='2' fill='var(--muted-2)'/>"+
-      "<path d='M"+mx1.toFixed(1)+","+my1.toFixed(1)+" L"+mx2+","+my2+" h-14' fill='none' stroke='var(--muted-2)' stroke-width='1'/>"+
-      "<text x='"+(mx2-18)+"' y='"+(my2+4)+"' text-anchor='end' class='geo-dim'>"+n+" × "+(t || 0)+" m</text>";
-  }
+  // ---- Légende (façon annotation matplotlib, coin de la zone de tracé) ----
+  var legendX = plotRight - 8, legendY = plotTop + 8;
+  var legendLines = [
+    "D = " + (D || "—") + " m",
+    "d = " + (E || 0) + " m",
+    n > 0 ? n + " × " + (t || 0) + " m" : "0 support",
+  ];
+  var legend =
+    "<rect x='"+(legendX-96)+"' y='"+legendY+"' width='96' height='"+(legendLines.length*15+10)+"' rx='3' "+
+      "fill='var(--panel)' stroke='var(--line-soft)' stroke-width='1' opacity='.92'/>"+
+    legendLines.map(function(l, i){
+      return "<text x='"+(legendX-88)+"' y='"+(legendY+18+i*15)+"' class='geo-dim'>"+l+"</text>";
+    }).join("");
 
   host.innerHTML =
-    "<svg viewBox='0 0 440 310' preserveAspectRatio='xMidYMid meet' style='width:100%;height:100%;display:block'>"+
-      axes+
-      "<circle cx='"+cx+"' cy='"+cy+"' r='"+R+"' fill='var(--void)' stroke='var(--pixel)' stroke-width='1.6'/>"+
+    "<svg viewBox='0 0 400 380' preserveAspectRatio='xMidYMid meet' style='width:100%;height:100%;display:block'>"+
+      "<text x='"+(plotLeft+plotW/2)+"' y='12' text-anchor='middle' class='geo-title'>Plan pupille — vue de face</text>"+
+      grid+
+      "<rect x='"+plotLeft+"' y='"+plotTop+"' width='"+plotW+"' height='"+plotH+"' fill='none' stroke='var(--muted-2)' stroke-width='1'/>"+
+      tickMarks+
+      "<text x='"+(plotLeft+plotW/2)+"' y='"+(plotBottom+30)+"' text-anchor='middle' class='geo-axislabel'>X (m)</text>"+
+      "<text x='14' y='"+(plotTop+plotH/2)+"' text-anchor='middle' class='geo-axislabel' transform='rotate(-90,14,"+(plotTop+plotH/2)+")'>Y (m)</text>"+
+      "<circle cx='"+cx.toFixed(1)+"' cy='"+cy.toFixed(1)+"' r='"+R.toFixed(1)+"' fill='var(--void)' stroke='var(--pixel)' stroke-width='1.6'/>"+
       struts+
-      (rObsc > 0 ? "<circle cx='"+cx+"' cy='"+cy+"' r='"+rObsc.toFixed(1)+"' fill='var(--panel)' stroke='var(--line)' stroke-width='1.2'/>" : "")+
-      dimD + obscLabel + supLabel +
+      (rObsc > 0 ? "<circle cx='"+cx.toFixed(1)+"' cy='"+cy.toFixed(1)+"' r='"+rObsc.toFixed(1)+"' fill='var(--panel)' stroke='var(--line)' stroke-width='1.2'/>" : "")+
+      legend+
     "</svg>";
 }
 
