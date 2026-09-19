@@ -850,6 +850,7 @@ var FIELD_LABELS = {
   Z: "Mode d'aberration",
   perfoCsv: "Cas WFE (CSV Zernike)",
   perfoCsvAlign: "Cadrage du cas WFE",
+  perfoCsvConvention: "Convention Zernike du cas WFE",
   qeSpectral: "Courbe QE(λ)"
 };
 
@@ -951,10 +952,17 @@ async function launchSimulation(){
   // correspond pas à celle, dépendante de l'altitude, de cette simulation
   // (cf. _remap_perfo_csv côté serveur) — "center" par défaut si absent
   // (cas WFE créé avant l'ajout de ce réglage).
+  // perfoCsvConvention : convention d'indexation Zernike du cas (cf.
+  // sélecteur "osa"/"noll" dans creer-instrument.html) — module_MTF.py
+  // en a besoin dès qu'un perfoCsv est fourni (paramFile.Telescope.
+  // WFE_convention, sans valeur par défaut côté backend). Converti en
+  // "OSA"/"Noll" (valeurs supposées attendues par op.convert_WFE, non
+  // confirmées faute d'accès à optics.py).
   var wfeCase = selectedWfeCase();
   if(wfeCase){
     payload.perfoCsv = wfeCase.csv;
     payload.perfoCsvAlign = wfeCase.align || "center";
+    payload.perfoCsvConvention = (wfeCase.convention === "noll") ? "Noll" : "OSA";
   }
 
   // Courbe QE(λ) réelle (cf. creer-instrument.html, state.values.qeSpectral)
