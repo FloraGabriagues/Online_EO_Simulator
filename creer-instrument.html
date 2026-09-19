@@ -170,6 +170,20 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .qespectral .qedel{appearance:none;cursor:pointer;background:transparent;border:none;
   color:var(--muted-2);font-size:15px;padding:2px 6px;flex:none}
 .qespectral .qedel:hover{color:var(--alert)}
+
+.zdetail{margin-bottom:0}
+.zpickrow{display:flex;gap:10px;margin-bottom:10px}
+.zpickrow select{flex:1;min-width:0;background:var(--panel-2);color:var(--paper);
+  border:1px solid var(--line);border-radius:3px;padding:6px 8px;font-family:var(--body);font-size:12.5px}
+.zgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(56px,1fr));gap:6px;
+  padding-top:8px;border-top:1px solid var(--line-soft)}
+.zcell{display:flex;flex-direction:column;align-items:center;background:var(--panel-2);
+  border:1px solid var(--line-soft);border-radius:4px;padding:4px 2px}
+.zcell .zlab{font-family:var(--mono);font-size:9px;color:var(--muted-2)}
+.zcell .zval{font-family:var(--mono);font-size:11px;color:var(--paper)}
+.zsum{margin-top:10px;padding-top:10px;border-top:1px solid var(--line-soft);
+  font-size:13px;color:var(--muted)}
+.zsum b{color:var(--pixel);font-family:var(--mono)}
 </style>
 </head>
 <body>
@@ -256,6 +270,11 @@ var SCHEMA = [
 ];
 
 var state = { active:"optique", values:{}, instrumentId:null };
+// Retour automatique vers simulations.html après enregistrement, si on
+// vient de là faute d'instrument existant (cf. renderInstruments dans
+// simulations.html, échange du 18/09/2026) — capturé une fois au
+// chargement, avant que saveToSupabase() ne réécrive l'URL avec ?id=.
+var returnTarget = new URLSearchParams(window.location.search).get("return");
 
 // persist() ne fait plus rien : l'état vit uniquement en mémoire
 // (state.values) pendant l'édition — la vraie sauvegarde (Supabase)
@@ -476,17 +495,20 @@ function renderPanel(){
     // renderQeChart pour ce qui est actuellement tracé.
     if(f.k === "QE") fieldsHtml += renderQeSpectralHtml();
   });
-  // Bloc Optique : mise en page 2 colonnes (plan à gauche, champs à
-  // droite), reprenant le style de référence partagé le 18/09/2026 —
-  // les autres blocs gardent la disposition simple, verticale.
+  // Blocs Optique et Détecteur : mise en page 2 colonnes (schéma à
+  // gauche, champs à droite) — Détecteur ajouté le 18/09/2026, reprend
+  // exactement la forme du bloc Optique avec son propre schéma en coupe.
+  // Les autres blocs gardent la disposition simple, verticale.
   var html = head;
-  if(block.id === "optique"){
+  if(block.id === "optique" || block.id === "detecteur"){
+    var svgId = block.id === "optique" ? "opticsGeoSvg" : "detectorGeoSvg";
+    var viewLabel = block.id === "optique" ? "Vue de face" : "Vue de côté";
     html += "<div class='optique-grid'>"+
       "<div class='optique-geo-col'>"+
-        "<div id='opticsGeoSvg'></div>"+
+        "<div id='"+svgId+"'></div>"+
         "<div class='geo-viewlabel'>"+
           "<svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><circle cx='12' cy='12' r='9'/><circle cx='12' cy='12' r='1.5' fill='currentColor'/><line x1='12' y1='1' x2='12' y2='5'/><line x1='12' y1='19' x2='12' y2='23'/><line x1='1' y1='12' x2='5' y2='12'/><line x1='19' y1='12' x2='23' y2='12'/></svg>"+
-          "Vue de face"+
+          viewLabel+
         "</div>"+
       "</div>"+
       "<div class='optique-fields-col'>"+fieldsHtml+"</div>"+
@@ -502,6 +524,7 @@ function renderPanel(){
       updateProgress();
       renderChain(); // met à jour le statut ✓/!/○ du bloc en cours de saisie
       if(block.id === "optique") renderOpticsGeometry(); // aperçu géométrique en direct
+      if(block.id === "detecteur") renderDetectorGeometry();
       // NSUP change : le placeholder d'ESUP ("obligatoire" ou "0 (défaut)")
       // en dépend — mis à jour directement sur l'input existant plutôt
       // qu'avec un renderPanel() complet, pour ne pas perdre le focus en
@@ -516,8 +539,8 @@ function renderPanel(){
     });
   });
   if(block.id === "optique") renderOpticsGeometry();
+  if(block.id === "detecteur") { renderDetectorGeometry(); wireQeSpectralUI(); }
   if(block.id === "wfe") wireWfeCasesUI();
-  if(block.id === "detecteur") wireQeSpectralUI();
   var actions = document.createElement("div");
   actions.className = "panel-actions";
   // Bouton "Suivant" : avance au bloc suivant de la chaîne (Optique →
@@ -582,7 +605,87 @@ function renderWfeCasesHtml(){
     "<p class='wfesub'>Optionnel — CSV Zernike réel (Detector_ID;Band;Column;Z1..Z37), choisi au lancement de la simulation. Le cadrage (centre/bord) dit quelle portion du CSV garder si sa largeur ne correspond pas exactement à la simulation.</p>"+
     (cases.length ? rows : "<p class='empty'>Aucun cas WFE défini.</p>")+
     "<input type='file' id='wfeCaseFileInput' accept='.csv,text/csv' style='display:none'>"+
+  "</div>"+
+  renderZernikeDetailHtml(cases);
+}
+
+// ===================== Détail Zernike par colonne =====================
+// Le CSV d'un cas WFE (cf. ci-dessus) est une ligne par couple
+// (Detector_ID, Band, Column) — chaque ligne porte 37 coefficients de
+// Zernike (Z1..Z37). Ajouté le 18/09/2026 : parse le CSV côté site pour
+// afficher, pour une colonne choisie, le détail de ses 37 coefficients et
+// leur somme — jusqu'ici le CSV n'était que transmis brut, jamais
+// affiché.
+function parsePerfoCsvRows(text){
+  if(!text) return [];
+  var lines = text.split(/\r?\n/).filter(function(l){ return l.trim(); });
+  if(lines.length < 2) return [];
+  var header = lines[0].split(";").map(function(h){ return h.trim(); });
+  var detIdx = header.indexOf("Detector_ID"), bandIdx = header.indexOf("Band"), colIdx = header.indexOf("Column");
+  var zIdx = [];
+  for(var i = 1; i <= 37; i++) zIdx.push(header.indexOf("Z"+i));
+  var rows = [];
+  for(var r = 1; r < lines.length; r++){
+    var cells = lines[r].split(";");
+    if(cells.length < header.length) continue;
+    var z = zIdx.map(function(idx){
+      if(idx < 0 || idx >= cells.length) return 0;
+      var v = parseFloat((cells[idx] || "").trim().replace(",", "."));
+      return isNaN(v) ? 0 : v;
+    });
+    rows.push({
+      detector: detIdx >= 0 ? (cells[detIdx] || "").trim() : "",
+      band: bandIdx >= 0 ? (cells[bandIdx] || "").trim() : "",
+      column: colIdx >= 0 ? (cells[colIdx] || "").trim() : String(r),
+      z: z
+    });
+  }
+  return rows;
+}
+
+function renderZernikeDetailHtml(cases){
+  return "<div class='wfecases zdetail'>"+
+    "<div class='wfehead'><label>Détail Zernike</label></div>"+
+    "<p class='wfesub'>Coefficients Z1 à Z37 d'une colonne donnée, pour un cas WFE chargé ci-dessus, et leur somme.</p>"+
+    (cases.length
+      ? "<div class='zpickrow'>"+
+          "<select id='zernCaseSel'>"+cases.map(function(c){ return "<option value='"+c.id+"'>"+c.name+"</option>"; }).join("")+"</select>"+
+          "<select id='zernColSel'></select>"+
+        "</div>"+
+        "<div id='zernOut'></div>"
+      : "<p class='empty'>Charge un cas WFE ci-dessus pour voir le détail.</p>")+
   "</div>";
+}
+
+function renderZernikeDetail(){
+  var caseSel = document.getElementById("zernCaseSel");
+  var colSel = document.getElementById("zernColSel");
+  var out = document.getElementById("zernOut");
+  if(!caseSel) return; // aucun cas WFE — rien à afficher
+
+  var cases = state.values.wfeCases || [];
+  var selectedCase = cases.find(function(c){ return c.id === caseSel.value; }) || cases[0];
+  if(!selectedCase){ out.innerHTML = ""; return; }
+
+  var rows = parsePerfoCsvRows(selectedCase.csv);
+  var prevCol = colSel.value;
+  colSel.innerHTML = rows.map(function(r, i){
+    return "<option value='"+i+"'>"+(r.band ? "Bande "+r.band+" — " : "")+"Colonne "+r.column+"</option>";
+  }).join("") || "<option value=''>—</option>";
+  if(rows.some(function(r, i){ return String(i) === prevCol; })) colSel.value = prevCol;
+
+  var idx = Number(colSel.value) || 0;
+  var row = rows[idx];
+  if(!row){
+    out.innerHTML = "<p class='empty'>CSV illisible ou vide.</p>";
+    return;
+  }
+
+  var sum = row.z.reduce(function(a, b){ return a + b; }, 0);
+  var cells = row.z.map(function(v, i){
+    return "<div class='zcell'><span class='zlab'>Z"+(i+1)+"</span><span class='zval'>"+v.toFixed(2)+"</span></div>";
+  }).join("");
+  out.innerHTML = "<div class='zgrid'>"+cells+"</div><div class='zsum'>Somme (Z1→Z37) : <b>"+sum.toFixed(3)+"</b></div>";
 }
 
 // Validation légère — on ne parse pas vraiment le CSV (le serveur le fait
@@ -658,6 +761,14 @@ function wireWfeCasesUI(){
       renderPanel();
     });
   });
+
+  var zernCaseSel = document.getElementById("zernCaseSel");
+  var zernColSel = document.getElementById("zernColSel");
+  if(zernCaseSel && zernColSel){
+    renderZernikeDetail();
+    zernCaseSel.addEventListener("change", renderZernikeDetail);
+    zernColSel.addEventListener("change", renderZernikeDetail);
+  }
 }
 
 // ===================== Aperçu géométrique du plan pupille =====================
@@ -744,6 +855,78 @@ function renderOpticsGeometry(){
       struts+
       (rObsc > 0 ? "<circle cx='"+cx+"' cy='"+cy+"' r='"+rObsc.toFixed(1)+"' fill='var(--panel)' stroke='var(--line)' stroke-width='1.2'/>" : "")+
       dimD + obscLabel + supLabel +
+    "</svg>";
+}
+
+// ===================== Aperçu géométrique du détecteur (coupe, vue de côté) =====================
+// Ajouté le 18/09/2026 — même esprit que renderOpticsGeometry (grille
+// décorative + cote CAD), mais en coupe : rangée de pixels posée sur un
+// substrat, lumière incidente en haut, cote sur la largeur de pixel (PX,
+// µm — pas en mètres comme l'optique). Purement visuel : PX est le seul
+// paramètre réellement utilisé ici, R/P/K/FW/QE ne changent rien au dessin
+// (ce ne sont pas des grandeurs géométriques).
+function renderDetectorGeometry(){
+  var host = document.getElementById("detectorGeoSvg");
+  if(!host) return;
+  var PX = Number(state.values.PX) || 0;
+
+  var cx = 220, pxSize = 36, nPix = 6;
+  var rowW = pxSize * nPix, xStart = cx - rowW / 2;
+  var subTop = 180, subH = 36, pixTop = subTop - 32;
+
+  // ---- Grille décorative (même texture que le plan pupille) ----
+  var gridStep = 40;
+  var grid = "<g stroke='var(--line-soft)' stroke-width='1'>";
+  for(var gx = 20; gx <= 420; gx += gridStep) grid += "<line x1='"+gx+"' y1='0' x2='"+gx+"' y2='310'/>";
+  for(var gy = 15; gy <= 295; gy += gridStep) grid += "<line x1='0' y1='"+gy+"' x2='440' y2='"+gy+"'/>";
+  grid += "</g>";
+
+  // ---- Substrat ----
+  var substrate = "<rect x='"+(xStart-4)+"' y='"+subTop+"' width='"+(rowW+8)+"' height='"+subH+"' rx='3' "+
+    "fill='var(--panel-2)' stroke='var(--line)' stroke-width='1.2'/>";
+
+  // ---- Pixels (carrés jointifs sur le substrat) ----
+  var pixels = "";
+  for(var i = 0; i < nPix; i++){
+    var px = xStart + i * pxSize;
+    pixels += "<rect x='"+px+"' y='"+pixTop+"' width='"+pxSize+"' height='32' "+
+      "fill='url(#chipGrad2)' fill-opacity='.5' stroke='var(--pixel)' stroke-opacity='.6' stroke-width='1'/>";
+  }
+
+  // ---- Lumière incidente (flèches vers le bas) ----
+  var light = "<g stroke='var(--photon)' stroke-width='1.6' stroke-linecap='round'>";
+  for(var lx = xStart + pxSize*0.5; lx <= xStart + rowW; lx += pxSize){
+    light += "<line x1='"+lx+"' y1='108' x2='"+lx+"' y2='"+(pixTop-6)+"'/>"+
+      "<path d='M"+lx+","+(pixTop-6)+" l-4,-7 h8 z' fill='var(--photon)' stroke='none'/>";
+  }
+  light += "</g>"+
+    "<text x='"+cx+"' y='98' text-anchor='middle' class='geo-dim'>Lumière incidente</text>";
+
+  // ---- Cotation de la largeur d'un pixel (le 4e, à peu près centré) ----
+  var dimIdx = Math.floor(nPix / 2);
+  var dxL = xStart + dimIdx * pxSize, dxR = dxL + pxSize;
+  var dimY = subTop + subH + 34;
+  var dimPx =
+    "<g stroke='var(--muted-2)' stroke-width='1'>"+
+      "<line x1='"+dxL+"' y1='"+(subTop+subH+4)+"' x2='"+dxL+"' y2='"+dimY+"'/>"+
+      "<line x1='"+dxR+"' y1='"+(subTop+subH+4)+"' x2='"+dxR+"' y2='"+dimY+"'/>"+
+      "<line x1='"+dxL+"' y1='"+dimY+"' x2='"+dxR+"' y2='"+dimY+"'/>"+
+    "</g>"+
+    "<path d='M"+dxL+","+dimY+" l8,-3.5 v7 z' fill='var(--muted-2)'/>"+
+    "<path d='M"+dxR+","+dimY+" l-8,-3.5 v7 z' fill='var(--muted-2)'/>"+
+    "<text x='"+((dxL+dxR)/2)+"' y='"+(dimY-7)+"' text-anchor='middle' class='geo-dim'>PX = "+(PX || "—")+" µm</text>";
+
+  host.innerHTML =
+    "<svg viewBox='0 0 440 310' preserveAspectRatio='xMidYMid meet' style='width:100%;height:100%;display:block'>"+
+      "<defs><linearGradient id='chipGrad2' x1='0' y1='0' x2='1' y2='1'>"+
+        "<stop offset='0%' stop-color='var(--pixel)'/><stop offset='100%' stop-color='#8A6CF2'/>"+
+      "</linearGradient></defs>"+
+      "<rect x='0' y='0' width='440' height='310' fill='var(--void)'/>"+
+      grid+
+      light+
+      substrate+
+      pixels+
+      dimPx+
     "</svg>";
 }
 
@@ -937,6 +1120,16 @@ async function saveToSupabase(){
 
   hint.style.color = "var(--ok)";
   hint.textContent = "Enregistré.";
+
+  // Retour vers simulations.html, étape 3, si on vient de là (cf.
+  // returnTarget ci-dessus) — uniquement à la toute première sauvegarde
+  // (result.data.id vient d'être créé juste au-dessus) : une fois
+  // revenu, on ne veut plus re-rediriger sur d'éventuelles sauvegardes
+  // suivantes de cette même session sur cette page.
+  if(returnTarget === "simulations" && result.data){
+    window.location.href = "simulations.html?newInstrument=" + result.data.id;
+    return;
+  }
 }
 
 function updateProgress(){

@@ -581,7 +581,6 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
           </div>
           <p class="mnote" id="settingsSubNote" style="margin:0 0 12px"></p>
           <div class="msection-actions">
-            <button class="mbtn primary" id="settingsUpgradeBtn" type="button" style="display:none">Passer à l'offre Équipe</button>
             <button class="mbtn danger" id="settingsCancelBtn" type="button">Résilier mon abonnement</button>
           </div>
         </div>
@@ -783,7 +782,6 @@ async function initSettingsModal(session){
   var subStatusText = document.getElementById("settingsSubStatusText");
   var subNote = document.getElementById("settingsSubNote");
   var cancelBtn = document.getElementById("settingsCancelBtn");
-  var upgradeBtn = document.getElementById("settingsUpgradeBtn");
 
   document.getElementById("settingsEmail").textContent = session.user.email || "";
   document.getElementById("settingsCreated").textContent = session.user.created_at
@@ -796,7 +794,6 @@ async function initSettingsModal(session){
     planBadge.classList.toggle("team", isTeam);
     planName.textContent = isTeam ? "Plan Équipe" : "Plan Individuel";
     planDesc.textContent = isTeam ? "Accès complet, pensé pour un usage collectif" : "Accès complet à toutes les fonctionnalités";
-    upgradeBtn.style.display = isTeam ? "none" : "inline-flex";
 
     if(account.cancellation_requested){
       subStatusDot.className = "pstatus pending";
@@ -810,14 +807,6 @@ async function initSettingsModal(session){
       subNote.textContent = "";
       subNote.className = "mnote";
       cancelBtn.textContent = "Résilier mon abonnement";
-    }
-
-    if(account.upgrade_requested){
-      upgradeBtn.textContent = "Demande envoyée — on te recontacte";
-      upgradeBtn.disabled = true;
-    } else {
-      upgradeBtn.textContent = "Passer à l'offre Équipe";
-      upgradeBtn.disabled = false;
     }
   }
   renderSubscription();
@@ -868,16 +857,6 @@ async function initSettingsModal(session){
     cancelBtn.disabled = false;
     if(error){ alert("Erreur : " + error.message); return; }
     account.cancellation_requested = requesting;
-    renderSubscription();
-  });
-
-  upgradeBtn.addEventListener("click", async function(){
-    if(!confirm("Envoyer une demande de passage à l'offre Équipe ? Nous te recontacterons pour la mise en place.")) return;
-    upgradeBtn.disabled = true;
-    var { error } = await supabaseClient.from("accounts")
-      .update({ upgrade_requested: true }).eq("id", session.user.id);
-    if(error){ alert("Erreur : " + error.message); upgradeBtn.disabled = false; return; }
-    account.upgrade_requested = true;
     renderSubscription();
   });
 

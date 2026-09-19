@@ -125,9 +125,8 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .instoption .meta{font-family:var(--mono);font-size:11px;color:var(--muted-2);margin-top:2px}
 .instoption .check{margin-left:auto;flex:none;color:var(--pixel);opacity:0}
 .instoption.selected .check{opacity:1}
-.empty-inst{font-size:13px;color:var(--muted);padding:20px 0}
-.empty-inst a{color:var(--pixel);text-decoration:none}
-.empty-inst a:hover{text-decoration:underline}
+.empty-inst{font-size:13px;color:var(--muted);padding:20px 0;display:flex;flex-direction:column;gap:14px}
+.empty-inst a.nextbtn{display:block;text-align:center;text-decoration:none;box-sizing:border-box}
 
 .fieldsgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px}
 .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
@@ -584,7 +583,6 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
           </div>
           <p class="mnote" id="settingsSubNote" style="margin:0 0 12px"></p>
           <div class="msection-actions">
-            <button class="mbtn primary" id="settingsUpgradeBtn" type="button" style="display:none">Passer à l'offre Équipe</button>
             <button class="mbtn danger" id="settingsCancelBtn" type="button">Résilier mon abonnement</button>
           </div>
         </div>
@@ -692,8 +690,10 @@ async function loadInstruments(){
 
 function renderInstruments(){
   if(instruments.length === 0){
-    instListEl.innerHTML = "<p class='empty-inst'>Aucun instrument enregistré — "+
-      "<a href='creer-instrument.html'>crée-en un d'abord</a>.</p>";
+    instListEl.innerHTML = "<div class='empty-inst'>"+
+      "<p style='margin:0'>Aucun instrument enregistré.</p>"+
+      "<a class='nextbtn' href='creer-instrument.html?return=simulations'>+ Créer un instrument</a>"+
+    "</div>";
     return;
   }
   instListEl.innerHTML = "";
@@ -785,7 +785,11 @@ function updatePanelButton(){
     btn.onclick = function(){ showStep(4); };
   } else {
     btn.textContent = "Suivant →";
-    btn.disabled = (currentStep === 1 && selectedInstIdx < 0 && instruments.length === 0);
+    // Étape 1 (scène) : jamais bloquée par l'absence d'instrument — on
+    // doit pouvoir passer à l'étape 2 même sans instrument existant, pour
+    // pouvoir en créer un depuis là (cf. renderInstruments). Étape 2
+    // (instrument) : bloquée tant qu'aucun instrument n'est sélectionné.
+    btn.disabled = (currentStep === 2 && selectedInstIdx < 0);
     btn.onclick = function(){ showStep(currentStep + 1); };
   }
   updateSummary();
@@ -831,6 +835,8 @@ var FIELD_LABELS = {
   T: "Transmission optique",
   W: "WFE RMS",
   PX: "Largeur pixel",
+  NSUP: "Nombre de supports",
+  ESUP: "Épaisseur des supports",
   R: "Bruit de lecture",
   P: "PRNU",
   K: "Courant d'obscurité",
@@ -933,6 +939,7 @@ async function launchSimulation(){
     D: inst.config.D, I: inst.config.I, W: inst.config.W, E: inst.config.E, T: inst.config.T,
     R: inst.config.R, P: inst.config.P, K: inst.config.K, FW: inst.config.FW,
     PX: inst.config.PX, QE: inst.config.QE, ADC: inst.config.ADC,
+    NSUP: inst.config.NSUP, ESUP: inst.config.ESUP,
   }, conditions);
 
   // Cas WFE actif (CSV Zernike réel) : remplace le mode simplifié W/Z pour
@@ -1173,7 +1180,6 @@ async function initSettingsModal(session){
   var subStatusText = document.getElementById("settingsSubStatusText");
   var subNote = document.getElementById("settingsSubNote");
   var cancelBtn = document.getElementById("settingsCancelBtn");
-  var upgradeBtn = document.getElementById("settingsUpgradeBtn");
 
   document.getElementById("settingsEmail").textContent = session.user.email || "";
   document.getElementById("settingsCreated").textContent = session.user.created_at
@@ -1186,7 +1192,6 @@ async function initSettingsModal(session){
     planBadge.classList.toggle("team", isTeam);
     planName.textContent = isTeam ? "Plan Équipe" : "Plan Individuel";
     planDesc.textContent = isTeam ? "Accès complet, pensé pour un usage collectif" : "Accès complet à toutes les fonctionnalités";
-    upgradeBtn.style.display = isTeam ? "none" : "inline-flex";
 
     if(account.cancellation_requested){
       subStatusDot.className = "pstatus pending";
@@ -1200,14 +1205,6 @@ async function initSettingsModal(session){
       subNote.textContent = "";
       subNote.className = "mnote";
       cancelBtn.textContent = "Résilier mon abonnement";
-    }
-
-    if(account.upgrade_requested){
-      upgradeBtn.textContent = "Demande envoyée — on te recontacte";
-      upgradeBtn.disabled = true;
-    } else {
-      upgradeBtn.textContent = "Passer à l'offre Équipe";
-      upgradeBtn.disabled = false;
     }
   }
   renderSubscription();
@@ -1258,16 +1255,6 @@ async function initSettingsModal(session){
     cancelBtn.disabled = false;
     if(error){ alert("Erreur : " + error.message); return; }
     account.cancellation_requested = requesting;
-    renderSubscription();
-  });
-
-  upgradeBtn.addEventListener("click", async function(){
-    if(!confirm("Envoyer une demande de passage à l'offre Équipe ? Nous te recontacterons pour la mise en place.")) return;
-    upgradeBtn.disabled = true;
-    var { error } = await supabaseClient.from("accounts")
-      .update({ upgrade_requested: true }).eq("id", session.user.id);
-    if(error){ alert("Erreur : " + error.message); upgradeBtn.disabled = false; return; }
-    account.upgrade_requested = true;
     renderSubscription();
   });
 
@@ -1323,6 +1310,24 @@ async function initSettingsModal(session){
   await initSettingsModal(session);
 
   await loadInstruments();
+
+  // Retour depuis creer-instrument.html?return=simulations (cf. échange
+  // du 18/09/2026) : instrument tout juste créé, on le sélectionne et on
+  // saute directement à l'étape 3 (conditions d'acquisition) plutôt que
+  // de laisser l'utilisateur repasser par la sélection.
+  var newInstId = new URLSearchParams(window.location.search).get("newInstrument");
+  if(newInstId){
+    var idx = instruments.findIndex(function(i){ return i.id === newInstId; });
+    if(idx >= 0){
+      selectedInstIdx = idx;
+      renderInstruments();
+      renderWfeCaseOptions();
+    }
+    window.history.replaceState(null, "", "simulations.html");
+    showStep(idx >= 0 ? 3 : 1);
+    return;
+  }
+
   renderSteps(1);
   updatePanelButton();
 })();
