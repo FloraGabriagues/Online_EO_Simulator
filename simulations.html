@@ -725,14 +725,17 @@ function renderWfeCaseOptions(){
   var cases = (selectedInstIdx >= 0 && instruments[selectedInstIdx].config && instruments[selectedInstIdx].config.wfeCases) || [];
   var current = sel.value;
   sel.innerHTML = "<option value=\"\">Simplifié (RMS + mode d'aberration)</option>" +
-    cases.map(function(c){ return "<option value='"+c.id+"'>"+c.name+"</option>"; }).join("");
+    cases.map(function(c){ return "<option value='"+c.id+"'>"+c.name+(c.mode === "rms" ? " (RMS)" : " (fichier)")+"</option>"; }).join("");
   sel.value = cases.some(function(c){ return c.id === current; }) ? current : "";
   toggleAberrationField();
 }
 
 function toggleAberrationField(){
-  var wfeCaseId = document.getElementById("fWfeCase").value;
-  document.getElementById("fZWrap").style.display = wfeCaseId ? "none" : "";
+  // Un cas "file" remplace entièrement le mode d'aberration simplifié
+  // (sa propre carte de Zernike en tient lieu) — un cas "rms" n'est qu'un
+  // W nommé, le mode d'aberration choisi ici s'applique toujours par-dessus.
+  var wfeCase = selectedWfeCase();
+  document.getElementById("fZWrap").style.display = (wfeCase && wfeCase.mode === "file") ? "none" : "";
 }
 
 function selectedWfeCase(){
@@ -767,11 +770,16 @@ function updateSummary(){
 
   if(currentStep >= 3){
     var wfeCase = selectedWfeCase();
+    var wfeLine = !wfeCase
+      ? document.getElementById("fZ").selectedOptions[0].textContent
+      : wfeCase.mode === "rms"
+        ? "Cas WFE : " + wfeCase.name + " · " + document.getElementById("fZ").selectedOptions[0].textContent
+        : "Cas WFE : " + wfeCase.name;
     document.getElementById("sumCondSlot").innerHTML =
       "<div class='sumlines'>"+
       document.getElementById("fH").value + " km · " + document.getElementById("fS").value + "°<br>"+
       "TI " + document.getElementById("fTI").value + "µs · TDI " + document.getElementById("fTDI").value + "<br>"+
-      (wfeCase ? "Cas WFE : " + wfeCase.name : document.getElementById("fZ").selectedOptions[0].textContent) +
+      wfeLine +
       "</div>";
   } else {
     document.getElementById("sumCondSlot").innerHTML = "<span class='empty'>—</span>";
@@ -903,7 +911,7 @@ async function launchSimulation(){
   document.getElementById("sumTDI").textContent = document.getElementById("fTDI").value;
   var wfeCaseForSummary = selectedWfeCase();
   document.getElementById("sumWfeCase").textContent = wfeCaseForSummary ? wfeCaseForSummary.name : "—";
-  document.getElementById("sumZ").textContent = wfeCaseForSummary
+  document.getElementById("sumZ").textContent = (wfeCaseForSummary && wfeCaseForSummary.mode === "file")
     ? "— (cas WFE actif)"
     : document.getElementById("fZ").selectedOptions[0].textContent;
 
@@ -943,26 +951,32 @@ async function launchSimulation(){
     NSUP: inst.config.NSUP, ESUP: inst.config.ESUP,
   }, conditions);
 
-  // Cas WFE actif (CSV Zernike réel) : remplace le mode simplifié W/Z pour
-  // cet envoi — même champ "perfoCsv" (texte brut) que côté backend
-  // SimulateParams/main.py, où W/Z sont alors ignorés pour le WFE mais
-  // restent requis dans le payload (valeurs de l'instrument envoyées
-  // normalement, simplement sans effet sur le résultat dans ce cas).
-  // perfoCsvAlign : quelle portion du CSV garder si sa largeur ne
-  // correspond pas à celle, dépendante de l'altitude, de cette simulation
-  // (cf. _remap_perfo_csv côté serveur) — "center" par défaut si absent
-  // (cas WFE créé avant l'ajout de ce réglage).
-  // perfoCsvConvention : convention d'indexation Zernike du cas (cf.
-  // sélecteur "osa"/"noll" dans creer-instrument.html) — module_MTF.py
-  // en a besoin dès qu'un perfoCsv est fourni (paramFile.Telescope.
-  // WFE_convention, sans valeur par défaut côté backend). Converti en
-  // "OSA"/"Noll" (valeurs supposées attendues par op.convert_WFE, non
-  // confirmées faute d'accès à optics.py).
+  // Cas WFE actif — deux formes possibles (cf. creer-instrument.html,
+  // échange du 19/09/2026) :
+  //  - "rms" : remplace juste W par la valeur du cas ; le mode
+  //    d'aberration choisi ci-dessus s'applique toujours par-dessus.
+  //  - "file" : CSV Zernike réel, remplace entièrement le mode simplifié
+  //    W/Z pour cet envoi — même champ "perfoCsv" (texte brut) que côté
+  //    backend SimulateParams/main.py, où W/Z sont alors ignorés pour le
+  //    WFE mais restent requis dans le payload (valeurs de l'instrument
+  //    envoyées normalement, simplement sans effet sur le résultat dans
+  //    ce cas). perfoCsvAlign : quelle portion du CSV garder si sa
+  //    largeur ne correspond pas à celle, dépendante de l'altitude, de
+  //    cette simulation (cf. _remap_perfo_csv côté serveur) — "center"
+  //    par défaut si absent. perfoCsvConvention : convention
+  //    d'indexation Zernike du cas — module_MTF.py en a besoin dès qu'un
+  //    perfoCsv est fourni (paramFile.Telescope.WFE_convention, sans
+  //    valeur par défaut côté backend). Valeurs "OSA"/"Noll"/"Fringe"
+  //    supposées attendues par op.convert_WFE, non confirmées faute
+  //    d'accès à optics.py.
   var wfeCase = selectedWfeCase();
-  if(wfeCase){
+  if(wfeCase && wfeCase.mode === "rms"){
+    payload.W = wfeCase.rms;
+  } else if(wfeCase){
     payload.perfoCsv = wfeCase.csv;
     payload.perfoCsvAlign = wfeCase.align || "center";
-    payload.perfoCsvConvention = (wfeCase.convention === "noll") ? "Noll" : "OSA";
+    payload.perfoCsvConvention = wfeCase.convention === "noll" ? "Noll"
+      : wfeCase.convention === "fringe" ? "Fringe" : "OSA";
   }
 
   // Courbe QE(λ) réelle (cf. creer-instrument.html, state.values.qeSpectral)
