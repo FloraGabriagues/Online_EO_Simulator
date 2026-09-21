@@ -743,39 +743,97 @@ function renderAcquisitionDiagram(){
   if(!host) return;
   var H = Number(document.getElementById("fH").value) || 500;
   var S = Number(document.getElementById("fS").value) || 45;
-  var satX = 360, satY = 78, groundY = 292, targetX = 360;
-  var solarLen = 165;
-  var angleRad = Math.max(8, Math.min(80, S)) * Math.PI / 180;
-  var sunX = targetX - solarLen * Math.cos(angleRad);
-  var sunY = groundY - solarLen * Math.sin(angleRad);
+
+  /* Diagramme volontairement très sobre : le satellite, la verticale nadir,
+     le rayon solaire et l'angle d'élévation sont les seules informations
+     graphiques importantes. */
+  var groundY = 274;
+  var targetX = 330;
+  var satY = 72;
+  var satX = targetX;
+  var angle = Math.max(8, Math.min(80, S));
+  var rad = angle * Math.PI / 180;
+  var solarLen = 150;
+  var sunX = targetX - solarLen * Math.cos(rad);
+  var sunY = groundY - solarLen * Math.sin(rad);
+  var arcR = 46;
+  var arcStartX = targetX - arcR;
+  var arcStartY = groundY;
+  var arcEndX = targetX - arcR * Math.cos(rad);
+  var arcEndY = groundY - arcR * Math.sin(rad);
+
   host.innerHTML =
-    "<svg viewBox='0 0 520 330' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Géométrie nadir et élévation solaire'>"+
+    "<svg viewBox='0 0 620 360' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Pointage nadir et élévation solaire'>"+
       "<defs>"+
-        "<linearGradient id='earthGrad' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='#173541'/><stop offset='100%' stop-color='#0B171F'/></linearGradient>"+
-        "<filter id='acqGlow'><feGaussianBlur stdDeviation='5' result='b'/><feMerge><feMergeNode in='b'/><feMergeNode in='SourceGraphic'/></feMerge></filter>"+
+        "<linearGradient id='earthFill' x1='0' y1='0' x2='0' y2='1'>"+
+          "<stop offset='0%' stop-color='#173543'/><stop offset='100%' stop-color='#0B171F'/>"+
+        "</linearGradient>"+
+        "<linearGradient id='skyFade' x1='0' y1='0' x2='0' y2='1'>"+
+          "<stop offset='0%' stop-color='#0C151D'/><stop offset='100%' stop-color='#091117'/>"+
+        "</linearGradient>"+
+        "<filter id='softGlow' x='-50%' y='-50%' width='200%' height='200%'>"+
+          "<feGaussianBlur stdDeviation='3' result='blur'/><feMerge><feMergeNode in='blur'/><feMergeNode in='SourceGraphic'/></feMerge>"+
+        "</filter>"+
+        "<marker id='arrowNadir' markerWidth='8' markerHeight='8' refX='6' refY='4' orient='auto'>"+
+          "<path d='M0,0 L8,4 L0,8 Z' fill='#5FDCD0'/>"+
+        "</marker>"+
       "</defs>"+
-      "<rect width='520' height='330' fill='var(--void)'/>"+
-      "<path d='M0 292 Q120 270 260 292 T520 292 L520 330 L0 330 Z' fill='url(#earthGrad)' stroke='var(--line)'/>"+
-      "<line x1='"+targetX+"' y1='112' x2='"+targetX+"' y2='282' stroke='var(--pixel)' stroke-width='2.2' stroke-dasharray='6 5' filter='url(#acqGlow)'/>"+
-      "<path d='M"+(targetX-10)+",270 h20 l-10,18 z' fill='var(--pixel)' opacity='.9'/>"+
-      "<text x='"+(targetX+14)+"' y='185' fill='var(--pixel)' font-family='var(--mono)' font-size='11'>Pointage nadir</text>"+
-      "<text x='"+(targetX+14)+"' y='202' fill='var(--muted-2)' font-family='var(--mono)' font-size='10'>0°</text>"+
-      "<line x1='"+targetX+"' y1='112' x2='"+targetX+"' y2='292' stroke='var(--muted-2)' stroke-width='1' opacity='.35'/>"+
-      "<g transform='translate("+satX+" 64)'>"+
-        "<rect x='-18' y='-9' width='36' height='18' rx='3' fill='var(--panel-2)' stroke='var(--pixel)'/>"+
-        "<rect x='-47' y='-7' width='23' height='14' rx='2' fill='var(--panel-2)' stroke='var(--line)'/>"+
-        "<rect x='24' y='-7' width='23' height='14' rx='2' fill='var(--panel-2)' stroke='var(--line)'/>"+
-        "<circle cx='0' cy='0' r='4' fill='var(--pixel)'/>"+
+
+      "<rect width='620' height='360' rx='5' fill='url(#skyFade)'/>"+
+      "<path d='M0 276 Q150 246 310 272 T620 265 L620 360 L0 360Z' fill='url(#earthFill)' stroke='#2E5261' stroke-width='1.2'/>"+
+      "<path d='M0 276 Q150 246 310 272 T620 265' fill='none' stroke='#385A68' stroke-width='1.4'/>"+
+
+      /* altitude */
+      "<line x1='500' y1='80' x2='500' y2='270' stroke='#8497AA' stroke-width='1' stroke-dasharray='3 6' opacity='.55'/>"+
+      "<line x1='492' y1='80' x2='508' y2='80' stroke='#8497AA' stroke-width='1'/>"+
+      "<line x1='492' y1='270' x2='508' y2='270' stroke='#8497AA' stroke-width='1'/>"+
+      "<text x='518' y='178' fill='#9BADBD' font-family='var(--mono)' font-size='11'>Altitude</text>"+
+      "<text x='518' y='195' fill='#E6EEF4' font-family='var(--mono)' font-size='12'>"+H+" km</text>"+
+
+      /* satellite */
+      "<g transform='translate("+satX+" "+satY+")'>"+
+        "<rect x='-18' y='-10' width='36' height='20' rx='3' fill='#182833' stroke='#5FDCD0' stroke-width='1.4'/>"+
+        "<rect x='-52' y='-8' width='27' height='16' rx='2' fill='#13242D' stroke='#40606E'/>"+
+        "<rect x='25' y='-8' width='27' height='16' rx='2' fill='#13242D' stroke='#40606E'/>"+
+        "<path d='M-48 -4h19M-48 0h19M-48 4h19M29 -4h19M29 0h19M29 4h19' stroke='#5FDCD0' stroke-width='.7' opacity='.65'/>"+
+        "<circle cx='0' cy='0' r='3.5' fill='#5FDCD0'/>"+
       "</g>"+
-      "<line x1='"+sunX.toFixed(1)+"' y1='"+sunY.toFixed(1)+"' x2='"+targetX+"' y2='"+groundY+"' stroke='var(--photon)' stroke-width='2' stroke-dasharray='7 5'/>"+
-      "<circle cx='"+sunX+"' cy='"+sunY+"' r='17' fill='none' stroke='var(--photon)' stroke-width='2'/>"+
-      "<g stroke='var(--photon)' stroke-width='1.5' opacity='.85'><line x1='"+(sunX-28)+"' y1='"+sunY+"' x2='"+(sunX-19)+"' y2='"+sunY+"'/><line x1='"+(sunX+19)+"' y1='"+sunY+"' x2='"+(sunX+28)+"' y2='"+sunY+"'/><line x1='"+sunX+"' y1='"+(sunY-28)+"' x2='"+sunX+"' y2='"+(sunY-19)+"'/><line x1='"+sunX+"' y1='"+(sunY+19)+"' x2='"+sunX+"' y2='"+(sunY+28)+"'/></g>"+
-      "<text x='"+(sunX-2)+"' y='"+(sunY+38)+"' text-anchor='middle' fill='var(--photon)' font-family='var(--mono)' font-size='11'>Soleil</text>"+
-      "<text x='"+(sunX+10)+"' y='"+(sunY+55)+"' fill='var(--paper)' font-family='var(--mono)' font-size='11'>Élévation solaire · "+S+"°</text>"+
-      "<line x1='"+(targetX-85)+"' y1='"+groundY+"' x2='"+(targetX+85)+"' y2='"+groundY+"' stroke='var(--muted-2)' stroke-width='1'/>"+
-      "<path d='M"+targetX+","+groundY+" A65,65 0 0 0 "+(targetX-65)+","+(groundY-0.1)+"' fill='none' stroke='var(--photon)' stroke-width='1.2' opacity='.55'/>"+
-      "<text x='"+(targetX+20)+"' y='"+(groundY-12)+"' fill='var(--muted-2)' font-family='var(--mono)' font-size='10'>surface terrestre</text>"+
-      "<text x='"+(targetX+10)+"' y='44' fill='var(--muted)' font-family='var(--mono)' font-size='10'>Altitude · "+H+" km</text>"+
+
+      /* nadir */
+      "<line x1='"+satX+"' y1='84' x2='"+targetX+"' y2='263' stroke='#5FDCD0' stroke-width='2' stroke-dasharray='7 6' marker-end='url(#arrowNadir)' filter='url(#softGlow)'/>"+
+      "<text x='"+(satX+18)+"' y='132' fill='#5FDCD0' font-family='var(--mono)' font-size='12'>Pointage nadir</text>"+
+      "<text x='"+(satX+18)+"' y='149' fill='#8497AA' font-family='var(--mono)' font-size='10'>0° par rapport à la verticale</text>"+
+
+      /* soleil + rayons */
+      "<g transform='translate("+sunX.toFixed(1)+" "+sunY.toFixed(1)+")' filter='url(#softGlow)'>"+
+        "<circle r='18' fill='#F5AC57' fill-opacity='.10' stroke='#F5AC57' stroke-width='2'/>"+
+        "<circle r='8' fill='#F5AC57' fill-opacity='.85'/>"+
+        "<g stroke='#F5AC57' stroke-width='1.5' stroke-linecap='round' opacity='.9'>"+
+          "<line x1='-30' y1='0' x2='-23' y2='0'/><line x1='23' y1='0' x2='30' y2='0'/>"+
+          "<line x1='0' y1='-30' x2='0' y2='-23'/><line x1='0' y1='23' x2='0' y2='30'/>"+
+          "<line x1='-21' y1='-21' x2='-16' y2='-16'/><line x1='21' y1='21' x2='16' y2='16'/>"+
+        "</g>"+
+      "</g>"+
+      "<line x1='"+sunX.toFixed(1)+"' y1='"+sunY.toFixed(1)+"' x2='"+targetX+"' y2='"+groundY+"' stroke='#F5AC57' stroke-width='2.2' stroke-dasharray='8 6'/>"+
+      "<text x='"+(sunX-10).toFixed(1)+"' y='"+(sunY+48).toFixed(1)+"' fill='#F5AC57' font-family='var(--mono)' font-size='11'>Soleil</text>"+
+
+      /* angle d'élévation */
+      "<line x1='"+(targetX-76)+"' y1='"+groundY+"' x2='"+(targetX+28)+"' y2='"+groundY+"' stroke='#8497AA' stroke-width='1' opacity='.55'/>"+
+      "<path d='M"+arcStartX.toFixed(1)+" "+arcStartY.toFixed(1)+" A"+arcR+" "+arcR+" 0 0 1 "+arcEndX.toFixed(1)+" "+arcEndY.toFixed(1)+"' fill='none' stroke='#F5AC57' stroke-width='2'/>"+
+      "<text x='"+(targetX-76)+"' y='"+(groundY-17)+"' fill='#F5AC57' font-family='var(--mono)' font-size='12'>"+angle+"°</text>"+
+      "<text x='"+(targetX-76)+"' y='"+(groundY-2)+"' fill='#9BADBD' font-family='var(--mono)' font-size='10'>élévation solaire</text>"+
+
+      /* point au sol */
+      "<circle cx='"+targetX+"' cy='"+groundY+"' r='4' fill='#5FDCD0'/>"+
+      "<circle cx='"+targetX+"' cy='"+groundY+"' r='13' fill='none' stroke='#5FDCD0' stroke-width='1' opacity='.28'/>"+
+      "<text x='"+(targetX+18)+"' y='"+(groundY+4)+"' fill='#9BADBD' font-family='var(--mono)' font-size='10'>point d'acquisition</text>"+
+
+      /* petits repères de lecture */
+      "<text x='24' y='32' fill='#8497AA' font-family='var(--mono)' font-size='10' letter-spacing='1.2'>GÉOMÉTRIE D'ACQUISITION</text>"+
+      "<line x1='24' y1='42' x2='190' y2='42' stroke='#22323F'/>"+
+      "<text x='24' y='326' fill='#5FDCD0' font-family='var(--mono)' font-size='10'>NADIR</text>"+
+      "<text x='76' y='326' fill='#8497AA' font-family='var(--mono)' font-size='10'>·</text>"+
+      "<text x='91' y='326' fill='#F5AC57' font-family='var(--mono)' font-size='10'>ÉLÉVATION SOLAIRE</text>"+
     "</svg>";
 }
 
