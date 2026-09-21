@@ -249,20 +249,19 @@ var SCHEMA = [
       {k:"T", label:"Transmission optique", unit:"τ", placeholder:"1 (défaut)"}
     ]},
     {id:"detecteur", label:"Détecteur", fields:[
-      {k:"DET_TYPE", label:"Type de détecteur", type:"select", options:["CMOS"]},
       // QE en fraction (τ, 0–1) et non en % — confirmé le 17/09/2026 par
       // radiometry.py : electrons = photons * QE_band, QE_band vient d'une
       // interpolation sur paramFile.Detector.QE_spectral.values, jamais
       // divisée par 100. Même convention que T (transmission optique).
       {k:"PX", label:"Largeur pixel", unit:"µm", placeholder:"obligatoire"},
+      {k:"R",  label:"Bruit de lecture", unit:"e⁻", placeholder:"0 (défaut)"},
       {k:"P",  label:"PRNU", unit:"%", placeholder:"0 (défaut)"},
       {k:"K",  label:"Courant d'obscurité", unit:"e⁻/s", placeholder:"0 (défaut)"},
+      {k:"FW", label:"Full well", unit:"e⁻", placeholder:"1 000 000 (défaut)"},
       {k:"QE", label:"Rendement quantique", unit:"τ", placeholder:"1 (défaut)"}
     ]},
     {id:"electronique", label:"Électronique", fields:[
-      {k:"ADC", label:"Résolution ADC", unit:"bits"},
-      {k:"FW", label:"Full well", unit:"e⁻", placeholder:"1 000 000 (défaut)"},
-      {k:"R",  label:"Bruit de lecture", unit:"e⁻", placeholder:"0 (défaut)"}
+      {k:"ADC",  label:"Résolution ADC", unit:"bits"}
     ]},
     {id:"wfe", label:"Performance WFE", fields:[
       {k:"W", label:"WFE RMS", unit:"nm", placeholder:"0 (défaut)"}
@@ -475,19 +474,16 @@ function renderPanel(){
   var head = "<h2>"+block.label+"</h2><p class='desc'>Renseignez les paramètres de ce bloc. Les valeurs non renseignées utilisent les valeurs par défaut du modèle.</p>";
   var fieldsHtml = "";
   block.fields.forEach(function(f){
-    var v = state.values[f.k] !== undefined ? state.values[f.k] : (f.k === "DET_TYPE" ? "CMOS" : "");
+    var v = state.values[f.k] !== undefined ? state.values[f.k] : "";
     var valueAttr = v !== "" ? " value='"+v+"'" : "";
     // ESUP : obligatoire seulement si des supports sont renseignés
     // (NSUP > 0) — sinon 0 par défaut, comme NSUP lui-même.
     var placeholder = f.placeholder;
     if(f.k === "ESUP") placeholder = (Number(state.values.NSUP) > 0) ? "obligatoire" : "0 (défaut)";
     var placeholderAttr = placeholder ? " placeholder='"+placeholder+"'" : "";
-    var control = f.type === "select"
-      ? "<select id='f-"+f.k+"'>" + f.options.map(function(opt){ return "<option value='"+opt+"'"+(String(v) === String(opt) ? " selected" : "")+">"+opt+"</option>"; }).join("") + "</select>"
-      : "<input type='number' step='any' id='f-"+f.k+"'"+valueAttr+placeholderAttr+">";
     fieldsHtml += "<div class='field'><label for='f-"+f.k+"'>"+f.label+"</label>"+
-      (f.type === "select" ? control : "<div class='row'>"+control+"<span class='unit'>"+(f.unit || "")+"</span></div>")+
-      "</div>";
+      "<div class='row'><input type='number' step='any' id='f-"+f.k+"'"+valueAttr+placeholderAttr+">"+
+      "<span class='unit'>"+f.unit+"</span></div></div>";
     // Le WFE RMS scalaire ci-dessus reste le mode simplifié (utilisé si
     // aucun cas WFE n'est sélectionné au lancement de la simulation).
     // Juste après, on permet d'associer des cas WFE nommés (ex. "Cas
@@ -541,13 +537,7 @@ function renderPanel(){
       }
       // renderChain() reconstruit les boutons : on garde le focus sur le bon champ
       var el = document.getElementById("f-"+f.k);
-      if(el && e.target.tagName === "INPUT") { el.focus(); var pos = e.target.value.length; el.setSelectionRange && el.setSelectionRange(pos,pos); }
-    });
-    if(f.type === "select") document.getElementById("f-"+f.k).addEventListener("change", function(e){
-      state.values[f.k] = e.target.value;
-      persist();
-      updateProgress();
-      renderChain();
+      if(el) { el.focus(); var pos = e.target.value.length; el.setSelectionRange && el.setSelectionRange(pos,pos); }
     });
   });
   if(block.id === "optique") renderOpticsGeometry();
@@ -1184,19 +1174,6 @@ function renderQeSpectralHtml(){
   "</div>";
 }
 
-function wavelengthToColor(wl){
-  var r=0,g=0,b=0;
-  if(wl < 440){ r=-(wl-440)/(440-380); g=0; b=1; }
-  else if(wl < 490){ r=0; g=(wl-440)/(490-440); b=1; }
-  else if(wl < 510){ r=0; g=1; b=-(wl-510)/(510-490); }
-  else if(wl < 580){ r=(wl-510)/(580-510); g=1; b=0; }
-  else if(wl < 645){ r=1; g=-(wl-645)/(645-580); b=0; }
-  else if(wl < 780){ r=1; g=0; b=0; }
-  else { r=0.72; g=0; b=0; }
-  var factor = wl < 420 ? 0.8 : (wl > 700 ? 0.9 : 1);
-  return "rgb("+Math.round(r*255*factor)+","+Math.round(g*255*factor)+","+Math.round(b*255*factor)+")";
-}
-
 function renderQeChart(){
   var host = document.getElementById("qeChart");
   if(!host) return;
@@ -1216,24 +1193,20 @@ function renderQeChart(){
   function x(wl){ return padL + (wl - wlMin) / wlSpan * (W - padL - padR); }
   function y(qe){ return H - padB - (qe - qeMin) / qeSpan * (H - padT - padB); }
   var pathD = pts.map(function(p, i){ return (i===0?"M":"L") + x(p.wl).toFixed(1) + "," + y(p.qe).toFixed(1); }).join(" ");
-  var stops = pts.map(function(p){
-    var offset = ((p.wl - wlMin) / wlSpan * 100).toFixed(2);
-    return "<stop offset='"+offset+"%' stop-color='"+wavelengthToColor(p.wl)+"'/>";
-  }).join("");
   var dots = pts.map(function(p){
-    return "<circle cx='"+x(p.wl).toFixed(1)+"' cy='"+y(p.qe).toFixed(1)+"' r='3' fill='"+wavelengthToColor(p.wl)+"'/>";
+    return "<circle cx='"+x(p.wl).toFixed(1)+"' cy='"+y(p.qe).toFixed(1)+"' r='3' fill='var(--pixel)'/>";
   }).join("");
   host.innerHTML =
     "<svg viewBox='0 0 "+W+" "+H+"' style='width:100%;height:auto;display:block;margin-top:10px'>"+
-      "<defs><linearGradient id='qeSpectralGradient' x1='"+padL+"' y1='0' x2='"+(W-padR)+"' y2='0' gradientUnits='userSpaceOnUse'>"+stops+"</linearGradient></defs>"+
       "<line x1='"+padL+"' y1='"+(H-padB)+"' x2='"+(W-padR)+"' y2='"+(H-padB)+"' stroke='var(--line-soft)'/>"+
       "<line x1='"+padL+"' y1='"+padT+"' x2='"+padL+"' y2='"+(H-padB)+"' stroke='var(--line-soft)'/>"+
       "<text x='"+padL+"' y='"+(H-4)+"' font-family='var(--mono)' font-size='9' fill='var(--muted-2)'>"+wlMin+" nm</text>"+
       "<text x='"+(W-padR)+"' y='"+(H-4)+"' text-anchor='end' font-family='var(--mono)' font-size='9' fill='var(--muted-2)'>"+wlMax+" nm</text>"+
-      "<path d='"+pathD+"' fill='none' stroke='url(#qeSpectralGradient)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
+      "<path d='"+pathD+"' fill='none' stroke='var(--pixel)' stroke-width='2'/>"+
       dots+
     "</svg>";
 }
+
 function wireQeSpectralUI(){
   renderQeChart();
 

@@ -129,11 +129,6 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .empty-inst a.nextbtn{display:block;text-align:center;text-decoration:none;box-sizing:border-box}
 
 .fieldsgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px}
-.acq-layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(300px,.8fr);gap:18px;align-items:stretch}
-.acq-illustration{background:var(--void);border:1px solid var(--line-soft);border-radius:6px;min-height:330px;overflow:hidden}
-.acq-illustration svg{width:100%;height:100%;display:block}
-.acq-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px;align-content:start}
-@media (max-width:900px){.acq-layout{grid-template-columns:1fr}.acq-illustration{min-height:280px}}
 .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
 .field select,.field input{width:100%;box-sizing:border-box;background:var(--panel-2);
   border:1px solid var(--line-soft);color:var(--paper);border-radius:5px;padding:8px 11px;
@@ -405,31 +400,39 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
             <div class="stepbody">
               <div class="stephead"><span class="ttl">3. Conditions d'acquisition</span></div>
               <p class="stepintro">Définissez le scénario d'acquisition de la scène.</p>
-              <div class="acq-layout">
-                <div class="acq-illustration" id="acqDiagram"></div>
-                <div class="acq-fields">
-                  <div class="field">
-                    <label>Altitude</label>
-                    <div class="row"><input type="number" id="fH" value="500" min="380" max="900" step="5"><span class="unit">km</span></div>
-                  </div>
-                  <div class="field">
-                    <label>Élévation solaire</label>
-                    <div class="row"><input type="number" id="fS" value="45" min="8" max="80" step="1"><span class="unit">°</span></div>
-                  </div>
-                  <div class="field">
-                    <label>Temps d'intégration</label>
-                    <div class="row"><input type="number" id="fTI" value="200" min="5" max="2000" step="5"><span class="unit">µs</span></div>
-                  </div>
-                  <div class="field">
-                    <label>Étages TDI</label>
-                    <div class="row"><input type="number" id="fTDI" value="8" min="1" max="64" step="1"><span class="unit">×</span></div>
-                  </div>
-                  <div class="field">
-                    <label>Cas WFE</label>
-                    <select id="fWfeCase">
-                      <option value="">Simplifié (RMS)</option>
-                    </select>
-                  </div>
+              <div class="fieldsgrid">
+                <div class="field">
+                  <label>Altitude</label>
+                  <div class="row"><input type="number" id="fH" value="500" min="380" max="900" step="5"><span class="unit">km</span></div>
+                </div>
+                <div class="field">
+                  <label>Élévation solaire</label>
+                  <div class="row"><input type="number" id="fS" value="45" min="8" max="80" step="1"><span class="unit">°</span></div>
+                </div>
+                <div class="field">
+                  <label>Temps d'intégration</label>
+                  <div class="row"><input type="number" id="fTI" value="200" min="5" max="2000" step="5"><span class="unit">µs</span></div>
+                </div>
+                <div class="field">
+                  <label>Étages TDI</label>
+                  <div class="row"><input type="number" id="fTDI" value="8" min="1" max="64" step="1"><span class="unit">×</span></div>
+                </div>
+                <div class="field">
+                  <label>Cas WFE</label>
+                  <select id="fWfeCase">
+                    <option value="">Simplifié (RMS + mode d'aberration)</option>
+                  </select>
+                </div>
+                <div class="field" id="fZWrap">
+                  <label>Mode d'aberration</label>
+                  <select id="fZ">
+                    <option value="none">Aucune</option>
+                    <option value="defoc">Défocalisation</option>
+                    <option value="astig">Astigmatisme</option>
+                    <option value="coma">Coma</option>
+                    <option value="spher">Aberration sphérique</option>
+                    <option value="trefo">Trefoil</option>
+                  </select>
                 </div>
               </div>
             </div>
@@ -472,6 +475,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
             <div class="sumrow"><span class="k">Temps d'intégration</span><span class="v" id="sumTI">—</span></div>
             <div class="sumrow"><span class="k">Étages TDI</span><span class="v" id="sumTDI">—</span></div>
             <div class="sumrow"><span class="k">Cas WFE</span><span class="v" id="sumWfeCase">—</span></div>
+            <div class="sumrow"><span class="k">Mode d'aberration</span><span class="v" id="sumZ">—</span></div>
           </div>
 
           <div class="statuspanel">
@@ -720,11 +724,19 @@ function renderWfeCaseOptions(){
   var sel = document.getElementById("fWfeCase");
   var cases = (selectedInstIdx >= 0 && instruments[selectedInstIdx].config && instruments[selectedInstIdx].config.wfeCases) || [];
   var current = sel.value;
-  sel.innerHTML = "<option value=\"\">Simplifié (RMS)</option>" +
+  sel.innerHTML = "<option value=\"\">Simplifié (RMS + mode d'aberration)</option>" +
     cases.map(function(c){ return "<option value='"+c.id+"'>"+c.name+(c.mode === "rms" ? " (RMS)" : " (fichier)")+"</option>"; }).join("");
   sel.value = cases.some(function(c){ return c.id === current; }) ? current : "";
+  toggleAberrationField();
 }
 
+function toggleAberrationField(){
+  // Un cas "file" remplace entièrement le mode d'aberration simplifié
+  // (sa propre carte de Zernike en tient lieu) — un cas "rms" n'est qu'un
+  // W nommé, le mode d'aberration choisi ici s'applique toujours par-dessus.
+  var wfeCase = selectedWfeCase();
+  document.getElementById("fZWrap").style.display = (wfeCase && wfeCase.mode === "file") ? "none" : "";
+}
 
 function selectedWfeCase(){
   var wfeCaseId = document.getElementById("fWfeCase").value;
@@ -734,50 +746,9 @@ function selectedWfeCase(){
 }
 
 document.getElementById("fWfeCase").addEventListener("change", function(){
+  toggleAberrationField();
   updateSummary();
 });
-
-// ===================== Schéma des conditions d'acquisition =====================
-function renderAcquisitionDiagram(){
-  var host = document.getElementById("acqDiagram");
-  if(!host) return;
-  var H = Number(document.getElementById("fH").value) || 500;
-  var S = Number(document.getElementById("fS").value) || 45;
-  var satX = 360, satY = 78, groundY = 292, targetX = 360;
-  var solarLen = 165;
-  var angleRad = Math.max(8, Math.min(80, S)) * Math.PI / 180;
-  var sunX = targetX - solarLen * Math.cos(angleRad);
-  var sunY = groundY - solarLen * Math.sin(angleRad);
-  host.innerHTML =
-    "<svg viewBox='0 0 520 330' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Géométrie nadir et élévation solaire'>"+
-      "<defs>"+
-        "<linearGradient id='earthGrad' x1='0' y1='0' x2='0' y2='1'><stop offset='0%' stop-color='#173541'/><stop offset='100%' stop-color='#0B171F'/></linearGradient>"+
-        "<filter id='acqGlow'><feGaussianBlur stdDeviation='5' result='b'/><feMerge><feMergeNode in='b'/><feMergeNode in='SourceGraphic'/></feMerge></filter>"+
-      "</defs>"+
-      "<rect width='520' height='330' fill='var(--void)'/>"+
-      "<path d='M0 292 Q120 270 260 292 T520 292 L520 330 L0 330 Z' fill='url(#earthGrad)' stroke='var(--line)'/>"+
-      "<line x1='"+targetX+"' y1='112' x2='"+targetX+"' y2='282' stroke='var(--pixel)' stroke-width='2.2' stroke-dasharray='6 5' filter='url(#acqGlow)'/>"+
-      "<path d='M"+(targetX-10)+",270 h20 l-10,18 z' fill='var(--pixel)' opacity='.9'/>"+
-      "<text x='"+(targetX+14)+"' y='185' fill='var(--pixel)' font-family='var(--mono)' font-size='11'>Pointage nadir</text>"+
-      "<text x='"+(targetX+14)+"' y='202' fill='var(--muted-2)' font-family='var(--mono)' font-size='10'>0°</text>"+
-      "<line x1='"+targetX+"' y1='112' x2='"+targetX+"' y2='292' stroke='var(--muted-2)' stroke-width='1' opacity='.35'/>"+
-      "<g transform='translate("+satX+" 64)'>"+
-        "<rect x='-18' y='-9' width='36' height='18' rx='3' fill='var(--panel-2)' stroke='var(--pixel)'/>"+
-        "<rect x='-47' y='-7' width='23' height='14' rx='2' fill='var(--panel-2)' stroke='var(--line)'/>"+
-        "<rect x='24' y='-7' width='23' height='14' rx='2' fill='var(--panel-2)' stroke='var(--line)'/>"+
-        "<circle cx='0' cy='0' r='4' fill='var(--pixel)'/>"+
-      "</g>"+
-      "<line x1='"+sunX.toFixed(1)+"' y1='"+sunY.toFixed(1)+"' x2='"+targetX+"' y2='"+groundY+"' stroke='var(--photon)' stroke-width='2' stroke-dasharray='7 5'/>"+
-      "<circle cx='"+sunX+"' cy='"+sunY+"' r='17' fill='none' stroke='var(--photon)' stroke-width='2'/>"+
-      "<g stroke='var(--photon)' stroke-width='1.5' opacity='.85'><line x1='"+(sunX-28)+"' y1='"+sunY+"' x2='"+(sunX-19)+"' y2='"+sunY+"'/><line x1='"+(sunX+19)+"' y1='"+sunY+"' x2='"+(sunX+28)+"' y2='"+sunY+"'/><line x1='"+sunX+"' y1='"+(sunY-28)+"' x2='"+sunX+"' y2='"+(sunY-19)+"'/><line x1='"+sunX+"' y1='"+(sunY+19)+"' x2='"+sunX+"' y2='"+(sunY+28)+"'/></g>"+
-      "<text x='"+(sunX-2)+"' y='"+(sunY+38)+"' text-anchor='middle' fill='var(--photon)' font-family='var(--mono)' font-size='11'>Soleil</text>"+
-      "<text x='"+(sunX+10)+"' y='"+(sunY+55)+"' fill='var(--paper)' font-family='var(--mono)' font-size='11'>Élévation solaire · "+S+"°</text>"+
-      "<line x1='"+(targetX-85)+"' y1='"+groundY+"' x2='"+(targetX+85)+"' y2='"+groundY+"' stroke='var(--muted-2)' stroke-width='1'/>"+
-      "<path d='M"+targetX+","+groundY+" A65,65 0 0 0 "+(targetX-65)+","+(groundY-0.1)+"' fill='none' stroke='var(--photon)' stroke-width='1.2' opacity='.55'/>"+
-      "<text x='"+(targetX+20)+"' y='"+(groundY-12)+"' fill='var(--muted-2)' font-family='var(--mono)' font-size='10'>surface terrestre</text>"+
-      "<text x='"+(targetX+10)+"' y='44' fill='var(--muted)' font-family='var(--mono)' font-size='10'>Altitude · "+H+" km</text>"+
-    "</svg>";
-}
 
 // ===================== Résumé permanent (étapes 1-3) =====================
 function updateSummary(){
@@ -799,7 +770,11 @@ function updateSummary(){
 
   if(currentStep >= 3){
     var wfeCase = selectedWfeCase();
-    var wfeLine = wfeCase ? "Cas WFE : " + wfeCase.name : "Cas WFE : Simplifié (RMS)";
+    var wfeLine = !wfeCase
+      ? document.getElementById("fZ").selectedOptions[0].textContent
+      : wfeCase.mode === "rms"
+        ? "Cas WFE : " + wfeCase.name + " · " + document.getElementById("fZ").selectedOptions[0].textContent
+        : "Cas WFE : " + wfeCase.name;
     document.getElementById("sumCondSlot").innerHTML =
       "<div class='sumlines'>"+
       document.getElementById("fH").value + " km · " + document.getElementById("fS").value + "°<br>"+
@@ -827,14 +802,9 @@ function updatePanelButton(){
   }
   updateSummary();
 }
-["fH","fS","fTI","fTDI"].forEach(function(id){
-  document.getElementById(id).addEventListener("input", function(){
-    if(id === "fH" || id === "fS") renderAcquisitionDiagram();
-    updateSummary();
-  });
+["fH","fS","fTI","fTDI","fZ"].forEach(function(id){
   document.getElementById(id).addEventListener("change", updateSummary);
 });
-renderAcquisitionDiagram();
 
 // ===================== Étape 4 : lancement réel + sauvegarde automatique =====================
 var lastResult = null;     // réponse brute du serveur (image_b64, bands, logs)
@@ -885,6 +855,7 @@ var FIELD_LABELS = {
   S: "Élévation solaire",
   TI: "Temps d'intégration",
   TDI: "Étages TDI",
+  Z: "Mode d'aberration",
   perfoCsv: "Cas WFE (CSV Zernike)",
   perfoCsvAlign: "Cadrage du cas WFE",
   perfoCsvConvention: "Convention Zernike du cas WFE",
@@ -940,6 +911,9 @@ async function launchSimulation(){
   document.getElementById("sumTDI").textContent = document.getElementById("fTDI").value;
   var wfeCaseForSummary = selectedWfeCase();
   document.getElementById("sumWfeCase").textContent = wfeCaseForSummary ? wfeCaseForSummary.name : "—";
+  document.getElementById("sumZ").textContent = (wfeCaseForSummary && wfeCaseForSummary.mode === "file")
+    ? "— (cas WFE actif)"
+    : document.getElementById("fZ").selectedOptions[0].textContent;
 
   if(simRunning || !inst) return;
   simRunning = true;
@@ -966,7 +940,7 @@ async function launchSimulation(){
     S: Number(document.getElementById("fS").value),
     TI: Number(document.getElementById("fTI").value),
     TDI: Number(document.getElementById("fTDI").value),
-    Z: "none",
+    Z: document.getElementById("fZ").value,
   };
 
   var payload = Object.assign({
