@@ -571,13 +571,14 @@ function fakeDeepAnalysis(){
       ];
       var out = {};
       bandNames.forEach(function(bandName, bi){
-        // Py6S = solar-domain only, pas d'émission thermique : deux
-        // composantes réelles (radiometry.py::generate_L_components), pas
-        // trois.
-        var L_atmo_background = 22 + Math.random()*8 - bi*1.2, L_target = 34 + Math.random()*10 + bi*3;
-        var toa = L_atmo_background + L_target;
+        // Vraies clés de module_SNR.py::module_SNR (capture_intermediates) :
+        // S_ref_atmo/S_ref_target en électrons, pas une radiance —
+        // rad.generate_S_ref calcule directement le signal de référence,
+        // pas une décomposition L_émise/L_atm_solaire/L_atm_thermique.
+        var S_ref_atmo = 1800 + Math.random()*600 - bi*90, S_ref_target = 3200 + Math.random()*900 + bi*260;
+        var toa = S_ref_atmo + S_ref_target;
         out[bandName] = {
-          radiometric_budget: { L_atmo_background: Math.max(1,L_atmo_background), L_target: L_target, L_toa: toa },
+          radiometric_budget: { S_ref_atmo: Math.max(1,S_ref_atmo), S_ref_target: S_ref_target, S_ref: toa, rho_ref_used: 0.2 },
           pipeline_stages: stageDefs.map(function(s, i){
             return {
               id: s[0], label: s[1], image_url: mainUrl, filter: s[2],
@@ -593,10 +594,10 @@ function fakeDeepAnalysis(){
 }
 
 function renderBudget(b){
-  var total = b.L_toa;
+  var total = b.S_ref;
   var parts = [
-    ["L_atmo_background (trajet + adjacence)", b.L_atmo_background, "#5FDCD0"],
-    ["L_target (contribution de la cible)", b.L_target, "#F5AC57"],
+    ["S_ref_atmo (atmosphère/environnement)", b.S_ref_atmo, "#5FDCD0"],
+    ["S_ref_target (réflexion de la cible)", b.S_ref_target, "#F5AC57"],
   ];
   var bar = document.getElementById("budgetBar");
   bar.innerHTML = parts.map(function(p){
@@ -607,11 +608,11 @@ function renderBudget(b){
     return "<span class='li'><span class='sw' style='background:" + p[2] + "'></span>" + p[0] + "</span>";
   }).join("");
   document.getElementById("budgetTable").innerHTML =
-    "<tr><th>Composante</th><th>Radiance (W/m²/sr/µm)</th><th>Part de L_TOA</th></tr>" +
+    "<tr><th>Composante</th><th>Signal (e⁻, à ρ_ref=" + b.rho_ref_used.toFixed(2) + ")</th><th>Part de S_ref</th></tr>" +
     parts.map(function(p){
-      return "<tr><td>" + p[0] + "</td><td>" + p[1].toFixed(2) + "</td><td>" + (p[1]/total*100).toFixed(1) + " %</td></tr>";
+      return "<tr><td>" + p[0] + "</td><td>" + Math.round(p[1]) + "</td><td>" + (p[1]/total*100).toFixed(1) + " %</td></tr>";
     }).join("") +
-    "<tr><td><strong>L_TOA (total)</strong></td><td><strong>" + total.toFixed(2) + "</strong></td><td>100 %</td></tr>";
+    "<tr><td><strong>S_ref (total)</strong></td><td><strong>" + Math.round(total) + "</strong></td><td>100 %</td></tr>";
 }
 
 function renderFilmstrip(stages){
