@@ -798,13 +798,25 @@ function renderAcquisitionDiagram(){
   var H = Number(document.getElementById("fH").value) || 500;
   var S = Number(document.getElementById("fS").value) || 45;
 
-  var groundY = 264;
+  /* Le panneau de droite (colonne .acq-fields, 5 champs) peut être plus
+     haut que le schéma d'origine n'était conçu pour l'être — la grille
+     CSS (align-items:stretch) étire alors .acq-illustration en
+     conséquence. On calcule ici la hauteur réelle du conteneur, ramenée
+     à notre repère de largeur fixe (620), pour que le schéma remplisse
+     tout l'espace au lieu de laisser une bande vide en bas. */
+  var VBW = 620;
+  var rectW = host.clientWidth || VBW;
+  var rectH = host.clientHeight || 360;
+  var VBH = Math.max(300, Math.min(760, VBW * (rectH / rectW)));
+  var scaleY = VBH / 360;
+
+  var groundY = 264 * scaleY;
   var targetX = 182;
-  var satY = 62;
+  var satY = 62 * scaleY;
   var satX = targetX;
   var angle = Math.max(8, Math.min(80, S));
   var rad = angle * Math.PI / 180;
-  var solarLen = 128;
+  var solarLen = 128 * scaleY;
   var sunX = targetX - solarLen * Math.cos(rad);
   var sunY = groundY - solarLen * Math.sin(rad);
   var arcR = 44;
@@ -825,7 +837,7 @@ function renderAcquisitionDiagram(){
   }).join("");
 
   host.innerHTML =
-    "<svg viewBox='0 0 620 360' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Pointage nadir et élévation solaire'>"+
+    "<svg viewBox='0 0 "+VBW+" "+VBH.toFixed(1)+"' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Pointage nadir et élévation solaire'>"+
       "<defs>"+
         "<linearGradient id='earthFill' x1='0' y1='0' x2='0' y2='1'>"+
           "<stop offset='0%' stop-color='#1C4152'/><stop offset='55%' stop-color='#102630'/><stop offset='100%' stop-color='#081217'/>"+
@@ -859,16 +871,16 @@ function renderAcquisitionDiagram(){
         "</filter>"+
       "</defs>"+
 
-      "<rect width='620' height='360' rx='6' fill='url(#skyFade)'/>"+
+      "<rect width='"+VBW+"' height='"+VBH.toFixed(1)+"' rx='6' fill='url(#skyFade)'/>"+
       "<g opacity='.9'>" + stars + "</g>"+
 
       /* limite d'atmosphère (pointillée, comme un repère de haute altitude) */
-      "<path d='M0 150 Q215 108 430 142' fill='none' stroke='#3D5A68' stroke-width='1.2' stroke-dasharray='1 5' opacity='.55'/>"+
+      "<path d='M0 "+(150*scaleY).toFixed(1)+" Q215 "+(108*scaleY).toFixed(1)+" 430 "+(142*scaleY).toFixed(1)+"' fill='none' stroke='#3D5A68' stroke-width='1.2' stroke-dasharray='1 5' opacity='.55'/>"+
 
       /* lueur d'atmosphère au-dessus de l'horizon + sol */
-      "<ellipse cx='260' cy='262' rx='340' ry='30' fill='url(#earthRim)'/>"+
-      "<path d='M0 266 Q150 236 310 262 T620 255 L620 360 L0 360Z' fill='url(#earthFill)' stroke='#2E5261' stroke-width='1.2'/>"+
-      "<path d='M0 266 Q150 236 310 262 T620 255' fill='none' stroke='#4E7B8C' stroke-width='1.6' opacity='.85'/>"+
+      "<ellipse cx='260' cy='"+(262*scaleY).toFixed(1)+"' rx='340' ry='"+(30*scaleY).toFixed(1)+"' fill='url(#earthRim)'/>"+
+      "<path d='M0 "+(266*scaleY).toFixed(1)+" Q150 "+(236*scaleY).toFixed(1)+" 310 "+(262*scaleY).toFixed(1)+" T620 "+(255*scaleY).toFixed(1)+" L620 "+VBH.toFixed(1)+" L0 "+VBH.toFixed(1)+"Z' fill='url(#earthFill)' stroke='#2E5261' stroke-width='1.2'/>"+
+      "<path d='M0 "+(266*scaleY).toFixed(1)+" Q150 "+(236*scaleY).toFixed(1)+" 310 "+(262*scaleY).toFixed(1)+" T620 "+(255*scaleY).toFixed(1)+"' fill='none' stroke='#4E7B8C' stroke-width='1.6' opacity='.85'/>"+
 
       /* faisceaux pleins : soleil → cible, puis satellite → cible */
       beamCone(sunX, sunY, targetX, groundY-2, 15, 3, "url(#sunBeamGrad)")+
@@ -992,6 +1004,12 @@ function updatePanelButton(){
   document.getElementById(id).addEventListener("change", updateSummary);
 });
 renderAcquisitionDiagram();
+setTimeout(renderAcquisitionDiagram, 60); // re-mesure une fois la mise en page stabilisée
+var acqResizeTimer = null;
+window.addEventListener("resize", function(){
+  clearTimeout(acqResizeTimer);
+  acqResizeTimer = setTimeout(renderAcquisitionDiagram, 120);
+});
 
 // ===================== Étape 4 : lancement réel + sauvegarde automatique =====================
 var lastResult = null;     // réponse brute du serveur (image_b64, bands, logs)
