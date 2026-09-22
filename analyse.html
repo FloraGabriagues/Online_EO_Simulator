@@ -252,10 +252,12 @@ table.datatable tr:last-child td{border-bottom:none}
           </div>
 
           <div id="deepResults" style="display:none">
+            <div class="bandtabs" id="deepBandTabs"></div>
+
             <div class="card" style="margin-bottom:16px">
               <p style="margin:0 0 14px;font-size:13px;color:var(--muted-2)">
-                Budget radiométrique au niveau capteur
-                <span class="devbadge">données simulées — endpoint réel à brancher</span>
+                Budget radiométrique au niveau capteur — bande <strong id="budgetBandName"></strong>
+                <span class="devbadge" id="budgetDevBadge">endpoint réel non confirmé — repli factice possible</span>
               </p>
               <div class="budgetbar" id="budgetBar"></div>
               <div class="budgetlegend" id="budgetLegend"></div>
@@ -264,8 +266,8 @@ table.datatable tr:last-child td{border-bottom:none}
 
             <div class="card">
               <p style="margin:0 0 14px;font-size:13px;color:var(--muted-2)">
-                Pipeline — image à chaque étape
-                <span class="devbadge">aperçus provisoires — endpoint réel à brancher</span>
+                Pipeline — image à chaque étape, bande <strong id="filmBandName"></strong> (pas de composite RGB : le bruit, la PSF et le TDI sont propres à chaque bande)
+                <span class="devbadge" id="filmDevBadge">endpoint réel non confirmé — repli factice possible</span>
               </p>
               <div class="filmstrip" id="filmStrip"></div>
               <p class="comparehint">Cliquez deux vignettes pour les comparer côte à côte.</p>
@@ -285,6 +287,8 @@ var session = null, accountId = null;
 var currentResult = null;
 var currentBand = null;
 var compareSelection = [];
+// Même conteneur que /simulate_account (cf. simulations.html).
+var API_URL = "https://nssharphopper7bba2963-container-kind-mcclintock.functions.fnc.fr-par.scw.cloud";
 
 // ----- démarrage / auth (même schéma de repli que simulations.html : sans
 // supabase-client.js ni accès réseau — typiquement l'aperçu Claude — on
@@ -466,50 +470,124 @@ async function renderBandDetail(bandName){
 // règle côté serveur.
 document.getElementById("runDeepBtn").addEventListener("click", runDeepAnalysis);
 
+var deepDataByBand = null; // rempli une fois l'analyse lancée : { bandName: {radiometric_budget, pipeline_stages} }
+var deepCurrentBand = null;
+
 async function runDeepAnalysis(){
   var btn = document.getElementById("runDeepBtn");
   var loading = document.getElementById("deepLoading");
   btn.disabled = true;
   loading.style.display = "flex";
+  var loadingLabel = loading.querySelector("span:last-child");
 
-  var deepData = await fakeDeepAnalysis(); // TODO: remplacer par le vrai appel backend
+  deepDataByBand = await callAnalyzeEndpoint();
 
   loading.style.display = "none";
+  if(loadingLabel) loadingLabel.textContent = "Calcul en cours — peut prendre 1 à 2 minutes…";
   document.getElementById("deepGate").style.display = "none";
   document.getElementById("deepResults").style.display = "block";
-  renderBudget(deepData.radiometric_budget);
-  renderFilmstrip(deepData.pipeline_stages);
+
+  var names = Object.keys(deepDataByBand);
+  var tabsHost = document.getElementById("deepBandTabs");
+  tabsHost.innerHTML = "";
+  names.forEach(function(n){
+    var btn2 = document.createElement("button");
+    btn2.className = "bandtab" + (n === (currentBand || names[0]) ? " active" : "");
+    btn2.type = "button";
+    btn2.textContent = n;
+    btn2.addEventListener("click", function(){
+      deepCurrentBand = n;
+      Array.prototype.forEach.call(tabsHost.children, function(c){ c.classList.remove("active"); });
+      btn2.classList.add("active");
+      renderDeepBand(n);
+    });
+    tabsHost.appendChild(btn2);
+  });
+  deepCurrentBand = (currentBand && deepDataByBand[currentBand]) ? currentBand : names[0];
+  renderDeepBand(deepCurrentBand);
+  btn.disabled = false;
 }
 
+// Essaie le vrai endpoint (POST /analyze_account, même payload exact que
+// la simulation d'origine) ; retombe sur des données factices si
+// l'endpoint n'existe pas encore côté serveur, si ce résultat a été
+// sauvegardé avant l'ajout de request_payload, ou en cas d'erreur réseau
+// — pour que la page reste utilisable/prévisualisable dans tous les cas.
+async function callAnalyzeEndpoint(){
+  var loading = document.getElementById("deepLoading");
+  var loadingLabel = loading.querySelector("span:last-child");
+  try{
+    if(!currentResult.request_payload) throw new Error("Ce résultat n'a pas de request_payload (sauvegardé avant le 22/09/2026) — analyse factice.");
+    if(typeof supabaseClient === "undefined") throw new Error("no client");
+
+    var { data: freshSessionData, error: sessionErr } = await supabaseClient.auth.getSession();
+    if(sessionErr || !freshSessionData.session) throw new Error("Session expirée.");
+
+    var resp = await fetch(API_URL + "/analyze_account", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "Authorization": "Bearer " + freshSessionData.session.access_token },
+      body: JSON.stringify(currentResult.request_payload),
+    });
+    var data = await resp.json();
+    if(!resp.ok) throw new Error((data && data.detail) || ("Erreur " + resp.status));
+    if(!data.bands) throw new Error("Réponse inattendue de /analyze_account (pas de champ 'bands').");
+    return data.bands;
+  }catch(e){
+    console.warn("/analyze_account indisponible, repli sur des données factices :", e);
+    if(loadingLabel) loadingLabel.textContent = "Endpoint réel indisponible — génération de données factices…";
+    return await fakeDeepAnalysis();
+  }
+}
+
+function renderDeepBand(bandName){
+  var d = deepDataByBand[bandName];
+  document.getElementById("budgetBandName").textContent = bandName;
+  document.getElementById("filmBandName").textContent = bandName;
+  renderBudget(d.radiometric_budget);
+  renderFilmstrip(d.pipeline_stages);
+}
+
+// Génère des données factices pour CHAQUE bande diagnostiquée à l'étape 1
+// (une bande = un capteur physique distinct : bruit, PSF et TDI propres à
+// chacune — pas de composite RGB ici). À remplacer par l'appel réel à
+// l'endpoint d'analyse, qui devrait renvoyer exactement cette forme, par
+// bande plutôt qu'un seul bloc global.
 function fakeDeepAnalysis(){
   return new Promise(function(resolve){
     setTimeout(function(){
+      var bandNames = Object.keys((currentResult.diagnostics && currentResult.diagnostics.bands) || { "B1": {} });
       var mainUrl = document.getElementById("rbThumb").style.backgroundImage.slice(5,-2);
-      var L_emise = 42 + Math.random()*10, L_atm_solaire = 18 + Math.random()*8,
-          L_atm_thermique = 6 + Math.random()*4;
-      var toa = L_emise + L_atm_solaire + L_atm_thermique;
-      var stages = [
-        ["scene", "Scène d'entrée", ""],
-        ["atmo", "Après atmosphère", "blur(0px) saturate(1.15)"],
-        ["optics", "Après optique (PSF)", "blur(1.6px)"],
-        ["tdi", "Après TDI", "blur(1.6px) brightness(1.08)"],
-        ["sampling", "Après échantillonnage", "blur(2.2px) contrast(1.05)"],
-        ["shot", "Bruit de photons (shot)", "blur(2.2px) contrast(1.05) grayscale(.06)"],
-        ["dark", "Bruit d'obscurité (dark)", "blur(2.2px) contrast(1.08) grayscale(.1)"],
-        ["read", "Bruit de lecture (read)", "blur(2.2px) contrast(1.1) grayscale(.14)"],
-        ["quant", "Après quantification", "blur(2.2px) contrast(1.12) grayscale(.16)"],
-        ["final", "Image finale", ""],
+      // Noms alignés sur les variables réelles de module_SNR.py (pas un
+      // enchaînement générique) : pas d'étape "atmosphère"/"TDI" séparée —
+      // déjà digérées en amont dans image_electrons — mais le PRNU, lui,
+      // a sa place avant le bruit de photons.
+      var stageDefs = [
+        ["electrons", "image_electrons (signal propre)", "grayscale(1)"],
+        ["prnu", "Après PRNU", "grayscale(1) contrast(1.03)"],
+        ["shot", "Après bruit de photons (shot)", "grayscale(1) contrast(1.05) brightness(.96)"],
+        ["dark", "Après dark current", "grayscale(1) contrast(1.08) brightness(.92)"],
+        ["read", "Après bruit de lecture (read)", "grayscale(1) contrast(1.1) brightness(.89)"],
+        ["quant", "Après quantification (finale)", "grayscale(1) contrast(1.12) brightness(.86)"],
       ];
-      resolve({
-        radiometric_budget: { L_emise: L_emise, L_atm_solaire: L_atm_solaire, L_atm_thermique: L_atm_thermique, L_toa: toa },
-        pipeline_stages: stages.map(function(s, i){
-          return {
-            id: s[0], label: s[1], image_url: mainUrl, filter: s[2],
-            stats: { mean: (120 + i*4 + Math.random()*6).toFixed(1), std: (8 + Math.random()*3).toFixed(1),
-                     min: Math.round(Math.random()*10), max: Math.round(240 - Math.random()*10) },
-          };
-        }),
+      var out = {};
+      bandNames.forEach(function(bandName, bi){
+        // Py6S = solar-domain only, pas d'émission thermique : deux
+        // composantes réelles (radiometry.py::generate_L_components), pas
+        // trois.
+        var L_atmo_background = 22 + Math.random()*8 - bi*1.2, L_target = 34 + Math.random()*10 + bi*3;
+        var toa = L_atmo_background + L_target;
+        out[bandName] = {
+          radiometric_budget: { L_atmo_background: Math.max(1,L_atmo_background), L_target: L_target, L_toa: toa },
+          pipeline_stages: stageDefs.map(function(s, i){
+            return {
+              id: s[0], label: s[1], image_url: mainUrl, filter: s[2],
+              stats: { mean: (110 + i*4 + bi*6 + Math.random()*6).toFixed(1), std: (7 + Math.random()*3).toFixed(1),
+                       min: Math.round(Math.random()*10), max: Math.round(240 - Math.random()*10) },
+            };
+          }),
+        };
       });
+      resolve(out);
     }, 1400);
   });
 }
@@ -517,9 +595,8 @@ function fakeDeepAnalysis(){
 function renderBudget(b){
   var total = b.L_toa;
   var parts = [
-    ["L_émise (surface)", b.L_emise, "#5FDCD0"],
-    ["L_atm_solaire (diffusion)", b.L_atm_solaire, "#F5AC57"],
-    ["L_atm_thermique (émission atm.)", b.L_atm_thermique, "#F0776D"],
+    ["L_atmo_background (trajet + adjacence)", b.L_atmo_background, "#5FDCD0"],
+    ["L_target (contribution de la cible)", b.L_target, "#F5AC57"],
   ];
   var bar = document.getElementById("budgetBar");
   bar.innerHTML = parts.map(function(p){
