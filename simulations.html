@@ -802,16 +802,18 @@ function renderAcquisitionDiagram(){
   var angleLabelX = targetX - arcR - 30;
   var angleLabelY = groundY + 18;
 
-  /* signal (zigzag) le long de l'axe de visée, entre la cible et le mât */
+  /* signal (zigzag) le long de l'axe de visée, entre la cible et le mât —
+     cantonné à la partie basse du cône (large), pour ne pas traverser les
+     deux lignes qui convergent près du satellite */
   var zig = "M"+targetX+" "+(groundY-8).toFixed(1);
-  var zigN = 5, zigAmp = 9;
+  var zigN = 3, zigAmp = 8, zigCap = 0.56;
+  var zigTop = (groundY-8) + (mastTipY+12 - (groundY-8)) * zigCap;
   for(var zi=1; zi<=zigN; zi++){
     var zt = zi/zigN;
-    var zy = (groundY-8) + (mastTipY+12 - (groundY-8)) * zt;
+    var zy = (groundY-8) + (zigTop - (groundY-8)) * zt;
     var zx = targetX + (zi % 2 === 0 ? zigAmp : -zigAmp);
     zig += " L"+zx.toFixed(1)+" "+zy.toFixed(1);
   }
-  zig += " L"+targetX+" "+(mastTipY+2).toFixed(1);
 
   /* cote d'altitude, à droite du mât */
   var dimX = satX + 150;
