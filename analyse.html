@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Analyse — du photon au pixel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#090E13; --panel:#131E27; --panel-2:#1A2833;
+  --line:#2E4152; --line-soft:#22323F;
+  --paper:#E6EEF4; --muted:#9BADBD; --muted-2:#8497AA;
+  --photon:#F5AC57; --pixel:#5FDCD0; --alert:#F0776D; --ok:#7FD88F;
+  --display:"Barlow Condensed",Impact,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{background:var(--void);color:var(--paper);font-family:var(--body);
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+button{font-family:inherit}
+
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{flex:none;width:210px;background:var(--panel);border-right:1px solid var(--line-soft);
+  display:flex;flex-direction:column;padding:16px 14px;overflow-y:auto}
+.brand{display:flex;align-items:center;gap:9px;padding:4px 8px 16px;border-bottom:1px solid var(--line-soft);
+  margin-bottom:12px}
+.brand .mark{flex:none;width:26px;height:26px;display:grid;grid-template-columns:repeat(2,1fr);gap:3px}
+.brand .mark i{width:100%;height:100%;border-radius:50%;background:var(--pixel)}
+.brand .mark i:nth-child(2),.brand .mark i:nth-child(3){background:var(--photon)}
+.brand .name{font-family:var(--display);font-weight:600;font-size:16.5px;letter-spacing:.02em;
+  text-transform:uppercase;line-height:1.1}
+.brand .tag{font-family:var(--mono);font-size:10.5px;color:var(--muted-2);margin-top:1px}
+.navlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.navlist a{display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:4px;
+  text-decoration:none;color:var(--muted);font-size:14px;transition:background .14s,color .14s}
+.navlist a svg{flex:none;width:17px;height:17px;opacity:.85}
+.navlist a:hover{background:var(--panel-2);color:var(--paper)}
+.navlist a.active{background:rgba(95,220,208,.10);color:var(--pixel);box-shadow:inset 2px 0 0 var(--pixel)}
+.navlist a.active svg{opacity:1}
+.navlist a.soon{cursor:default;opacity:.45;pointer-events:none}
+.sidebar-bottom{margin-top:auto;padding-top:14px;border-top:1px solid var(--line-soft)}
+
+.main{flex:1;min-width:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{display:flex;justify-content:flex-end;align-items:center;gap:16px;flex:none;
+  padding:9px 26px;border-bottom:1px solid var(--line-soft)}
+.iconbtn{width:32px;height:32px;border-radius:50%;border:1px solid var(--line-soft);
+  background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.iconbtn:hover{border-color:var(--line);color:var(--paper)}
+.userchip{display:flex;align-items:center;gap:10px;font-family:var(--mono);font-size:12.5px;color:var(--muted)}
+.userchip .avatar{width:28px;height:28px;border-radius:50%;background:var(--panel-2);
+  border:1px solid var(--pixel);color:var(--pixel);display:flex;align-items:center;
+  justify-content:center;font-family:var(--display);font-size:12px;font-weight:600}
+
+.wrap{max-width:1180px;margin:0 auto;padding:16px 26px 60px;width:100%;flex:1}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--muted-2);
+  text-transform:uppercase;margin:0 0 4px}
+h1{font-family:var(--display);font-weight:600;font-size:30px;letter-spacing:.01em;margin:0 0 6px}
+.pagesub{color:var(--muted);margin:0 0 22px;font-size:14.5px}
+
+/* ---- bandeau résultat ---- */
+.resultbar{display:flex;align-items:center;gap:18px;background:var(--panel);
+  border:1px solid var(--line-soft);border-radius:8px;padding:14px 18px;margin-bottom:22px;flex-wrap:wrap}
+.resultbar .thumb{width:64px;height:64px;border-radius:6px;background:var(--panel-2) center/cover no-repeat;
+  flex:none;border:1px solid var(--line-soft)}
+.resultbar .meta{flex:1;min-width:220px}
+.resultbar .meta .t1{font-family:var(--display);font-size:19px;font-weight:600}
+.resultbar .meta .t2{font-family:var(--mono);font-size:12px;color:var(--muted-2);margin-top:2px}
+.resultbar .backbtn{font-family:var(--mono);font-size:12.5px;color:var(--muted);text-decoration:none;
+  border:1px solid var(--line-soft);border-radius:5px;padding:7px 12px}
+.resultbar .backbtn:hover{border-color:var(--line);color:var(--paper)}
+
+/* ---- sections génériques ---- */
+.asection{margin-bottom:32px}
+.asection .shead{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.asection .shead .num{font-family:var(--mono);font-size:12px;color:var(--pixel);
+  border:1px solid var(--pixel);border-radius:50%;width:20px;height:20px;display:flex;
+  align-items:center;justify-content:center;flex:none}
+.asection .shead h2{font-family:var(--display);font-weight:600;font-size:19px;margin:0}
+.asection .shead .note{font-family:var(--mono);font-size:11px;color:var(--muted-2);margin-left:auto}
+.card{background:var(--panel);border:1px solid var(--line-soft);border-radius:8px;padding:18px}
+
+/* ---- picker (pas de résultat sélectionné) ---- */
+.pickgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.pickcard{background:var(--panel);border:1px solid var(--line-soft);border-radius:8px;padding:12px;
+  cursor:pointer;text-decoration:none;color:inherit;display:block;transition:border-color .14s}
+.pickcard:hover{border-color:var(--pixel)}
+.pickcard .thumb{width:100%;height:110px;border-radius:5px;background:var(--panel-2) center/cover no-repeat;
+  margin-bottom:9px;border:1px solid var(--line-soft)}
+.pickcard .t1{font-size:14px;font-weight:500}
+.pickcard .t2{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);margin-top:2px}
+.emptynote{color:var(--muted-2);font-size:14px;padding:30px 0;text-align:center}
+
+/* ---- diagnostics déjà calculés : par bande ---- */
+.bandtabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.bandtab{font-family:var(--mono);font-size:12px;padding:6px 12px;border-radius:5px;
+  border:1px solid var(--line-soft);background:transparent;color:var(--muted);cursor:pointer}
+.bandtab.active{background:rgba(95,220,208,.12);border-color:var(--pixel);color:var(--pixel)}
+.statgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px}
+.statbox{background:var(--panel-2);border-radius:6px;padding:10px 12px}
+.statbox .k{font-family:var(--mono);font-size:10px;color:var(--muted-2);text-transform:uppercase;letter-spacing:.06em}
+.statbox .v{font-family:var(--mono);font-size:17px;color:var(--paper);margin-top:3px}
+.graphgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:12px}
+.graphcard{background:var(--panel-2);border-radius:6px;overflow:hidden;border:1px solid var(--line-soft)}
+.graphcard img{width:100%;display:block;background:var(--void)}
+.graphcard .cap{font-family:var(--mono);font-size:11px;color:var(--muted-2);padding:7px 10px}
+.graphcard .missing{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;
+  color:var(--muted-2);font-size:12px;font-family:var(--mono)}
+
+/* ---- analyse approfondie ---- */
+.deepgate{background:var(--panel);border:1px dashed var(--line-soft);border-radius:8px;
+  padding:34px 24px;text-align:center}
+.deepgate p{color:var(--muted);max-width:520px;margin:0 auto 16px;font-size:14px}
+.runbtn{font-family:var(--mono);font-size:13.5px;background:var(--pixel);color:#06171A;
+  border:none;border-radius:6px;padding:11px 22px;cursor:pointer;font-weight:500}
+.runbtn:hover{filter:brightness(1.08)}
+.runbtn:disabled{opacity:.5;cursor:default}
+.deeploading{display:none;align-items:center;gap:10px;justify-content:center;
+  font-family:var(--mono);font-size:12.5px;color:var(--muted);margin-top:14px}
+.spin{width:14px;height:14px;border-radius:50%;border:2px solid var(--line-soft);
+  border-top-color:var(--pixel);animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.devbadge{display:inline-block;font-family:var(--mono);font-size:10px;color:var(--photon);
+  background:rgba(245,172,87,.1);border:1px solid rgba(245,172,87,.3);border-radius:4px;
+  padding:2px 7px;margin-left:8px}
+
+/* budget radiométrique */
+.budgetbar{display:flex;height:26px;border-radius:5px;overflow:hidden;margin-bottom:12px;
+  border:1px solid var(--line-soft)}
+.budgetbar div{display:flex;align-items:center;justify-content:center;font-family:var(--mono);
+  font-size:10.5px;color:#06171A;font-weight:600;white-space:nowrap;overflow:hidden}
+.budgetlegend{display:flex;gap:16px;flex-wrap:wrap;margin-bottom:16px}
+.budgetlegend .li{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.budgetlegend .sw{width:10px;height:10px;border-radius:2px;flex:none}
+table.datatable{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12.5px}
+table.datatable th{text-align:left;color:var(--muted-2);font-weight:500;padding:6px 10px;
+  border-bottom:1px solid var(--line-soft);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+table.datatable td{padding:7px 10px;border-bottom:1px solid var(--line-soft)}
+table.datatable tr:last-child td{border-bottom:none}
+
+/* pellicule pipeline */
+.filmstrip{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px}
+.frame{flex:none;width:150px;cursor:pointer}
+.frame .fimg{width:150px;height:150px;border-radius:6px;border:1px solid var(--line-soft);
+  background:var(--void) center/cover no-repeat;transition:border-color .14s}
+.frame:hover .fimg,.frame.selected .fimg{border-color:var(--pixel)}
+.frame .flabel{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:6px;line-height:1.3}
+.frame .fstats{font-family:var(--mono);font-size:9.5px;color:var(--muted-2);margin-top:2px}
+.comparewrap{display:none;margin-top:18px;gap:14px}
+.comparewrap.show{display:grid;grid-template-columns:1fr 1fr}
+.compareframe{background:var(--panel-2);border-radius:8px;padding:12px;border:1px solid var(--line-soft)}
+.compareframe img{width:100%;border-radius:5px;display:block;margin-bottom:8px}
+.compareframe .lbl{font-family:var(--mono);font-size:12px;color:var(--pixel)}
+.comparehint{font-family:var(--mono);font-size:11px;color:var(--muted-2);margin-top:8px}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="mark"><i></i><i></i><i></i><i></i></span>
+      <span>
+        <div class="name">EO Toolbox</div>
+        <div class="tag">Du photon au pixel</div>
+      </span>
+    </div>
+    <ul class="navlist">
+      <li><a href="espace-personnel.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>
+        Instruments</a></li>
+      <li><a class="soon" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 4V2M15 4V2M9 22v-2M15 22v-2M4 9H2M4 15H2M22 9h-2M22 15h-2"/></svg>
+        Plateforme <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto">à venir</em></a></li>
+      <li><a href="simulations.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 4l14 8-14 8V4z"/></svg>
+        Simulations</a></li>
+      <li><a href="resultats.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
+        Résultats</a></li>
+      <li><a class="active" href="analyse.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M8 11h6M11 8v6"/></svg>
+        Analyse</a></li>
+    </ul>
+    <div class="sidebar-bottom">
+      <ul class="navlist">
+        <li><a href="#">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.9.3-1.2.9-1.2 1.8"/><circle cx="12" cy="16.6" r=".4" fill="currentColor" stroke="none"/></svg>
+          Aide</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <span class="userchip" id="userChip"><span class="avatar" id="userAvatar">…</span><span id="userEmail">—</span></span>
+      <button class="iconbtn" aria-label="Se déconnecter" type="button" id="signOutBtn" title="Se déconnecter">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
+    </div>
+
+    <div class="wrap">
+      <p class="eyebrow">Analyse</p>
+      <h1 id="pageTitle">Analyse détaillée</h1>
+      <p class="pagesub" id="pageSub">Choisissez un résultat pour l'examiner en détail — budget radiométrique, PSF/MTF, bruit, image à chaque étape du pipeline.</p>
+
+      <!-- Picker : affiché quand aucun ?id= n'est fourni -->
+      <div id="pickerView">
+        <div class="pickgrid" id="pickGrid"></div>
+        <p class="emptynote" id="pickEmpty" style="display:none">Aucun résultat sauvegardé pour le moment.</p>
+      </div>
+
+      <!-- Vue résultat -->
+      <div id="resultView" style="display:none">
+        <div class="resultbar">
+          <span class="thumb" id="rbThumb"></span>
+          <div class="meta">
+            <div class="t1" id="rbTitle">—</div>
+            <div class="t2" id="rbSub">—</div>
+          </div>
+          <a class="backbtn" href="analyse.html">← Autres résultats</a>
+        </div>
+
+        <!-- 1. Diagnostics déjà calculés (données réelles, déjà en base) -->
+        <div class="asection">
+          <div class="shead">
+            <span class="num">1</span><h2>Diagnostics du résultat</h2>
+            <span class="note">déjà calculés lors de la simulation</span>
+          </div>
+          <div class="card">
+            <div class="bandtabs" id="bandTabs"></div>
+            <div class="statgrid" id="bandStats"></div>
+            <div class="graphgrid" id="bandGraphs"></div>
+          </div>
+        </div>
+
+        <!-- 2. Analyse approfondie (nouveau calcul, à la demande) -->
+        <div class="asection">
+          <div class="shead">
+            <span class="num">2</span><h2>Analyse approfondie</h2>
+            <span class="note">nouveau calcul, à la demande</span>
+          </div>
+
+          <div class="deepgate" id="deepGate">
+            <p>Relance le moteur de simulation sur ce résultat en mode instrumenté : décomposition du budget radiométrique (énergie émise / atmosphère solaire / atmosphère thermique) et image à chaque étape du pipeline (atmosphère, optique, TDI, échantillonnage, chaque source de bruit, quantification).</p>
+            <button class="runbtn" id="runDeepBtn" type="button">🔬 Lancer l'analyse détaillée</button>
+            <div class="deeploading" id="deepLoading"><span class="spin"></span><span>Calcul en cours — peut prendre 1 à 2 minutes…</span></div>
+          </div>
+
+          <div id="deepResults" style="display:none">
+            <div class="card" style="margin-bottom:16px">
+              <p style="margin:0 0 14px;font-size:13px;color:var(--muted-2)">
+                Budget radiométrique au niveau capteur
+                <span class="devbadge">données simulées — endpoint réel à brancher</span>
+              </p>
+              <div class="budgetbar" id="budgetBar"></div>
+              <div class="budgetlegend" id="budgetLegend"></div>
+              <table class="datatable" id="budgetTable"></table>
+            </div>
+
+            <div class="card">
+              <p style="margin:0 0 14px;font-size:13px;color:var(--muted-2)">
+                Pipeline — image à chaque étape
+                <span class="devbadge">aperçus provisoires — endpoint réel à brancher</span>
+              </p>
+              <div class="filmstrip" id="filmStrip"></div>
+              <p class="comparehint">Cliquez deux vignettes pour les comparer côte à côte.</p>
+              <div class="comparewrap" id="compareWrap"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<script>
+var session = null, accountId = null;
+var currentResult = null;
+var currentBand = null;
+var compareSelection = [];
+
+// ----- démarrage / auth (même schéma de repli que simulations.html : sans
+// supabase-client.js ni accès réseau — typiquement l'aperçu Claude — on
+// simule une session pour pouvoir prévisualiser l'UI) -----
+(async function(){
+  try{
+    session = (typeof requireAuth === "function") ? await requireAuth() : null;
+  }catch(e){ session = null; }
+  if(!session) session = { user: { id: "preview", email: "" } };
+  accountId = session.user.id;
+  document.getElementById("userEmail").textContent = session.user.email || "";
+  document.getElementById("userAvatar").textContent = (session.user.email || "").slice(0,2).toUpperCase();
+  document.getElementById("signOutBtn").addEventListener("click", function(){
+    if(typeof signOut === "function") signOut();
+  });
+
+  var params = new URLSearchParams(location.search);
+  var id = params.get("id");
+  if(id) loadResult(id);
+  else loadPicker();
+})();
+
+// ----- image signée depuis le bucket privé "results" -----
+async function signedUrl(path){
+  if(!path) return null;
+  try{
+    if(typeof supabaseClient === "undefined") throw new Error("no client");
+    var { data, error } = await supabaseClient.storage.from("results").createSignedUrl(path, 3600);
+    if(error) throw error;
+    return data.signedUrl;
+  }catch(e){
+    console.warn("Signed URL indisponible pour", path, e);
+    return null;
+  }
+}
+
+// ----- picker : liste des résultats sauvegardés -----
+async function loadPicker(){
+  var grid = document.getElementById("pickGrid");
+  try{
+    if(typeof supabaseClient === "undefined") throw new Error("no client");
+    var { data, error } = await supabaseClient.from("saved_results")
+      .select("id,scene,instrument_snapshot,conditions,image_path,created_at")
+      .eq("account_id", accountId)
+      .order("created_at", { ascending: false })
+      .limit(60);
+    if(error) throw error;
+    if(!data || !data.length){
+      document.getElementById("pickEmpty").style.display = "block";
+      return;
+    }
+    for(var i=0;i<data.length;i++){
+      var r = data[i];
+      var url = await signedUrl(r.image_path);
+      var a = document.createElement("a");
+      a.className = "pickcard";
+      a.href = "analyse.html?id=" + r.id;
+      var instName = r.instrument_snapshot ? r.instrument_snapshot.name : "—";
+      var cond = r.conditions || {};
+      a.innerHTML =
+        "<span class='thumb'" + (url ? " style=\"background-image:url('" + url + "')\"" : "") + "></span>" +
+        "<div class='t1'>" + (r.scene || "—") + "</div>" +
+        "<div class='t2'>" + instName + " · " + (cond.H||"—") + " km · " + (cond.S||"—") + "°</div>";
+      grid.appendChild(a);
+    }
+  }catch(e){
+    console.warn("Chargement de la liste des résultats impossible :", e);
+    document.getElementById("pickEmpty").textContent = "Impossible de charger les résultats pour l'instant.";
+    document.getElementById("pickEmpty").style.display = "block";
+  }
+}
+
+// ----- chargement d'un résultat précis -----
+async function loadResult(id){
+  document.getElementById("pickerView").style.display = "none";
+  document.getElementById("resultView").style.display = "block";
+  try{
+    if(typeof supabaseClient === "undefined") throw new Error("no client");
+    var { data, error } = await supabaseClient.from("saved_results")
+      .select("*").eq("id", id).eq("account_id", accountId).single();
+    if(error) throw error;
+    currentResult = data;
+  }catch(e){
+    console.warn("Résultat introuvable, données de démonstration utilisées :", e);
+    currentResult = PREVIEW_RESULT;
+  }
+  await renderResultHeader();
+  renderDiagnostics();
+}
+
+async function renderResultHeader(){
+  var r = currentResult;
+  var instName = r.instrument_snapshot ? r.instrument_snapshot.name : "—";
+  var cond = r.conditions || {};
+  document.getElementById("pageTitle").textContent = r.scene || "Analyse détaillée";
+  document.getElementById("pageSub").textContent = instName + " — lancé le " + (r.created_at ? new Date(r.created_at).toLocaleString("fr-FR") : "—");
+  document.getElementById("rbTitle").textContent = r.scene || "—";
+  document.getElementById("rbSub").textContent = instName + " · Altitude " + (cond.H||"—") + " km · Élévation solaire " + (cond.S||"—") + "° · TI " + (cond.TI||"—") + " µs · TDI " + (cond.TDI||"—");
+  var url = await signedUrl(r.image_path);
+  if(url) document.getElementById("rbThumb").style.backgroundImage = "url('" + url + "')";
+}
+
+// ----- section 1 : diagnostics déjà en base (réels) -----
+function renderDiagnostics(){
+  var bands = (currentResult.diagnostics && currentResult.diagnostics.bands) || {};
+  var names = Object.keys(bands);
+  var tabsHost = document.getElementById("bandTabs");
+  tabsHost.innerHTML = "";
+  if(!names.length){
+    document.getElementById("bandStats").innerHTML = "";
+    document.getElementById("bandGraphs").innerHTML = "<p class='emptynote'>Aucun diagnostic par bande n'a été sauvegardé pour ce résultat.</p>";
+    return;
+  }
+  names.forEach(function(n){
+    var btn = document.createElement("button");
+    btn.className = "bandtab" + (n === names[0] ? " active" : "");
+    btn.type = "button";
+    btn.textContent = n;
+    btn.addEventListener("click", function(){
+      currentBand = n;
+      Array.prototype.forEach.call(tabsHost.children, function(c){ c.classList.remove("active"); });
+      btn.classList.add("active");
+      renderBandDetail(n);
+    });
+    tabsHost.appendChild(btn);
+  });
+  currentBand = names[0];
+  renderBandDetail(currentBand);
+}
+
+async function renderBandDetail(bandName){
+  var d = (currentResult.diagnostics.bands || {})[bandName] || {};
+  var statsHost = document.getElementById("bandStats");
+  var stats = [
+    ["SNR moyen", d.snr_mean != null ? d.snr_mean.toFixed(1) : "—"],
+    ["MTF @ Nyquist", d.mtf_at_nyquist != null ? d.mtf_at_nyquist.toFixed(3) : "—"],
+    ["Remplissage puits", d.fill_pct != null ? d.fill_pct.toFixed(1) + " %" : "—"],
+    ["Signal moyen", d.signal_mean_e != null ? Math.round(d.signal_mean_e) + " e⁻" : "—"],
+    ["Réflectance moy.", d.reflectance_mean != null ? d.reflectance_mean.toFixed(3) : "—"],
+    ["Réflectance ref.", d.rho_ref != null ? d.rho_ref.toFixed(3) : "—"],
+  ];
+  statsHost.innerHTML = stats.map(function(s){
+    return "<div class='statbox'><div class='k'>" + s[0] + "</div><div class='v'>" + s[1] + "</div></div>";
+  }).join("");
+
+  var GRAPHS = [
+    ["psf_png_path", "PSF"], ["mtf_png_path", "MTF"],
+    ["snr_noise_budget_png_path", "Budget de bruit"], ["snr_map_png_path", "Carte SNR"],
+    ["snr_histogram_png_path", "Histogramme SNR"], ["snr_noise_maps_sim_png_path", "Cartes de bruit"],
+    ["snr_image_compare_png_path", "Comparaison image"], ["snr_regimes_png_path", "Régimes de bruit"],
+    ["pupil_png_path", "Pupille"],
+  ];
+  var graphsHost = document.getElementById("bandGraphs");
+  graphsHost.innerHTML = GRAPHS.map(function(g){
+    return "<div class='graphcard' data-key='" + g[0] + "'><div class='missing'>chargement…</div><div class='cap'>" + g[1] + "</div></div>";
+  }).join("");
+  var cards = graphsHost.querySelectorAll(".graphcard");
+  for(var i=0;i<GRAPHS.length;i++){
+    var key = GRAPHS[i][0], label = GRAPHS[i][1];
+    var path = d[key];
+    var card = cards[i];
+    if(!path){ card.querySelector(".missing").textContent = "non disponible"; continue; }
+    var url = await signedUrl(path);
+    if(url){
+      card.innerHTML = "<img src='" + url + "' alt='" + label + "' loading='lazy'><div class='cap'>" + label + "</div>";
+    } else {
+      card.querySelector(".missing").textContent = "erreur de chargement";
+    }
+  }
+}
+
+// ----- section 2 : analyse approfondie (nouveau calcul, à la demande) -----
+// Intégration réelle à faire : appeler le backend (ex. un endpoint
+// /analyze_account côté même conteneur Scaleway que /simulate_account, cf.
+// simulations.html) avec le payload reconstruit à partir de
+// currentResult.instrument_snapshot + currentResult.conditions, en
+// demandant explicitement le détail du pipeline. Le bloc ci-dessous simule
+// ce calcul pour que la mise en page soit prête pendant que ce point se
+// règle côté serveur.
+document.getElementById("runDeepBtn").addEventListener("click", runDeepAnalysis);
+
+async function runDeepAnalysis(){
+  var btn = document.getElementById("runDeepBtn");
+  var loading = document.getElementById("deepLoading");
+  btn.disabled = true;
+  loading.style.display = "flex";
+
+  var deepData = await fakeDeepAnalysis(); // TODO: remplacer par le vrai appel backend
+
+  loading.style.display = "none";
+  document.getElementById("deepGate").style.display = "none";
+  document.getElementById("deepResults").style.display = "block";
+  renderBudget(deepData.radiometric_budget);
+  renderFilmstrip(deepData.pipeline_stages);
+}
+
+function fakeDeepAnalysis(){
+  return new Promise(function(resolve){
+    setTimeout(function(){
+      var mainUrl = document.getElementById("rbThumb").style.backgroundImage.slice(5,-2);
+      var L_emise = 42 + Math.random()*10, L_atm_solaire = 18 + Math.random()*8,
+          L_atm_thermique = 6 + Math.random()*4;
+      var toa = L_emise + L_atm_solaire + L_atm_thermique;
+      var stages = [
+        ["scene", "Scène d'entrée", ""],
+        ["atmo", "Après atmosphère", "blur(0px) saturate(1.15)"],
+        ["optics", "Après optique (PSF)", "blur(1.6px)"],
+        ["tdi", "Après TDI", "blur(1.6px) brightness(1.08)"],
+        ["sampling", "Après échantillonnage", "blur(2.2px) contrast(1.05)"],
+        ["shot", "Bruit de photons (shot)", "blur(2.2px) contrast(1.05) grayscale(.06)"],
+        ["dark", "Bruit d'obscurité (dark)", "blur(2.2px) contrast(1.08) grayscale(.1)"],
+        ["read", "Bruit de lecture (read)", "blur(2.2px) contrast(1.1) grayscale(.14)"],
+        ["quant", "Après quantification", "blur(2.2px) contrast(1.12) grayscale(.16)"],
+        ["final", "Image finale", ""],
+      ];
+      resolve({
+        radiometric_budget: { L_emise: L_emise, L_atm_solaire: L_atm_solaire, L_atm_thermique: L_atm_thermique, L_toa: toa },
+        pipeline_stages: stages.map(function(s, i){
+          return {
+            id: s[0], label: s[1], image_url: mainUrl, filter: s[2],
+            stats: { mean: (120 + i*4 + Math.random()*6).toFixed(1), std: (8 + Math.random()*3).toFixed(1),
+                     min: Math.round(Math.random()*10), max: Math.round(240 - Math.random()*10) },
+          };
+        }),
+      });
+    }, 1400);
+  });
+}
+
+function renderBudget(b){
+  var total = b.L_toa;
+  var parts = [
+    ["L_émise (surface)", b.L_emise, "#5FDCD0"],
+    ["L_atm_solaire (diffusion)", b.L_atm_solaire, "#F5AC57"],
+    ["L_atm_thermique (émission atm.)", b.L_atm_thermique, "#F0776D"],
+  ];
+  var bar = document.getElementById("budgetBar");
+  bar.innerHTML = parts.map(function(p){
+    var pct = (p[1]/total*100);
+    return "<div style='width:" + pct.toFixed(1) + "%;background:" + p[2] + "'>" + (pct>8 ? pct.toFixed(0)+"%" : "") + "</div>";
+  }).join("");
+  document.getElementById("budgetLegend").innerHTML = parts.map(function(p){
+    return "<span class='li'><span class='sw' style='background:" + p[2] + "'></span>" + p[0] + "</span>";
+  }).join("");
+  document.getElementById("budgetTable").innerHTML =
+    "<tr><th>Composante</th><th>Radiance (W/m²/sr/µm)</th><th>Part de L_TOA</th></tr>" +
+    parts.map(function(p){
+      return "<tr><td>" + p[0] + "</td><td>" + p[1].toFixed(2) + "</td><td>" + (p[1]/total*100).toFixed(1) + " %</td></tr>";
+    }).join("") +
+    "<tr><td><strong>L_TOA (total)</strong></td><td><strong>" + total.toFixed(2) + "</strong></td><td>100 %</td></tr>";
+}
+
+function renderFilmstrip(stages){
+  var host = document.getElementById("filmStrip");
+  host.innerHTML = "";
+  compareSelection = [];
+  stages.forEach(function(s){
+    var f = document.createElement("div");
+    f.className = "frame";
+    f.innerHTML =
+      "<div class='fimg' style=\"background-image:url('" + s.image_url + "');filter:" + s.filter + "\"></div>" +
+      "<div class='flabel'>" + s.label + "</div>" +
+      "<div class='fstats'>μ=" + s.stats.mean + " σ=" + s.stats.std + "</div>";
+    f.addEventListener("click", function(){ toggleCompare(s, f); });
+    host.appendChild(f);
+  });
+}
+
+function toggleCompare(stage, el){
+  var idx = compareSelection.findIndex(function(c){ return c.stage.id === stage.id; });
+  if(idx >= 0){
+    compareSelection.splice(idx, 1);
+    el.classList.remove("selected");
+  } else {
+    if(compareSelection.length >= 2){
+      var removed = compareSelection.shift();
+      removed.el.classList.remove("selected");
+    }
+    compareSelection.push({ stage: stage, el: el });
+    el.classList.add("selected");
+  }
+  var wrap = document.getElementById("compareWrap");
+  if(compareSelection.length === 2){
+    wrap.classList.add("show");
+    wrap.innerHTML = compareSelection.map(function(c){
+      return "<div class='compareframe'>" +
+        "<img src='" + c.stage.image_url + "' style='filter:" + c.stage.filter + "'>" +
+        "<div class='lbl'>" + c.stage.label + "</div>" +
+        "<div class='fstats'>μ=" + c.stage.stats.mean + " σ=" + c.stage.stats.std +
+        " min=" + c.stage.stats.min + " max=" + c.stage.stats.max + "</div></div>";
+    }).join("");
+  } else {
+    wrap.classList.remove("show");
+    wrap.innerHTML = "";
+  }
+}
+
+// ----- repli aperçu (sans backend) -----
+var PREVIEW_RESULT = {
+  id: "preview", scene: "Zone urbaine — démo",
+  instrument_snapshot: { name: "Instrument (aperçu)" },
+  conditions: { H: 500, S: 45, TI: 200, TDI: 8 },
+  image_path: null, created_at: new Date().toISOString(),
+  diagnostics: { bands: { "B1 (bleu)": { snr_mean: 142.3, mtf_at_nyquist: .312, fill_pct: 68.4,
+    signal_mean_e: 48210, reflectance_mean: .21, rho_ref: .3 } } },
+};
+</script>
+</body>
+</html>
