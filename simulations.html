@@ -799,7 +799,7 @@ function renderAcquisitionDiagram(){
   var angle = Math.max(8, Math.min(80, S));
   var rad = angle * Math.PI / 180;
   var solarLen = 225 * scaleY;
-  var sunRad = Math.min(rad, 58 * Math.PI / 180);
+  var sunRad = rad;
   var sunX = targetX - solarLen * Math.cos(sunRad);
   var sunY = groundY - solarLen * Math.sin(sunRad);
   var sunDirLen = Math.sqrt(Math.pow(targetX-sunX,2) + Math.pow(groundY-sunY,2)) || 1;
@@ -809,7 +809,7 @@ function renderAcquisitionDiagram(){
   var arcStartY = groundY;
   var arcEndX = targetX - arcR * Math.cos(rad);
   var arcEndY = groundY - arcR * Math.sin(rad);
-  var angleLabelX = targetX - arcR - 30;
+  var angleLabelX = targetX - arcR - 14;
   var angleLabelY = groundY + 18;
 
   /* nuage sur le trajet solaire (énergie incidente / diffuse) */
@@ -847,15 +847,10 @@ function renderAcquisitionDiagram(){
         "</marker>"+
       "</defs>"+
 
-      /* en-tête */
-      "<text x='26' y='32' fill='#9BADBD' font-family='var(--mono)' font-size='11.5' letter-spacing='1.6'>GÉOMÉTRIE D'ACQUISITION</text>"+
-      "<line x1='26' y1='44' x2='250' y2='44' stroke='#2E4152'/>"+
-
-      /* sol : horizon légèrement courbe, avec des bandes d'atmosphère */
-      "<path d='M0 "+(groundY-46*scaleY).toFixed(1)+" Q310 "+(groundY-66*scaleY).toFixed(1)+" "+VBW+" "+(groundY-44*scaleY).toFixed(1)+"' fill='none' stroke='#3D5A68' stroke-width='1' stroke-dasharray='1 5' opacity='.35'/>"+
-      "<path d='M0 "+(groundY-24*scaleY).toFixed(1)+" Q310 "+(groundY-38*scaleY).toFixed(1)+" "+VBW+" "+(groundY-22*scaleY).toFixed(1)+"' fill='none' stroke='#4E7B8C' stroke-width='1.1' opacity='.4'/>"+
-      "<path d='M0 "+groundY.toFixed(1)+" Q310 "+(groundY-14*scaleY).toFixed(1)+" "+VBW+" "+(groundY+2*scaleY).toFixed(1)+"' fill='none' stroke='#5FDCD0' stroke-width='1.4' opacity='.7'/>"+
-      haloText(VBW-90, groundY-52*scaleY, "Atmosphère", "#6E8493", 10.5, "middle")+
+      /* sol + atmosphère : une seule courbe discrète */
+      "<path d='M0 "+(groundY-34*scaleY).toFixed(1)+" Q305 "+(groundY-52*scaleY).toFixed(1)+" "+VBW+" "+(groundY-32*scaleY).toFixed(1)+"' fill='none' stroke='#557887' stroke-width='1' opacity='.42'/>"+
+      "<path d='M0 "+groundY.toFixed(1)+" Q305 "+(groundY-12*scaleY).toFixed(1)+" "+VBW+" "+(groundY+1*scaleY).toFixed(1)+"' fill='none' stroke='#5A7A88' stroke-width='1.2' opacity='.62'/>"+
+      haloText(92, groundY-48*scaleY, "Atmosphère", "#6E8493", 10.5, "start")+
 
       /* rayon solaire : trait pointillé, comme la ligne de nadir */
       "<line x1='"+(sunX+22*sunDirX).toFixed(1)+"' y1='"+(sunY+22*sunDirY).toFixed(1)+"' x2='"+(targetX-8*sunDirX).toFixed(1)+"' y2='"+(groundY-8*sunDirY).toFixed(1)+"' stroke='#F5AC57' stroke-width='2.4' stroke-linecap='round' stroke-dasharray='1 6' marker-end='url(#arrowSun)'/>"+
@@ -870,7 +865,7 @@ function renderAcquisitionDiagram(){
       /* angle d'élévation */
       "<line x1='"+(targetX-arcR-14)+"' y1='"+groundY.toFixed(1)+"' x2='"+(targetX+34)+"' y2='"+groundY.toFixed(1)+"' stroke='#8497AA' stroke-width='1' opacity='.4'/>"+
       "<path d='M"+arcStartX.toFixed(1)+" "+arcStartY.toFixed(1)+" A"+arcR+" "+arcR+" 0 0 1 "+arcEndX.toFixed(1)+" "+arcEndY.toFixed(1)+"' fill='none' stroke='#F5AC57' stroke-width='1.8'/>"+
-      haloText(angleLabelX, angleLabelY, "θ = "+angle+"°", "#F5AC57", 15, "middle")+
+      haloText(angleLabelX, angleLabelY, "θ = "+angle+"°", "#F5AC57", 13.5, "middle")+
 
       /* cote d'altitude */
       "<line x1='"+dimX+"' y1='"+(satY+6).toFixed(1)+"' x2='"+dimX+"' y2='"+groundY.toFixed(1)+"' stroke='#8497AA' stroke-width='1' stroke-dasharray='2 5' opacity='.6'/>"+
@@ -891,16 +886,22 @@ function renderAcquisitionDiagram(){
       "</g>"+
       haloText(sunX-23, sunY+5, "Soleil", "#F5AC57", 12.5, "end")+
 
-      /* capteur : boîtier + objectif (plutôt qu'un satellite à panneaux) */
+      /* satellite : bus + panneaux solaires + objectif, inspiré de la maquette */
       "<g transform='translate("+satX+" "+satY+")'>"+
-        "<rect x='-16' y='-12' width='32' height='20' rx='3' fill='url(#satBody)' stroke='#5FDCD0' stroke-width='1.6'/>"+
-        "<rect x='-16' y='-12' width='20' height='7' rx='2' fill='#5FDCD0' opacity='.16'/>"+
-        "<rect x='-7' y='6' width='14' height='11' rx='2.5' fill='#152229' stroke='#5FDCD0' stroke-width='1.4'/>"+
-        "<circle cx='0' cy='19' r='4.4' fill='#0B141A' stroke='#5FDCD0' stroke-width='1.6'/>"+
-        "<circle cx='0' cy='19' r='1.6' fill='#5FDCD0'/>"+
-        "<circle cx='9' cy='-4' r='1.4' fill='#F0776D'/>"+
+        "<rect x='-18' y='-11' width='36' height='20' rx='3' fill='url(#satBody)' stroke='#5FDCD0' stroke-width='1.5'/>"+
+        "<rect x='-12' y='-7' width='24' height='6' rx='1.5' fill='#315363' opacity='.55'/>"+
+        "<circle cx='9' cy='-3.5' r='1.4' fill='#F0776D'/>"+
+        "<rect x='-43' y='-5' width='20' height='10' rx='1.5' fill='#1A2A33' stroke='#4A7688' stroke-width='1'/>"+
+        "<line x1='-36' y1='-5' x2='-36' y2='5' stroke='#345A6B' stroke-width='.8'/><line x1='-30' y1='-5' x2='-30' y2='5' stroke='#345A6B' stroke-width='.8'/>"+
+        "<line x1='-43' y1='0' x2='-23' y2='0' stroke='#345A6B' stroke-width='.8'/>"+
+        "<rect x='23' y='-5' width='20' height='10' rx='1.5' fill='#1A2A33' stroke='#4A7688' stroke-width='1'/>"+
+        "<line x1='30' y1='-5' x2='30' y2='5' stroke='#345A6B' stroke-width='.8'/><line x1='36' y1='-5' x2='36' y2='5' stroke='#345A6B' stroke-width='.8'/>"+
+        "<line x1='23' y1='0' x2='43' y2='0' stroke='#345A6B' stroke-width='.8'/>"+
+        "<rect x='-7' y='8' width='14' height='10' rx='2.5' fill='#101B22' stroke='#5FDCD0' stroke-width='1.35'/>"+
+        "<circle cx='0' cy='20' r='4.6' fill='#091117' stroke='#5FDCD0' stroke-width='1.5'/>"+
+        "<circle cx='0' cy='20' r='1.6' fill='#5FDCD0'/>"+
       "</g>"+
-      haloText(satX+34, satY+40, "Nadir", "#8497AA", 12, "start")+
+      haloText(satX+46, satY+36, "Nadir", "#8497AA", 11.5, "start")+
 
       /* cible */
       "<circle cx='"+targetX+"' cy='"+groundY.toFixed(1)+"' r='5.5' fill='#5FDCD0'/>"+
