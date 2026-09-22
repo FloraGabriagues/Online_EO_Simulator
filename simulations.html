@@ -789,32 +789,46 @@ function renderAcquisitionDiagram(){
   var VBH = Math.max(300, Math.min(760, VBW * (rectH / rectW)));
   var scaleY = VBH / 360;
 
-  var groundY = 288 * scaleY;
+  // Physical-to-screen vertical scale.
+  // The displayed ground-to-satellite distance changes with altitude.
+  var H_MIN = 380, H_MAX = 900;
+  var satGroundPxMin = 150 * scaleY;
+  var satGroundPxMax = 248 * scaleY;
+  var hNorm = Math.max(0, Math.min(1, (H - H_MIN) / (H_MAX - H_MIN)));
+  var satGroundPx = satGroundPxMin + (satGroundPxMax - satGroundPxMin) * hNorm;
+
+  var groundY = 292 * scaleY;
   var targetX = 292;
-  var satX = targetX;
-  var satY = 58 * scaleY;
+  var satY = groundY - satGroundPx;
   var sensorBottomY = satY + 31;
 
   var angle = Math.max(8, Math.min(80, S));
   var rad = angle * Math.PI / 180;
 
-  // Stable visual composition: the Sun stays left, while the orange
-  // ray follows the actual solar-elevation angle to the target.
-  var sunX = 94;
-  var sunY = 78 * scaleY;
+  // Atmosphere is tied to the same altitude scale:
+  // a constant physical thickness is represented as a fraction of the
+  // current ground-to-satellite distance.
+  var atmosphereKm = 80;
+  var atmospherePx = satGroundPx * (atmosphereKm / Math.max(H, 1));
+  atmospherePx = Math.max(17 * scaleY, Math.min(34 * scaleY, atmospherePx));
+  var atmBottomY = groundY - atmospherePx;
+  var atmTopY = atmBottomY - 22 * scaleY;
 
-  // Solar ray line is clipped to the diagram viewport.
-  var rayLength = 340;
-  var rayStartX = Math.max(25, targetX - rayLength * Math.cos(rad));
-  var rayStartY = Math.max(40, groundY - rayLength * Math.sin(rad));
-  var rayDirX = Math.cos(rad);
-  var rayDirY = Math.sin(rad);
+  // Sun follows the requested elevation angle around the target.
+  // The radius grows slightly with altitude to preserve readability.
+  var sunRadius = 205 * scaleY + 0.12 * satGroundPx;
+  var sunX = targetX - sunRadius * Math.cos(rad);
+  var sunY = groundY - sunRadius * Math.sin(rad);
 
-  // Atmosphere band.
-  var atmTopY = groundY - 52 * scaleY;
-  var atmBottomY = groundY - 24 * scaleY;
+  var rayStartX = sunX;
+  var rayStartY = sunY;
+  var dx = targetX - rayStartX;
+  var dy = groundY - rayStartY;
+  var rayLen = Math.hypot(dx, dy) || 1;
+  var rayDirX = dx / rayLen;
+  var rayDirY = dy / rayLen;
 
-  // Solar-angle arc.
+  // Solar elevation arc.
   var arcR = 52;
   var arcStartX = targetX - arcR;
   var arcEndX = targetX - arcR * Math.cos(rad);
@@ -840,24 +854,24 @@ function renderAcquisitionDiagram(){
         "</marker>"+
       "</defs>"+
 
-      // Atmosphere band + surface.
-      "<path d='M0 "+atmTopY.toFixed(1)+" Q305 "+(atmTopY-14*scaleY).toFixed(1)+" "+VBW+" "+atmTopY.toFixed(1)+
-        " L"+VBW+" "+atmBottomY.toFixed(1)+" Q305 "+(atmBottomY-10*scaleY).toFixed(1)+" 0 "+atmBottomY.toFixed(1)+" Z' fill='url(#atmBand)'/>"+
-      "<path d='M0 "+atmTopY.toFixed(1)+" Q305 "+(atmTopY-14*scaleY).toFixed(1)+" "+VBW+" "+atmTopY.toFixed(1)+"' fill='none' stroke='#587887' stroke-width='1' opacity='.42'/>"+
-      "<path d='M0 "+atmBottomY.toFixed(1)+" Q305 "+(atmBottomY-10*scaleY).toFixed(1)+" "+VBW+" "+atmBottomY.toFixed(1)+"' fill='none' stroke='#446373' stroke-width='1' opacity='.28'/>"+
+      // Atmosphere adapts with the displayed altitude.
+      "<path d='M0 "+atmTopY.toFixed(1)+" Q305 "+(atmTopY-7*scaleY).toFixed(1)+" "+VBW+" "+atmTopY.toFixed(1)+
+        " L"+VBW+" "+atmBottomY.toFixed(1)+" Q305 "+(atmBottomY-5*scaleY).toFixed(1)+" 0 "+atmBottomY.toFixed(1)+" Z' fill='url(#atmBand)'/>"+
+      "<path d='M0 "+atmTopY.toFixed(1)+" Q305 "+(atmTopY-7*scaleY).toFixed(1)+" "+VBW+" "+atmTopY.toFixed(1)+"' fill='none' stroke='#587887' stroke-width='1' opacity='.42'/>"+
+      "<path d='M0 "+atmBottomY.toFixed(1)+" Q305 "+(atmBottomY-5*scaleY).toFixed(1)+" "+VBW+" "+atmBottomY.toFixed(1)+"' fill='none' stroke='#446373' stroke-width='1' opacity='.28'/>"+
       "<path d='M0 "+groundY.toFixed(1)+" Q305 "+(groundY-12*scaleY).toFixed(1)+" "+VBW+" "+(groundY+1*scaleY).toFixed(1)+"' fill='none' stroke='#5A7A88' stroke-width='1.2' opacity='.68'/>"+
       haloText(92, atmTopY-9, "ATMOSPHÈRE", "#718896", 10, "start")+
       haloText(VBW-18, groundY+24, "SURFACE", "#718896", 10, "end")+
 
-      // Solar path.
+      // Solar ray: same angle as the input.
       "<line x1='"+rayStartX.toFixed(1)+"' y1='"+rayStartY.toFixed(1)+"' x2='"+(targetX-7*rayDirX).toFixed(1)+"' y2='"+(groundY-7*rayDirY).toFixed(1)+
       "' stroke='#F5AC57' stroke-width='2.2' stroke-linecap='round' stroke-dasharray='1 7' marker-end='url(#acqArrowSun)'/>"+
 
-      // Nadir axis only.
+      // Nadir axis adapts with altitude.
       "<line x1='"+satX+"' y1='"+sensorBottomY.toFixed(1)+"' x2='"+targetX+"' y2='"+groundY.toFixed(1)+"' stroke='#5FDCD0' stroke-width='1.4' stroke-dasharray='2 6' opacity='.82'/>"+
-      haloText(targetX+18, satY+76, "NADIR", "#8497AA", 10.5, "start")+
+      haloText(targetX+18, satY+76*scaleY, "NADIR", "#8497AA", 10.5, "start")+
 
-      // Target marker.
+      // Target.
       "<circle cx='"+targetX+"' cy='"+groundY.toFixed(1)+"' r='7' fill='#5FDCD0'/>"+
       "<circle cx='"+targetX+"' cy='"+groundY.toFixed(1)+"' r='17' fill='none' stroke='#5FDCD0' stroke-width='1' opacity='.22'/>"+
       haloText(targetX, groundY+31, "CIBLE", "#8497AA", 10.5, "middle")+
@@ -874,7 +888,7 @@ function renderAcquisitionDiagram(){
       haloText(dimX+15, dimMidY-4, "ALTITUDE", "#8497AA", 10, "start")+
       haloText(dimX+15, dimMidY+17, H+" km", "#E6EEF4", 15, "start")+
 
-      // Sun icon.
+      // Sun — its position follows the entered elevation.
       "<g transform='translate("+sunX.toFixed(1)+" "+sunY.toFixed(1)+")'>"+
         "<g stroke='#F5AC57' stroke-width='1.8' stroke-linecap='round'>"+
           "<line x1='-18' y1='0' x2='-11' y2='0'/><line x1='11' y1='0' x2='18' y2='0'/>"+
@@ -886,7 +900,7 @@ function renderAcquisitionDiagram(){
       "</g>"+
       haloText(sunX-19, sunY+4, "SOLEIL", "#F5AC57", 11.5, "end")+
 
-      // Compact satellite.
+      // Satellite.
       "<g transform='translate("+satX+" "+satY.toFixed(1)+")'>"+
         "<rect x='-18' y='-11' width='36' height='20' rx='3' fill='url(#acqSatBody)' stroke='#5FDCD0' stroke-width='1.5'/>"+
         "<rect x='-12' y='-7' width='24' height='6' rx='1.5' fill='#315363' opacity='.55'/>"+
@@ -902,13 +916,21 @@ function renderAcquisitionDiagram(){
         "<circle cx='0' cy='20' r='1.6' fill='#5FDCD0'/>"+
       "</g>"+
 
-      // Small legend to decode the two paths.
+      // Legend.
       "<g transform='translate("+ (VBW-182) +" 22)'>"+
         "<line x1='0' y1='4' x2='20' y2='4' stroke='#F5AC57' stroke-width='2' stroke-dasharray='1 5'/><text x='27' y='8' fill='#8497AA' font-family='var(--mono)' font-size='9.5'>ÉCLAIREMENT</text>"+
         "<line x1='0' y1='22' x2='20' y2='22' stroke='#5FDCD0' stroke-width='1.4' stroke-dasharray='2 5'/><text x='27' y='26' fill='#8497AA' font-family='var(--mono)' font-size='9.5'>VISÉE / NADIR</text>"+
       "</g>"+
     "</svg>";
 }
+
+["fH","fS"].forEach(function(id){
+  var el = document.getElementById(id);
+  if(el){
+    el.addEventListener("input", renderAcquisitionDiagram);
+    el.addEventListener("change", renderAcquisitionDiagram);
+  }
+});
 
 // ===================== Résumé permanent (étapes 1-3) =====================
 function updateSummary(){
