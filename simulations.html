@@ -760,6 +760,19 @@ function haloText(x, y, text, color, size, anchor){
   return "<text x='"+xs+"' y='"+ys+"' fill='none' stroke='#060A0F' stroke-width='4.2' stroke-linejoin='round' font-family='var(--mono)' font-size='"+size+"' text-anchor='"+anchor+"'>"+text+"</text>"+
     "<text x='"+xs+"' y='"+ys+"' fill='"+color+"' font-family='var(--mono)' font-size='"+size+"' text-anchor='"+anchor+"'>"+text+"</text>";
 }
+// Petit nuage (trois bulles + base) pour marquer une interaction avec
+// l'atmosphère sur le trajet du signal — inspiré des schémas de bilan
+// radiatif (énergie incidente / diffuse / réfléchie).
+function cloudIcon(cx, cy, scale, color){
+  scale = scale || 1;
+  var s = scale;
+  return "<g transform='translate("+cx.toFixed(1)+" "+cy.toFixed(1)+") scale("+s+")' opacity='.8'>"+
+    "<ellipse cx='0' cy='2' rx='15' ry='7' fill='"+color+"' fill-opacity='.5'/>"+
+    "<circle cx='-8' cy='-2' r='7' fill='"+color+"' fill-opacity='.55'/>"+
+    "<circle cx='2' cy='-5' r='9' fill='"+color+"' fill-opacity='.6'/>"+
+    "<circle cx='10' cy='-1' r='6.5' fill='"+color+"' fill-opacity='.5'/>"+
+  "</g>";
+}
 function renderAcquisitionDiagram(){
   var host = document.getElementById("acqDiagram");
   if(!host) return;
@@ -775,20 +788,14 @@ function renderAcquisitionDiagram(){
   var VBH = Math.max(300, Math.min(760, VBW * (rectH / rectW)));
   var scaleY = VBH / 360;
 
-  /* Vue 2D pure (coupe verticale) : sol = simple ligne horizontale, plus
-     de plan en perspective. Toute la largeur du bloc est utilisée
-     maintenant qu'il n'y a plus de panneau de lecture séparé. */
   var groundY = 272 * scaleY;
   var targetX = 300;
   var satY = 58 * scaleY;
-  var mastTipY = satY + 27;
+  var mastTipY = satY + 24;
   var satX = targetX;
   var angle = Math.max(8, Math.min(80, S));
   var rad = angle * Math.PI / 180;
   var solarLen = 225 * scaleY;
-  // Le soleil est positionné avec un angle légèrement plafonné : à très
-  // haute élévation, un satellite au nadir se retrouve littéralement au
-  // même endroit dans le ciel, et les deux icônes se chevauchent.
   var sunRad = Math.min(rad, 58 * Math.PI / 180);
   var sunX = targetX - solarLen * Math.cos(sunRad);
   var sunY = groundY - solarLen * Math.sin(sunRad);
@@ -802,9 +809,14 @@ function renderAcquisitionDiagram(){
   var angleLabelX = targetX - arcR - 30;
   var angleLabelY = groundY + 18;
 
-  /* signal (zigzag) le long de l'axe de visée, entre la cible et le mât —
-     cantonné à la partie basse du cône (large), pour ne pas traverser les
-     deux lignes qui convergent près du satellite */
+  /* nuage sur le trajet solaire (énergie incidente / diffuse) */
+  var cloud1X = sunX + (targetX - sunX) * 0.46, cloud1Y = sunY + (groundY - sunY) * 0.46;
+  /* nuage sur le trajet retour vers le capteur (énergie réfléchie) */
+  var cloud2X = targetX, cloud2Y = groundY - (groundY - mastTipY) * 0.4;
+
+  /* signal (zigzag) le long de l'axe de visée, cantonné à la partie basse
+     du cône (large), pour ne pas traverser les deux lignes qui
+     convergent près du capteur */
   var zig = "M"+targetX+" "+(groundY-8).toFixed(1);
   var zigN = 3, zigAmp = 8, zigCap = 0.56;
   var zigTop = (groundY-8) + (mastTipY+12 - (groundY-8)) * zigCap;
@@ -815,17 +827,14 @@ function renderAcquisitionDiagram(){
     zig += " L"+zx.toFixed(1)+" "+zy.toFixed(1);
   }
 
-  /* cote d'altitude, à droite du mât */
+  /* cote d'altitude, à droite du capteur */
   var dimX = satX + 150;
 
   host.innerHTML =
     "<svg viewBox='0 0 "+VBW+" "+VBH.toFixed(1)+"' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Pointage nadir et élévation solaire'>"+
       "<defs>"+
         "<linearGradient id='satBody' x1='0' y1='0' x2='0' y2='1'>"+
-          "<stop offset='0%' stop-color='#25404F'/><stop offset='100%' stop-color='#122029'/>"+
-        "</linearGradient>"+
-        "<linearGradient id='panelFill' x1='0' y1='0' x2='1' y2='0'>"+
-          "<stop offset='0%' stop-color='#0E1E27'/><stop offset='100%' stop-color='#1B3542'/>"+
+          "<stop offset='0%' stop-color='#2E4C5C'/><stop offset='100%' stop-color='#132229'/>"+
         "</linearGradient>"+
         "<marker id='arrowSun' markerWidth='10' markerHeight='10' refX='7' refY='5' orient='auto'>"+
           "<path d='M0,0 L10,5 L0,10 Z' fill='#F5AC57'/>"+
@@ -833,9 +842,6 @@ function renderAcquisitionDiagram(){
         "<marker id='arrowSignal' markerWidth='9' markerHeight='9' refX='6' refY='4.5' orient='auto'>"+
           "<path d='M0,0 L9,4.5 L0,9 Z' fill='#5FDCD0'/>"+
         "</marker>"+
-        "<filter id='softGlow' x='-60%' y='-60%' width='220%' height='220%'>"+
-          "<feGaussianBlur stdDeviation='2.6' result='blur'/><feMerge><feMergeNode in='blur'/><feMergeNode in='SourceGraphic'/></feMerge>"+
-        "</filter>"+
       "</defs>"+
 
       /* en-tête */
@@ -845,8 +851,7 @@ function renderAcquisitionDiagram(){
       /* sol : simple ligne horizontale */
       "<line x1='0' y1='"+groundY.toFixed(1)+"' x2='"+VBW+"' y2='"+groundY.toFixed(1)+"' stroke='#3D5A68' stroke-width='1.4'/>"+
 
-      /* rayon solaire : flèche nette (le vecteur réel soleil→cible, pas
-         l'angle affiché, qui peut être plafonné pour l'icône du soleil) */
+      /* rayon solaire : flèche nette */
       "<line x1='"+(sunX+22*sunDirX).toFixed(1)+"' y1='"+(sunY+22*sunDirY).toFixed(1)+"' x2='"+(targetX-12*sunDirX).toFixed(1)+"' y2='"+(groundY-12*sunDirY).toFixed(1)+"' stroke='#F5AC57' stroke-width='3.4' stroke-linecap='round' marker-end='url(#arrowSun)'/>"+
 
       /* cône de visée : deux lignes fines (pas de remplissage) */
@@ -855,6 +860,11 @@ function renderAcquisitionDiagram(){
 
       /* signal : zigzag avec flèche vers le capteur */
       "<path d='"+zig+"' fill='none' stroke='#5FDCD0' stroke-width='1.8' stroke-linejoin='round' marker-end='url(#arrowSignal)'/>"+
+
+      /* atmosphère : deux nuages sur les trajets aller / retour */
+      cloudIcon(cloud1X, cloud1Y, 0.95, "#9BADBD")+
+      cloudIcon(cloud2X, cloud2Y, 0.8, "#9BADBD")+
+      haloText(cloud1X, cloud1Y-22, "atmosphère", "#8497AA", 9.5, "middle")+
 
       /* angle d'élévation */
       "<line x1='"+(targetX-arcR-14)+"' y1='"+groundY.toFixed(1)+"' x2='"+(targetX+34)+"' y2='"+groundY.toFixed(1)+"' stroke='#8497AA' stroke-width='1' opacity='.4'/>"+
@@ -880,20 +890,16 @@ function renderAcquisitionDiagram(){
       "</g>"+
       haloText(sunX-23, sunY+5, "Soleil", "#F5AC57", 12.5, "end")+
 
-      /* satellite : corps + panneaux solaires + antenne, sur un mât */
-      "<line x1='"+satX+"' y1='"+(satY+11)+"' x2='"+satX+"' y2='"+mastTipY.toFixed(1)+"' stroke='#8497AA' stroke-width='1.4'/>"+
+      /* capteur : boîtier + objectif (plutôt qu'un satellite à panneaux) */
       "<g transform='translate("+satX+" "+satY+")'>"+
-        "<rect x='-18' y='-10' width='36' height='20' rx='4' fill='#5FDCD0' opacity='.16' filter='url(#softGlow)'/>"+
-        "<rect x='-60' y='-8' width='42' height='16' rx='2' fill='url(#panelFill)' stroke='#3D6272' stroke-width='1'/>"+
-        "<rect x='18' y='-8' width='42' height='16' rx='2' fill='url(#panelFill)' stroke='#3D6272' stroke-width='1'/>"+
-        "<path d='M-56 -4h34M-56 0h34M-56 4h34M22 -4h34M22 0h34M22 4h34' stroke='#5FDCD0' stroke-width='.6' opacity='.5'/>"+
-        "<rect x='-18' y='-10' width='36' height='20' rx='4' fill='url(#satBody)' stroke='#5FDCD0' stroke-width='1.6'/>"+
-        "<line x1='0' y1='-10' x2='0' y2='-18' stroke='#5FDCD0' stroke-width='1.3'/>"+
-        "<circle cx='0' cy='-18' r='1.6' fill='#5FDCD0'/>"+
-        "<circle cx='0' cy='0' r='3' fill='#5FDCD0'/>"+
-        "<circle cx='10' cy='4.5' r='1.4' fill='#F0776D'/>"+
+        "<rect x='-16' y='-12' width='32' height='20' rx='3' fill='url(#satBody)' stroke='#5FDCD0' stroke-width='1.6'/>"+
+        "<rect x='-16' y='-12' width='20' height='7' rx='2' fill='#5FDCD0' opacity='.16'/>"+
+        "<rect x='-7' y='6' width='14' height='11' rx='2.5' fill='#152229' stroke='#5FDCD0' stroke-width='1.4'/>"+
+        "<circle cx='0' cy='19' r='4.4' fill='#0B141A' stroke='#5FDCD0' stroke-width='1.6'/>"+
+        "<circle cx='0' cy='19' r='1.6' fill='#5FDCD0'/>"+
+        "<circle cx='9' cy='-4' r='1.4' fill='#F0776D'/>"+
       "</g>"+
-      haloText(satX+34, satY+38, "Nadir", "#8497AA", 12, "start")+
+      haloText(satX+34, satY+40, "Nadir", "#8497AA", 12, "start")+
 
       /* cible */
       "<circle cx='"+targetX+"' cy='"+groundY.toFixed(1)+"' r='5.5' fill='#5FDCD0'/>"+
