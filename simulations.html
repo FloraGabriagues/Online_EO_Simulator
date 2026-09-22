@@ -671,13 +671,27 @@ var instruments = [];
 var selectedInstIdx = -1;
 var instListEl = document.getElementById("instList");
 
+// Instrument de secours utilisé uniquement quand Supabase est injoignable
+// (typiquement l'aperçu Claude, qui n'a ni supabase-client.js ni accès
+// réseau à votre projet Supabase) — permet de naviguer dans l'assistant
+// pour prévisualiser l'UI. Sur le site réel, supabaseClient répond
+// normalement et ce repli n'est jamais utilisé.
+var PREVIEW_FALLBACK_INSTRUMENTS = [
+  { id: "preview-demo", name: "Instrument (aperçu)", config: { wfeCases: [] } }
+];
 async function loadInstruments(){
-  var { data, error } = await supabaseClient
-    .from("instruments")
-    .select("*")
-    .order("updated_at", { ascending: false });
-  if(error){ console.error("Erreur chargement instruments :", error); return; }
-  instruments = data || [];
+  try {
+    if(typeof supabaseClient === "undefined") throw new Error("supabaseClient indisponible");
+    var { data, error } = await supabaseClient
+      .from("instruments")
+      .select("*")
+      .order("updated_at", { ascending: false });
+    if(error) throw error;
+    instruments = data || [];
+  } catch(e){
+    console.warn("Chargement instruments impossible, repli aperçu :", e);
+    instruments = PREVIEW_FALLBACK_INSTRUMENTS;
+  }
   if(instruments.length > 0) selectedInstIdx = 0;
   renderInstruments();
   renderWfeCaseOptions();
@@ -738,102 +752,187 @@ document.getElementById("fWfeCase").addEventListener("change", function(){
 });
 
 // ===================== Schéma des conditions d'acquisition =====================
+// Halo de lecture derrière le texte : reste net même quand il croise une
+// ligne du schéma, sans encadré (un fond plein se fondait dans le ciel
+// presque noir et rendait le texte illisible dès qu'il y avait du monde).
+function haloText(x, y, text, color, size, anchor){
+  anchor = anchor || "middle";
+  var xs = x.toFixed(1), ys = y.toFixed(1);
+  return "<text x='"+xs+"' y='"+ys+"' fill='none' stroke='#060A0F' stroke-width='4' stroke-linejoin='round' font-family='var(--mono)' font-size='"+size+"' text-anchor='"+anchor+"'>"+text+"</text>"+
+    "<text x='"+xs+"' y='"+ys+"' fill='"+color+"' font-family='var(--mono)' font-size='"+size+"' text-anchor='"+anchor+"'>"+text+"</text>";
+}
+// Faisceau plein (cône) entre deux points, pour remplacer les lignes
+// pointillées fines par quelque chose de plus lisible et illustratif —
+// inspiré des schémas d'acquisition optique classiques (Fo / L / Laser).
+function beamCone(x1, y1, x2, y2, halfW1, halfW2, fillUrl){
+  var dx = x2 - x1, dy = y2 - y1, len = Math.sqrt(dx*dx + dy*dy) || 1;
+  var ux = dx / len, uy = dy / len, px = -uy, py = ux;
+  var p1a = [x1 + px*halfW1, y1 + py*halfW1];
+  var p1b = [x1 - px*halfW1, y1 - py*halfW1];
+  var p2a = [x2 + px*halfW2, y2 + py*halfW2];
+  var p2b = [x2 - px*halfW2, y2 - py*halfW2];
+  var d = "M"+p1a[0].toFixed(1)+" "+p1a[1].toFixed(1)+" L"+p2a[0].toFixed(1)+" "+p2a[1].toFixed(1)+
+          " L"+p2b[0].toFixed(1)+" "+p2b[1].toFixed(1)+" L"+p1b[0].toFixed(1)+" "+p1b[1].toFixed(1)+" Z";
+  return "<path d='"+d+"' fill='"+fillUrl+"'/>";
+}
+// Petit repère de diffusion atmosphérique (aérosol / molécule) : un point
+// central entouré de rayons courts, comme sur les schémas de télédétection.
+function starburst(cx, cy, r, color, rays){
+  rays = rays || 9;
+  var out = "";
+  for(var i=0;i<rays;i++){
+    var a = (i/rays) * Math.PI * 2;
+    var x1 = cx + Math.cos(a)*r*0.45, y1 = cy + Math.sin(a)*r*0.45;
+    var x2 = cx + Math.cos(a)*r, y2 = cy + Math.sin(a)*r;
+    out += "<line x1='"+x1.toFixed(1)+"' y1='"+y1.toFixed(1)+"' x2='"+x2.toFixed(1)+"' y2='"+y2.toFixed(1)+"' stroke='"+color+"' stroke-width='1' stroke-linecap='round' opacity='.7'/>";
+  }
+  return "<g>"+out+"<circle cx='"+cx.toFixed(1)+"' cy='"+cy.toFixed(1)+"' r='2' fill='"+color+"'/></g>";
+}
+var ACQ_STARS = [
+  [26,24,1,.5],[64,42,.7,.35],[112,18,1.1,.5],[176,36,.8,.4],
+  [36,76,.9,.4],[140,64,.7,.3]
+];
 function renderAcquisitionDiagram(){
   var host = document.getElementById("acqDiagram");
   if(!host) return;
   var H = Number(document.getElementById("fH").value) || 500;
   var S = Number(document.getElementById("fS").value) || 45;
 
-  /* Diagramme volontairement très sobre : le satellite, la verticale nadir,
-     le rayon solaire et l'angle d'élévation sont les seules informations
-     graphiques importantes. */
-  var groundY = 274;
-  var targetX = 330;
-  var satY = 72;
+  var groundY = 264;
+  var targetX = 182;
+  var satY = 62;
   var satX = targetX;
   var angle = Math.max(8, Math.min(80, S));
   var rad = angle * Math.PI / 180;
-  var solarLen = 150;
+  var solarLen = 128;
   var sunX = targetX - solarLen * Math.cos(rad);
   var sunY = groundY - solarLen * Math.sin(rad);
-  var arcR = 46;
+  var arcR = 44;
   var arcStartX = targetX - arcR;
   var arcStartY = groundY;
   var arcEndX = targetX - arcR * Math.cos(rad);
   var arcEndY = groundY - arcR * Math.sin(rad);
+  var midRad = rad / 2;
+  var angleLabelX = targetX - (arcR + 22) * Math.cos(midRad);
+  var angleLabelY = groundY - (arcR + 22) * Math.sin(midRad);
+
+  // deux points de diffusion le long du faisceau solaire (35% / 65%)
+  var scat1X = sunX + (targetX - sunX) * 0.38, scat1Y = sunY + (groundY - sunY) * 0.38;
+  var scat2X = sunX + (targetX - sunX) * 0.66, scat2Y = sunY + (groundY - sunY) * 0.66;
+
+  var stars = ACQ_STARS.map(function(st){
+    return "<circle cx='" + st[0] + "' cy='" + st[1] + "' r='" + st[2] + "' fill='#E6EEF4' opacity='" + st[3] + "'/>";
+  }).join("");
 
   host.innerHTML =
     "<svg viewBox='0 0 620 360' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Pointage nadir et élévation solaire'>"+
       "<defs>"+
         "<linearGradient id='earthFill' x1='0' y1='0' x2='0' y2='1'>"+
-          "<stop offset='0%' stop-color='#173543'/><stop offset='100%' stop-color='#0B171F'/>"+
+          "<stop offset='0%' stop-color='#1C4152'/><stop offset='55%' stop-color='#102630'/><stop offset='100%' stop-color='#081217'/>"+
         "</linearGradient>"+
         "<linearGradient id='skyFade' x1='0' y1='0' x2='0' y2='1'>"+
-          "<stop offset='0%' stop-color='#0C151D'/><stop offset='100%' stop-color='#091117'/>"+
+          "<stop offset='0%' stop-color='#0D1620'/><stop offset='60%' stop-color='#0A131B'/><stop offset='100%' stop-color='#080F15'/>"+
         "</linearGradient>"+
-        "<filter id='softGlow' x='-50%' y='-50%' width='200%' height='200%'>"+
+        "<linearGradient id='satBody' x1='0' y1='0' x2='0' y2='1'>"+
+          "<stop offset='0%' stop-color='#25404F'/><stop offset='100%' stop-color='#122029'/>"+
+        "</linearGradient>"+
+        "<linearGradient id='panelFill' x1='0' y1='0' x2='1' y2='0'>"+
+          "<stop offset='0%' stop-color='#0E1E27'/><stop offset='100%' stop-color='#1B3542'/>"+
+        "</linearGradient>"+
+        "<radialGradient id='sunCore' cx='50%' cy='50%' r='50%'>"+
+          "<stop offset='0%' stop-color='#FFE3B0'/><stop offset='55%' stop-color='#F5AC57'/><stop offset='100%' stop-color='#F5AC57' stop-opacity='0'/>"+
+        "</radialGradient>"+
+        "<radialGradient id='earthRim' cx='50%' cy='0%' r='75%'>"+
+          "<stop offset='0%' stop-color='#5FDCD0' stop-opacity='.4'/><stop offset='100%' stop-color='#5FDCD0' stop-opacity='0'/>"+
+        "</radialGradient>"+
+        "<linearGradient id='sunBeamGrad' gradientUnits='userSpaceOnUse' x1='"+sunX.toFixed(1)+"' y1='"+sunY.toFixed(1)+"' x2='"+targetX+"' y2='"+groundY+"'>"+
+          "<stop offset='0%' stop-color='#F5AC57' stop-opacity='.38'/><stop offset='100%' stop-color='#F5AC57' stop-opacity='.06'/>"+
+        "</linearGradient>"+
+        "<linearGradient id='nadirBeamGrad' gradientUnits='userSpaceOnUse' x1='"+satX+"' y1='"+satY+"' x2='"+targetX+"' y2='"+groundY+"'>"+
+          "<stop offset='0%' stop-color='#5FDCD0' stop-opacity='.32'/><stop offset='100%' stop-color='#5FDCD0' stop-opacity='.05'/>"+
+        "</linearGradient>"+
+        "<filter id='softGlow' x='-60%' y='-60%' width='220%' height='220%'>"+
           "<feGaussianBlur stdDeviation='3' result='blur'/><feMerge><feMergeNode in='blur'/><feMergeNode in='SourceGraphic'/></feMerge>"+
         "</filter>"+
-        "<marker id='arrowNadir' markerWidth='8' markerHeight='8' refX='6' refY='4' orient='auto'>"+
-          "<path d='M0,0 L8,4 L0,8 Z' fill='#5FDCD0'/>"+
-        "</marker>"+
+        "<filter id='wideGlow' x='-80%' y='-80%' width='260%' height='260%'>"+
+          "<feGaussianBlur stdDeviation='8'/>"+
+        "</filter>"+
       "</defs>"+
 
-      "<rect width='620' height='360' rx='5' fill='url(#skyFade)'/>"+
-      "<path d='M0 276 Q150 246 310 272 T620 265 L620 360 L0 360Z' fill='url(#earthFill)' stroke='#2E5261' stroke-width='1.2'/>"+
-      "<path d='M0 276 Q150 246 310 272 T620 265' fill='none' stroke='#385A68' stroke-width='1.4'/>"+
+      "<rect width='620' height='360' rx='6' fill='url(#skyFade)'/>"+
+      "<g opacity='.9'>" + stars + "</g>"+
 
-      /* altitude */
-      "<line x1='500' y1='80' x2='500' y2='270' stroke='#8497AA' stroke-width='1' stroke-dasharray='3 6' opacity='.55'/>"+
-      "<line x1='492' y1='80' x2='508' y2='80' stroke='#8497AA' stroke-width='1'/>"+
-      "<line x1='492' y1='270' x2='508' y2='270' stroke='#8497AA' stroke-width='1'/>"+
-      "<text x='518' y='178' fill='#9BADBD' font-family='var(--mono)' font-size='11'>Altitude</text>"+
-      "<text x='518' y='195' fill='#E6EEF4' font-family='var(--mono)' font-size='12'>"+H+" km</text>"+
+      /* limite d'atmosphère (pointillée, comme un repère de haute altitude) */
+      "<path d='M0 150 Q215 108 430 142' fill='none' stroke='#3D5A68' stroke-width='1.2' stroke-dasharray='1 5' opacity='.55'/>"+
 
-      /* satellite */
-      "<g transform='translate("+satX+" "+satY+")'>"+
-        "<rect x='-18' y='-10' width='36' height='20' rx='3' fill='#182833' stroke='#5FDCD0' stroke-width='1.4'/>"+
-        "<rect x='-52' y='-8' width='27' height='16' rx='2' fill='#13242D' stroke='#40606E'/>"+
-        "<rect x='25' y='-8' width='27' height='16' rx='2' fill='#13242D' stroke='#40606E'/>"+
-        "<path d='M-48 -4h19M-48 0h19M-48 4h19M29 -4h19M29 0h19M29 4h19' stroke='#5FDCD0' stroke-width='.7' opacity='.65'/>"+
-        "<circle cx='0' cy='0' r='3.5' fill='#5FDCD0'/>"+
-      "</g>"+
+      /* lueur d'atmosphère au-dessus de l'horizon + sol */
+      "<ellipse cx='260' cy='262' rx='340' ry='30' fill='url(#earthRim)'/>"+
+      "<path d='M0 266 Q150 236 310 262 T620 255 L620 360 L0 360Z' fill='url(#earthFill)' stroke='#2E5261' stroke-width='1.2'/>"+
+      "<path d='M0 266 Q150 236 310 262 T620 255' fill='none' stroke='#4E7B8C' stroke-width='1.6' opacity='.85'/>"+
 
-      /* nadir */
-      "<line x1='"+satX+"' y1='84' x2='"+targetX+"' y2='263' stroke='#5FDCD0' stroke-width='2' stroke-dasharray='7 6' marker-end='url(#arrowNadir)' filter='url(#softGlow)'/>"+
-      "<text x='"+(satX+18)+"' y='132' fill='#5FDCD0' font-family='var(--mono)' font-size='12'>Pointage nadir</text>"+
-      "<text x='"+(satX+18)+"' y='149' fill='#8497AA' font-family='var(--mono)' font-size='10'>0° par rapport à la verticale</text>"+
+      /* faisceaux pleins : soleil → cible, puis satellite → cible */
+      beamCone(sunX, sunY, targetX, groundY-2, 15, 3, "url(#sunBeamGrad)")+
+      beamCone(satX, satY, targetX, groundY-2, 9, 2.5, "url(#nadirBeamGrad)")+
 
-      /* soleil + rayons */
-      "<g transform='translate("+sunX.toFixed(1)+" "+sunY.toFixed(1)+")' filter='url(#softGlow)'>"+
-        "<circle r='18' fill='#F5AC57' fill-opacity='.10' stroke='#F5AC57' stroke-width='2'/>"+
-        "<circle r='8' fill='#F5AC57' fill-opacity='.85'/>"+
-        "<g stroke='#F5AC57' stroke-width='1.5' stroke-linecap='round' opacity='.9'>"+
-          "<line x1='-30' y1='0' x2='-23' y2='0'/><line x1='23' y1='0' x2='30' y2='0'/>"+
-          "<line x1='0' y1='-30' x2='0' y2='-23'/><line x1='0' y1='23' x2='0' y2='30'/>"+
-          "<line x1='-21' y1='-21' x2='-16' y2='-16'/><line x1='21' y1='21' x2='16' y2='16'/>"+
-        "</g>"+
-      "</g>"+
-      "<line x1='"+sunX.toFixed(1)+"' y1='"+sunY.toFixed(1)+"' x2='"+targetX+"' y2='"+groundY+"' stroke='#F5AC57' stroke-width='2.2' stroke-dasharray='8 6'/>"+
-      "<text x='"+(sunX-10).toFixed(1)+"' y='"+(sunY+48).toFixed(1)+"' fill='#F5AC57' font-family='var(--mono)' font-size='11'>Soleil</text>"+
+      /* diffusion atmosphérique le long du faisceau solaire (repère visuel,
+         le détail Aérosol/Molécule est décrit ailleurs dans l'outil) */
+      starburst(scat1X, scat1Y, 9, "#F5AC57", 9)+
+      starburst(scat2X, scat2Y, 10, "#F5AC57", 9)+
 
       /* angle d'élévation */
-      "<line x1='"+(targetX-76)+"' y1='"+groundY+"' x2='"+(targetX+28)+"' y2='"+groundY+"' stroke='#8497AA' stroke-width='1' opacity='.55'/>"+
-      "<path d='M"+arcStartX.toFixed(1)+" "+arcStartY.toFixed(1)+" A"+arcR+" "+arcR+" 0 0 1 "+arcEndX.toFixed(1)+" "+arcEndY.toFixed(1)+"' fill='none' stroke='#F5AC57' stroke-width='2'/>"+
-      "<text x='"+(targetX-76)+"' y='"+(groundY-17)+"' fill='#F5AC57' font-family='var(--mono)' font-size='12'>"+angle+"°</text>"+
-      "<text x='"+(targetX-76)+"' y='"+(groundY-2)+"' fill='#9BADBD' font-family='var(--mono)' font-size='10'>élévation solaire</text>"+
+      "<line x1='"+(targetX-arcR-14)+"' y1='"+groundY+"' x2='"+(targetX+30)+"' y2='"+groundY+"' stroke='#8497AA' stroke-width='1' opacity='.4'/>"+
+      "<path d='M"+arcStartX.toFixed(1)+" "+arcStartY.toFixed(1)+" A"+arcR+" "+arcR+" 0 0 1 "+arcEndX.toFixed(1)+" "+arcEndY.toFixed(1)+"' fill='none' stroke='#F5AC57' stroke-width='2.4' filter='url(#softGlow)'/>"+
+      haloText(angleLabelX, angleLabelY, "θ = "+angle+"°", "#F5AC57", 13, "middle")+
 
-      /* point au sol */
-      "<circle cx='"+targetX+"' cy='"+groundY+"' r='4' fill='#5FDCD0'/>"+
-      "<circle cx='"+targetX+"' cy='"+groundY+"' r='13' fill='none' stroke='#5FDCD0' stroke-width='1' opacity='.28'/>"+
-      "<text x='"+(targetX+18)+"' y='"+(groundY+4)+"' fill='#9BADBD' font-family='var(--mono)' font-size='10'>point d'acquisition</text>"+
+      /* soleil */
+      "<g transform='translate("+sunX.toFixed(1)+" "+sunY.toFixed(1)+")'>"+
+        "<circle r='24' fill='url(#sunCore)' filter='url(#wideGlow)'/>"+
+        "<g stroke='#F5AC57' stroke-width='1.6' stroke-linecap='round' opacity='.85'>"+
+          "<line x1='-30' y1='0' x2='-22' y2='0'/><line x1='22' y1='0' x2='30' y2='0'/>"+
+          "<line x1='0' y1='-30' x2='0' y2='-22'/><line x1='0' y1='22' x2='0' y2='30'/>"+
+          "<line x1='-20' y1='-20' x2='-15' y2='-15'/><line x1='20' y1='20' x2='15' y2='15'/>"+
+          "<line x1='20' y1='-20' x2='15' y2='-15'/><line x1='-20' y1='20' x2='-15' y2='15'/>"+
+        "</g>"+
+        "<circle r='8' fill='#FFE3B0'/><circle r='8' fill='#F5AC57' fill-opacity='.55'/>"+
+      "</g>"+
+      haloText(sunX, sunY-34, "Soleil", "#F5AC57", 11, "middle")+
 
-      /* petits repères de lecture */
-      "<text x='24' y='32' fill='#8497AA' font-family='var(--mono)' font-size='10' letter-spacing='1.2'>GÉOMÉTRIE D'ACQUISITION</text>"+
-      "<line x1='24' y1='42' x2='190' y2='42' stroke='#22323F'/>"+
-      "<text x='24' y='326' fill='#5FDCD0' font-family='var(--mono)' font-size='10'>NADIR</text>"+
-      "<text x='76' y='326' fill='#8497AA' font-family='var(--mono)' font-size='10'>·</text>"+
-      "<text x='91' y='326' fill='#F5AC57' font-family='var(--mono)' font-size='10'>ÉLÉVATION SOLAIRE</text>"+
+      /* satellite : corps + panneaux accolés (une seule silhouette) */
+      "<g transform='translate("+satX+" "+satY+")'>"+
+        "<rect x='-16' y='-9' width='32' height='18' rx='4' fill='#5FDCD0' opacity='.16' filter='url(#wideGlow)'/>"+
+        "<rect x='-54' y='-7' width='38' height='14' rx='2' fill='url(#panelFill)' stroke='#3D6272' stroke-width='1'/>"+
+        "<rect x='16' y='-7' width='38' height='14' rx='2' fill='url(#panelFill)' stroke='#3D6272' stroke-width='1'/>"+
+        "<path d='M-50 -3h30M-50 1h30M-50 5h30M20 -3h30M20 1h30M20 5h30' stroke='#5FDCD0' stroke-width='.6' opacity='.5'/>"+
+        "<rect x='-16' y='-9' width='32' height='18' rx='4' fill='url(#satBody)' stroke='#5FDCD0' stroke-width='1.5'/>"+
+        "<line x1='0' y1='-9' x2='0' y2='-16' stroke='#5FDCD0' stroke-width='1.2'/>"+
+        "<circle cx='0' cy='-16' r='1.4' fill='#5FDCD0'/>"+
+        "<circle cx='0' cy='0' r='2.6' fill='#5FDCD0'/>"+
+        "<circle cx='9' cy='4' r='1.2' fill='#F0776D'/>"+
+      "</g>"+
+      haloText(satX+30, satY+34, "Nadir", "#5FDCD0", 11, "start")+
+
+      /* cible au sol */
+      "<rect x='"+(targetX-35)+"' y='"+(groundY-5)+"' width='70' height='10' rx='4' fill='#5FDCD0' fill-opacity='.14' stroke='#5FDCD0' stroke-opacity='.5' stroke-width='1'/>"+
+      "<circle cx='"+targetX+"' cy='"+groundY+"' r='2.6' fill='#5FDCD0'/>"+
+      haloText(targetX, groundY+20, "cible", "#8497AA", 9.5, "middle")+
+
+      /* en-tête */
+      "<text x='24' y='30' fill='#9BADBD' font-family='var(--mono)' font-size='10.5' letter-spacing='1.6'>GÉOMÉTRIE D'ACQUISITION</text>"+
+      "<line x1='24' y1='40' x2='226' y2='40' stroke='#2E4152'/>"+
+
+      /* panneau de lecture (valeurs) */
+      "<rect x='442' y='58' width='154' height='188' rx='8' fill='#0B141C' fill-opacity='.92' stroke='#22323F' stroke-width='1'/>"+
+      "<rect x='460' y='84' width='7' height='7' rx='1.5' fill='#9BADBD'/>"+
+      "<text x='476' y='90' fill='#8497AA' font-family='var(--mono)' font-size='10' letter-spacing='.08em'>ALTITUDE</text>"+
+      "<text x='460' y='112' fill='#E6EEF4' font-family='var(--mono)' font-size='17'>"+H+" <tspan fill='#8497AA' font-size='11'>km</tspan></text>"+
+      "<line x1='460' y1='128' x2='582' y2='128' stroke='#22323F'/>"+
+      "<rect x='460' y='142' width='7' height='7' rx='1.5' fill='#F5AC57'/>"+
+      "<text x='476' y='148' fill='#8497AA' font-family='var(--mono)' font-size='10' letter-spacing='.06em'>ÉLÉVATION SOLAIRE</text>"+
+      "<text x='460' y='170' fill='#F5AC57' font-family='var(--mono)' font-size='17'>"+angle+"°</text>"+
+      "<line x1='460' y1='186' x2='582' y2='186' stroke='#22323F'/>"+
+      "<rect x='460' y='200' width='7' height='7' rx='1.5' fill='#5FDCD0'/>"+
+      "<text x='476' y='206' fill='#8497AA' font-family='var(--mono)' font-size='10' letter-spacing='.06em'>POINTAGE NADIR</text>"+
+      "<text x='460' y='228' fill='#5FDCD0' font-family='var(--mono)' font-size='17'>0° <tspan fill='#8497AA' font-size='10.5'>/ verticale</tspan></text>"+
     "</svg>";
 }
 
@@ -1406,14 +1505,29 @@ async function initSettingsModal(session){
 
 // ===================== Démarrage =====================
 (async function(){
-  session = await requireAuth();
-  if(!session) return;
+  try {
+    session = (typeof requireAuth === "function") ? await requireAuth() : null;
+  } catch(e){
+    console.warn("requireAuth indisponible, repli aperçu :", e);
+    session = null;
+  }
+  if(!session){
+    // Aperçu Claude (ou tout environnement sans supabase-client.js /
+    // session valide) : on simule une session minimale pour pouvoir
+    // prévisualiser l'assistant. Sur le site réel, requireAuth()
+    // redirige vers la connexion et ce repli n'intervient jamais.
+    session = { user: { id: "preview", email: "" } };
+  }
   accountId = session.user.id;
 
   document.getElementById("userEmail").textContent = session.user.email || "";
   document.getElementById("userAvatar").textContent = (session.user.email || "").slice(0, 2).toUpperCase();
   document.getElementById("signOutBtn").addEventListener("click", signOut);
-  await initSettingsModal(session);
+  try {
+    await initSettingsModal(session);
+  } catch(e){
+    console.warn("initSettingsModal indisponible (aperçu) :", e);
+  }
 
   await loadInstruments();
 
