@@ -779,6 +779,7 @@ function cloudIcon(cx, cy, scale, color){
 function renderAcquisitionDiagram(){
   var host = document.getElementById("acqDiagram");
   if(!host) return;
+  try{
 
   var H = Number(document.getElementById("fH").value) || 500;
   var S = Number(document.getElementById("fS").value) || 45;
@@ -799,6 +800,7 @@ function renderAcquisitionDiagram(){
 
   var groundY = 292 * scaleY;
   var targetX = 292;
+  var satX = targetX; // le capteur pointe toujours au nadir — directement au-dessus de la cible
   var satY = groundY - satGroundPx;
   var sensorBottomY = satY + 31;
 
@@ -922,6 +924,14 @@ function renderAcquisitionDiagram(){
         "<line x1='0' y1='22' x2='20' y2='22' stroke='#5FDCD0' stroke-width='1.4' stroke-dasharray='2 5'/><text x='27' y='26' fill='#8497AA' font-family='var(--mono)' font-size='9.5'>VISÉE / NADIR</text>"+
       "</g>"+
     "</svg>";
+  }catch(e){
+    // Ne doit JAMAIS remonter : une exception non rattrapée ici, avant la
+    // fin du script (bloc "Démarrage" plus bas), empêche updatePanelButton()
+    // de tourner au chargement — donc le bouton "Suivant →" de répondre au
+    // clic, sur TOUTE l'appli, pas juste le schéma. C'est précisément ce
+    // qui vient de se produire (satX non déclarée, cf. fix ci-dessus).
+    console.warn("renderAcquisitionDiagram a échoué (schéma non affiché) :", e);
+  }
 }
 
 ["fH","fS"].forEach(function(id){
