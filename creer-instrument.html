@@ -616,6 +616,14 @@ function renderPanel(){
     belowHtml = "<details class='advanced' id='qeDetails'"+(nQe ? " open" : "")+">"+
       "<summary>Courbe spectrale du rendement (optionnel)"+(nQe ? "<span class='count'>"+nQe+" point"+(nQe > 1 ? "s" : "")+"</span>" : "")+"</summary>"+
       renderQeSpectralHtml()+"</details>"+advancedDetails;
+  } else if(block.id === "optique"){
+    // Optique : courbe de transmission spectrale, même présentation que la
+    // courbe QE du bloc Détecteur.
+    var nT = (state.values.tSpectral || []).length;
+    belowHtml = "<details class='advanced' id='tDetails'"+(nT ? " open" : "")+">"+
+      "<summary>Courbe spectrale de la transmission (optionnel)"+(nT ? "<span class='count'>"+nT+" point"+(nT > 1 ? "s" : "")+"</span>" : "")+"</summary>"+
+      renderTSpectralHtml()+"</details>";
+    fieldsHtml += advancedDetails;
   } else {
     fieldsHtml += advancedDetails;
   }
@@ -684,7 +692,7 @@ function renderPanel(){
       if(f.k === "electronics_mode") renderPanel();
     });
   });
-  if(block.id === "optique") renderOpticsGeometry();
+  if(block.id === "optique") { renderOpticsGeometry(); wireTSpectralUI(); }
   if(block.id === "detecteur") { renderDetectorGeometry(); wireQeSpectralUI(); }
   if(block.id === "wfe") wireWfeCasesUI();
   var actions = document.createElement("div");
@@ -1315,6 +1323,59 @@ function renderDetectorGeometry(){
 // sous la forme paramFile.Detector.QE_spectral = {wavelength_nm:[...], values:[...]}
 // attendue par radiometry._integrate_radiance_to_electrons — remplace alors
 // la version synthétisée à plat depuis le QE scalaire.
+// ===================== Transmission optique spectrale (04/10/2026) =====================
+// Même principe que la courbe QE ci-dessous : state.values.tSpectral =
+// [{wl, t}, ...] (wl en nm, t en fraction 0-1). Optionnelle — avec au moins
+// 2 points valides, elle remplace la transmission scalaire à l'envoi (cf.
+// simulations.html, payload.tSpectral) et devient
+// paramFile.Telescope.T_opt_spectral = {wavelength_nm:[...], values:[...]}
+// (cf. paramfile_builder.py). Hors de la plage saisie, le backend garde la
+// valeur du point le plus proche (np.interp dans radiometry.py).
+function renderTSpectralHtml(){
+  var pts = state.values.tSpectral || [];
+  var rows = pts.map(function(p, i){
+    return "<div class='qerow'>"+
+      "<input type='number' step='any' class='qewl tswl' data-t-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
+      "<input type='number' step='any' class='qeval tsval' data-t-idx='"+i+"' value='"+p.t+"' placeholder='Transmission (0-1)'>"+
+      "<button type='button' class='qedel' data-t-del='"+i+"' aria-label='Supprimer ce point'>×</button>"+
+    "</div>";
+  }).join("");
+  return "<div class='wfecases qespectral'>"+
+    "<div class='wfehead'><label>Points de la courbe</label>"+
+    "<button type='button' class='addcasebtn' id='btnAddTPoint'>+ Ajouter un point</button></div>"+
+    "<p class='wfesub'>Un point par longueur d'onde, transmission en fraction (0-1, pas en %) — remplace la transmission scalaire ci-dessus si renseigné. La courbe doit couvrir les bandes : en dehors, la valeur du point le plus proche est gardée.</p>"+
+    "<div id='tRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div>"+
+    "<div id='tChart'></div>"+
+  "</div>";
+}
+
+function wireTSpectralUI(){
+  renderTChart();
+  document.getElementById("btnAddTPoint").addEventListener("click", function(){
+    if(!state.values.tSpectral) state.values.tSpectral = [];
+    state.values.tSpectral.push({ wl: "", t: "" });
+    persist();
+    renderPanel();
+    var rows = document.querySelectorAll(".tswl");
+    if(rows.length) rows[rows.length-1].focus();
+  });
+  panelEl.querySelectorAll(".tswl, .tsval").forEach(function(input){
+    input.addEventListener("input", function(){
+      var i = Number(input.dataset.tIdx);
+      state.values.tSpectral[i][input.classList.contains("tswl") ? "wl" : "t"] = input.value;
+      persist();
+      renderTChart(); // pas de renderPanel() : on garde le focus pendant la frappe
+    });
+  });
+  panelEl.querySelectorAll("[data-t-del]").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      state.values.tSpectral.splice(Number(btn.dataset.tDel), 1);
+      persist();
+      renderPanel();
+    });
+  });
+}
+
 function renderQeSpectralHtml(){
   var pts = state.values.qeSpectral || [];
   var rows = pts.map(function(p, i){
@@ -1346,12 +1407,16 @@ function wavelengthToColor(wl){
   return "rgb("+Math.round(r*255*factor)+","+Math.round(g*255*factor)+","+Math.round(b*255*factor)+")";
 }
 
-function renderQeChart(){
-  var host = document.getElementById("qeChart");
+// 04/10/2026 — le tracé est commun à la courbe QE (bloc Détecteur) et à la
+// courbe de transmission optique (bloc Optique) : mêmes axes, même rendu.
+function renderQeChart(){ renderSpectralChart("qeChart", state.values.qeSpectral, "qe", "qeSpectralGradient"); }
+function renderTChart(){ renderSpectralChart("tChart", state.values.tSpectral, "t", "tSpectralGradient"); }
+function renderSpectralChart(hostId, rawPts, valKey, gradId){
+  var host = document.getElementById(hostId);
   if(!host) return;
-  var pts = (state.values.qeSpectral || [])
-    .filter(function(p){ return p.wl !== "" && p.qe !== "" && !isNaN(p.wl) && !isNaN(p.qe); })
-    .map(function(p){ return { wl: Number(p.wl), qe: Number(p.qe) }; })
+  var pts = (rawPts || [])
+    .filter(function(p){ return p.wl !== "" && p[valKey] !== "" && !isNaN(p.wl) && !isNaN(p[valKey]); })
+    .map(function(p){ return { wl: Number(p.wl), qe: Number(p[valKey]) }; })
     .sort(function(a,b){ return a.wl - b.wl; });
   if(pts.length < 2){
     host.innerHTML = "<p class='empty' style='margin-top:8px'>Au moins 2 points valides pour afficher la courbe.</p>";
@@ -1374,12 +1439,12 @@ function renderQeChart(){
   }).join("");
   host.innerHTML =
     "<svg viewBox='0 0 "+W+" "+H+"' style='width:100%;height:auto;display:block;margin-top:10px'>"+
-      "<defs><linearGradient id='qeSpectralGradient' x1='"+padL+"' y1='0' x2='"+(W-padR)+"' y2='0' gradientUnits='userSpaceOnUse'>"+stops+"</linearGradient></defs>"+
+      "<defs><linearGradient id='"+gradId+"' x1='"+padL+"' y1='0' x2='"+(W-padR)+"' y2='0' gradientUnits='userSpaceOnUse'>"+stops+"</linearGradient></defs>"+
       "<line x1='"+padL+"' y1='"+(H-padB)+"' x2='"+(W-padR)+"' y2='"+(H-padB)+"' stroke='var(--line-soft)'/>"+
       "<line x1='"+padL+"' y1='"+padT+"' x2='"+padL+"' y2='"+(H-padB)+"' stroke='var(--line-soft)'/>"+
       "<text x='"+padL+"' y='"+(H-4)+"' font-family='var(--mono)' font-size='9' fill='var(--muted-2)'>"+wlMin+" nm</text>"+
       "<text x='"+(W-padR)+"' y='"+(H-4)+"' text-anchor='end' font-family='var(--mono)' font-size='9' fill='var(--muted-2)'>"+wlMax+" nm</text>"+
-      "<path d='"+pathD+"' fill='none' stroke='url(#qeSpectralGradient)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
+      "<path d='"+pathD+"' fill='none' stroke='url(#"+gradId+")' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
       dots+
     "</svg>";
 }

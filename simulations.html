@@ -1309,6 +1309,20 @@ async function launchSimulation(){
     };
   }
 
+  // Courbe de transmission optique T(λ) (04/10/2026) — même principe et
+  // même format que la courbe QE ci-dessus : avec au moins 2 points
+  // valides, elle remplace la transmission scalaire pour cet envoi.
+  var tPts = (inst.config.tSpectral || [])
+    .filter(function(p){ return p.wl !== "" && p.t !== "" && !isNaN(p.wl) && !isNaN(p.t); })
+    .map(function(p){ return { wl: Number(p.wl), t: Number(p.t) }; })
+    .sort(function(a,b){ return a.wl - b.wl; });
+  if(tPts.length >= 2){
+    payload.tSpectral = {
+      wavelength_nm: tPts.map(function(p){ return p.wl; }),
+      values: tPts.map(function(p){ return p.t; }),
+    };
+  }
+
   lastPayload = { payload: payload, scene: scene, inst: inst, conditions: conditions, wfeCase: wfeCase };
 
   abortController = new AbortController();
