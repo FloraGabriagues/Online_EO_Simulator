@@ -1146,6 +1146,26 @@ async function launchSimulation(){
     NSUP: inst.config.NSUP, ESUP: inst.config.ESUP,
   }, conditions);
 
+  // Électronique et DSNU (03/10/2026) — clés explicites, identiques à
+  // celles du paramFile (cf. creer-instrument.html et paramfile_builder.py).
+  // Seuls les champs du mode choisi sont envoyés : le backend refuse un
+  // mélange de modes (module_SNR.resolve_electronics). Un champ vide n'est
+  // pas envoyé (undefined disparaît à la sérialisation JSON).
+  function numOrUndef(v){ return (v === undefined || v === null || v === "") ? undefined : Number(v); }
+  var cfg = inst.config;
+  payload.electronics_mode = cfg.electronics_mode || undefined;
+  if(cfg.electronics_mode === "detailed"){
+    payload.CVF_uV_per_e = numOrUndef(cfg.CVF_uV_per_e);
+    payload.G_PGA = numOrUndef(cfg.G_PGA);
+    payload.V_range = numOrUndef(cfg.V_range);
+  } else if(cfg.electronics_mode === "datasheet"){
+    payload.CWF = numOrUndef(cfg.CWF);
+  }
+  payload.DN0 = numOrUndef(cfg.DN0);
+  payload.bits_TDI = numOrUndef(cfg.bits_TDI);
+  payload.dsnu_1288 = numOrUndef(cfg.dsnu_1288);
+  payload.dsnu_T_ref = numOrUndef(cfg.dsnu_T_ref);
+
   // Cas WFE actif — deux formes possibles (cf. creer-instrument.html,
   // échange du 19/09/2026) :
   //  - "rms" : remplace juste W par la valeur du cas ; le mode

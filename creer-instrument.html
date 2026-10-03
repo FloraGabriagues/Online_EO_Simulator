@@ -117,6 +117,17 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .field input::placeholder{color:var(--muted-2);font-family:var(--body);font-style:italic}
 .field .unit{font-family:var(--mono);font-size:12px;color:var(--muted-2);min-width:34px}
 .field input:focus{outline:none;border-color:var(--pixel)}
+/* 03/10/2026 — aides de saisie, sélecteur de mode électronique, paramètres avancés */
+.field .labrow{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.field .labrow label{margin-bottom:0}
+.field .helpbtn{appearance:none;cursor:pointer;background:transparent;border:1px solid var(--line);
+  color:var(--muted);border-radius:50%;width:18px;height:18px;font-size:11px;line-height:1;padding:0}
+.field .helpbtn:hover{border-color:var(--pixel);color:var(--pixel)}
+.field .fieldhelp{font-size:12px;color:var(--muted);margin:6px 0 0;line-height:1.45}
+.field select{width:100%;background:var(--panel-2);color:var(--paper);border:1px solid var(--line);
+  border-radius:4px;padding:8px 10px;font-size:14px}
+details.advanced{border-top:1px solid var(--line-soft);margin-top:6px;padding-top:12px}
+details.advanced summary{cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:12px}
 .panel-actions{display:flex;justify-content:space-between;gap:10px;margin-top:20px;
   padding-top:16px;border-top:1px solid var(--line-soft)}
 .panel-actions .rightbtns{display:flex;gap:10px;margin-left:auto}
@@ -257,12 +268,42 @@ var SCHEMA = [
       {k:"PX", label:"Largeur pixel", unit:"µm", placeholder:"obligatoire"},
       {k:"P",  label:"PRNU", unit:"%", placeholder:"0 (défaut)"},
       {k:"K",  label:"Courant d'obscurité", unit:"e⁻/s", placeholder:"0 (défaut)"},
-      {k:"QE", label:"Rendement quantique", unit:"τ", placeholder:"1 (défaut)"}
+      {k:"QE", label:"Rendement quantique", unit:"τ", placeholder:"1 (défaut)"},
+      // DSNU (03/10/2026) : clés explicites, identiques à celles du paramFile
+      // (Detector.dsnu_1288 / dsnu_T_ref, cf. module_SNR.build_fixed_pattern).
+      {k:"dsnu_1288", label:"DSNU (EMVA 1288)", unit:"e⁻", placeholder:"0 (défaut)", optional:true,
+       help:"Dispersion du signal d'obscurité d'un pixel à l'autre, en électrons RMS, mesurée selon l'EMVA 1288. Laisser 0 si la datasheet ne la donne pas."},
+      {k:"dsnu_T_ref", label:"Temps de référence DSNU", unit:"s", placeholder:"0 (défaut)", requiredIf:"dsnu_1288",
+       help:"Temps d'exposition utilisé pour mesurer la DSNU. Obligatoire dès que la DSNU est non nulle : sans lui, la valeur ne peut pas être ramenée au temps d'intégration."}
     ]},
     {id:"electronique", label:"Électronique", fields:[
-      {k:"ADC", label:"Résolution ADC", unit:"bits"},
-      {k:"FW", label:"Full well", unit:"e⁻", placeholder:"1 000 000 (défaut)"},
-      {k:"R",  label:"Bruit de lecture", unit:"e⁻", placeholder:"0 (défaut)"}
+      {k:"ADC", label:"Résolution ADC", unit:"bits", placeholder:"obligatoire",
+       help:"Nombre de bits du convertisseur, donc 2^bits codes (4 096 pour 12 bits). Profondeur d'une lecture, avant sommation des étages TDI."},
+      {k:"FW", label:"Full well", unit:"e⁻", placeholder:"obligatoire",
+       help:"Charge maximale d'un pixel, ligne « full well capacity » ou « saturation capacity ». Capacité d'un étage, pas la capacité cumulée après TDI."},
+      {k:"R",  label:"Bruit de lecture", unit:"e⁻", placeholder:"0 (défaut)",
+       help:"Bruit ajouté à chaque lecture, en électrons RMS. Avec un TDI numérique il s'ajoute à chaque étage."},
+      // Électronique (03/10/2026) — obligatoire : un des trois modes doit
+      // être choisi, plus de repli silencieux. Clés explicites, identiques
+      // à celles lues par module_SNR.resolve_electronics.
+      {k:"electronics_mode", label:"Mode de saisie de l'électronique", type:"select", options:[
+        {v:"", label:"— choisir —"},
+        {v:"detailed", label:"Détaillé (facteur de conversion + plage ADC)"},
+        {v:"datasheet", label:"Datasheet (gain global en DN/e⁻)"},
+        {v:"full_scale", label:"Pleine échelle ADC = full well"}],
+       help:"À choisir selon ce que donne la datasheet. Sans aucune donnée électronique, « Pleine échelle ADC = full well » suppose l'ADC réglé pour que sa pleine échelle corresponde au puits plein : seuls le full well et le nombre de bits comptent."},
+      {k:"CVF_uV_per_e", label:"Facteur de conversion", unit:"µV/e⁻", placeholder:"obligatoire", modes:["detailed"],
+       help:"Tension produite par électron, ligne « conversion gain » des datasheets. Ne pas saisir l'inverse (e⁻/V)."},
+      {k:"G_PGA", label:"Gain de l'amplificateur (PGA)", unit:"", placeholder:"1 (défaut)", modes:["detailed"], optional:true,
+       help:"Gain en tension appliqué avant l'ADC. Laisser 1 en l'absence d'amplificateur programmable."},
+      {k:"V_range", label:"Plage d'entrée de l'ADC", unit:"V", placeholder:"obligatoire", modes:["detailed"],
+       help:"Tension convertie par l'ADC, de 0 à cette valeur. Vérification : full well × facteur de conversion × gain doit être proche de cette plage ; au-delà, l'ADC sature avant le puits."},
+      {k:"CWF", label:"Gain global", unit:"DN/e⁻", placeholder:"obligatoire", modes:["datasheet"],
+       help:"Nombre de DN par électron. Si la datasheet donne des e⁻/DN, saisir l'inverse."},
+      {k:"DN0", label:"Niveau noir", unit:"DN", placeholder:"0 (défaut)", optional:true, advanced:true,
+       help:"Offset électronique ajouté à chaque étage, distinct du courant d'obscurité. Doit rester inférieur à 2^bits − 1."},
+      {k:"bits_TDI", label:"Accumulateur TDI", unit:"bits", placeholder:"sans perte (défaut)", optional:true, advanced:true,
+       help:"Profondeur du registre qui somme les étages. Vide : dimensionné pour ne jamais saturer. Sinon au moins égal à la résolution ADC."}
     ]},
     {id:"wfe", label:"Performance WFE", fields:[
       {k:"W", label:"WFE RMS", unit:"nm", placeholder:"0 (défaut)"}
@@ -313,14 +354,48 @@ async function loadInstrument(){
   document.getElementById("instName").value = data.name || "";
 }
 
+// 03/10/2026 — un champ peut être masqué selon le mode d'électronique
+// (f.modes), facultatif (f.optional), ou obligatoire seulement si un autre
+// champ est non nul (f.requiredIf). Seuls les champs visibles et non
+// facultatifs comptent dans l'avancement.
+function isFilled(k){
+  var v = state.values[k];
+  return v !== undefined && v !== null && v !== "";
+}
+function fieldVisible(f){
+  return !f.modes || f.modes.indexOf(state.values.electronics_mode) >= 0;
+}
+function fieldCounts(f){
+  if(!fieldVisible(f) || f.optional) return false;
+  if(f.requiredIf) return Number(state.values[f.requiredIf]) > 0;
+  return true;
+}
+// Champs manquants pour pouvoir enregistrer : électronique complète
+// (résolution ADC, full well, mode et champs du mode) et temps de
+// référence si une DSNU est saisie. Retourne la liste des libellés.
+function missingRequired(){
+  var missing = [];
+  instrumentNode.blocks.forEach(function(b){
+    if(b.id !== "electronique" && b.id !== "detecteur") return;
+    b.fields.forEach(function(f){
+      var required = (b.id === "electronique" && (f.k === "ADC" || f.k === "FW" || f.k === "electronics_mode"))
+        || (f.modes && fieldVisible(f) && !f.optional)
+        || (f.requiredIf && Number(state.values[f.requiredIf]) > 0);
+      if(required && !isFilled(f.k)) missing.push(f.label);
+    });
+  });
+  return missing;
+}
+
 function blockStatus(block){
-  var filled = 0;
+  var filled = 0, counted = 0;
   block.fields.forEach(function(f){
-    var v = state.values[f.k];
-    if(v !== undefined && v !== null && v !== "") filled++;
+    if(!fieldCounts(f)) return;
+    counted++;
+    if(isFilled(f.k)) filled++;
   });
   if(filled === 0) return "empty";
-  if(filled < block.fields.length) return "warn";
+  if(filled < counted) return "warn";
   return "ok";
 }
 
@@ -329,10 +404,10 @@ function overallPct(){
   SCHEMA.forEach(function(n){
     if(n.kind !== "group") return;
     n.blocks.forEach(function(b){
-      total += b.fields.length;
       b.fields.forEach(function(f){
-        var v = state.values[f.k];
-        if(v !== undefined && v !== null && v !== "") done++;
+        if(!fieldCounts(f)) return;
+        total++;
+        if(isFilled(f.k)) done++;
       });
     });
   });
@@ -472,22 +547,32 @@ function currentBlock(){
 function renderPanel(){
   var block = currentBlock();
   if(!block){ panelEl.innerHTML = ""; return; }
-  var head = "<h2>"+block.label+"</h2><p class='desc'>Renseignez les paramètres de ce bloc. Les valeurs non renseignées utilisent les valeurs par défaut du modèle.</p>";
+  var head = "<h2>"+block.label+"</h2><p class='desc'>Renseignez les paramètres de ce bloc. Les champs marqués « obligatoire » n'ont pas de valeur par défaut ; le bouton « ? » explique chaque champ.</p>";
   var fieldsHtml = "";
+  var advancedHtml = "";
   block.fields.forEach(function(f){
+    if(!fieldVisible(f)) return;
     var v = state.values[f.k] !== undefined ? state.values[f.k] : (f.k === "DET_TYPE" ? "CMOS" : "");
     var valueAttr = v !== "" ? " value='"+v+"'" : "";
     // ESUP : obligatoire seulement si des supports sont renseignés
     // (NSUP > 0) — sinon 0 par défaut, comme NSUP lui-même.
     var placeholder = f.placeholder;
     if(f.k === "ESUP") placeholder = (Number(state.values.NSUP) > 0) ? "obligatoire" : "0 (défaut)";
+    if(f.requiredIf) placeholder = (Number(state.values[f.requiredIf]) > 0) ? "obligatoire" : "0 (défaut)";
     var placeholderAttr = placeholder ? " placeholder='"+placeholder+"'" : "";
     var control = f.type === "select"
-      ? "<select id='f-"+f.k+"'>" + f.options.map(function(opt){ return "<option value='"+opt+"'"+(String(v) === String(opt) ? " selected" : "")+">"+opt+"</option>"; }).join("") + "</select>"
+      ? "<select id='f-"+f.k+"'>" + f.options.map(function(opt){
+          // option = chaîne simple, ou {v, label} quand le libellé diffère de la valeur
+          var ov = (typeof opt === "object") ? opt.v : opt;
+          var ol = (typeof opt === "object") ? opt.label : opt;
+          return "<option value='"+ov+"'"+(String(v) === String(ov) ? " selected" : "")+">"+ol+"</option>"; }).join("") + "</select>"
       : "<input type='number' step='any' id='f-"+f.k+"'"+valueAttr+placeholderAttr+">";
-    fieldsHtml += "<div class='field'><label for='f-"+f.k+"'>"+f.label+"</label>"+
+    var helpBtn = f.help ? "<button type='button' class='helpbtn' data-help='"+f.k+"' aria-label='Aide'>?</button>" : "";
+    var helpTxt = f.help ? "<p class='fieldhelp' id='h-"+f.k+"' hidden>"+f.help+"</p>" : "";
+    var oneField = "<div class='field'><div class='labrow'><label for='f-"+f.k+"'>"+f.label+"</label>"+helpBtn+"</div>"+
       (f.type === "select" ? control : "<div class='row'>"+control+"<span class='unit'>"+(f.unit || "")+"</span></div>")+
-      "</div>";
+      helpTxt+"</div>";
+    if(f.advanced) advancedHtml += oneField; else fieldsHtml += oneField;
     // Le WFE RMS scalaire ci-dessus reste le mode simplifié (utilisé si
     // aucun cas WFE n'est sélectionné au lancement de la simulation).
     // Juste après, on permet d'associer des cas WFE nommés (ex. "Cas
@@ -501,6 +586,7 @@ function renderPanel(){
     // renderQeChart pour ce qui est actuellement tracé.
     if(f.k === "QE") fieldsHtml += renderQeSpectralHtml();
   });
+  if(advancedHtml) fieldsHtml += "<details class='advanced'><summary>Paramètres avancés</summary>"+advancedHtml+"</details>";
   // Blocs Optique et Détecteur : mise en page 2 colonnes (schéma à
   // gauche, champs à droite) — Détecteur ajouté le 18/09/2026, reprend
   // exactement la forme du bloc Optique avec son propre schéma en coupe.
@@ -523,7 +609,14 @@ function renderPanel(){
     html += fieldsHtml;
   }
   panelEl.innerHTML = html;
+  panelEl.querySelectorAll(".helpbtn").forEach(function(b){
+    b.addEventListener("click", function(){
+      var h = document.getElementById("h-"+b.getAttribute("data-help"));
+      if(h) h.hidden = !h.hidden;
+    });
+  });
   block.fields.forEach(function(f){
+    if(!document.getElementById("f-"+f.k)) return; // champ masqué par le mode d'électronique
     document.getElementById("f-"+f.k).addEventListener("input", function(e){
       state.values[f.k] = e.target.value;
       persist();
@@ -539,6 +632,11 @@ function renderPanel(){
         var esupEl = document.getElementById("f-ESUP");
         if(esupEl) esupEl.placeholder = (Number(state.values.NSUP) > 0) ? "obligatoire" : "0 (défaut)";
       }
+      // Même principe pour le temps de référence, obligatoire dès que la DSNU est non nulle.
+      if(f.k === "dsnu_1288"){
+        var trefEl = document.getElementById("f-dsnu_T_ref");
+        if(trefEl) trefEl.placeholder = (Number(state.values.dsnu_1288) > 0) ? "obligatoire" : "0 (défaut)";
+      }
       // renderChain() reconstruit les boutons : on garde le focus sur le bon champ
       var el = document.getElementById("f-"+f.k);
       if(el && e.target.tagName === "INPUT") { el.focus(); var pos = e.target.value.length; el.setSelectionRange && el.setSelectionRange(pos,pos); }
@@ -548,6 +646,8 @@ function renderPanel(){
       persist();
       updateProgress();
       renderChain();
+      // Changer de mode d'électronique change les champs affichés.
+      if(f.k === "electronics_mode") renderPanel();
     });
   });
   if(block.id === "optique") renderOpticsGeometry();
@@ -1311,6 +1411,16 @@ async function saveToSupabase(){
     return;
   }
 
+  var missing = missingRequired();
+  if(missing.length){
+    var missHint = document.createElement("p");
+    missHint.className = "savehint";
+    missHint.style.color = "var(--alert)";
+    missHint.textContent = "À renseigner avant d'enregistrer : " + missing.join(", ") + ".";
+    panelEl.appendChild(missHint);
+    return;
+  }
+
   btn.disabled = true;
   var hint = document.createElement("p");
   hint.className = "savehint";
@@ -1421,7 +1531,24 @@ document.getElementById("fileInput").addEventListener("change", function(e){
         if(det.bits != null) state.values.ADC = det.bits;
         if(det.QE_spectral && det.QE_spectral.values && det.QE_spectral.values.length){
           var qVals = det.QE_spectral.values;
-          state.values.QE = (qVals.reduce(function(a,b){return a+b;}, 0) / qVals.length) * 100;
+          // QE en fraction (0-1), comme le champ du formulaire — la
+          // multiplication par 100 d'avant le 03/10/2026 donnait des %.
+          state.values.QE = qVals.reduce(function(a,b){return a+b;}, 0) / qVals.length;
+        }
+        if(det.dsnu_1288 != null) state.values.dsnu_1288 = det.dsnu_1288;
+        if(det.dsnu_T_ref != null) state.values.dsnu_T_ref = det.dsnu_T_ref;
+        if(det.DN0 != null) state.values.DN0 = det.DN0;
+        if(det.bits_TDI != null) state.values.bits_TDI = det.bits_TDI;
+        // Mode d'électronique déduit des clés présentes ; sans aucune clé,
+        // on ne suppose rien : le mode reste à choisir.
+        if(det.CVF_uV_per_e != null || det.V_range != null){
+          state.values.electronics_mode = "detailed";
+          if(det.CVF_uV_per_e != null) state.values.CVF_uV_per_e = det.CVF_uV_per_e;
+          if(det.G_PGA != null) state.values.G_PGA = det.G_PGA;
+          if(det.V_range != null) state.values.V_range = det.V_range;
+        } else if(det.CWF != null || det.LSB != null){
+          state.values.electronics_mode = "datasheet";
+          state.values.CWF = det.CWF != null ? det.CWF : 1 / det.LSB;
         }
       } else {
         // Ancien format "plat" (clés directement D/I/E/T/W/PX/R/P/K/FW/QE/ADC)
