@@ -1299,7 +1299,7 @@ async function launchSimulation(){
   // sur le QE scalaire — cohérent avec le seuil minimum d'affichage de la
   // courbe dans creer-instrument.html (renderQeChart).
   var qePts = (inst.config.qeSpectral || [])
-    .filter(function(p){ return p.wl !== "" && p.qe !== "" && !isNaN(p.wl) && !isNaN(p.qe); })
+    .filter(function(p){ return p.wl !== "" && p.qe !== "" && !isNaN(p.wl) && !isNaN(p.qe) && Number(p.qe) >= 0 && Number(p.qe) <= 1; })
     .map(function(p){ return { wl: Number(p.wl), qe: Number(p.qe) }; })
     .sort(function(a,b){ return a.wl - b.wl; });
   if(qePts.length >= 2){
@@ -1313,7 +1313,7 @@ async function launchSimulation(){
   // même format que la courbe QE ci-dessus : avec au moins 2 points
   // valides, elle remplace la transmission scalaire pour cet envoi.
   var tPts = (inst.config.tSpectral || [])
-    .filter(function(p){ return p.wl !== "" && p.t !== "" && !isNaN(p.wl) && !isNaN(p.t); })
+    .filter(function(p){ return p.wl !== "" && p.t !== "" && !isNaN(p.wl) && !isNaN(p.t) && Number(p.t) >= 0 && Number(p.t) <= 1; })
     .map(function(p){ return { wl: Number(p.wl), t: Number(p.t) }; })
     .sort(function(a,b){ return a.wl - b.wl; });
   if(tPts.length >= 2){

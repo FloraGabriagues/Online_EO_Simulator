@@ -119,6 +119,9 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .field input:focus{outline:none;border-color:var(--pixel)}
 .field input:disabled{opacity:.45;cursor:not-allowed}
 .field .lockhint{font-size:12px;color:var(--muted-2);margin:6px 0 0}
+/* 04/10/2026 — valeur hors de l'intervalle autorisé (fractions 0-1) */
+.field input.invalid,.qespectral input.invalid{border-color:var(--alert)}
+.rangehint{font-size:12px;color:var(--alert);margin:6px 0 0}
 /* 03/10/2026 — aides de saisie, sélecteur de mode électronique, paramètres avancés */
 .field .labrow{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .field .labrow label{margin-bottom:0}
@@ -191,11 +194,15 @@ details.advanced summary .count{font-family:var(--mono);font-size:11.5px;color:v
   color:var(--muted-2);font-size:15px;padding:2px 6px;flex:none}
 .qespectral .qedel:hover{color:var(--alert)}
 /* 04/10/2026 — courbes spectrales en trois colonnes : λ, valeur, tracé */
-.qespectral .spec-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.15fr);gap:20px;align-items:start}
+.qespectral .spec-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.15fr);gap:20px;align-items:stretch}
+/* avec peu de points, le tracé est plus haut que les lignes : on centre alors les lignes sur lui */
+.qespectral .spec-rows{display:flex;flex-direction:column;justify-content:center}
 .qespectral .spec-head{display:flex;gap:8px;padding:0 0 4px;font-family:var(--mono);font-size:11px;color:var(--muted-2)}
 .qespectral .spec-head span{flex:1;min-width:0}
 .qespectral .spec-head .gap{flex:none;width:27px}
-.qespectral .spec-chart{border-left:1px solid var(--line-soft);padding-left:18px;min-height:100%}
+/* tracé centré en hauteur sur les lignes de points (padding-top = hauteur de la ligne d'en-têtes) */
+.qespectral .spec-chart{border-left:1px solid var(--line-soft);padding:22px 0 0 18px;
+  display:flex;flex-direction:column;justify-content:center}
 @media(max-width:720px){.qespectral .spec-cols{grid-template-columns:1fr}
   .qespectral .spec-chart{border-left:none;padding-left:0}}
 
@@ -273,7 +280,7 @@ var SCHEMA = [
       // simulation comme PX/QE/ADC (cf. simulations.html).
       {k:"NSUP", label:"Nombre de supports", unit:"", placeholder:"0 (défaut)"},
       {k:"ESUP", label:"Épaisseur des supports", unit:"m", placeholder:"0 (défaut)"},
-      {k:"T", label:"Transmission optique", unit:"τ", placeholder:"1 (défaut)"}
+      {k:"T", label:"Transmission optique", unit:"τ", placeholder:"1 (défaut)", min:0, max:1}
     ]},
     {id:"detecteur", label:"Détecteur", fields:[
       // 04/10/2026 — un seul type possible en V1 : affiché comme simple
@@ -286,7 +293,7 @@ var SCHEMA = [
       // interpolation sur paramFile.Detector.QE_spectral.values, jamais
       // divisée par 100. Même convention que T (transmission optique).
       {k:"PX", label:"Largeur pixel", unit:"µm", placeholder:"obligatoire"},
-      {k:"QE", label:"Rendement quantique", unit:"τ", placeholder:"1 (défaut)"},
+      {k:"QE", label:"Rendement quantique", unit:"τ", placeholder:"1 (défaut)", min:0, max:1},
       {k:"P",  label:"PRNU", unit:"%", placeholder:"0 (défaut)"},
       {k:"K",  label:"Courant d'obscurité", unit:"e⁻/s", placeholder:"0 (défaut)"},
       // DSNU (03/10/2026) : clés explicites, identiques à celles du paramFile
@@ -386,12 +393,37 @@ function isFilled(k){
 // même seuil que pour l'envoi dans simulations.html) remplace la valeur
 // scalaire correspondante : le champ scalaire est alors grisé, et ne
 // compte plus dans l'avancement.
+// 04/10/2026 — transmission et rendement quantique sont des fractions :
+// une valeur hors de [0, 1] est signalée en rouge, n'entre ni dans le tracé
+// ni dans la courbe envoyée, et bloque l'enregistrement.
+function inUnitRange(v){
+  return v !== "" && v !== undefined && v !== null && !isNaN(v) && Number(v) >= 0 && Number(v) <= 1;
+}
+function fieldOutOfRange(f){
+  if(f.min === undefined || !isFilled(f.k)) return false;
+  var v = Number(state.values[f.k]);
+  return isNaN(v) || v < f.min || v > f.max;
+}
+// Libellés des saisies hors intervalle (champs scalaires et points de courbe).
+function invalidEntries(){
+  var out = [];
+  instrumentNode.blocks.forEach(function(b){
+    b.fields.forEach(function(f){
+      if(fieldOutOfRange(f) && !spectralActive(f.k)) out.push(f.label);
+      var lock = SPECTRAL_LOCKS[f.k];
+      if(lock && (state.values[lock.arr] || []).some(function(p){ return p[lock.key] !== "" && !inUnitRange(p[lock.key]); })){
+        out.push("courbe spectrale (" + f.label.toLowerCase() + ")");
+      }
+    });
+  });
+  return out;
+}
 var SPECTRAL_LOCKS = { T: {arr:"tSpectral", key:"t"}, QE: {arr:"qeSpectral", key:"qe"} };
 function spectralActive(fieldKey){
   var lock = SPECTRAL_LOCKS[fieldKey];
   if(!lock) return false;
   var n = (state.values[lock.arr] || []).filter(function(p){
-    return p.wl !== "" && p[lock.key] !== "" && !isNaN(p.wl) && !isNaN(p[lock.key]);
+    return p.wl !== "" && !isNaN(p.wl) && inUnitRange(p[lock.key]);
   }).length;
   return n >= 2;
 }
@@ -406,6 +438,17 @@ function syncScalarLock(fieldKey){
   if(hint) hint.hidden = !active;
   updateProgress();
   renderChain();
+}
+// Marque en rouge les valeurs de courbe hors de [0, 1] et affiche le message.
+function syncCurveRange(valSelector, arrKey, valKey, hintId){
+  var any = false;
+  panelEl.querySelectorAll(valSelector).forEach(function(el){
+    var bad = el.value !== "" && !inUnitRange(el.value);
+    el.classList.toggle("invalid", bad);
+    if(bad) any = true;
+  });
+  var hint = document.getElementById(hintId);
+  if(hint) hint.hidden = !any;
 }
 // Touche Entrée dans une ligne de courbe : passe au champ vide de la ligne,
 // ou ajoute un point si la ligne est complète (clic sur « + Ajouter un point »).
@@ -632,7 +675,10 @@ function renderPanel(){
           var ov = (typeof opt === "object") ? opt.v : opt;
           var ol = (typeof opt === "object") ? opt.label : opt;
           return "<option value='"+ov+"'"+(String(v) === String(ov) ? " selected" : "")+">"+ol+"</option>"; }).join("") + "</select>"
-      : "<input type='number' step='any' id='f-"+f.k+"'"+valueAttr+placeholderAttr+(spectralActive(f.k) ? " disabled" : "")+">";
+      : "<input type='number' step='any' id='f-"+f.k+"'"+valueAttr+placeholderAttr+
+          (f.min !== undefined ? " min='"+f.min+"' max='"+f.max+"'" : "")+
+          (fieldOutOfRange(f) ? " class='invalid'" : "")+
+          (spectralActive(f.k) ? " disabled" : "")+">";
     var helpBtn = f.help ? "<button type='button' class='helpbtn' data-help='"+f.k+"' aria-label='Aide'>?</button>" : "";
     var helpTxt = f.help ? "<p class='fieldhelp' id='h-"+f.k+"' hidden>"+f.help+"</p>" : "";
     // Champ obligatoire seulement si un autre est non nul (ex. temps de
@@ -643,6 +689,7 @@ function renderPanel(){
     var oneField = "<div class='field' id='w-"+f.k+"'"+hiddenAttr+"><div class='labrow'><label for='f-"+f.k+"'>"+f.label+"</label>"+helpBtn+"</div>"+
       (f.type === "select" ? control : "<div class='row'>"+control+"<span class='unit'>"+(f.unit || "")+"</span></div>")+
       helpTxt+
+      (f.min !== undefined ? "<p class='rangehint' id='range-"+f.k+"'"+(fieldOutOfRange(f) ? "" : " hidden")+">Fraction attendue, entre "+f.min+" et "+f.max+" (0.62 pour 62 %).</p>" : "")+
       (SPECTRAL_LOCKS[f.k] ? "<p class='lockhint' id='lock-"+f.k+"'"+(spectralActive(f.k) ? "" : " hidden")+">Remplacé par la courbe spectrale ci-dessous.</p>" : "")+
       "</div>";
     if(f.advanced) advancedHtml += oneField; else fieldsHtml += oneField;
@@ -726,6 +773,12 @@ function renderPanel(){
       if(f.k === "NSUP"){
         var esupEl = document.getElementById("f-ESUP");
         if(esupEl) esupEl.placeholder = (Number(state.values.NSUP) > 0) ? "obligatoire" : "0 (défaut)";
+      }
+      if(f.min !== undefined){
+        var bad = fieldOutOfRange(f);
+        e.target.classList.toggle("invalid", bad);
+        var rangeEl = document.getElementById("range-"+f.k);
+        if(rangeEl) rangeEl.hidden = !bad;
       }
       // Même principe pour le temps de référence, obligatoire dès que la DSNU est non nulle.
       if(f.k === "dsnu_1288"){
@@ -1396,7 +1449,7 @@ function renderTSpectralHtml(){
   var rows = pts.map(function(p, i){
     return "<div class='qerow'>"+
       "<input type='number' step='any' class='qewl tswl' data-t-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
-      "<input type='number' step='any' class='qeval tsval' data-t-idx='"+i+"' value='"+p.t+"' placeholder='Transmission (0-1)'>"+
+      "<input type='number' step='any' class='qeval tsval"+(p.t !== "" && !inUnitRange(p.t) ? " invalid" : "")+"' data-t-idx='"+i+"' value='"+p.t+"' min='0' max='1' placeholder='Transmission (0-1)'>"+
       "<button type='button' class='qedel' data-t-del='"+i+"' aria-label='Supprimer ce point'>×</button>"+
     "</div>";
   }).join("");
@@ -1405,8 +1458,9 @@ function renderTSpectralHtml(){
     "<button type='button' class='addcasebtn' id='btnAddTPoint'>+ Ajouter un point</button></div>"+
     "<p class='wfesub'>Un point par longueur d'onde, transmission en fraction (0-1, pas en %) — remplace la transmission scalaire ci-dessus si renseigné. La courbe doit couvrir les bandes : en dehors, la valeur du point le plus proche est gardée.</p>"+
     "<div class='spec-cols'>"+
-      "<div><div class='spec-head'><span>λ (nm)</span><span>Transmission (0-1)</span><span class='gap'></span></div>"+
-        "<div id='tRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div></div>"+
+      "<div class='spec-rows'><div class='spec-head'><span>λ (nm)</span><span>Transmission (0-1)</span><span class='gap'></span></div>"+
+        "<div id='tRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div>"+
+        "<p class='rangehint' id='tRangeHint'"+(pts.some(function(p){ return p.t !== "" && !inUnitRange(p.t); }) ? "" : " hidden")+">Valeur hors de 0 à 1 : ce point est ignoré.</p></div>"+
       "<div class='spec-chart' id='tChart'></div>"+
     "</div>"+
   "</div>";
@@ -1427,6 +1481,7 @@ function wireTSpectralUI(){
       var i = Number(input.dataset.tIdx);
       state.values.tSpectral[i][input.classList.contains("tswl") ? "wl" : "t"] = input.value;
       persist();
+      syncCurveRange(".tsval", "tSpectral", "t", "tRangeHint");
       renderTChart(); // pas de renderPanel() : on garde le focus pendant la frappe
       syncScalarLock("T");
     });
@@ -1446,7 +1501,7 @@ function renderQeSpectralHtml(){
   var rows = pts.map(function(p, i){
     return "<div class='qerow' data-qe-idx='"+i+"'>"+
       "<input type='number' step='any' class='qewl' data-qe-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
-      "<input type='number' step='any' class='qeval' data-qe-idx='"+i+"' value='"+p.qe+"' placeholder='QE (0-1)'>"+
+      "<input type='number' step='any' class='qeval"+(p.qe !== "" && !inUnitRange(p.qe) ? " invalid" : "")+"' data-qe-idx='"+i+"' value='"+p.qe+"' min='0' max='1' placeholder='QE (0-1)'>"+
       "<button type='button' class='qedel' data-qe-del='"+i+"' aria-label='Supprimer ce point'>×</button>"+
     "</div>";
   }).join("");
@@ -1455,8 +1510,9 @@ function renderQeSpectralHtml(){
     "<button type='button' class='addcasebtn' id='btnAddQePoint'>+ Ajouter un point</button></div>"+
     "<p class='wfesub'>Un point par longueur d'onde, QE en fraction (0-1, pas en %) — remplace le QE scalaire ci-dessus si renseigné.</p>"+
     "<div class='spec-cols'>"+
-      "<div><div class='spec-head'><span>λ (nm)</span><span>QE (0-1)</span><span class='gap'></span></div>"+
-        "<div id='qeRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div></div>"+
+      "<div class='spec-rows'><div class='spec-head'><span>λ (nm)</span><span>QE (0-1)</span><span class='gap'></span></div>"+
+        "<div id='qeRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div>"+
+        "<p class='rangehint' id='qeRangeHint'"+(pts.some(function(p){ return p.qe !== "" && !inUnitRange(p.qe); }) ? "" : " hidden")+">Valeur hors de 0 à 1 : ce point est ignoré.</p></div>"+
       "<div class='spec-chart' id='qeChart'></div>"+
     "</div>"+
   "</div>";
@@ -1483,19 +1539,22 @@ function renderSpectralChart(hostId, rawPts, valKey, gradId){
   var host = document.getElementById(hostId);
   if(!host) return;
   var pts = (rawPts || [])
-    .filter(function(p){ return p.wl !== "" && p[valKey] !== "" && !isNaN(p.wl) && !isNaN(p[valKey]); })
+    .filter(function(p){ return p.wl !== "" && !isNaN(p.wl) && inUnitRange(p[valKey]); })
     .map(function(p){ return { wl: Number(p.wl), qe: Number(p[valKey]) }; })
     .sort(function(a,b){ return a.wl - b.wl; });
   if(pts.length < 2){
-    host.innerHTML = "<p class='empty' style='margin-top:22px'>Au moins 2 points valides pour afficher la courbe.</p>";
+    host.innerHTML = "<p class='empty'>Au moins 2 points valides pour afficher la courbe.</p>";
     return;
   }
   // 04/10/2026 — tracé dans la troisième colonne, plus étroite : cadre
   // plus carré (300×210 au lieu de 400×140) et étiquettes agrandies.
-  var W = 300, H = 210, padL = 14, padR = 12, padT = 12, padB = 30;
+  var W = 300, H = 210, padL = 30, padR = 12, padT = 16, padB = 30;
   var wlMin = pts[0].wl, wlMax = pts[pts.length-1].wl;
+  // 04/10/2026 — ordonnées de 0 à 1 au moins (grandeurs en fraction), pour
+  // que le repère 1 soit toujours visible ; l'axe ne s'étend au-delà que si
+  // une valeur saisie dépasse 1.
   var qeMin = Math.min(0, Math.min.apply(null, pts.map(function(p){ return p.qe; })));
-  var qeMax = Math.max.apply(null, pts.map(function(p){ return p.qe; })) * 1.1 || 1;
+  var qeMax = Math.max(1, Math.max.apply(null, pts.map(function(p){ return p.qe; })));
   var wlSpan = (wlMax - wlMin) || 1, qeSpan = (qeMax - qeMin) || 1;
   function x(wl){ return padL + (wl - wlMin) / wlSpan * (W - padL - padR); }
   function y(qe){ return H - padB - (qe - qeMin) / qeSpan * (H - padT - padB); }
@@ -1512,6 +1571,9 @@ function renderSpectralChart(hostId, rawPts, valKey, gradId){
       "<defs><linearGradient id='"+gradId+"' x1='"+padL+"' y1='0' x2='"+(W-padR)+"' y2='0' gradientUnits='userSpaceOnUse'>"+stops+"</linearGradient></defs>"+
       "<line x1='"+padL+"' y1='"+(H-padB)+"' x2='"+(W-padR)+"' y2='"+(H-padB)+"' stroke='var(--line-soft)'/>"+
       "<line x1='"+padL+"' y1='"+padT+"' x2='"+padL+"' y2='"+(H-padB)+"' stroke='var(--line-soft)'/>"+
+      "<line x1='"+(padL-4)+"' y1='"+y(1).toFixed(1)+"' x2='"+(W-padR)+"' y2='"+y(1).toFixed(1)+"' stroke='var(--line-soft)' stroke-dasharray='3 4'/>"+
+      "<text x='"+(padL-8)+"' y='"+(y(1)+5).toFixed(1)+"' text-anchor='end' font-family='var(--mono)' font-size='14' fill='var(--muted-2)'>1</text>"+
+      "<text x='"+(padL-8)+"' y='"+(y(0)+5).toFixed(1)+"' text-anchor='end' font-family='var(--mono)' font-size='14' fill='var(--muted-2)'>0</text>"+
       "<text x='"+padL+"' y='"+(H-8)+"' font-family='var(--mono)' font-size='14' fill='var(--muted-2)'>"+wlMin+" nm</text>"+
       "<text x='"+(W-padR)+"' y='"+(H-8)+"' text-anchor='end' font-family='var(--mono)' font-size='14' fill='var(--muted-2)'>"+wlMax+" nm</text>"+
       "<path d='"+pathD+"' fill='none' stroke='url(#"+gradId+")' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
@@ -1536,6 +1598,7 @@ function wireQeSpectralUI(){
       var key = input.classList.contains("qewl") ? "wl" : "qe";
       state.values.qeSpectral[i][key] = input.value;
       persist();
+      syncCurveRange(".qeval", "qeSpectral", "qe", "qeRangeHint");
       renderQeChart(); // pas de renderPanel() ici : on garde le focus sur le champ en cours de saisie
       syncScalarLock("QE");
     });
@@ -1597,6 +1660,15 @@ async function saveToSupabase(){
     return;
   }
 
+  var invalid = invalidEntries();
+  if(invalid.length){
+    var invHint = document.createElement("p");
+    invHint.className = "savehint";
+    invHint.style.color = "var(--alert)";
+    invHint.textContent = "Valeur hors de l'intervalle 0 à 1, à corriger avant d'enregistrer : " + invalid.join(", ") + ".";
+    panelEl.appendChild(invHint);
+    return;
+  }
   var missing = missingRequired();
   if(missing.length){
     var missHint = document.createElement("p");
