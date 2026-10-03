@@ -128,6 +128,12 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
   border-radius:4px;padding:8px 10px;font-size:14px}
 details.advanced{border-top:1px solid var(--line-soft);margin-top:6px;padding-top:12px}
 details.advanced summary{cursor:pointer;font-size:13px;color:var(--muted);margin-bottom:12px}
+details.advanced summary .count{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);margin-left:6px}
+/* 04/10/2026 — bloc Détecteur allégé : champs courts côte à côte, mention du type à côté du titre */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:0 22px;align-items:start}
+@media(max-width:720px){.grid2{grid-template-columns:1fr}}
+.typebadge{font-family:var(--mono);font-size:11.5px;font-weight:400;color:var(--muted);
+  border:1px solid var(--line);border-radius:3px;padding:2px 7px;margin-left:10px;vertical-align:middle}
 .panel-actions{display:flex;justify-content:space-between;gap:10px;margin-top:20px;
   padding-top:16px;border-top:1px solid var(--line-soft)}
 .panel-actions .rightbtns{display:flex;gap:10px;margin-left:auto}
@@ -260,20 +266,24 @@ var SCHEMA = [
       {k:"T", label:"Transmission optique", unit:"τ", placeholder:"1 (défaut)"}
     ]},
     {id:"detecteur", label:"Détecteur", fields:[
-      {k:"DET_TYPE", label:"Type de détecteur", type:"select", options:["CMOS"]},
+      // 04/10/2026 — un seul type possible en V1 : affiché comme simple
+      // mention à côté du titre du bloc (mention:true), plus comme un champ.
+      // optional:true : ne compte pas dans l'avancement (avant, ce champ
+      // jamais « rempli » empêchait le bloc d'atteindre la coche).
+      {k:"DET_TYPE", label:"Type de détecteur", type:"select", options:["CMOS"], mention:true, optional:true},
       // QE en fraction (τ, 0–1) et non en % — confirmé le 17/09/2026 par
       // radiometry.py : electrons = photons * QE_band, QE_band vient d'une
       // interpolation sur paramFile.Detector.QE_spectral.values, jamais
       // divisée par 100. Même convention que T (transmission optique).
       {k:"PX", label:"Largeur pixel", unit:"µm", placeholder:"obligatoire"},
+      {k:"QE", label:"Rendement quantique", unit:"τ", placeholder:"1 (défaut)"},
       {k:"P",  label:"PRNU", unit:"%", placeholder:"0 (défaut)"},
       {k:"K",  label:"Courant d'obscurité", unit:"e⁻/s", placeholder:"0 (défaut)"},
-      {k:"QE", label:"Rendement quantique", unit:"τ", placeholder:"1 (défaut)"},
       // DSNU (03/10/2026) : clés explicites, identiques à celles du paramFile
       // (Detector.dsnu_1288 / dsnu_T_ref, cf. module_SNR.build_fixed_pattern).
-      {k:"dsnu_1288", label:"DSNU (EMVA 1288)", unit:"e⁻", placeholder:"0 (défaut)", optional:true,
+      {k:"dsnu_1288", label:"DSNU (EMVA 1288)", unit:"e⁻", placeholder:"0 (défaut)", optional:true, advanced:true,
        help:"Dispersion du signal d'obscurité d'un pixel à l'autre, en électrons RMS, mesurée selon l'EMVA 1288. Laisser 0 si la datasheet ne la donne pas."},
-      {k:"dsnu_T_ref", label:"Temps de référence DSNU", unit:"s", placeholder:"0 (défaut)", requiredIf:"dsnu_1288",
+      {k:"dsnu_T_ref", label:"Temps de référence DSNU", unit:"s", placeholder:"0 (défaut)", requiredIf:"dsnu_1288", advanced:true,
        help:"Temps d'exposition utilisé pour mesurer la DSNU. Obligatoire dès que la DSNU est non nulle : sans lui, la valeur ne peut pas être ramenée au temps d'intégration."}
     ]},
     {id:"electronique", label:"Électronique", fields:[
@@ -547,11 +557,14 @@ function currentBlock(){
 function renderPanel(){
   var block = currentBlock();
   if(!block){ panelEl.innerHTML = ""; return; }
-  var head = "<h2 style='margin-bottom:16px'>"+block.label+"</h2>";
+  var mention = block.fields.filter(function(f){ return f.mention; })
+    .map(function(f){ return "<span class='typebadge' title='"+f.label+"'>"+f.options[0]+"</span>"; }).join("");
+  var head = "<h2 style='margin-bottom:16px'>"+block.label+mention+"</h2>";
   var fieldsHtml = "";
   var advancedHtml = "";
+  var advancedFilled = false;
   block.fields.forEach(function(f){
-    if(!fieldVisible(f)) return;
+    if(!fieldVisible(f) || f.mention) return;
     var v = state.values[f.k] !== undefined ? state.values[f.k] : (f.k === "DET_TYPE" ? "CMOS" : "");
     var valueAttr = v !== "" ? " value='"+v+"'" : "";
     // ESUP : obligatoire seulement si des supports sont renseignés
@@ -569,7 +582,12 @@ function renderPanel(){
       : "<input type='number' step='any' id='f-"+f.k+"'"+valueAttr+placeholderAttr+">";
     var helpBtn = f.help ? "<button type='button' class='helpbtn' data-help='"+f.k+"' aria-label='Aide'>?</button>" : "";
     var helpTxt = f.help ? "<p class='fieldhelp' id='h-"+f.k+"' hidden>"+f.help+"</p>" : "";
-    var oneField = "<div class='field'><div class='labrow'><label for='f-"+f.k+"'>"+f.label+"</label>"+helpBtn+"</div>"+
+    // Champ obligatoire seulement si un autre est non nul (ex. temps de
+    // référence DSNU) : rendu mais masqué tant que cet autre champ est vide
+    // ou nul, et révélé à la frappe sans redessiner le panneau.
+    var hiddenAttr = (f.requiredIf && !(Number(state.values[f.requiredIf]) > 0)) ? " hidden" : "";
+    if(f.advanced && isFilled(f.k)) advancedFilled = true;
+    var oneField = "<div class='field' id='w-"+f.k+"'"+hiddenAttr+"><div class='labrow'><label for='f-"+f.k+"'>"+f.label+"</label>"+helpBtn+"</div>"+
       (f.type === "select" ? control : "<div class='row'>"+control+"<span class='unit'>"+(f.unit || "")+"</span></div>")+
       helpTxt+"</div>";
     if(f.advanced) advancedHtml += oneField; else fieldsHtml += oneField;
@@ -584,9 +602,23 @@ function renderPanel(){
     // plus du QE scalaire ci-dessus (mode simplifié, utilisé si aucune
     // courbe n'est saisie). Juste un aperçu visuel côté site — voir
     // renderQeChart pour ce qui est actuellement tracé.
-    if(f.k === "QE") fieldsHtml += renderQeSpectralHtml();
   });
-  if(advancedHtml) fieldsHtml += "<details class='advanced'><summary>Paramètres avancés</summary>"+advancedHtml+"</details>";
+  // Sections repliées (04/10/2026) : ouvertes d'office si elles contiennent
+  // déjà une valeur, pour ne jamais cacher une saisie existante.
+  var advancedDetails = advancedHtml
+    ? "<details class='advanced'"+(advancedFilled ? " open" : "")+"><summary>Paramètres avancés</summary><div class='grid2'>"+advancedHtml+"</div></details>"
+    : "";
+  var belowHtml = "";
+  if(block.id === "detecteur"){
+    // Détecteur : la courbe QE spectrale et les paramètres avancés passent
+    // sous le schéma, en pleine largeur, repliés par défaut.
+    var nQe = (state.values.qeSpectral || []).length;
+    belowHtml = "<details class='advanced' id='qeDetails'"+(nQe ? " open" : "")+">"+
+      "<summary>Courbe spectrale du rendement (optionnel)"+(nQe ? "<span class='count'>"+nQe+" point"+(nQe > 1 ? "s" : "")+"</span>" : "")+"</summary>"+
+      renderQeSpectralHtml()+"</details>"+advancedDetails;
+  } else {
+    fieldsHtml += advancedDetails;
+  }
   // Blocs Optique et Détecteur : mise en page 2 colonnes (schéma à
   // gauche, champs à droite) — Détecteur ajouté le 18/09/2026, reprend
   // exactement la forme du bloc Optique avec son propre schéma en coupe.
@@ -604,7 +636,7 @@ function renderPanel(){
         "</div>"+
       "</div>"+
       "<div class='optique-fields-col'>"+fieldsHtml+"</div>"+
-    "</div>";
+    "</div>"+belowHtml;
   } else {
     html += fieldsHtml;
   }
@@ -636,6 +668,8 @@ function renderPanel(){
       if(f.k === "dsnu_1288"){
         var trefEl = document.getElementById("f-dsnu_T_ref");
         if(trefEl) trefEl.placeholder = (Number(state.values.dsnu_1288) > 0) ? "obligatoire" : "0 (défaut)";
+        var trefWrap = document.getElementById("w-dsnu_T_ref");
+        if(trefWrap) trefWrap.hidden = !(Number(state.values.dsnu_1288) > 0);
       }
       // renderChain() reconstruit les boutons : on garde le focus sur le bon champ
       var el = document.getElementById("f-"+f.k);
@@ -1291,7 +1325,7 @@ function renderQeSpectralHtml(){
     "</div>";
   }).join("");
   return "<div class='wfecases qespectral'>"+
-    "<div class='wfehead'><label>QE spectral (optionnel)</label>"+
+    "<div class='wfehead'><label>Points de la courbe</label>"+
     "<button type='button' class='addcasebtn' id='btnAddQePoint'>+ Ajouter un point</button></div>"+
     "<p class='wfesub'>Un point par longueur d'onde, QE en fraction (0-1, pas en %) — remplace le QE scalaire ci-dessus si renseigné.</p>"+
     "<div id='qeRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div>"+
