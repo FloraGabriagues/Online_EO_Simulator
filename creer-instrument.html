@@ -117,6 +117,8 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .field input::placeholder{color:var(--muted-2);font-family:var(--body);font-style:italic}
 .field .unit{font-family:var(--mono);font-size:12px;color:var(--muted-2);min-width:34px}
 .field input:focus{outline:none;border-color:var(--pixel)}
+.field input:disabled{opacity:.45;cursor:not-allowed}
+.field .lockhint{font-size:12px;color:var(--muted-2);margin:6px 0 0}
 /* 03/10/2026 — aides de saisie, sélecteur de mode électronique, paramètres avancés */
 .field .labrow{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .field .labrow label{margin-bottom:0}
@@ -188,6 +190,14 @@ details.advanced summary .count{font-family:var(--mono);font-size:11.5px;color:v
 .qespectral .qedel{appearance:none;cursor:pointer;background:transparent;border:none;
   color:var(--muted-2);font-size:15px;padding:2px 6px;flex:none}
 .qespectral .qedel:hover{color:var(--alert)}
+/* 04/10/2026 — courbes spectrales en trois colonnes : λ, valeur, tracé */
+.qespectral .spec-cols{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1.15fr);gap:20px;align-items:start}
+.qespectral .spec-head{display:flex;gap:8px;padding:0 0 4px;font-family:var(--mono);font-size:11px;color:var(--muted-2)}
+.qespectral .spec-head span{flex:1;min-width:0}
+.qespectral .spec-head .gap{flex:none;width:27px}
+.qespectral .spec-chart{border-left:1px solid var(--line-soft);padding-left:18px;min-height:100%}
+@media(max-width:720px){.qespectral .spec-cols{grid-template-columns:1fr}
+  .qespectral .spec-chart{border-left:none;padding-left:0}}
 
 .zdetail{margin-bottom:0}
 .zpickrow{display:flex;gap:10px;margin-bottom:10px}
@@ -372,11 +382,54 @@ function isFilled(k){
   var v = state.values[k];
   return v !== undefined && v !== null && v !== "";
 }
+// 04/10/2026 — une courbe spectrale saisie (au moins 2 points valides, le
+// même seuil que pour l'envoi dans simulations.html) remplace la valeur
+// scalaire correspondante : le champ scalaire est alors grisé, et ne
+// compte plus dans l'avancement.
+var SPECTRAL_LOCKS = { T: {arr:"tSpectral", key:"t"}, QE: {arr:"qeSpectral", key:"qe"} };
+function spectralActive(fieldKey){
+  var lock = SPECTRAL_LOCKS[fieldKey];
+  if(!lock) return false;
+  var n = (state.values[lock.arr] || []).filter(function(p){
+    return p.wl !== "" && p[lock.key] !== "" && !isNaN(p.wl) && !isNaN(p[lock.key]);
+  }).length;
+  return n >= 2;
+}
+// Met à jour l'état grisé du champ scalaire sans redessiner le panneau
+// (appelé à chaque frappe dans la courbe, pour garder le focus).
+function syncScalarLock(fieldKey){
+  var input = document.getElementById("f-"+fieldKey);
+  var hint = document.getElementById("lock-"+fieldKey);
+  if(!input) return;
+  var active = spectralActive(fieldKey);
+  input.disabled = active;
+  if(hint) hint.hidden = !active;
+  updateProgress();
+  renderChain();
+}
+// Touche Entrée dans une ligne de courbe : passe au champ vide de la ligne,
+// ou ajoute un point si la ligne est complète (clic sur « + Ajouter un point »).
+function wireSpectralEnter(selector, idxAttr, wlClass, valClass, addBtnId){
+  panelEl.querySelectorAll(selector).forEach(function(input){
+    input.addEventListener("keydown", function(e){
+      if(e.key !== "Enter") return;
+      e.preventDefault();
+      var i = input.getAttribute(idxAttr);
+      var wlEl = panelEl.querySelector("."+wlClass+"["+idxAttr+"='"+i+"']");
+      var valEl = panelEl.querySelector("."+valClass+"["+idxAttr+"='"+i+"']");
+      if(wlEl.value === ""){ wlEl.focus(); return; }
+      if(valEl.value === ""){ valEl.focus(); return; }
+      document.getElementById(addBtnId).click();
+    });
+  });
+}
+
 function fieldVisible(f){
   return !f.modes || f.modes.indexOf(state.values.electronics_mode) >= 0;
 }
 function fieldCounts(f){
   if(!fieldVisible(f) || f.optional) return false;
+  if(spectralActive(f.k)) return false; // scalaire remplacé par la courbe
   if(f.requiredIf) return Number(state.values[f.requiredIf]) > 0;
   return true;
 }
@@ -579,7 +632,7 @@ function renderPanel(){
           var ov = (typeof opt === "object") ? opt.v : opt;
           var ol = (typeof opt === "object") ? opt.label : opt;
           return "<option value='"+ov+"'"+(String(v) === String(ov) ? " selected" : "")+">"+ol+"</option>"; }).join("") + "</select>"
-      : "<input type='number' step='any' id='f-"+f.k+"'"+valueAttr+placeholderAttr+">";
+      : "<input type='number' step='any' id='f-"+f.k+"'"+valueAttr+placeholderAttr+(spectralActive(f.k) ? " disabled" : "")+">";
     var helpBtn = f.help ? "<button type='button' class='helpbtn' data-help='"+f.k+"' aria-label='Aide'>?</button>" : "";
     var helpTxt = f.help ? "<p class='fieldhelp' id='h-"+f.k+"' hidden>"+f.help+"</p>" : "";
     // Champ obligatoire seulement si un autre est non nul (ex. temps de
@@ -589,7 +642,9 @@ function renderPanel(){
     if(f.advanced && isFilled(f.k)) advancedFilled = true;
     var oneField = "<div class='field' id='w-"+f.k+"'"+hiddenAttr+"><div class='labrow'><label for='f-"+f.k+"'>"+f.label+"</label>"+helpBtn+"</div>"+
       (f.type === "select" ? control : "<div class='row'>"+control+"<span class='unit'>"+(f.unit || "")+"</span></div>")+
-      helpTxt+"</div>";
+      helpTxt+
+      (SPECTRAL_LOCKS[f.k] ? "<p class='lockhint' id='lock-"+f.k+"'"+(spectralActive(f.k) ? "" : " hidden")+">Remplacé par la courbe spectrale ci-dessous.</p>" : "")+
+      "</div>";
     if(f.advanced) advancedHtml += oneField; else fieldsHtml += oneField;
     // Le WFE RMS scalaire ci-dessus reste le mode simplifié (utilisé si
     // aucun cas WFE n'est sélectionné au lancement de la simulation).
@@ -614,14 +669,14 @@ function renderPanel(){
     // sous le schéma, en pleine largeur, repliés par défaut.
     var nQe = (state.values.qeSpectral || []).length;
     belowHtml = "<details class='advanced' id='qeDetails'"+(nQe ? " open" : "")+">"+
-      "<summary>Courbe spectrale du rendement (optionnel)"+(nQe ? "<span class='count'>"+nQe+" point"+(nQe > 1 ? "s" : "")+"</span>" : "")+"</summary>"+
+      "<summary>Courbe spectrale du rendement (optionnel)</summary>"+
       renderQeSpectralHtml()+"</details>"+advancedDetails;
   } else if(block.id === "optique"){
     // Optique : courbe de transmission spectrale, même présentation que la
     // courbe QE du bloc Détecteur.
     var nT = (state.values.tSpectral || []).length;
     belowHtml = "<details class='advanced' id='tDetails'"+(nT ? " open" : "")+">"+
-      "<summary>Courbe spectrale de la transmission (optionnel)"+(nT ? "<span class='count'>"+nT+" point"+(nT > 1 ? "s" : "")+"</span>" : "")+"</summary>"+
+      "<summary>Courbe spectrale de la transmission (optionnel)</summary>"+
       renderTSpectralHtml()+"</details>";
     fieldsHtml += advancedDetails;
   } else {
@@ -710,7 +765,12 @@ function renderPanel(){
     "<button class='btn primary' type='button' id='btnSave'>Enregistrer l'instrument</button></div>";
   panelEl.appendChild(actions);
   document.getElementById("btnReset").addEventListener("click", function(){
-    block.fields.forEach(function(f){ delete state.values[f.k]; });
+    block.fields.forEach(function(f){
+      delete state.values[f.k];
+      // 04/10/2026 — la courbe spectrale liée au champ est effacée aussi,
+      // sinon le champ scalaire resterait grisé après la réinitialisation.
+      if(SPECTRAL_LOCKS[f.k]) delete state.values[SPECTRAL_LOCKS[f.k].arr];
+    });
     persist(); updateProgress(); renderChain(); renderPanel();
   });
   if(nextBlock){
@@ -1344,8 +1404,11 @@ function renderTSpectralHtml(){
     "<div class='wfehead'><label>Points de la courbe</label>"+
     "<button type='button' class='addcasebtn' id='btnAddTPoint'>+ Ajouter un point</button></div>"+
     "<p class='wfesub'>Un point par longueur d'onde, transmission en fraction (0-1, pas en %) — remplace la transmission scalaire ci-dessus si renseigné. La courbe doit couvrir les bandes : en dehors, la valeur du point le plus proche est gardée.</p>"+
-    "<div id='tRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div>"+
-    "<div id='tChart'></div>"+
+    "<div class='spec-cols'>"+
+      "<div><div class='spec-head'><span>λ (nm)</span><span>Transmission (0-1)</span><span class='gap'></span></div>"+
+        "<div id='tRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div></div>"+
+      "<div class='spec-chart' id='tChart'></div>"+
+    "</div>"+
   "</div>";
 }
 
@@ -1365,8 +1428,10 @@ function wireTSpectralUI(){
       state.values.tSpectral[i][input.classList.contains("tswl") ? "wl" : "t"] = input.value;
       persist();
       renderTChart(); // pas de renderPanel() : on garde le focus pendant la frappe
+      syncScalarLock("T");
     });
   });
+  wireSpectralEnter(".tswl, .tsval", "data-t-idx", "tswl", "tsval", "btnAddTPoint");
   panelEl.querySelectorAll("[data-t-del]").forEach(function(btn){
     btn.addEventListener("click", function(){
       state.values.tSpectral.splice(Number(btn.dataset.tDel), 1);
@@ -1389,8 +1454,11 @@ function renderQeSpectralHtml(){
     "<div class='wfehead'><label>Points de la courbe</label>"+
     "<button type='button' class='addcasebtn' id='btnAddQePoint'>+ Ajouter un point</button></div>"+
     "<p class='wfesub'>Un point par longueur d'onde, QE en fraction (0-1, pas en %) — remplace le QE scalaire ci-dessus si renseigné.</p>"+
-    "<div id='qeRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div>"+
-    "<div id='qeChart'></div>"+
+    "<div class='spec-cols'>"+
+      "<div><div class='spec-head'><span>λ (nm)</span><span>QE (0-1)</span><span class='gap'></span></div>"+
+        "<div id='qeRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div></div>"+
+      "<div class='spec-chart' id='qeChart'></div>"+
+    "</div>"+
   "</div>";
 }
 
@@ -1419,10 +1487,12 @@ function renderSpectralChart(hostId, rawPts, valKey, gradId){
     .map(function(p){ return { wl: Number(p.wl), qe: Number(p[valKey]) }; })
     .sort(function(a,b){ return a.wl - b.wl; });
   if(pts.length < 2){
-    host.innerHTML = "<p class='empty' style='margin-top:8px'>Au moins 2 points valides pour afficher la courbe.</p>";
+    host.innerHTML = "<p class='empty' style='margin-top:22px'>Au moins 2 points valides pour afficher la courbe.</p>";
     return;
   }
-  var W = 400, H = 140, padL = 34, padR = 10, padT = 10, padB = 22;
+  // 04/10/2026 — tracé dans la troisième colonne, plus étroite : cadre
+  // plus carré (300×210 au lieu de 400×140) et étiquettes agrandies.
+  var W = 300, H = 210, padL = 14, padR = 12, padT = 12, padB = 30;
   var wlMin = pts[0].wl, wlMax = pts[pts.length-1].wl;
   var qeMin = Math.min(0, Math.min.apply(null, pts.map(function(p){ return p.qe; })));
   var qeMax = Math.max.apply(null, pts.map(function(p){ return p.qe; })) * 1.1 || 1;
@@ -1438,12 +1508,12 @@ function renderSpectralChart(hostId, rawPts, valKey, gradId){
     return "<circle cx='"+x(p.wl).toFixed(1)+"' cy='"+y(p.qe).toFixed(1)+"' r='3' fill='"+wavelengthToColor(p.wl)+"'/>";
   }).join("");
   host.innerHTML =
-    "<svg viewBox='0 0 "+W+" "+H+"' style='width:100%;height:auto;display:block;margin-top:10px'>"+
+    "<svg viewBox='0 0 "+W+" "+H+"' style='width:100%;height:auto;display:block'>"+
       "<defs><linearGradient id='"+gradId+"' x1='"+padL+"' y1='0' x2='"+(W-padR)+"' y2='0' gradientUnits='userSpaceOnUse'>"+stops+"</linearGradient></defs>"+
       "<line x1='"+padL+"' y1='"+(H-padB)+"' x2='"+(W-padR)+"' y2='"+(H-padB)+"' stroke='var(--line-soft)'/>"+
       "<line x1='"+padL+"' y1='"+padT+"' x2='"+padL+"' y2='"+(H-padB)+"' stroke='var(--line-soft)'/>"+
-      "<text x='"+padL+"' y='"+(H-4)+"' font-family='var(--mono)' font-size='9' fill='var(--muted-2)'>"+wlMin+" nm</text>"+
-      "<text x='"+(W-padR)+"' y='"+(H-4)+"' text-anchor='end' font-family='var(--mono)' font-size='9' fill='var(--muted-2)'>"+wlMax+" nm</text>"+
+      "<text x='"+padL+"' y='"+(H-8)+"' font-family='var(--mono)' font-size='14' fill='var(--muted-2)'>"+wlMin+" nm</text>"+
+      "<text x='"+(W-padR)+"' y='"+(H-8)+"' text-anchor='end' font-family='var(--mono)' font-size='14' fill='var(--muted-2)'>"+wlMax+" nm</text>"+
       "<path d='"+pathD+"' fill='none' stroke='url(#"+gradId+")' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
       dots+
     "</svg>";
@@ -1467,8 +1537,10 @@ function wireQeSpectralUI(){
       state.values.qeSpectral[i][key] = input.value;
       persist();
       renderQeChart(); // pas de renderPanel() ici : on garde le focus sur le champ en cours de saisie
+      syncScalarLock("QE");
     });
   });
+  wireSpectralEnter(".qewl, .qeval", "data-qe-idx", "qewl", "qeval", "btnAddQePoint");
 
   panelEl.querySelectorAll("[data-qe-del]").forEach(function(btn){
     btn.addEventListener("click", function(){
