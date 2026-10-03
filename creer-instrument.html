@@ -180,7 +180,7 @@ details.advanced summary .count{font-family:var(--mono);font-size:11.5px;color:v
 .optique-grid{display:flex;gap:22px;align-items:stretch;margin-bottom:14px}
 .optique-geo-col{flex:1;min-width:0;border:1px solid var(--line-soft);border-radius:6px;
   padding:14px 14px 10px;background:var(--panel-2);display:flex;flex-direction:column}
-#opticsGeoSvg{flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
+#opticsGeoSvg,#electronicsGeoSvg{flex:1;display:flex;align-items:center;justify-content:center;min-height:0}
 .geo-viewlabel{display:flex;align-items:center;gap:7px;margin-top:6px;flex:none;
   font-family:var(--mono);font-size:11px;color:var(--muted-2)}
 .geo-viewlabel svg{flex:none}
@@ -791,9 +791,9 @@ function renderPanel(){
   // exactement la forme du bloc Optique avec son propre schéma en coupe.
   // Les autres blocs gardent la disposition simple, verticale.
   var html = head;
-  if(block.id === "optique" || block.id === "detecteur"){
-    var svgId = block.id === "optique" ? "opticsGeoSvg" : "detectorGeoSvg";
-    var viewLabel = block.id === "optique" ? "Vue de face" : "Vue de côté";
+  if(block.id === "optique" || block.id === "detecteur" || block.id === "electronique"){
+    var svgId = block.id === "optique" ? "opticsGeoSvg" : (block.id === "detecteur" ? "detectorGeoSvg" : "electronicsGeoSvg");
+    var viewLabel = block.id === "optique" ? "Vue de face" : (block.id === "detecteur" ? "Vue de côté" : "Courbe de transfert");
     html += "<div class='optique-grid'>"+
       "<div class='optique-geo-col'>"+
         "<div id='"+svgId+"'></div>"+
@@ -838,6 +838,7 @@ function renderPanel(){
       renderChain(); // met à jour le statut ✓/!/○ du bloc en cours de saisie
       if(block.id === "optique") renderOpticsGeometry(); // aperçu géométrique en direct
       if(block.id === "detecteur") renderDetectorGeometry();
+      if(block.id === "electronique") renderElectronicsGeometry();
       // NSUP change : le placeholder d'ESUP ("obligatoire" ou "0 (défaut)")
       // en dépend — mis à jour directement sur l'input existant plutôt
       // qu'avec un renderPanel() complet, pour ne pas perdre le focus en
@@ -874,6 +875,7 @@ function renderPanel(){
   });
   if(block.id === "optique") { renderOpticsGeometry(); wireTSpectralUI(); }
   if(block.id === "detecteur") { renderDetectorGeometry(); wireQeSpectralUI(); }
+  if(block.id === "electronique") renderElectronicsGeometry();
   if(block.id === "wfe") wireWfeCasesUI();
   var actions = document.createElement("div");
   actions.className = "panel-actions";
@@ -1434,6 +1436,150 @@ function renderOpticsGeometry(){
 // µm — pas en mètres comme l'optique). Purement visuel : PX est le seul
 // paramètre réellement utilisé ici, R/P/K/FW/QE ne changent rien au dessin
 // (ce ne sont pas des grandeurs géométriques).
+// ===================== Courbe de transfert de l'électronique (04/10/2026) =====================
+// Schéma du bloc Électronique : électrons en abscisse, DN en ordonnée, pour
+// UN étage TDI. Chaque paramètre du bloc y a sa place :
+//   pente              = gain de conversion (1 / LSB_e), quel que soit le mode
+//   plafond horizontal = pleine échelle de l'ADC, 2^bits - 1
+//   limite verticale   = full well
+//   départ de la droite= niveau noir DN0
+// Le pas de quantification LSB_e (e⁻/DN) reprend les trois formules de
+// module_SNR.resolve_electronics :
+//   détaillé      : (1e6 / CVF) · (V_range / 2^bits) / G_PGA
+//   datasheet     : 1 / CWF
+//   pleine échelle: full_well / (2^bits - 1)
+// Le schéma fait aussi le contrôle de cohérence : si la droite touche le
+// plafond avant le full well, l'ADC sature en premier ; si elle atteint le
+// full well sous le plafond, une partie des codes n'est jamais utilisée.
+// Au-dessus, une ligne de légende rappelle la chaîne du mode choisi.
+// Purement visuel : rien n'est écrit dans state.values.
+function electronicsLsb(){
+  var v = state.values;
+  function num(k){ return (v[k] === undefined || v[k] === null || v[k] === "") ? NaN : Number(v[k]); }
+  var bits = num("ADC"), fw = num("FW");
+  if(!(bits >= 1 && bits <= 32)) return null;
+  var lsb = NaN;
+  if(v.electronics_mode === "detailed"){
+    var g = isNaN(num("G_PGA")) ? 1 : num("G_PGA");
+    lsb = (1e6 / num("CVF_uV_per_e")) * (num("V_range") / Math.pow(2, bits)) / g;
+  } else if(v.electronics_mode === "datasheet"){
+    lsb = 1 / num("CWF");
+  } else if(v.electronics_mode === "full_scale"){
+    lsb = fw / (Math.pow(2, bits) - 1);
+  }
+  return (isFinite(lsb) && lsb > 0) ? lsb : null;
+}
+function renderElectronicsGeometry(){
+  var host = document.getElementById("electronicsGeoSvg");
+  if(!host) return;
+  var v = state.values;
+  function num(k){ return (v[k] === undefined || v[k] === null || v[k] === "") ? NaN : Number(v[k]); }
+  function fmt(x){
+    if(!isFinite(x)) return "—";
+    var a = Math.abs(x);
+    if(a >= 1000) return String(Math.round(x)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    if(a >= 100) return String(Math.round(x));
+    return String(Number(x.toPrecision(3)));
+  }
+  var W = 440, H = 330;
+  var bits = num("ADC"), fw = num("FW"), rn = num("R");
+  var dn0 = isNaN(num("DN0")) ? 0 : num("DN0");
+  var mode = v.electronics_mode || "";
+  var lsb = electronicsLsb();
+
+  // ---- Grille décorative (même texture que les autres schémas) ----
+  var grid = "<g stroke='var(--line-soft)' stroke-width='1'>";
+  for(var gx = 20; gx <= 420; gx += 40) grid += "<line x1='"+gx+"' y1='0' x2='"+gx+"' y2='"+H+"'/>";
+  for(var gy = 15; gy <= H; gy += 40) grid += "<line x1='0' y1='"+gy+"' x2='"+W+"' y2='"+gy+"'/>";
+  grid += "</g>";
+
+  // ---- Ligne de légende : la chaîne du mode choisi ----
+  function box(x, w, label, lit){
+    return "<rect x='"+x+"' y='10' width='"+w+"' height='26' rx='4' fill='var(--panel-2)' stroke='"+(lit ? "var(--pixel)" : "var(--line)")+"' stroke-width='1.2'/>"+
+      "<text x='"+(x + w/2)+"' y='28' text-anchor='middle' font-family='var(--mono)' font-size='13' fill='"+(lit ? "var(--paper)" : "var(--muted-2)")+"'>"+label+"</text>";
+  }
+  function arrow(x){ return "<path d='M"+x+",23 h12 m-4,-4 l4,4 -4,4' fill='none' stroke='var(--muted-2)' stroke-width='1.2'/>"; }
+  var chain = box(14, 46, "e⁻", true) + arrow(64);
+  if(mode === "detailed"){
+    chain += box(80, 78, "CVF", true) + arrow(162) + box(178, 78, "PGA", true) + arrow(260) + box(276, 78, "ADC", true);
+  } else if(mode === "datasheet"){
+    chain += box(80, 274, "gain global CWF", true);
+  } else if(mode === "full_scale"){
+    chain += box(80, 274, "pleine échelle = full well", true);
+  } else {
+    chain += box(80, 274, "mode à choisir", false);
+  }
+  chain += arrow(358) + box(374, 52, "DN", true);
+
+  // ---- Cadre du graphe ----
+  var x0 = 62, x1 = 418, yTop = 78, yBot = 244;
+  var frame =
+    "<line x1='"+x0+"' y1='"+yBot+"' x2='"+x1+"' y2='"+yBot+"' stroke='var(--line)' stroke-width='1.2'/>"+
+    "<line x1='"+x0+"' y1='"+(yTop-14)+"' x2='"+x0+"' y2='"+yBot+"' stroke='var(--line)' stroke-width='1.2'/>"+
+    "<text x='"+(x0-8)+"' y='"+(yTop-18)+"' text-anchor='end' font-family='var(--mono)' font-size='13' fill='var(--muted)'>DN</text>"+
+    "<text x='"+x1+"' y='"+(yBot+30)+"' text-anchor='end' font-family='var(--mono)' font-size='13' fill='var(--muted)'>e⁻</text>"+
+    "<text x='"+(x0-8)+"' y='"+(yBot+4)+"' text-anchor='end' font-family='var(--mono)' font-size='12' fill='var(--muted-2)'>0</text>";
+
+  var body = "", line1 = "", line2 = "", line2Color = "var(--muted)";
+  if(!(bits >= 1 && bits <= 32) || !(fw > 0) || !lsb){
+    // Pas assez d'informations pour tracer : on dit ce qui manque.
+    var need = [];
+    if(!(bits >= 1 && bits <= 32)) need.push("la résolution ADC");
+    if(!(fw > 0)) need.push("le full well");
+    if(!mode) need.push("le mode");
+    else if(!lsb && bits >= 1 && fw > 0) need.push("les champs du mode");
+    line1 = "Pour tracer la courbe, renseigner";
+    line2 = need.join(", ") + ".";
+  } else {
+    var dnMax = Math.pow(2, bits) - 1;
+    var eAdc = Math.max(0, (dnMax - dn0) * lsb);        // électrons auxquels l'ADC sature
+    var xMax = fw * 1.18, yMax = dnMax * 1.14;
+    function X(e){ return x0 + (e / xMax) * (x1 - x0); }
+    function Y(d){ return yBot - (d / yMax) * (yBot - yTop + 14); }
+    var eKnee = Math.min(fw, eAdc);
+    var dnAtFw = Math.min(dnMax, dn0 + fw / lsb);        // DN d'un étage au full well
+    // Plafond de l'ADC et limite du full well
+    body +=
+      "<line x1='"+x0+"' y1='"+Y(dnMax).toFixed(1)+"' x2='"+x1+"' y2='"+Y(dnMax).toFixed(1)+"' stroke='var(--photon)' stroke-width='1.2' stroke-dasharray='5 4'/>"+
+      "<text x='"+x1+"' y='"+(Y(dnMax)-6).toFixed(1)+"' text-anchor='end' font-family='var(--mono)' font-size='12' fill='var(--photon)'>pleine échelle ADC</text>"+
+      "<text x='"+(x0-8)+"' y='"+(Y(dnMax)+4).toFixed(1)+"' text-anchor='end' font-family='var(--mono)' font-size='12' fill='var(--muted-2)'>"+fmt(dnMax)+"</text>"+
+      "<line x1='"+X(fw).toFixed(1)+"' y1='"+(yTop-14)+"' x2='"+X(fw).toFixed(1)+"' y2='"+yBot+"' stroke='var(--muted)' stroke-width='1.2' stroke-dasharray='5 4'/>"+
+      "<text x='"+X(fw).toFixed(1)+"' y='"+(yBot+15)+"' text-anchor='middle' font-family='var(--mono)' font-size='12' fill='var(--muted-2)'>"+fmt(fw)+"</text>"+
+      "<text x='"+(X(fw)-6).toFixed(1)+"' y='"+(yBot-8)+"' text-anchor='end' font-family='var(--mono)' font-size='12' fill='var(--muted)'>full well</text>";
+    // Droite de transfert : montée, palier éventuel au plafond, puis pixel saturé
+    var path = "M"+X(0).toFixed(1)+","+Y(Math.min(dn0, dnMax)).toFixed(1)+
+               " L"+X(eKnee).toFixed(1)+","+Y(Math.min(dnMax, dn0 + eKnee / lsb)).toFixed(1);
+    if(eAdc < fw) path += " L"+X(fw).toFixed(1)+","+Y(dnMax).toFixed(1);
+    body +=
+      "<path d='"+path+"' fill='none' stroke='var(--pixel)' stroke-width='2.6' stroke-linecap='round' stroke-linejoin='round'/>"+
+      "<line x1='"+X(fw).toFixed(1)+"' y1='"+Y(dnAtFw).toFixed(1)+"' x2='"+x1+"' y2='"+Y(dnAtFw).toFixed(1)+"' stroke='var(--pixel)' stroke-width='1.6' stroke-dasharray='2 5' opacity='.7'/>"+
+      "<circle cx='"+X(eKnee).toFixed(1)+"' cy='"+Y(Math.min(dnMax, dn0 + eKnee / lsb)).toFixed(1)+"' r='3.5' fill='var(--pixel)'/>";
+    if(dn0 > 0){
+      body += "<text x='"+(x0+8)+"' y='"+(Y(Math.min(dn0, dnMax))-7).toFixed(1)+"' font-family='var(--mono)' font-size='12' fill='var(--muted)'>DN0 = "+fmt(dn0)+"</text>";
+    }
+    // Lecture chiffrée
+    line1 = "1 DN = " + fmt(lsb) + " e⁻";
+    if(rn > 0) line1 += "  ·  bruit de lecture = " + fmt(rn / lsb) + " DN";
+    var ratio = eAdc / fw;
+    if(Math.abs(ratio - 1) < 0.02){
+      line2 = "Pleine échelle ADC au full well."; line2Color = "var(--ok)";
+    } else if(ratio < 1){
+      line2 = "L'ADC sature à " + fmt(eAdc) + " e⁻, " + Math.round(ratio * 100) + " % du full well."; line2Color = "var(--alert)";
+    } else {
+      line2 = "Full well atteint à " + fmt(dnAtFw) + " DN, " + Math.round(dnAtFw / dnMax * 100) + " % des codes."; line2Color = "var(--photon)";
+    }
+  }
+  var foot =
+    "<text x='"+(W/2)+"' y='"+(H-32)+"' text-anchor='middle' font-family='var(--mono)' font-size='14' fill='var(--paper)'>"+line1+"</text>"+
+    "<text x='"+(W/2)+"' y='"+(H-11)+"' text-anchor='middle' font-family='var(--mono)' font-size='14' fill='"+line2Color+"'>"+line2+"</text>";
+
+  host.innerHTML =
+    "<svg viewBox='0 0 "+W+" "+H+"' preserveAspectRatio='xMidYMid meet' style='width:100%;height:100%;display:block'>"+
+      "<rect x='0' y='0' width='"+W+"' height='"+H+"' fill='var(--void)'/>"+
+      grid + chain + frame + body + foot +
+    "</svg>";
+}
+
 function renderDetectorGeometry(){
   var host = document.getElementById("detectorGeoSvg");
   if(!host) return;
