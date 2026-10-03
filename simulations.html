@@ -1301,6 +1301,7 @@ async function launchSimulation(){
   var qePts = (inst.config.qeSpectral || [])
     .filter(function(p){ return p.wl !== "" && p.qe !== "" && !isNaN(p.wl) && !isNaN(p.qe) && Number(p.qe) >= 0 && Number(p.qe) <= 1; })
     .map(function(p){ return { wl: Number(p.wl), qe: Number(p.qe) }; })
+    .filter(function(p, i, all){ return all.findIndex(function(q){ return q.wl === p.wl; }) === i; }) // pas de λ en double
     .sort(function(a,b){ return a.wl - b.wl; });
   if(qePts.length >= 2){
     payload.qeSpectral = {
@@ -1315,6 +1316,7 @@ async function launchSimulation(){
   var tPts = (inst.config.tSpectral || [])
     .filter(function(p){ return p.wl !== "" && p.t !== "" && !isNaN(p.wl) && !isNaN(p.t) && Number(p.t) >= 0 && Number(p.t) <= 1; })
     .map(function(p){ return { wl: Number(p.wl), t: Number(p.t) }; })
+    .filter(function(p, i, all){ return all.findIndex(function(q){ return q.wl === p.wl; }) === i; }) // pas de λ en double
     .sort(function(a,b){ return a.wl - b.wl; });
   if(tPts.length >= 2){
     payload.tSpectral = {

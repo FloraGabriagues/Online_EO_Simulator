@@ -406,15 +406,40 @@ function fieldOutOfRange(f){
   var v = Number(state.values[f.k]);
   return isNaN(v) || v < f.min || v > f.max;
 }
-// Libellés des saisies hors intervalle (champs scalaires et points de courbe).
+// État d'une courbe spectrale (04/10/2026). Une longueur d'onde ne peut
+// figurer qu'une fois : la première ligne qui la porte est gardée, les
+// suivantes sont marquées en double (dup) et ignorées. range = valeurs hors
+// de [0, 1]. valid = points retenus pour le tracé et pour l'envoi.
+function curveStatus(arr, valKey){
+  var seen = {}, dup = {}, range = {}, valid = [];
+  (arr || []).forEach(function(p, i){
+    var wlOk = p.wl !== "" && !isNaN(p.wl);
+    if(wlOk){
+      var k = String(Number(p.wl));
+      if(seen[k]) dup[i] = true; else seen[k] = true;
+    }
+    if(p[valKey] !== "" && !inUnitRange(p[valKey])) range[i] = true;
+    if(wlOk && !dup[i] && inUnitRange(p[valKey])) valid.push({ wl: Number(p.wl), qe: Number(p[valKey]) });
+  });
+  return { dup: dup, range: range, valid: valid };
+}
+function curveHintText(st){
+  var parts = [];
+  if(Object.keys(st.dup).length) parts.push("Longueur d'onde déjà saisie : la ligne en double est ignorée.");
+  if(Object.keys(st.range).length) parts.push("Valeur hors de 0 à 1 : ce point est ignoré.");
+  return parts.join(" ");
+}
+// Libellés des saisies à corriger (champs scalaires et points de courbe).
 function invalidEntries(){
   var out = [];
   instrumentNode.blocks.forEach(function(b){
     b.fields.forEach(function(f){
-      if(fieldOutOfRange(f) && !spectralActive(f.k)) out.push(f.label);
+      if(fieldOutOfRange(f) && !spectralActive(f.k)) out.push(f.label + " : valeur hors de 0 à 1");
       var lock = SPECTRAL_LOCKS[f.k];
-      if(lock && (state.values[lock.arr] || []).some(function(p){ return p[lock.key] !== "" && !inUnitRange(p[lock.key]); })){
-        out.push("courbe spectrale (" + f.label.toLowerCase() + ")");
+      if(lock){
+        var st = curveStatus(state.values[lock.arr], lock.key);
+        if(Object.keys(st.range).length) out.push("courbe spectrale (" + f.label.toLowerCase() + ") : valeur hors de 0 à 1");
+        if(Object.keys(st.dup).length) out.push("courbe spectrale (" + f.label.toLowerCase() + ") : longueur d'onde en double");
       }
     });
   });
@@ -424,10 +449,7 @@ var SPECTRAL_LOCKS = { T: {arr:"tSpectral", key:"t"}, QE: {arr:"qeSpectral", key
 function spectralActive(fieldKey){
   var lock = SPECTRAL_LOCKS[fieldKey];
   if(!lock) return false;
-  var n = (state.values[lock.arr] || []).filter(function(p){
-    return p.wl !== "" && !isNaN(p.wl) && inUnitRange(p[lock.key]);
-  }).length;
-  return n >= 2;
+  return curveStatus(state.values[lock.arr], lock.key).valid.length >= 2;
 }
 // Met à jour l'état grisé du champ scalaire sans redessiner le panneau
 // (appelé à chaque frappe dans la courbe, pour garder le focus).
@@ -441,16 +463,17 @@ function syncScalarLock(fieldKey){
   updateProgress();
   renderChain();
 }
-// Marque en rouge les valeurs de courbe hors de [0, 1] et affiche le message.
-function syncCurveRange(valSelector, arrKey, valKey, hintId){
-  var any = false;
+// Marque en rouge les valeurs hors de [0, 1] et les longueurs d'onde en double, et affiche le message.
+function syncCurveRange(wlSelector, valSelector, idxAttr, arrKey, valKey, hintId){
+  var st = curveStatus(state.values[arrKey], valKey);
   panelEl.querySelectorAll(valSelector).forEach(function(el){
-    var bad = el.value !== "" && !inUnitRange(el.value);
-    el.classList.toggle("invalid", bad);
-    if(bad) any = true;
+    el.classList.toggle("invalid", !!st.range[el.getAttribute(idxAttr)]);
+  });
+  panelEl.querySelectorAll(wlSelector).forEach(function(el){
+    el.classList.toggle("invalid", !!st.dup[el.getAttribute(idxAttr)]);
   });
   var hint = document.getElementById(hintId);
-  if(hint) hint.hidden = !any;
+  if(hint){ var txt = curveHintText(st); hint.textContent = txt; hint.hidden = !txt; }
 }
 // Touche Entrée dans une ligne de courbe : passe au champ vide de la ligne,
 // ou ajoute un point si la ligne est complète (clic sur « + Ajouter un point »).
@@ -462,7 +485,7 @@ function wireSpectralEnter(selector, idxAttr, wlClass, valClass, addBtnId){
       var i = input.getAttribute(idxAttr);
       var wlEl = panelEl.querySelector("."+wlClass+"["+idxAttr+"='"+i+"']");
       var valEl = panelEl.querySelector("."+valClass+"["+idxAttr+"='"+i+"']");
-      if(wlEl.value === ""){ wlEl.focus(); return; }
+      if(wlEl.value === "" || wlEl.classList.contains("invalid")){ wlEl.focus(); wlEl.select && wlEl.select(); return; }
       if(valEl.value === ""){ valEl.focus(); return; }
       document.getElementById(addBtnId).click();
     });
@@ -1448,9 +1471,10 @@ function renderDetectorGeometry(){
 // valeur du point le plus proche (np.interp dans radiometry.py).
 function renderTSpectralHtml(){
   var pts = state.values.tSpectral || [];
+  var st = curveStatus(pts, "t");
   var rows = pts.map(function(p, i){
     return "<div class='qerow'>"+
-      "<input type='number' step='any' class='qewl tswl' data-t-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
+      "<input type='number' step='any' class='qewl tswl"+(st.dup[i] ? " invalid" : "")+"' data-t-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
       "<input type='number' step='any' class='qeval tsval"+(p.t !== "" && !inUnitRange(p.t) ? " invalid" : "")+"' data-t-idx='"+i+"' value='"+p.t+"' min='0' max='1' placeholder='Transmission (0-1)'>"+
       "<button type='button' class='qedel' data-t-del='"+i+"' aria-label='Supprimer ce point'>×</button>"+
     "</div>";
@@ -1458,11 +1482,11 @@ function renderTSpectralHtml(){
   return "<div class='wfecases qespectral'>"+
     "<div class='wfehead'><label>Points de la courbe</label>"+
     "<button type='button' class='addcasebtn' id='btnAddTPoint'>+ Ajouter un point</button></div>"+
-    "<p class='wfesub'>Un point par longueur d'onde, transmission en fraction (0-1, pas en %) — remplace la transmission scalaire ci-dessus si renseigné. La courbe doit couvrir les bandes : en dehors, la valeur du point le plus proche est gardée.</p>"+
+    "<p class='wfesub'>Un point par longueur d'onde, transmission en fraction (0-1, pas en %). La courbe doit couvrir les bandes : en dehors, la valeur du point le plus proche est gardée.</p>"+
     "<div class='spec-cols'>"+
       "<div class='spec-rows'><div class='spec-head'><span>λ (nm)</span><span>Transmission (0-1)</span><span class='gap'></span></div>"+
         "<div id='tRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div>"+
-        "<p class='rangehint' id='tRangeHint'"+(pts.some(function(p){ return p.t !== "" && !inUnitRange(p.t); }) ? "" : " hidden")+">Valeur hors de 0 à 1 : ce point est ignoré.</p></div>"+
+        "<p class='rangehint' id='tRangeHint'"+(curveHintText(st) ? "" : " hidden")+">"+curveHintText(st)+"</p></div>"+
       "<div class='spec-chart' id='tChart'></div>"+
     "</div>"+
   "</div>";
@@ -1483,7 +1507,7 @@ function wireTSpectralUI(){
       var i = Number(input.dataset.tIdx);
       state.values.tSpectral[i][input.classList.contains("tswl") ? "wl" : "t"] = input.value;
       persist();
-      syncCurveRange(".tsval", "tSpectral", "t", "tRangeHint");
+      syncCurveRange(".tswl", ".tsval", "data-t-idx", "tSpectral", "t", "tRangeHint");
       renderTChart(); // pas de renderPanel() : on garde le focus pendant la frappe
       syncScalarLock("T");
     });
@@ -1500,9 +1524,10 @@ function wireTSpectralUI(){
 
 function renderQeSpectralHtml(){
   var pts = state.values.qeSpectral || [];
+  var st = curveStatus(pts, "qe");
   var rows = pts.map(function(p, i){
     return "<div class='qerow' data-qe-idx='"+i+"'>"+
-      "<input type='number' step='any' class='qewl' data-qe-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
+      "<input type='number' step='any' class='qewl"+(st.dup[i] ? " invalid" : "")+"' data-qe-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
       "<input type='number' step='any' class='qeval"+(p.qe !== "" && !inUnitRange(p.qe) ? " invalid" : "")+"' data-qe-idx='"+i+"' value='"+p.qe+"' min='0' max='1' placeholder='QE (0-1)'>"+
       "<button type='button' class='qedel' data-qe-del='"+i+"' aria-label='Supprimer ce point'>×</button>"+
     "</div>";
@@ -1510,11 +1535,11 @@ function renderQeSpectralHtml(){
   return "<div class='wfecases qespectral'>"+
     "<div class='wfehead'><label>Points de la courbe</label>"+
     "<button type='button' class='addcasebtn' id='btnAddQePoint'>+ Ajouter un point</button></div>"+
-    "<p class='wfesub'>Un point par longueur d'onde, QE en fraction (0-1, pas en %) — remplace le QE scalaire ci-dessus si renseigné.</p>"+
+    "<p class='wfesub'>Un point par longueur d'onde, QE en fraction (0-1, pas en %).</p>"+
     "<div class='spec-cols'>"+
       "<div class='spec-rows'><div class='spec-head'><span>λ (nm)</span><span>QE (0-1)</span><span class='gap'></span></div>"+
         "<div id='qeRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div>"+
-        "<p class='rangehint' id='qeRangeHint'"+(pts.some(function(p){ return p.qe !== "" && !inUnitRange(p.qe); }) ? "" : " hidden")+">Valeur hors de 0 à 1 : ce point est ignoré.</p></div>"+
+        "<p class='rangehint' id='qeRangeHint'"+(curveHintText(st) ? "" : " hidden")+">"+curveHintText(st)+"</p></div>"+
       "<div class='spec-chart' id='qeChart'></div>"+
     "</div>"+
   "</div>";
@@ -1540,9 +1565,7 @@ function renderTChart(){ renderSpectralChart("tChart", state.values.tSpectral, "
 function renderSpectralChart(hostId, rawPts, valKey, gradId){
   var host = document.getElementById(hostId);
   if(!host) return;
-  var pts = (rawPts || [])
-    .filter(function(p){ return p.wl !== "" && !isNaN(p.wl) && inUnitRange(p[valKey]); })
-    .map(function(p){ return { wl: Number(p.wl), qe: Number(p[valKey]) }; })
+  var pts = curveStatus(rawPts, valKey).valid
     .sort(function(a,b){ return a.wl - b.wl; });
   if(pts.length < 2){
     host.innerHTML = "<p class='empty'>Au moins 2 points valides pour afficher la courbe.</p>";
@@ -1605,7 +1628,7 @@ function wireQeSpectralUI(){
       var key = input.classList.contains("qewl") ? "wl" : "qe";
       state.values.qeSpectral[i][key] = input.value;
       persist();
-      syncCurveRange(".qeval", "qeSpectral", "qe", "qeRangeHint");
+      syncCurveRange("input.qewl", ".qeval", "data-qe-idx", "qeSpectral", "qe", "qeRangeHint");
       renderQeChart(); // pas de renderPanel() ici : on garde le focus sur le champ en cours de saisie
       syncScalarLock("QE");
     });
@@ -1672,7 +1695,7 @@ async function saveToSupabase(){
     var invHint = document.createElement("p");
     invHint.className = "savehint";
     invHint.style.color = "var(--alert)";
-    invHint.textContent = "Valeur hors de l'intervalle 0 à 1, à corriger avant d'enregistrer : " + invalid.join(", ") + ".";
+    invHint.textContent = "À corriger avant d'enregistrer : " + invalid.join(" ; ") + ".";
     panelEl.appendChild(invHint);
     return;
   }
