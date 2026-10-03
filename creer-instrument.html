@@ -159,7 +159,7 @@ details.advanced summary{cursor:pointer;font-size:13px;color:var(--muted);margin
 .wfecases .caserow .cdel:hover{color:var(--alert)}
 .wfecases .empty{font-size:12px;color:var(--muted-2);padding:8px 0 2px}
 
-.geo-dim{font-family:var(--mono);font-size:10px;fill:var(--muted-2)}
+.geo-dim{font-family:var(--mono);font-size:14px;fill:var(--muted)}
 .optique-grid{display:flex;gap:22px;align-items:stretch;margin-bottom:14px}
 .optique-geo-col{flex:1;min-width:0;border:1px solid var(--line-soft);border-radius:6px;
   padding:14px 14px 10px;background:var(--panel-2);display:flex;flex-direction:column}
@@ -547,7 +547,7 @@ function currentBlock(){
 function renderPanel(){
   var block = currentBlock();
   if(!block){ panelEl.innerHTML = ""; return; }
-  var head = "<h2>"+block.label+"</h2><p class='desc'>Renseignez les paramètres de ce bloc. Les champs marqués « obligatoire » n'ont pas de valeur par défaut ; le bouton « ? » explique chaque champ.</p>";
+  var head = "<h2 style='margin-bottom:16px'>"+block.label+"</h2>";
   var fieldsHtml = "";
   var advancedHtml = "";
   block.fields.forEach(function(f){
@@ -1131,11 +1131,15 @@ function renderOpticsGeometry(){
   var struts = "";
   for(var i = 0; i < n; i++){
     var angle = (2 * Math.PI * i) / n - Math.PI / 2;
-    var x1 = cx + rObsc * Math.cos(angle), y1 = cy + rObsc * Math.sin(angle);
-    var x2 = cx + R * Math.cos(angle), y2 = cy + R * Math.sin(angle);
-    struts += "<line x1='"+x1.toFixed(1)+"' y1='"+y1.toFixed(1)+"' x2='"+x2.toFixed(1)+"' y2='"+y2.toFixed(1)+
-      "' stroke='var(--muted)' stroke-width='"+strokeW.toFixed(1)+"' stroke-linecap='round'/>";
+    // 03/10/2026 — les supports ne doivent pas sortir de la pupille : avant,
+    // les bouts arrondis dépassaient du cercle d'une demi-épaisseur. Le
+    // trait part du centre (caché par l'obscuration), dépasse le bord, et
+    // le groupe est découpé par le cercle de pupille (clip-path ci-dessous).
+    var x2 = cx + (R + strokeW) * Math.cos(angle), y2 = cy + (R + strokeW) * Math.sin(angle);
+    struts += "<line x1='"+cx+"' y1='"+cy+"' x2='"+x2.toFixed(1)+"' y2='"+y2.toFixed(1)+
+      "' stroke='var(--muted)' stroke-width='"+strokeW.toFixed(1)+"'/>";
   }
+  struts = "<g clip-path='url(#pupilClip)'>"+struts+"</g>";
 
   // ---- Cotation du diamètre D, ligne horizontale sous le cercle ----
   var dimY = cy + R + 34;
@@ -1155,11 +1159,13 @@ function renderOpticsGeometry(){
   if(rObsc > 0){
     var a1 = -40 * Math.PI / 180;
     var lx1 = cx + rObsc * Math.cos(a1), ly1 = cy + rObsc * Math.sin(a1);
-    var lx2 = cx + R + 34, ly2 = cy - R + 6;
+    var lx2 = cx + R + 20, ly2 = cy - R + 6;
+    // Texte posé au-dessus du trait horizontal et aligné à droite : avec la
+    // taille de cote agrandie, il ne tient plus à la suite du trait.
     obscLabel =
       "<circle cx='"+lx1.toFixed(1)+"' cy='"+ly1.toFixed(1)+"' r='2' fill='var(--muted-2)'/>"+
-      "<path d='M"+lx1.toFixed(1)+","+ly1.toFixed(1)+" L"+lx2+","+ly2+" h14' fill='none' stroke='var(--muted-2)' stroke-width='1'/>"+
-      "<text x='"+(lx2+18)+"' y='"+(ly2+4)+"' class='geo-dim'>d = "+(E || 0)+" m</text>";
+      "<path d='M"+lx1.toFixed(1)+","+ly1.toFixed(1)+" L"+lx2+","+ly2+" H432' fill='none' stroke='var(--muted-2)' stroke-width='1'/>"+
+      "<text x='432' y='"+(ly2-7)+"' text-anchor='end' class='geo-dim'>d = "+(E || 0)+" m</text>";
   }
 
   // ---- Appel de cote pour les supports, en diagonale basse ----
@@ -1170,17 +1176,19 @@ function renderOpticsGeometry(){
     var mx2 = cx - R - 15, my2 = cy + R + 6;
     supLabel =
       "<circle cx='"+mx1.toFixed(1)+"' cy='"+my1.toFixed(1)+"' r='2' fill='var(--muted-2)'/>"+
-      "<path d='M"+mx1.toFixed(1)+","+my1.toFixed(1)+" L"+mx2+","+my2+" h-14' fill='none' stroke='var(--muted-2)' stroke-width='1'/>"+
-      "<text x='"+(mx2-18)+"' y='"+(my2+4)+"' text-anchor='end' class='geo-dim'>"+n+" × "+(t || 0)+" m</text>";
+      "<path d='M"+mx1.toFixed(1)+","+my1.toFixed(1)+" L"+mx2+","+my2+" H8' fill='none' stroke='var(--muted-2)' stroke-width='1'/>"+
+      "<text x='8' y='"+(my2-7)+"' class='geo-dim'>"+n+" × "+(t || 0)+" m</text>";
   }
 
   host.innerHTML =
     "<svg viewBox='0 0 440 310' preserveAspectRatio='xMidYMid meet' style='width:100%;height:100%;display:block'>"+
       "<rect x='0' y='0' width='440' height='310' fill='var(--void)'/>"+
       grid+
-      "<circle cx='"+cx+"' cy='"+cy+"' r='"+R+"' fill='var(--void)' stroke='var(--pixel)' stroke-width='1.6'/>"+
+      "<defs><clipPath id='pupilClip'><circle cx='"+cx+"' cy='"+cy+"' r='"+R+"'/></clipPath></defs>"+
+      "<circle cx='"+cx+"' cy='"+cy+"' r='"+R+"' fill='var(--void)'/>"+
       struts+
       (rObsc > 0 ? "<circle cx='"+cx+"' cy='"+cy+"' r='"+rObsc.toFixed(1)+"' fill='var(--panel)' stroke='var(--line)' stroke-width='1.2'/>" : "")+
+      "<circle cx='"+cx+"' cy='"+cy+"' r='"+R+"' fill='none' stroke='var(--pixel)' stroke-width='1.6'/>"+
       dimD + obscLabel + supLabel +
     "</svg>";
 }
@@ -1241,7 +1249,7 @@ function renderDetectorGeometry(){
     "</g>"+
     "<path d='M"+dxL+","+dimY+" l8,-3.5 v7 z' fill='var(--muted-2)'/>"+
     "<path d='M"+dxR+","+dimY+" l-8,-3.5 v7 z' fill='var(--muted-2)'/>"+
-    "<text x='"+((dxL+dxR)/2)+"' y='"+(dimY-7)+"' text-anchor='middle' class='geo-dim'>PX = "+(PX || "—")+" µm</text>";
+    "<text x='"+((dxL+dxR)/2)+"' y='"+(dimY+18)+"' text-anchor='middle' class='geo-dim'>PX = "+(PX || "—")+" µm</text>";
 
   host.innerHTML =
     "<svg viewBox='0 0 440 310' preserveAspectRatio='xMidYMid meet' style='width:100%;height:100%;display:block'>"+
