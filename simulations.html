@@ -133,6 +133,10 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .acq-illustration{background:var(--void);border:1px solid var(--line-soft);border-radius:6px;min-height:330px;overflow:hidden}
 .acq-illustration svg{width:100%;height:100%;display:block}
 .acq-fields{display:grid;grid-template-columns:1fr 1fr;gap:16px 22px;align-content:start}
+.acq-advanced{grid-column:1/-1;border-top:1px solid var(--line-soft);padding-top:12px}
+.acq-advanced summary{cursor:pointer;font-size:12px;color:var(--muted);margin-bottom:14px}
+.field .soon{font-size:10.5px;color:var(--muted-2);margin-left:6px}
+.field input:disabled{opacity:.45;cursor:not-allowed}
 @media (max-width:900px){.acq-layout{grid-template-columns:1fr}.acq-illustration{min-height:280px}}
 .field label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
 .field select,.field input{width:100%;box-sizing:border-box;background:var(--panel-2);
@@ -433,6 +437,59 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
                       <option value="">Simplifié (RMS)</option>
                     </select>
                   </div>
+                  <!-- Angle de visée : non modélisé en V1 (visée au nadir), affiché grisé. -->
+                  <div class="field">
+                    <label>Angle de visée <span class="soon">à venir</span></label>
+                    <div class="row"><input type="number" id="fView" value="0" disabled><span class="unit">°</span></div>
+                  </div>
+                  <!-- Réglages atmosphériques (03/10/2026) : paramètres avancés, repliés par
+                       défaut. Mêmes clés et mêmes valeurs par défaut que
+                       radiometry.resolve_atmosphere (SIXS_DEFAULTS). -->
+                  <details class="acq-advanced">
+                    <summary>Atmosphère (paramètres avancés)</summary>
+                    <div class="acq-fields">
+                      <div class="field">
+                        <label>Profil atmosphérique</label>
+                        <select id="fAtmosProfile">
+                          <option value="Tropical">Tropical</option>
+                          <option value="MidlatitudeSummer" selected>Latitudes moyennes, été</option>
+                          <option value="MidlatitudeWinter">Latitudes moyennes, hiver</option>
+                          <option value="SubarcticSummer">Subarctique, été</option>
+                          <option value="SubarcticWinter">Subarctique, hiver</option>
+                          <option value="USStandard1962">US Standard 1962</option>
+                          <option value="custom">Personnalisé</option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label>Type d'aérosols</label>
+                        <select id="fAeroProfile">
+                          <option value="Continental" selected>Continental</option>
+                          <option value="Maritime">Maritime</option>
+                          <option value="Urban">Urbain</option>
+                          <option value="Desert">Désertique</option>
+                        </select>
+                      </div>
+                      <div class="field atm-custom" hidden>
+                        <label>Vapeur d'eau</label>
+                        <div class="row"><input type="number" id="fWater" min="0" max="10" step="0.1" placeholder="0 à 10"><span class="unit">g/cm²</span></div>
+                      </div>
+                      <div class="field atm-custom" hidden>
+                        <label>Ozone</label>
+                        <div class="row"><input type="number" id="fOzone" min="0" max="1" step="0.01" placeholder="0 à 1"><span class="unit">cm-atm</span></div>
+                      </div>
+                      <div class="field">
+                        <label>Charge en aérosols</label>
+                        <select id="fAeroLoadKind">
+                          <option value="visibility_km" selected>Visibilité (km)</option>
+                          <option value="aot550">Épaisseur optique 550 nm</option>
+                        </select>
+                      </div>
+                      <div class="field">
+                        <label>Valeur</label>
+                        <div class="row"><input type="number" id="fAeroLoad" min="0" step="any" placeholder="23 km (défaut)"><span class="unit" id="fAeroLoadUnit">km</span></div>
+                      </div>
+                    </div>
+                  </details>
                 </div>
               </div>
             </div>
@@ -624,6 +681,19 @@ function renderSteps(current){
 
 // ===================== Navigation séquentielle =====================
 var wizardGrid = document.getElementById("wizardGrid");
+// Atmosphère avancée (03/10/2026) : vapeur d'eau et ozone n'apparaissent
+// qu'avec le profil « Personnalisé » ; l'unité et l'indication de la charge
+// en aérosols suivent la grandeur choisie.
+document.getElementById("fAtmosProfile").addEventListener("change", function(e){
+  document.querySelectorAll(".atm-custom").forEach(function(el){ el.hidden = e.target.value !== "custom"; });
+});
+document.getElementById("fAeroLoadKind").addEventListener("change", function(e){
+  var vis = e.target.value === "visibility_km";
+  document.getElementById("fAeroLoadUnit").textContent = vis ? "km" : "";
+  document.getElementById("fAeroLoad").placeholder = vis ? "23 km (défaut)" : "ex. 0.2";
+  document.getElementById("fAeroLoad").value = "";
+});
+
 var currentStep = 1;
 function showStep(n){
   currentStep = n;
@@ -1138,13 +1208,39 @@ async function launchSimulation(){
     Z: "none",
   };
 
+  // Valeurs par défaut (03/10/2026) : le formulaire de création d'instrument
+  // annonce « 0 (défaut) » ou « 1 (défaut) » pour ces champs, mais un champ
+  // laissé vide partait tel quel et le serveur le refusait (champ requis).
+  // Elles sont maintenant appliquées ici, au moment de l'envoi. D, I, PX,
+  // ADC et FW n'ont pas de défaut : ils restent obligatoires.
+  function orDefault(v, d){ return (v === undefined || v === null || v === "") ? d : Number(v); }
   var payload = Object.assign({
     scene: scene.id,
-    D: inst.config.D, I: inst.config.I, W: inst.config.W, E: inst.config.E, T: inst.config.T,
-    R: inst.config.R, P: inst.config.P, K: inst.config.K, FW: inst.config.FW,
-    PX: inst.config.PX, QE: inst.config.QE, ADC: inst.config.ADC,
-    NSUP: inst.config.NSUP, ESUP: inst.config.ESUP,
+    D: inst.config.D, I: inst.config.I,
+    W: orDefault(inst.config.W, 0), E: orDefault(inst.config.E, 0), T: orDefault(inst.config.T, 1),
+    R: orDefault(inst.config.R, 0), P: orDefault(inst.config.P, 0), K: orDefault(inst.config.K, 0),
+    FW: inst.config.FW,
+    PX: inst.config.PX, QE: orDefault(inst.config.QE, 1), ADC: inst.config.ADC,
+    NSUP: orDefault(inst.config.NSUP, 0), ESUP: orDefault(inst.config.ESUP, 0),
   }, conditions);
+
+  // Atmosphère (03/10/2026) — seules les valeurs modifiées sont envoyées :
+  // sans bloc "atmosphere", le backend applique ses réglages par défaut
+  // (radiometry.SIXS_DEFAULTS). Vapeur d'eau et ozone vont ensemble et
+  // remplacent le profil ; visibilité et épaisseur optique s'excluent.
+  var atm = {};
+  var atmProfile = document.getElementById("fAtmosProfile").value;
+  if(atmProfile === "custom"){
+    var water = document.getElementById("fWater").value, ozone = document.getElementById("fOzone").value;
+    if(water !== "" && ozone !== ""){ atm.water_vapour_gcm2 = Number(water); atm.ozone_cmatm = Number(ozone); }
+  } else if(atmProfile !== "MidlatitudeSummer"){
+    atm.atmos_profile = atmProfile;
+  }
+  var aeroProfile = document.getElementById("fAeroProfile").value;
+  if(aeroProfile !== "Continental") atm.aero_profile = aeroProfile;
+  var aeroLoad = document.getElementById("fAeroLoad").value;
+  if(aeroLoad !== "") atm[document.getElementById("fAeroLoadKind").value] = Number(aeroLoad);
+  if(Object.keys(atm).length) payload.atmosphere = atm;
 
   // Électronique et DSNU (03/10/2026) — clés explicites, identiques à
   // celles du paramFile (cf. creer-instrument.html et paramfile_builder.py).
