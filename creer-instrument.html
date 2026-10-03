@@ -159,7 +159,7 @@ details.advanced summary{cursor:pointer;font-size:13px;color:var(--muted);margin
 .wfecases .caserow .cdel:hover{color:var(--alert)}
 .wfecases .empty{font-size:12px;color:var(--muted-2);padding:8px 0 2px}
 
-.geo-dim{font-family:var(--mono);font-size:14px;fill:var(--muted)}
+.geo-dim{font-family:var(--mono);font-size:18px;fill:var(--muted)}
 .optique-grid{display:flex;gap:22px;align-items:stretch;margin-bottom:14px}
 .optique-geo-col{flex:1;min-width:0;border:1px solid var(--line-soft);border-radius:6px;
   padding:14px 14px 10px;background:var(--panel-2);display:flex;flex-direction:column}
@@ -1168,16 +1168,23 @@ function renderOpticsGeometry(){
       "<text x='432' y='"+(ly2-7)+"' text-anchor='end' class='geo-dim'>d = "+(E || 0)+" m</text>";
   }
 
-  // ---- Appel de cote pour les supports, en diagonale basse ----
+  // ---- Appel de cote pour les supports, vers le haut à gauche ----
+  // 04/10/2026 — le trait part maintenant du milieu du support vertical
+  // du haut (le premier tracé, à -90°, présent dès que n > 0), donc il
+  // pointe toujours sur un support quels que soient n, l'épaisseur et
+  // l'obscuration. Avant, il visait un point fixe de la pupille (145°),
+  // qui ne tombait sur un support que par hasard. Le texte est en haut à
+  // gauche, symétrique de la cote d'obscuration : en bas à gauche, avec
+  // la taille agrandie, il chevauchait le trait de rappel de la cote D.
   var supLabel = "";
   if(n > 0){
-    var a2 = 145 * Math.PI / 180;
-    var mx1 = cx + R * 0.62 * Math.cos(a2), my1 = cy + R * 0.62 * Math.sin(a2);
-    var mx2 = cx - R - 15, my2 = cy + R + 6;
+    var supText = n+" × "+(t || 0)+" m";
+    var mx1 = cx, my1 = cy - (rObsc + R) / 2;
+    var mx2 = Math.min(cx - 24, 8 + supText.length * 10.8 + 6), my2 = cy - R + 6;
     supLabel =
-      "<circle cx='"+mx1.toFixed(1)+"' cy='"+my1.toFixed(1)+"' r='2' fill='var(--muted-2)'/>"+
-      "<path d='M"+mx1.toFixed(1)+","+my1.toFixed(1)+" L"+mx2+","+my2+" H8' fill='none' stroke='var(--muted-2)' stroke-width='1'/>"+
-      "<text x='8' y='"+(my2-7)+"' class='geo-dim'>"+n+" × "+(t || 0)+" m</text>";
+      "<path d='M"+mx1.toFixed(1)+","+my1.toFixed(1)+" L"+mx2.toFixed(1)+","+my2+" H8' fill='none' stroke='var(--muted-2)' stroke-width='1'/>"+
+      "<circle cx='"+mx1.toFixed(1)+"' cy='"+my1.toFixed(1)+"' r='2.5' fill='var(--void)'/>"+
+      "<text x='8' y='"+(my2-7)+"' class='geo-dim'>"+supText+"</text>";
   }
 
   host.innerHTML =
@@ -1249,7 +1256,7 @@ function renderDetectorGeometry(){
     "</g>"+
     "<path d='M"+dxL+","+dimY+" l8,-3.5 v7 z' fill='var(--muted-2)'/>"+
     "<path d='M"+dxR+","+dimY+" l-8,-3.5 v7 z' fill='var(--muted-2)'/>"+
-    "<text x='"+((dxL+dxR)/2)+"' y='"+(dimY+18)+"' text-anchor='middle' class='geo-dim'>PX = "+(PX || "—")+" µm</text>";
+    "<text x='"+((dxL+dxR)/2)+"' y='"+(dimY+22)+"' text-anchor='middle' class='geo-dim'>PX = "+(PX || "—")+" µm</text>";
 
   host.innerHTML =
     "<svg viewBox='0 0 440 310' preserveAspectRatio='xMidYMid meet' style='width:100%;height:100%;display:block'>"+
