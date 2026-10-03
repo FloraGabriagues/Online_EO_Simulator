@@ -119,6 +119,12 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .field input:focus{outline:none;border-color:var(--pixel)}
 .field input:disabled{opacity:.45;cursor:not-allowed}
 .field .lockhint{font-size:12px;color:var(--muted-2);margin:6px 0 0}
+/* 04/10/2026 — choix « Valeur constante / Courbe » pour la transmission et le rendement quantique */
+.field .modeseg{display:inline-flex;border:1px solid var(--line);border-radius:4px;overflow:hidden;margin-bottom:8px}
+.field .modeseg button{appearance:none;cursor:pointer;background:transparent;border:none;color:var(--muted);
+  font-family:var(--body);font-size:12.5px;padding:5px 12px}
+.field .modeseg button + button{border-left:1px solid var(--line)}
+.field .modeseg button.on{background:var(--panel-2);color:var(--pixel)}
 /* 04/10/2026 — valeur hors de l'intervalle autorisé (fractions 0-1) */
 .field input.invalid,.qespectral input.invalid{border-color:var(--alert)}
 .rangehint{font-size:12px;color:var(--alert);margin:6px 0 0}
@@ -436,30 +442,47 @@ function invalidEntries(){
     b.fields.forEach(function(f){
       if(fieldOutOfRange(f) && !spectralActive(f.k)) out.push(f.label + " : valeur hors de 0 à 1");
       var lock = SPECTRAL_LOCKS[f.k];
-      if(lock){
+      if(lock && spectralActive(f.k)){
         var st = curveStatus(state.values[lock.arr], lock.key);
         if(Object.keys(st.range).length) out.push("courbe spectrale (" + f.label.toLowerCase() + ") : valeur hors de 0 à 1");
         if(Object.keys(st.dup).length) out.push("courbe spectrale (" + f.label.toLowerCase() + ") : longueur d'onde en double");
+        if(st.valid.length < 2) out.push("courbe spectrale (" + f.label.toLowerCase() + ") : au moins 2 points valides");
       }
     });
   });
   return out;
 }
-var SPECTRAL_LOCKS = { T: {arr:"tSpectral", key:"t"}, QE: {arr:"qeSpectral", key:"qe"} };
-function spectralActive(fieldKey){
+// 04/10/2026 (soir) — la transmission et le rendement quantique se
+// saisissent selon UN mode à la fois, choisi par l'utilisateur :
+//   "constant" : une seule valeur, envoyée comme une courbe PLATE (deux
+//                points à la même valeur, cf. simulations.html) ;
+//   "curve"    : la courbe saisie point par point.
+// Le mode est stocké dans state.values[lock.mode]. Pour un instrument créé
+// avant ce choix (pas de mode enregistré), il est déduit : "curve" si une
+// courbe d'au moins 2 points valides existe, "constant" sinon.
+var SPECTRAL_LOCKS = {
+  T:  {arr:"tSpectral",  key:"t",  mode:"T_mode"},
+  QE: {arr:"qeSpectral", key:"qe", mode:"QE_mode"}
+};
+function spectralMode(fieldKey){
   var lock = SPECTRAL_LOCKS[fieldKey];
-  if(!lock) return false;
-  return curveStatus(state.values[lock.arr], lock.key).valid.length >= 2;
+  if(!lock) return null;
+  var m = state.values[lock.mode];
+  if(m === "constant" || m === "curve") return m;
+  return curveStatus(state.values[lock.arr], lock.key).valid.length >= 2 ? "curve" : "constant";
+}
+function spectralActive(fieldKey){ return spectralMode(fieldKey) === "curve"; }
+// Un champ en mode courbe est « rempli » quand la courbe a au moins 2 points valides.
+function fieldFilled(f){
+  var lock = SPECTRAL_LOCKS[f.k];
+  if(lock && spectralActive(f.k)) return curveStatus(state.values[lock.arr], lock.key).valid.length >= 2;
+  return isFilled(f.k);
 }
 // Met à jour l'état grisé du champ scalaire sans redessiner le panneau
 // (appelé à chaque frappe dans la courbe, pour garder le focus).
 function syncScalarLock(fieldKey){
-  var input = document.getElementById("f-"+fieldKey);
-  var hint = document.getElementById("lock-"+fieldKey);
-  if(!input) return;
-  var active = spectralActive(fieldKey);
-  input.disabled = active;
-  if(hint) hint.hidden = !active;
+  // Depuis le choix de mode, il n'y a plus de champ scalaire à griser :
+  // la frappe dans la courbe met seulement à jour l'avancement.
   updateProgress();
   renderChain();
 }
@@ -497,7 +520,6 @@ function fieldVisible(f){
 }
 function fieldCounts(f){
   if(!fieldVisible(f) || f.optional) return false;
-  if(spectralActive(f.k)) return false; // scalaire remplacé par la courbe
   if(f.requiredIf) return Number(state.values[f.requiredIf]) > 0;
   return true;
 }
@@ -523,7 +545,7 @@ function blockStatus(block){
   block.fields.forEach(function(f){
     if(!fieldCounts(f)) return;
     counted++;
-    if(isFilled(f.k)) filled++;
+    if(fieldFilled(f)) filled++;
   });
   if(filled === 0) return "empty";
   if(filled < counted) return "warn";
@@ -538,7 +560,7 @@ function overallPct(){
       b.fields.forEach(function(f){
         if(!fieldCounts(f)) return;
         total++;
-        if(isFilled(f.k)) done++;
+        if(fieldFilled(f)) done++;
       });
     });
   });
@@ -703,7 +725,7 @@ function renderPanel(){
       : "<input type='number' step='any' id='f-"+f.k+"'"+valueAttr+placeholderAttr+
           (f.min !== undefined ? " min='"+f.min+"' max='"+f.max+"'" : "")+
           (fieldOutOfRange(f) ? " class='invalid'" : "")+
-          (spectralActive(f.k) ? " disabled" : "")+">";
+          ">";
     var helpBtn = f.help ? "<button type='button' class='helpbtn' data-help='"+f.k+"' aria-label='Aide'>?</button>" : "";
     var helpTxt = f.help ? "<p class='fieldhelp' id='h-"+f.k+"' hidden>"+f.help+"</p>" : "";
     // Champ obligatoire seulement si un autre est non nul (ex. temps de
@@ -711,11 +733,21 @@ function renderPanel(){
     // ou nul, et révélé à la frappe sans redessiner le panneau.
     var hiddenAttr = (f.requiredIf && !(Number(state.values[f.requiredIf]) > 0)) ? " hidden" : "";
     if(f.advanced && isFilled(f.k)) advancedFilled = true;
+    // Transmission / rendement quantique : sélecteur « Valeur constante /
+    // Courbe ». En mode courbe, le champ à une valeur n'est pas affiché du
+    // tout ; la courbe se saisit dans la section sous le schéma.
+    var curveMode = SPECTRAL_LOCKS[f.k] ? spectralMode(f.k) : null;
+    var modeSeg = curveMode
+      ? "<div><div class='modeseg' data-mode-for='"+f.k+"'>"+
+          "<button type='button' data-m='constant'"+(curveMode === "constant" ? " class='on'" : "")+">Valeur constante</button>"+
+          "<button type='button' data-m='curve'"+(curveMode === "curve" ? " class='on'" : "")+">Courbe</button></div></div>"
+      : "";
+    var inputRow = curveMode === "curve"
+      ? "<p class='lockhint' style='margin-top:0'>Courbe à saisir dans la section sous le schéma.</p>"
+      : (f.type === "select" ? control : "<div class='row'>"+control+"<span class='unit'>"+(f.unit || "")+"</span></div>")+
+        (f.min !== undefined ? "<p class='rangehint' id='range-"+f.k+"'"+(fieldOutOfRange(f) ? "" : " hidden")+">Fraction attendue, entre "+f.min+" et "+f.max+" (0.62 pour 62 %).</p>" : "");
     var oneField = "<div class='field' id='w-"+f.k+"'"+hiddenAttr+"><div class='labrow'><label for='f-"+f.k+"'>"+f.label+"</label>"+helpBtn+"</div>"+
-      (f.type === "select" ? control : "<div class='row'>"+control+"<span class='unit'>"+(f.unit || "")+"</span></div>")+
-      helpTxt+
-      (f.min !== undefined ? "<p class='rangehint' id='range-"+f.k+"'"+(fieldOutOfRange(f) ? "" : " hidden")+">Fraction attendue, entre "+f.min+" et "+f.max+" (0.62 pour 62 %).</p>" : "")+
-      (SPECTRAL_LOCKS[f.k] ? "<p class='lockhint' id='lock-"+f.k+"'"+(spectralActive(f.k) ? "" : " hidden")+">Remplacé par la courbe spectrale ci-dessous.</p>" : "")+
+      modeSeg+inputRow+helpTxt+
       "</div>";
     if(f.advanced) advancedHtml += oneField; else fieldsHtml += oneField;
     // Le WFE RMS scalaire ci-dessus reste le mode simplifié (utilisé si
@@ -739,17 +771,17 @@ function renderPanel(){
   if(block.id === "detecteur"){
     // Détecteur : la courbe QE spectrale et les paramètres avancés passent
     // sous le schéma, en pleine largeur, repliés par défaut.
-    var nQe = (state.values.qeSpectral || []).length;
-    belowHtml = "<details class='advanced' id='qeDetails'"+(nQe ? " open" : "")+">"+
-      "<summary>Courbe spectrale du rendement (optionnel)</summary>"+
-      renderQeSpectralHtml()+"</details>"+advancedDetails;
+    belowHtml = (spectralActive("QE")
+      ? "<details class='advanced' id='qeDetails' open><summary>Courbe spectrale du rendement</summary>"+
+        renderQeSpectralHtml()+"</details>"
+      : "")+advancedDetails;
   } else if(block.id === "optique"){
     // Optique : courbe de transmission spectrale, même présentation que la
     // courbe QE du bloc Détecteur.
-    var nT = (state.values.tSpectral || []).length;
-    belowHtml = "<details class='advanced' id='tDetails'"+(nT ? " open" : "")+">"+
-      "<summary>Courbe spectrale de la transmission (optionnel)</summary>"+
-      renderTSpectralHtml()+"</details>";
+    belowHtml = spectralActive("T")
+      ? "<details class='advanced' id='tDetails' open><summary>Courbe spectrale de la transmission</summary>"+
+        renderTSpectralHtml()+"</details>"
+      : "";
     fieldsHtml += advancedDetails;
   } else {
     fieldsHtml += advancedDetails;
@@ -776,6 +808,21 @@ function renderPanel(){
     html += fieldsHtml;
   }
   panelEl.innerHTML = html;
+  panelEl.querySelectorAll(".modeseg button").forEach(function(btn){
+    btn.addEventListener("click", function(){
+      var k = btn.parentNode.getAttribute("data-mode-for"), lock = SPECTRAL_LOCKS[k];
+      state.values[lock.mode] = btn.getAttribute("data-m");
+      // Passage en mode courbe sans aucun point : une première ligne vide,
+      // pour pouvoir saisir tout de suite.
+      if(state.values[lock.mode] === "curve" && !(state.values[lock.arr] || []).length){
+        var first = { wl: "" }; first[lock.key] = "";
+        state.values[lock.arr] = [first];
+      }
+      persist(); updateProgress(); renderChain(); renderPanel();
+      var firstWl = panelEl.querySelector(".qewl");
+      if(state.values[lock.mode] === "curve" && firstWl) firstWl.focus();
+    });
+  });
   panelEl.querySelectorAll(".helpbtn").forEach(function(b){
     b.addEventListener("click", function(){
       var h = document.getElementById("h-"+b.getAttribute("data-help"));
@@ -847,7 +894,7 @@ function renderPanel(){
       delete state.values[f.k];
       // 04/10/2026 — la courbe spectrale liée au champ est effacée aussi,
       // sinon le champ scalaire resterait grisé après la réinitialisation.
-      if(SPECTRAL_LOCKS[f.k]) delete state.values[SPECTRAL_LOCKS[f.k].arr];
+      if(SPECTRAL_LOCKS[f.k]){ delete state.values[SPECTRAL_LOCKS[f.k].arr]; delete state.values[SPECTRAL_LOCKS[f.k].mode]; }
     });
     persist(); updateProgress(); renderChain(); renderPanel();
   });
@@ -1493,6 +1540,7 @@ function renderTSpectralHtml(){
 }
 
 function wireTSpectralUI(){
+  if(!document.getElementById("btnAddTPoint")) return; // mode « Valeur constante »
   renderTChart();
   document.getElementById("btnAddTPoint").addEventListener("click", function(){
     if(!state.values.tSpectral) state.values.tSpectral = [];
@@ -1611,6 +1659,7 @@ function renderSpectralChart(hostId, rawPts, valKey, gradId){
     "</svg>";
 }
 function wireQeSpectralUI(){
+  if(!document.getElementById("btnAddQePoint")) return; // mode « Valeur constante »
   renderQeChart();
 
   document.getElementById("btnAddQePoint").addEventListener("click", function(){

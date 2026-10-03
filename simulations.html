@@ -1214,6 +1214,8 @@ async function launchSimulation(){
   // Elles sont maintenant appliquées ici, au moment de l'envoi. D, I, PX,
   // ADC et FW n'ont pas de défaut : ils restent obligatoires.
   function orDefault(v, d){ return (v === undefined || v === null || v === "") ? d : Number(v); }
+  // Longueurs d'onde des deux points d'une courbe plate (mode « Valeur constante »).
+  var FLAT_CURVE_NM = [300, 1100];
   var payload = Object.assign({
     scene: scene.id,
     D: inst.config.D, I: inst.config.I,
@@ -1303,12 +1305,28 @@ async function launchSimulation(){
     .map(function(p){ return { wl: Number(p.wl), qe: Number(p.qe) }; })
     .filter(function(p, i, all){ return all.findIndex(function(q){ return q.wl === p.wl; }) === i; }) // pas de λ en double
     .sort(function(a,b){ return a.wl - b.wl; });
-  if(qePts.length >= 2){
+  // Mode de saisie (04/10/2026, cf. creer-instrument.html, QE_mode) :
+  //   "curve"    : la courbe saisie est envoyée telle quelle ;
+  //   "constant" : la valeur unique est envoyée comme une courbe PLATE, deux
+  //                points à la même valeur. Avant, le backend remettait à
+  //                l'échelle la forme spectrale de son template, que
+  //                l'utilisateur ne voyait pas. Les longueurs d'onde des deux
+  //                points sont sans effet : hors de la plage, le backend
+  //                garde la valeur du bord.
+  // Instrument sans mode enregistré : "curve" s'il a une courbe d'au moins
+  // 2 points valides, "constant" sinon. Dans les deux cas une courbe est
+  // envoyée, donc le QE scalaire ne l'est plus (sinon le builder ferait une
+  // remise à l'échelle inutile, écrasée ensuite par la courbe).
+  var qeMode = inst.config.QE_mode || (qePts.length >= 2 ? "curve" : "constant");
+  if(qeMode === "curve" && qePts.length >= 2){
     payload.qeSpectral = {
       wavelength_nm: qePts.map(function(p){ return p.wl; }),
       values: qePts.map(function(p){ return p.qe; }),
     };
+  } else {
+    payload.qeSpectral = { wavelength_nm: FLAT_CURVE_NM, values: [payload.QE, payload.QE] };
   }
+  delete payload.QE;
 
   // Courbe de transmission optique T(λ) (04/10/2026) — même principe et
   // même format que la courbe QE ci-dessus : avec au moins 2 points
@@ -1318,11 +1336,18 @@ async function launchSimulation(){
     .map(function(p){ return { wl: Number(p.wl), t: Number(p.t) }; })
     .filter(function(p, i, all){ return all.findIndex(function(q){ return q.wl === p.wl; }) === i; }) // pas de λ en double
     .sort(function(a,b){ return a.wl - b.wl; });
-  if(tPts.length >= 2){
+  // Même choix de mode que pour le QE (T_mode). Le champ T reste envoyé
+  // parce que le serveur l'exige ; en mode courbe il vaut la moyenne des
+  // points, et le builder ne s'en sert pas quand une courbe est fournie.
+  var tMode = inst.config.T_mode || (tPts.length >= 2 ? "curve" : "constant");
+  if(tMode === "curve" && tPts.length >= 2){
     payload.tSpectral = {
       wavelength_nm: tPts.map(function(p){ return p.wl; }),
       values: tPts.map(function(p){ return p.t; }),
     };
+    payload.T = tPts.reduce(function(a, p){ return a + p.t; }, 0) / tPts.length;
+  } else {
+    payload.tSpectral = { wavelength_nm: FLAT_CURVE_NM, values: [payload.T, payload.T] };
   }
 
   lastPayload = { payload: payload, scene: scene, inst: inst, conditions: conditions, wfeCase: wfeCase };
