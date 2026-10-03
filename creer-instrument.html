@@ -197,11 +197,13 @@ details.advanced summary .count{font-family:var(--mono);font-size:11.5px;color:v
 .qespectral .spec-cols{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:stretch}
 /* avec peu de points, le tracé est plus haut que les lignes : on centre alors les lignes sur lui */
 .qespectral .spec-rows{display:flex;flex-direction:column;justify-content:center}
-.qespectral .spec-head{display:flex;gap:8px;padding:0 0 4px;font-family:var(--mono);font-size:11px;color:var(--muted-2)}
+.qespectral .wfehead label{font-size:14.5px;color:var(--paper)}
+.qespectral .wfesub{font-size:13px;line-height:1.5;color:var(--muted)}
+.qespectral .spec-head{display:flex;gap:8px;padding:0 0 6px;font-family:var(--mono);font-size:13px;color:var(--muted)}
 .qespectral .spec-head span{flex:1;min-width:0}
 .qespectral .spec-head .gap{flex:none;width:27px}
 /* tracé centré en hauteur sur les lignes de points (padding-top = hauteur de la ligne d'en-têtes) */
-.qespectral .spec-chart{border-left:1px solid var(--line-soft);padding:22px 0 0 18px;
+.qespectral .spec-chart{border-left:1px solid var(--line-soft);padding:26px 0 0 18px;
   display:flex;flex-direction:column;justify-content:center}
 @media(max-width:720px){.qespectral .spec-cols{grid-template-columns:1fr}
   .qespectral .spec-chart{border-left:none;padding-left:0}}
@@ -1566,16 +1568,21 @@ function renderSpectralChart(hostId, rawPts, valKey, gradId){
   var dots = pts.map(function(p){
     return "<circle cx='"+x(p.wl).toFixed(1)+"' cy='"+y(p.qe).toFixed(1)+"' r='3' fill='"+wavelengthToColor(p.wl)+"'/>";
   }).join("");
+  // Graduations des ordonnées tous les 0,2 (04/10/2026), avec une ligne de
+  // repère pointillée par graduation ; l'axe des abscisses tient lieu de 0.
+  var yTicks = "";
+  [0, 0.2, 0.4, 0.6, 0.8, 1].forEach(function(v){
+    if(v > 0) yTicks += "<line x1='"+(padL-4)+"' y1='"+y(v).toFixed(1)+"' x2='"+(W-padR)+"' y2='"+y(v).toFixed(1)+"' stroke='var(--line-soft)' stroke-dasharray='3 4'/>";
+    yTicks += "<text x='"+(padL-7)+"' y='"+(y(v)+3.5).toFixed(1)+"' text-anchor='end' font-family='var(--mono)' font-size='10' fill='var(--muted-2)'>"+v+"</text>";
+  });
   host.innerHTML =
     "<svg viewBox='0 0 "+W+" "+H+"' style='width:100%;height:auto;display:block'>"+
       "<defs><linearGradient id='"+gradId+"' x1='"+padL+"' y1='0' x2='"+(W-padR)+"' y2='0' gradientUnits='userSpaceOnUse'>"+stops+"</linearGradient></defs>"+
       "<line x1='"+padL+"' y1='"+(H-padB)+"' x2='"+(W-padR)+"' y2='"+(H-padB)+"' stroke='var(--line-soft)'/>"+
       "<line x1='"+padL+"' y1='"+padT+"' x2='"+padL+"' y2='"+(H-padB)+"' stroke='var(--line-soft)'/>"+
-      "<line x1='"+(padL-4)+"' y1='"+y(1).toFixed(1)+"' x2='"+(W-padR)+"' y2='"+y(1).toFixed(1)+"' stroke='var(--line-soft)' stroke-dasharray='3 4'/>"+
-      "<text x='"+(padL-8)+"' y='"+(y(1)+5).toFixed(1)+"' text-anchor='end' font-family='var(--mono)' font-size='14' fill='var(--muted-2)'>1</text>"+
-      "<text x='"+(padL-8)+"' y='"+(y(0)+5).toFixed(1)+"' text-anchor='end' font-family='var(--mono)' font-size='14' fill='var(--muted-2)'>0</text>"+
-      "<text x='"+padL+"' y='"+(H-8)+"' font-family='var(--mono)' font-size='14' fill='var(--muted-2)'>"+wlMin+" nm</text>"+
-      "<text x='"+(W-padR)+"' y='"+(H-8)+"' text-anchor='end' font-family='var(--mono)' font-size='14' fill='var(--muted-2)'>"+wlMax+" nm</text>"+
+      yTicks+
+      "<text x='"+padL+"' y='"+(H-12)+"' font-family='var(--mono)' font-size='10' fill='var(--muted-2)'>"+wlMin+" nm</text>"+
+      "<text x='"+(W-padR)+"' y='"+(H-12)+"' text-anchor='end' font-family='var(--mono)' font-size='10' fill='var(--muted-2)'>"+wlMax+" nm</text>"+
       "<path d='"+pathD+"' fill='none' stroke='url(#"+gradId+")' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
       dots+
     "</svg>";
