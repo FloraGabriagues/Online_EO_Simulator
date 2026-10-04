@@ -998,6 +998,13 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
     e.preventDefault();
     openSettings();
   });
+  // 04/10/2026 — les autres pages (Simulations, Résultats) n'ont plus leur
+  // propre fenêtre de paramètres : leur lien « Paramètres » mène ici avec
+  // ?settings=1, et la fenêtre s'ouvre directement.
+  if(new URLSearchParams(window.location.search).get("settings") === "1"){
+    openSettings();
+    history.replaceState({}, "", window.location.pathname);
+  }
   document.getElementById("settingsCloseBtn").addEventListener("click", closeSettings);
   overlay.addEventListener("click", function(e){
     if(e.target === overlay) closeSettings();
