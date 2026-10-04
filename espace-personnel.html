@@ -282,6 +282,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
 .mnote{font-size:12px;color:var(--muted-2);line-height:1.5;margin:0}
 .mnote.ok{color:var(--ok)}
 .mnote.err{color:var(--alert)}
+.mnote.warn{color:var(--photon)}
 .mdelete-list{margin:0 0 6px;padding-left:18px;font-size:12.5px;color:var(--muted);line-height:1.55}
 .mdelete-list li{margin-bottom:5px}
 @media(max-width:640px){
@@ -837,7 +838,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
 
   var { data: entRow, error: entErr } = await supabaseClient
     .from("account_entitlements")
-    .select("plan, subscription_status, current_period_end")
+    .select("*") // toute la ligne : si la colonne cancel_at_period_end n'existe pas encore, la lecture ne casse pas
     .maybeSingle();
   if(entErr) console.error("Erreur chargement abonnement :", entErr);
   if(entRow) entitlement = entRow;
@@ -859,9 +860,14 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
   // statut « active », et échéance absente ou future. Avant le 04/10/2026,
   // l'échéance n'était pas regardée ici : un accès attribué à la main et
   // expiré s'affichait encore comme « Actif ».
+  // Marge de 2 jours après l'échéance, identique à celle du serveur
+  // (main.py, _PERIOD_GRACE_DAYS) : un retard du webhook Stripe au moment
+  // d'un renouvellement ne doit pas faire passer un abonné pour non abonné.
+  var PERIOD_GRACE_MS = 2 * 24 * 3600 * 1000;
   function isSubscribed(){
     if(entitlement.plan === "free" || entitlement.subscription_status !== "active") return false;
-    if(entitlement.current_period_end && new Date(entitlement.current_period_end) <= new Date()) return false;
+    if(entitlement.current_period_end
+       && new Date(entitlement.current_period_end).getTime() + PERIOD_GRACE_MS <= Date.now()) return false;
     return true;
   }
 
@@ -873,10 +879,19 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
       planDesc.textContent = "Accès complet — 199 €/mois";
       subStatusDot.className = "pstatus";
       subStatusText.textContent = "Actif";
-      subNote.className = "mnote";
-      subNote.textContent = entitlement.current_period_end
-        ? "Prochaine échéance le " + formatDate(entitlement.current_period_end) + "."
-        : "";
+      // 04/10/2026 — date affichée sous l'offre : renouvellement, ou fin
+      // d'accès si l'abonnement a été résilié (il reste actif jusqu'à la
+      // fin de la période payée). Les deux informations viennent du
+      // webhook Stripe (current_period_end, cancel_at_period_end).
+      if(entitlement.current_period_end && entitlement.cancel_at_period_end){
+        subNote.className = "mnote warn";
+        subNote.textContent = "Résilié : expire le " + formatDate(entitlement.current_period_end) + ".";
+      } else {
+        subNote.className = "mnote";
+        subNote.textContent = entitlement.current_period_end
+          ? "Renouvellement le " + formatDate(entitlement.current_period_end) + "."
+          : "";
+      }
       subBtn.textContent = "Gérer mon abonnement";
       subBtn.className = "mbtn";
 
@@ -1058,7 +1073,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
     for(var i = 0; i < 10; i++){
       var { data: fresh } = await supabaseClient
         .from("account_entitlements")
-        .select("plan, subscription_status, current_period_end")
+        .select("*")
         .maybeSingle();
       if(fresh && fresh.plan !== "free" && fresh.subscription_status === "active"){
         entitlement = fresh;
