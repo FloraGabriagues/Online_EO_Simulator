@@ -928,6 +928,17 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
       subStatusText.textContent = "Inactif";
       subNote.className = "mnote";
       subNote.textContent = "";
+      // 04/10/2026 — abonnement terminé : le compte reste utilisable sans
+      // simulation pendant 12 mois, puis il est supprimé avec ses données
+      // (fonction purge-lapsed-accounts, qui prévient par e-mail 30 jours
+      // avant). On affiche les deux dates. Même durée que KEEP_DAYS côté serveur.
+      if(entitlement.subscription_ended_at){
+        var endedAt = new Date(entitlement.subscription_ended_at);
+        var keptUntil = new Date(endedAt.getTime() + 365 * 24 * 3600 * 1000);
+        subNote.className = "mnote warn";
+        subNote.textContent = "Votre abonnement a pris fin le " + formatDate(endedAt.toISOString()) +
+          ". Sans réabonnement, votre compte et vos données seront supprimés le " + formatDate(keptUntil.toISOString()) + ".";
+      }
       subBtn.textContent = "S'abonner — 199 €/mois";
       subBtn.className = "mbtn primary";
     }
