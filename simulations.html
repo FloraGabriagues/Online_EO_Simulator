@@ -1131,13 +1131,19 @@ function updateSummary(){
 // l'identique — plan payant, statut « active », échéance absente ou future.
 var FUNCTIONS_URL = "https://hmnlxbpcfqxdezucxsep.supabase.co/functions/v1";
 var PAID_PLANS = ["individuel", "equipe"];
+// Marge après l'échéance (04/10/2026), identique à celle du serveur
+// (main.py, _PERIOD_GRACE_DAYS) : à chaque renouvellement, le webhook Stripe
+// repousse la date d'échéance ; s'il a du retard ou échoue ce jour-là, un
+// abonné qui vient de payer ne doit pas être bloqué.
+var PERIOD_GRACE_MS = 2 * 24 * 3600 * 1000;
 var entitlement = null;     // ligne account_entitlements du compte, ou null
 var accessKnown = false;    // false tant que la lecture n'a pas abouti : on ne bloque rien
 function hasSimAccess(){
   if(!accessKnown) return true;
   if(!entitlement) return false;
   if(PAID_PLANS.indexOf(entitlement.plan) < 0 || entitlement.subscription_status !== "active") return false;
-  if(entitlement.current_period_end && new Date(entitlement.current_period_end) <= new Date()) return false;
+  if(entitlement.current_period_end
+     && new Date(entitlement.current_period_end).getTime() + PERIOD_GRACE_MS <= Date.now()) return false;
   return true;
 }
 function paymentPending(){ return !!entitlement && entitlement.subscription_status === "past_due"; }
@@ -1602,7 +1608,10 @@ async function launchSimulation(){
     ppct.textContent = "100 %";
     etaText.textContent = "terminé";
 
-    (data.logs || "").split("\n").filter(function(l){ return l.trim(); }).forEach(addLog);
+    // 04/10/2026 — les logs du serveur (diagnostics internes : statistiques
+    // par bande, gains, étirement…) ne sont plus recopiés dans ce panneau.
+    // Ils restent dans lastResult.logs et sont enregistrés avec le résultat
+    // (colonne saved_results.logs). Le panneau ne montre que les étapes.
     addLog("Simulation terminée.");
     clearInterval(pingInterval);
     simRunning = false;
