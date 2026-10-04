@@ -1225,6 +1225,10 @@ async function launchSimulation(){
     PX: inst.config.PX, QE: orDefault(inst.config.QE, 1), ADC: inst.config.ADC,
     NSUP: orDefault(inst.config.NSUP, 0), ESUP: orDefault(inst.config.ESUP, 0),
   }, conditions);
+  // Pas de supports sans obscuration centrale (04/10/2026) : le formulaire
+  // grise ces champs quand l'obscuration est nulle, et des valeurs saisies
+  // avant restent enregistrées ; elles ne sont pas envoyées.
+  if(!(payload.E > 0)){ payload.NSUP = 0; payload.ESUP = 0; }
 
   // Atmosphère (03/10/2026) — seules les valeurs modifiées sont envoyées :
   // sans bloc "atmosphere", le backend applique ses réglages par défaut

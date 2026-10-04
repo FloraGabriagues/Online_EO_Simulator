@@ -128,6 +128,9 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 /* 04/10/2026 — valeur hors de l'intervalle autorisé (fractions 0-1) */
 .field input.invalid,.qespectral input.invalid{border-color:var(--alert)}
 .rangehint{font-size:12px;color:var(--alert);margin:6px 0 0}
+/* 04/10/2026 — valeur possible mais inhabituelle : alerte orange, non bloquante */
+.field input.odd,.qespectral input.odd{border-color:var(--photon)}
+.oddhint{font-size:12px;color:var(--photon);margin:6px 0 0}
 /* 03/10/2026 — aides de saisie, sélecteur de mode électronique, paramètres avancés */
 .field .labrow{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .field .labrow label{margin-bottom:0}
@@ -407,19 +410,105 @@ function isFilled(k){
 function inUnitRange(v){
   return v !== "" && v !== undefined && v !== null && !isNaN(v) && Number(v) >= 0 && Number(v) <= 1;
 }
-function fieldOutOfRange(f){
-  if(f.min === undefined || !isFilled(f.k)) return false;
-  var v = Number(state.values[f.k]);
-  return isNaN(v) || v < f.min || v > f.max;
+// ===================== Règles de saisie par champ (04/10/2026) =====================
+// UNE table pour toutes les contraintes, à ajuster ici :
+//   integer   : nombre entier (le point décimal est refusé à la frappe)
+//   positive  : strictement positif (0 refusé, en rouge, bloque l'enregistrement)
+//   enabledIf : champ saisissable seulement si cet autre champ est > 0
+//   plausible : [min, max] de la plage habituelle. En dehors, alerte ORANGE
+//               « valeur inhabituelle », qui n'empêche pas d'enregistrer.
+//               Un min de 0 signifie « pas de borne basse ».
+// Les bornes de plausibilité sont des ordres de grandeur pour l'observation
+// de la Terre dans le visible ; elles ne sont pas des limites du modèle.
+// Les signes moins, lettres et espaces sont refusés à la frappe pour tous
+// les champs numériques, et la virgule est changée en point (cf.
+// l'écouteur « input » posé sur panelEl).
+var FIELD_RULES = {
+  I:            {positive:true, plausible:[0.2, 50]},       // µrad
+  D:            {positive:true, plausible:[0.05, 3]},       // m
+  E:            {},                                         // m — contrôles particuliers ci-dessous (E < D)
+  NSUP:         {integer:true, enabledIf:"E", plausible:[0, 6]},
+  ESUP:         {enabledIf:"E", plausible:[0, 0.1]},        // m
+  T:            {plausible:[0.2, 1]},
+  PX:           {positive:true, plausible:[1, 30]},         // µm
+  QE:           {plausible:[0.1, 1]},
+  P:            {plausible:[0, 5]},                         // %
+  K:            {plausible:[0, 10000]},                     // e⁻/s
+  dsnu_1288:    {plausible:[0, 1000]},                      // e⁻
+  dsnu_T_ref:   {positive:true, plausible:[0.0001, 10]},    // s
+  ADC:          {integer:true, positive:true, plausible:[8, 16]},   // bits
+  FW:           {positive:true, plausible:[1000, 1000000]}, // e⁻
+  R:            {plausible:[0, 200]},                       // e⁻
+  CVF_uV_per_e: {positive:true, plausible:[1, 300]},        // µV/e⁻
+  G_PGA:        {positive:true, plausible:[0.1, 64]},
+  V_range:      {positive:true, plausible:[0.1, 5]},        // V
+  CWF:          {positive:true, plausible:[0.001, 10]},     // DN/e⁻
+  DN0:          {integer:true},                             // DN
+  bits_TDI:     {integer:true, plausible:[0, 32]},          // bits
+  W:            {plausible:[0, 200]}                        // nm
+};
+// Plage habituelle des longueurs d'onde d'une courbe spectrale (nm) : en
+// dehors, alerte orange (erreur d'unité probable, µm au lieu de nm).
+var CURVE_WL_PLAUSIBLE = [300, 1100];
+function fieldRule(f){ return FIELD_RULES[f.k] || {}; }
+// Champ non saisissable tant que le champ dont il dépend est vide ou nul
+// (les supports n'existent pas sans obscuration centrale).
+function fieldDisabled(f){
+  var dep = fieldRule(f).enabledIf;
+  return !!dep && !(Number(state.values[dep]) > 0);
+}
+// Erreur BLOQUANTE (rouge) : message, ou "" si la valeur est acceptable.
+function hardMessage(f){
+  if(f.type === "select" || !isFilled(f.k) || fieldDisabled(f)) return "";
+  var r = fieldRule(f), v = Number(state.values[f.k]);
+  if(isNaN(v)) return "Nombre attendu.";
+  if(f.min !== undefined && (v < f.min || v > f.max)) return "Fraction attendue, entre " + f.min + " et " + f.max + " (0.62 pour 62 %).";
+  if(r.positive && !(v > 0)) return "Valeur strictement positive attendue.";
+  if(f.k === "E" && isFilled("D") && v >= Number(state.values.D)) return "L'obscuration doit rester inférieure au diamètre de pupille.";
+  if(f.k === "ADC" && v > 32) return "32 bits au plus.";
+  if(f.k === "DN0" && isFilled("ADC") && v >= Math.pow(2, Number(state.values.ADC)) - 1) return "Doit rester inférieur à 2^bits − 1.";
+  if(f.k === "bits_TDI" && isFilled("ADC") && v < Number(state.values.ADC)) return "Au moins égal à la résolution ADC.";
+  return "";
+}
+// Alerte NON bloquante (orange) : valeur possible mais inhabituelle.
+function softMessage(f){
+  if(f.type === "select" || !isFilled(f.k) || fieldDisabled(f) || hardMessage(f)) return "";
+  var r = fieldRule(f), v = Number(state.values[f.k]), u = f.unit && f.unit !== "τ" ? " " + f.unit : "";
+  if(f.k === "E" && isFilled("D") && v > 0.5 * Number(state.values.D)) return "Valeur inhabituelle : obscuration supérieure à la moitié du diamètre.";
+  if(!r.plausible) return "";
+  var lo = r.plausible[0], hi = r.plausible[1];
+  if(v > hi) return "Valeur inhabituelle : en général " + (lo > 0 ? "entre " + lo + " et " + hi : "jusqu'à " + hi) + u + ".";
+  if(lo > 0 && v < lo) return "Valeur inhabituelle : en général entre " + lo + " et " + hi + u + ".";
+  return "";
+}
+function fieldOutOfRange(f){ return !!hardMessage(f); }
+// Met à jour, sans redessiner le panneau, l'état de tous les champs du bloc :
+// grisé, bordure rouge/orange et messages. Appelé à chaque frappe, car un
+// champ peut dépendre d'un autre (obscuration et diamètre, niveau noir et
+// résolution ADC, supports et obscuration).
+function syncBlockHints(block){
+  block.fields.forEach(function(f){
+    var input = document.getElementById("f-"+f.k);
+    if(!input || f.type === "select") return;
+    var off = fieldDisabled(f), hard = hardMessage(f), soft = softMessage(f);
+    input.disabled = off;
+    input.classList.toggle("invalid", !!hard);
+    input.classList.toggle("odd", !!soft);
+    var hEl = document.getElementById("range-"+f.k), sEl = document.getElementById("odd-"+f.k), dEl = document.getElementById("en-"+f.k);
+    if(hEl){ hEl.textContent = hard; hEl.hidden = !hard; }
+    if(sEl){ sEl.textContent = soft; sEl.hidden = !soft; }
+    if(dEl) dEl.hidden = !off;
+  });
 }
 // État d'une courbe spectrale (04/10/2026). Une longueur d'onde ne peut
 // figurer qu'une fois : la première ligne qui la porte est gardée, les
 // suivantes sont marquées en double (dup) et ignorées. range = valeurs hors
 // de [0, 1]. valid = points retenus pour le tracé et pour l'envoi.
 function curveStatus(arr, valKey){
-  var seen = {}, dup = {}, range = {}, valid = [];
+  var seen = {}, dup = {}, range = {}, odd = {}, valid = [];
   (arr || []).forEach(function(p, i){
     var wlOk = p.wl !== "" && !isNaN(p.wl);
+    if(wlOk && (Number(p.wl) < CURVE_WL_PLAUSIBLE[0] || Number(p.wl) > CURVE_WL_PLAUSIBLE[1])) odd[i] = true;
     if(wlOk){
       var k = String(Number(p.wl));
       if(seen[k]) dup[i] = true; else seen[k] = true;
@@ -427,7 +516,7 @@ function curveStatus(arr, valKey){
     if(p[valKey] !== "" && !inUnitRange(p[valKey])) range[i] = true;
     if(wlOk && !dup[i] && inUnitRange(p[valKey])) valid.push({ wl: Number(p.wl), qe: Number(p[valKey]) });
   });
-  return { dup: dup, range: range, valid: valid };
+  return { dup: dup, range: range, odd: odd, valid: valid };
 }
 function curveHintText(st){
   var parts = [];
@@ -435,12 +524,17 @@ function curveHintText(st){
   if(Object.keys(st.range).length) parts.push("Valeur hors de 0 à 1 : ce point est ignoré.");
   return parts.join(" ");
 }
+function curveOddText(st){
+  return Object.keys(st.odd).length
+    ? "Longueur d'onde inhabituelle : en général entre " + CURVE_WL_PLAUSIBLE[0] + " et " + CURVE_WL_PLAUSIBLE[1] + " nm (vérifier l'unité)."
+    : "";
+}
 // Libellés des saisies à corriger (champs scalaires et points de courbe).
 function invalidEntries(){
   var out = [];
   instrumentNode.blocks.forEach(function(b){
     b.fields.forEach(function(f){
-      if(fieldOutOfRange(f) && !spectralActive(f.k)) out.push(f.label + " : valeur hors de 0 à 1");
+      if(fieldOutOfRange(f) && !spectralActive(f.k)) out.push(f.label);
       var lock = SPECTRAL_LOCKS[f.k];
       if(lock && spectralActive(f.k)){
         var st = curveStatus(state.values[lock.arr], lock.key);
@@ -494,9 +588,12 @@ function syncCurveRange(wlSelector, valSelector, idxAttr, arrKey, valKey, hintId
   });
   panelEl.querySelectorAll(wlSelector).forEach(function(el){
     el.classList.toggle("invalid", !!st.dup[el.getAttribute(idxAttr)]);
+    el.classList.toggle("odd", !st.dup[el.getAttribute(idxAttr)] && !!st.odd[el.getAttribute(idxAttr)]);
   });
   var hint = document.getElementById(hintId);
   if(hint){ var txt = curveHintText(st); hint.textContent = txt; hint.hidden = !txt; }
+  var oddEl = document.getElementById(hintId.replace("RangeHint", "OddHint"));
+  if(oddEl){ var otxt = curveOddText(st); oddEl.textContent = otxt; oddEl.hidden = !otxt; }
 }
 // Touche Entrée dans une ligne de courbe : passe au champ vide de la ligne,
 // ou ajoute un point si la ligne est complète (clic sur « + Ajouter un point »).
@@ -519,7 +616,7 @@ function fieldVisible(f){
   return !f.modes || f.modes.indexOf(state.values.electronics_mode) >= 0;
 }
 function fieldCounts(f){
-  if(!fieldVisible(f) || f.optional) return false;
+  if(!fieldVisible(f) || f.optional || fieldDisabled(f)) return false;
   if(f.requiredIf) return Number(state.values[f.requiredIf]) > 0;
   return true;
 }
@@ -575,6 +672,27 @@ function statusMark(s){
 
 var chainEl = document.getElementById("chainList");
 var panelEl = document.getElementById("fieldPanel");
+// 04/10/2026 — filtre de frappe pour tous les champs numériques (attribut
+// data-num) : la virgule devient un point, tout ce qui n'est ni chiffre ni
+// point est retiré (donc pas de signe moins ni de lettres), un seul point
+// est gardé, et aucun pour les entiers (data-int). Posé en phase de capture
+// pour passer AVANT les écouteurs des champs, qui lisent la valeur nettoyée.
+panelEl.addEventListener("input", function(e){
+  var el = e.target;
+  if(!el.matches || !el.matches("input[data-num]")) return;
+  var raw = el.value, pos = el.selectionStart;
+  var v = raw.replace(/,/g, ".").replace(/[^0-9.]/g, "");
+  if(el.hasAttribute("data-int")){
+    v = v.replace(/\./g, "");
+  } else {
+    var dot = v.indexOf(".");
+    if(dot >= 0) v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, "");
+  }
+  if(v !== raw){
+    el.value = v;
+    try{ var p = Math.max(0, pos - (raw.length - v.length)); el.setSelectionRange(p, p); }catch(_){}
+  }
+}, true);
 var schemaEl = document.getElementById("schemaWrap");
 var instrumentNode = SCHEMA.filter(function(n){ return n.kind === "group"; })[0];
 
@@ -722,10 +840,8 @@ function renderPanel(){
           var ov = (typeof opt === "object") ? opt.v : opt;
           var ol = (typeof opt === "object") ? opt.label : opt;
           return "<option value='"+ov+"'"+(String(v) === String(ov) ? " selected" : "")+">"+ol+"</option>"; }).join("") + "</select>"
-      : "<input type='number' step='any' id='f-"+f.k+"'"+valueAttr+placeholderAttr+
-          (f.min !== undefined ? " min='"+f.min+"' max='"+f.max+"'" : "")+
-          (fieldOutOfRange(f) ? " class='invalid'" : "")+
-          ">";
+      : "<input type='text' inputmode='"+(fieldRule(f).integer ? "numeric" : "decimal")+"' autocomplete='off' data-num"+
+          (fieldRule(f).integer ? " data-int" : "")+" id='f-"+f.k+"'"+valueAttr+placeholderAttr+">";
     var helpBtn = f.help ? "<button type='button' class='helpbtn' data-help='"+f.k+"' aria-label='Aide'>?</button>" : "";
     var helpTxt = f.help ? "<p class='fieldhelp' id='h-"+f.k+"' hidden>"+f.help+"</p>" : "";
     // Champ obligatoire seulement si un autre est non nul (ex. temps de
@@ -745,7 +861,10 @@ function renderPanel(){
     var inputRow = curveMode === "curve"
       ? "<p class='lockhint' style='margin-top:0'>Courbe à saisir dans la section sous le schéma.</p>"
       : (f.type === "select" ? control : "<div class='row'>"+control+"<span class='unit'>"+(f.unit || "")+"</span></div>")+
-        (f.min !== undefined ? "<p class='rangehint' id='range-"+f.k+"'"+(fieldOutOfRange(f) ? "" : " hidden")+">Fraction attendue, entre "+f.min+" et "+f.max+" (0.62 pour 62 %).</p>" : "");
+        (f.type === "select" ? "" :
+          "<p class='rangehint' id='range-"+f.k+"' hidden></p>"+
+          "<p class='oddhint' id='odd-"+f.k+"' hidden></p>"+
+          (fieldRule(f).enabledIf ? "<p class='lockhint' id='en-"+f.k+"' hidden>Disponible avec une obscuration centrale.</p>" : ""));
     var oneField = "<div class='field' id='w-"+f.k+"'"+hiddenAttr+"><div class='labrow'><label for='f-"+f.k+"'>"+f.label+"</label>"+helpBtn+"</div>"+
       modeSeg+inputRow+helpTxt+
       "</div>";
@@ -771,10 +890,11 @@ function renderPanel(){
   if(block.id === "detecteur"){
     // Détecteur : la courbe QE spectrale et les paramètres avancés passent
     // sous le schéma, en pleine largeur, repliés par défaut.
-    belowHtml = (spectralActive("QE")
+    // 04/10/2026 — les paramètres avancés passent avant la courbe QE.
+    belowHtml = advancedDetails+(spectralActive("QE")
       ? "<details class='advanced' id='qeDetails' open><summary>Courbe spectrale du rendement</summary>"+
         renderQeSpectralHtml()+"</details>"
-      : "")+advancedDetails;
+      : "");
   } else if(block.id === "optique"){
     // Optique : courbe de transmission spectrale, même présentation que la
     // courbe QE du bloc Détecteur.
@@ -847,12 +967,7 @@ function renderPanel(){
         var esupEl = document.getElementById("f-ESUP");
         if(esupEl) esupEl.placeholder = (Number(state.values.NSUP) > 0) ? "obligatoire" : "0 (défaut)";
       }
-      if(f.min !== undefined){
-        var bad = fieldOutOfRange(f);
-        e.target.classList.toggle("invalid", bad);
-        var rangeEl = document.getElementById("range-"+f.k);
-        if(rangeEl) rangeEl.hidden = !bad;
-      }
+      syncBlockHints(block); // grisé, rouge, orange : pour tout le bloc
       // Même principe pour le temps de référence, obligatoire dès que la DSNU est non nulle.
       if(f.k === "dsnu_1288"){
         var trefEl = document.getElementById("f-dsnu_T_ref");
@@ -877,6 +992,7 @@ function renderPanel(){
   if(block.id === "detecteur") { renderDetectorGeometry(); wireQeSpectralUI(); }
   if(block.id === "electronique") renderElectronicsGeometry();
   if(block.id === "wfe") wireWfeCasesUI();
+  syncBlockHints(block);
   var actions = document.createElement("div");
   actions.className = "panel-actions";
   // Bouton "Suivant" : avance au bloc suivant de la chaîne (Optique →
@@ -1344,6 +1460,7 @@ function renderOpticsGeometry(){
   var D = Number(state.values.D) || 0;
   var E = Number(state.values.E) || 0;
   var n = Math.max(0, Math.round(Number(state.values.NSUP) || 0));
+  if(!(Number(state.values.E) > 0)) n = 0; // pas de supports sans obscuration centrale
   var t = Number(state.values.ESUP) || 0;
 
   var cx = 210, cy = 155, R = 105; // rayon à l'écran (px) représentant D
@@ -1667,8 +1784,8 @@ function renderTSpectralHtml(){
   var st = curveStatus(pts, "t");
   var rows = pts.map(function(p, i){
     return "<div class='qerow'>"+
-      "<input type='number' step='any' class='qewl tswl"+(st.dup[i] ? " invalid" : "")+"' data-t-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
-      "<input type='number' step='any' class='qeval tsval"+(p.t !== "" && !inUnitRange(p.t) ? " invalid" : "")+"' data-t-idx='"+i+"' value='"+p.t+"' min='0' max='1' placeholder='Transmission (0-1)'>"+
+      "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qewl tswl"+(st.dup[i] ? " invalid" : (st.odd[i] ? " odd" : ""))+"' data-t-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
+      "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qeval tsval"+(p.t !== "" && !inUnitRange(p.t) ? " invalid" : "")+"' data-t-idx='"+i+"' value='"+p.t+"' min='0' max='1' placeholder='Transmission (0-1)'>"+
       "<button type='button' class='qedel' data-t-del='"+i+"' aria-label='Supprimer ce point'>×</button>"+
     "</div>";
   }).join("");
@@ -1679,7 +1796,8 @@ function renderTSpectralHtml(){
     "<div class='spec-cols'>"+
       "<div class='spec-rows'><div class='spec-head'><span>λ (nm)</span><span>Transmission (0-1)</span><span class='gap'></span></div>"+
         "<div id='tRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div>"+
-        "<p class='rangehint' id='tRangeHint'"+(curveHintText(st) ? "" : " hidden")+">"+curveHintText(st)+"</p></div>"+
+        "<p class='rangehint' id='tRangeHint'"+(curveHintText(st) ? "" : " hidden")+">"+curveHintText(st)+"</p>"+
+        "<p class='oddhint' id='tOddHint'"+(curveOddText(st) ? "" : " hidden")+">"+curveOddText(st)+"</p></div>"+
       "<div class='spec-chart' id='tChart'></div>"+
     "</div>"+
   "</div>";
@@ -1721,8 +1839,8 @@ function renderQeSpectralHtml(){
   var st = curveStatus(pts, "qe");
   var rows = pts.map(function(p, i){
     return "<div class='qerow' data-qe-idx='"+i+"'>"+
-      "<input type='number' step='any' class='qewl"+(st.dup[i] ? " invalid" : "")+"' data-qe-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
-      "<input type='number' step='any' class='qeval"+(p.qe !== "" && !inUnitRange(p.qe) ? " invalid" : "")+"' data-qe-idx='"+i+"' value='"+p.qe+"' min='0' max='1' placeholder='QE (0-1)'>"+
+      "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qewl"+(st.dup[i] ? " invalid" : (st.odd[i] ? " odd" : ""))+"' data-qe-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
+      "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qeval"+(p.qe !== "" && !inUnitRange(p.qe) ? " invalid" : "")+"' data-qe-idx='"+i+"' value='"+p.qe+"' min='0' max='1' placeholder='QE (0-1)'>"+
       "<button type='button' class='qedel' data-qe-del='"+i+"' aria-label='Supprimer ce point'>×</button>"+
     "</div>";
   }).join("");
@@ -1733,7 +1851,8 @@ function renderQeSpectralHtml(){
     "<div class='spec-cols'>"+
       "<div class='spec-rows'><div class='spec-head'><span>λ (nm)</span><span>QE (0-1)</span><span class='gap'></span></div>"+
         "<div id='qeRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div>"+
-        "<p class='rangehint' id='qeRangeHint'"+(curveHintText(st) ? "" : " hidden")+">"+curveHintText(st)+"</p></div>"+
+        "<p class='rangehint' id='qeRangeHint'"+(curveHintText(st) ? "" : " hidden")+">"+curveHintText(st)+"</p>"+
+        "<p class='oddhint' id='qeOddHint'"+(curveOddText(st) ? "" : " hidden")+">"+curveOddText(st)+"</p></div>"+
       "<div class='spec-chart' id='qeChart'></div>"+
     "</div>"+
   "</div>";
