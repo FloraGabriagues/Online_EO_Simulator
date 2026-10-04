@@ -53,6 +53,26 @@ function mapStatus(stripeStatus: string): string {
   }
 }
 
+// 04/10/2026 — fin de la période en cours. Selon la version de l'API Stripe
+// de l'événement, la date est sur l'abonnement ou sur sa première ligne :
+// on lit les deux (avant, seule la première était lue et la base restait
+// vide). Pour un abonnement résilié, c'est la date où l'accès s'arrête.
+function periodEndOf(sub: Stripe.Subscription): number | null {
+  // deno-lint-ignore no-explicit-any
+  const s = sub as any;
+  return s.cancel_at ?? s.current_period_end ?? s.items?.data?.[0]?.current_period_end ?? null;
+}
+
+// L'abonnement a-t-il été résilié, avec arrêt à la fin de la période payée ?
+function willCancel(sub: Stripe.Subscription): boolean {
+  // deno-lint-ignore no-explicit-any
+  const s = sub as any;
+  return s.cancel_at_period_end === true || s.cancel_at != null;
+}
+
+// Statuts d'un abonnement « en cours » (même liste que create-checkout-session).
+const CURRENT_STATUSES = ["active", "trialing", "past_due", "unpaid"];
+
 async function upsertEntitlement(params: {
   accountId: string;
   plan: string;
@@ -60,24 +80,55 @@ async function upsertEntitlement(params: {
   customerId: string | null;
   subscriptionId: string | null;
   periodEnd: number | null;
+  cancelAtPeriodEnd?: boolean;
+  // 04/10/2026 — fin d'abonnement, point de départ des 12 mois de
+  // conservation (cf. fonction purge-lapsed-accounts) :
+  //   true  -> l'abonnement vient de prendre fin : on date la fin ;
+  //   false -> un abonnement est en cours : on efface la date et l'alerte.
+  ended?: boolean;
 }) {
-  const { error } = await supabase
-    .from("account_entitlements")
-    .upsert(
-      {
-        account_id: params.accountId,
-        plan: params.plan,
-        subscription_status: params.status,
-        stripe_customer_id: params.customerId,
-        stripe_subscription_id: params.subscriptionId,
-        current_period_end: params.periodEnd
-          ? new Date(params.periodEnd * 1000).toISOString()
-          : null,
-      },
-      { onConflict: "account_id" },
-    );
+  const row: Record<string, unknown> = {
+    account_id: params.accountId,
+    plan: params.plan,
+    subscription_status: params.status,
+    stripe_customer_id: params.customerId,
+    stripe_subscription_id: params.subscriptionId,
+    current_period_end: params.periodEnd
+      ? new Date(params.periodEnd * 1000).toISOString()
+      : null,
+    cancel_at_period_end: params.cancelAtPeriodEnd === true,
+    subscription_ended_at: params.ended ? new Date().toISOString() : null,
+    deletion_warned_at: null,
+  };
 
-  if (error) throw new Error(`upsert entitlement: ${error.message}`);
+  let { error } = await supabase
+    .from("account_entitlements")
+    .upsert(row, { onConflict: "account_id" });
+
+  // Sécurité : si l'une des colonnes ajoutées après coup n'a pas encore été
+  // créée en base, on réessaie sans elles plutôt que de bloquer l'activation
+  // d'un abonnement payé.
+  if (error && /cancel_at_period_end|subscription_ended_at|deletion_warned_at/.test(error.message ?? "")) {
+    console.warn("colonne(s) récente(s) absente(s) : écriture sans elles");
+    delete row.cancel_at_period_end;
+    delete row.subscription_ended_at;
+    delete row.deletion_warned_at;
+    ({ error } = await supabase
+      .from("account_entitlements")
+      .upsert(row, { onConflict: "account_id" }));
+  }
+
+  if (error) {
+    // 04/10/2026 — 23503 = violation de clé étrangère : le compte n'existe
+    // plus (il a été supprimé par la fonction delete-account, qui arrête
+    // l'abonnement juste avant). Il n'y a rien à mettre à jour, et il ne
+    // faut pas renvoyer d'erreur, sinon Stripe réessaie pendant des jours.
+    if (error.code === "23503") {
+      console.log(`compte ${params.accountId} supprimé, événement ignoré`);
+      return;
+    }
+    throw new Error(`upsert entitlement: ${error.message}`);
+  }
 }
 
 // Retrouve l'account_id à partir du customer Stripe :
@@ -142,7 +193,8 @@ Deno.serve(async (req) => {
           status: mapStatus(sub.status),
           customerId: session.customer as string,
           subscriptionId: sub.id,
-          periodEnd: sub.current_period_end,
+          periodEnd: periodEndOf(sub),
+          cancelAtPeriodEnd: willCancel(sub),
         });
         break;
       }
@@ -161,13 +213,42 @@ Deno.serve(async (req) => {
 
         const canceled = event.type === "customer.subscription.deleted";
 
+        // 04/10/2026 — un abonnement prend fin, mais le client en a peut-être
+        // un autre encore en cours (cas d'un abonnement en double) : dans ce
+        // cas le compte garde son accès, aligné sur celui qui reste. Avant,
+        // le compte passait en « résilié » dès la première suppression.
+        if (canceled) {
+          const others = await stripe.subscriptions.list({
+            customer: sub.customer as string,
+            status: "all",
+            limit: 100,
+          });
+          const remaining = others.data.find(
+            (s) => s.id !== sub.id && CURRENT_STATUSES.includes(s.status),
+          );
+          if (remaining) {
+            await upsertEntitlement({
+              accountId,
+              plan: planForSubscription(remaining),
+              status: mapStatus(remaining.status),
+              customerId: sub.customer as string,
+              subscriptionId: remaining.id,
+              periodEnd: periodEndOf(remaining),
+              cancelAtPeriodEnd: willCancel(remaining),
+            });
+            break;
+          }
+        }
+
         await upsertEntitlement({
           accountId,
           plan: canceled ? "free" : planForSubscription(sub),
           status: canceled ? "canceled" : mapStatus(sub.status),
           customerId: sub.customer as string,
           subscriptionId: canceled ? null : sub.id,
-          periodEnd: canceled ? null : sub.current_period_end,
+          periodEnd: canceled ? null : periodEndOf(sub),
+          cancelAtPeriodEnd: canceled ? false : willCancel(sub),
+          ended: canceled, // plus aucun abonnement en cours : la fin est datée
         });
         break;
       }
