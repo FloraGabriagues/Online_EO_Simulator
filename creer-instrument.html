@@ -32,6 +32,9 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
   margin-bottom:20px}
 .filebtn:hover{background:#FFBE72;border-color:#FFBE72}
 .filebtn input[type=file]{display:none}
+.filebtn.ghost{background:transparent;color:var(--photon);border:1px solid var(--photon)}
+.filebtn.ghost:hover{background:rgba(245,172,87,.12);border-color:var(--photon)}
+.filebtn[hidden]{display:none}
 .sidefield{margin-bottom:16px}
 
 .sidefield label{display:block;font-family:var(--mono);font-size:11.5px;color:var(--muted);
@@ -131,6 +134,9 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 /* 04/10/2026 — valeur possible mais inhabituelle : alerte orange, non bloquante */
 .field input.odd,.qespectral input.odd{border-color:var(--photon)}
 .oddhint{font-size:12px;color:var(--photon);margin:6px 0 0}
+/* valeurs déduites affichées sous le schéma de pupille */
+.geo-derived{flex:none;margin:10px 0 0;font-family:var(--mono);font-size:12px;line-height:1.5;color:var(--muted)}
+.geo-derived b{font-weight:400;color:var(--paper)}
 /* 03/10/2026 — aides de saisie, sélecteur de mode électronique, paramètres avancés */
 .field .labrow{display:flex;align-items:center;gap:8px;margin-bottom:6px}
 .field .labrow label{margin-bottom:0}
@@ -263,6 +269,8 @@ details.advanced summary .count{font-family:var(--mono);font-size:11.5px;color:v
           <button class="filebtn" id="btnFile" type="button">Charger une configuration
             <input type="file" id="fileInput" accept="application/json">
           </button>
+          <!-- 04/10/2026 — visible dès qu'au moins un champ est saisi (cf. updateProgress) -->
+          <button class="filebtn ghost" id="btnExport" type="button" hidden>Exporter la configuration</button>
         </div>
       </div>
       <div class="chainlistcard instgroup" id="chainList"></div>
@@ -283,15 +291,21 @@ var SCHEMA = [
   {id:"atmosphere", kind:"ctx", label:"Atmosphère", sub:"modèle atmosphérique"},
   {id:"instrument", kind:"group", label:"Instrument", blocks:[
     {id:"optique", label:"Optique", fields:[
-      {k:"I", label:"iFoV", unit:"µrad", placeholder:"obligatoire"},
-      {k:"D", label:"Diamètre de pupille", unit:"m", placeholder:"obligatoire"},
-      {k:"E", label:"Obscuration centrale", unit:"m", placeholder:"0 (défaut)"},
+      {k:"I", label:"iFoV", unit:"µrad", placeholder:"obligatoire",
+       help:"Angle sous lequel un pixel voit la scène : pas pixel divisé par la focale. Exemple : 5 µm / 2,5 m = 2 µrad. En microradians, pas en radians."},
+      {k:"D", label:"Diamètre de pupille", unit:"m", placeholder:"obligatoire",
+       help:"Diamètre utile du miroir primaire. Il fixe la limite de diffraction et le flux collecté, proportionnel à son carré."},
+      {k:"E", label:"Obscuration centrale", unit:"m", placeholder:"0 (défaut)",
+       help:"Diamètre de l'ombre du miroir secondaire, baffle compris, en mètres et non en ratio. Laisser vide pour un télescope sans obstruction."},
       // NSUP/ESUP : confirmés le 17/09/2026 (paramFile.Telescope.n_supports/
       // support_width, cf. module_MTF.py) — envoyés au payload de
       // simulation comme PX/QE/ADC (cf. simulations.html).
-      {k:"NSUP", label:"Nombre de supports", unit:"", placeholder:"0 (défaut)"},
-      {k:"ESUP", label:"Épaisseur des supports", unit:"m", placeholder:"0 (défaut)"},
-      {k:"T", label:"Transmission optique", unit:"τ", placeholder:"1 (défaut)", min:0, max:1}
+      {k:"NSUP", label:"Nombre de supports", unit:"", placeholder:"0 (défaut)",
+       help:"Nombre de bras qui tiennent le miroir secondaire, 3 ou 4 en général."},
+      {k:"ESUP", label:"Épaisseur des supports", unit:"m", placeholder:"0 (défaut)",
+       help:"Largeur d'un bras vue de face. Obligatoire dès qu'un nombre de supports est saisi."},
+      {k:"T", label:"Transmission optique", unit:"0 à 1", placeholder:"1 (défaut)", min:0, max:1,
+       help:"Produit des réflectivités et transmissions de tous les éléments optiques. Exemple : quatre miroirs à 0,95 donnent 0,81. Ne pas y inclure le filtre de bande ni le rendement du détecteur."}
     ]},
     {id:"detecteur", label:"Détecteur", fields:[
       // 04/10/2026 — un seul type possible en V1 : affiché comme simple
@@ -303,10 +317,14 @@ var SCHEMA = [
       // radiometry.py : electrons = photons * QE_band, QE_band vient d'une
       // interpolation sur paramFile.Detector.QE_spectral.values, jamais
       // divisée par 100. Même convention que T (transmission optique).
-      {k:"PX", label:"Largeur pixel", unit:"µm", placeholder:"obligatoire"},
-      {k:"QE", label:"Rendement quantique", unit:"τ", placeholder:"1 (défaut)", min:0, max:1},
-      {k:"P",  label:"PRNU", unit:"%", placeholder:"0 (défaut)"},
-      {k:"K",  label:"Courant d'obscurité", unit:"e⁻/s", placeholder:"0 (défaut)"},
+      {k:"PX", label:"Largeur pixel", unit:"µm", placeholder:"obligatoire",
+       help:"Pas entre deux pixels voisins, ligne « pixel pitch » ou « pixel size » des datasheets."},
+      {k:"QE", label:"Rendement quantique", unit:"0 à 1", placeholder:"1 (défaut)", min:0, max:1,
+       help:"Probabilité qu'un photon arrivant sur le pixel donne un électron. Saisir 0,65 pour 65 %."},
+      {k:"P",  label:"PRNU", unit:"%", placeholder:"0 (défaut)",
+       help:"Dispersion de la réponse d'un pixel à l'autre, en % RMS. Une valeur crête à crête est plusieurs fois plus grande et ne doit pas être saisie telle quelle."},
+      {k:"K",  label:"Courant d'obscurité", unit:"e⁻/s", placeholder:"0 (défaut)",
+       help:"Électrons générés sans lumière, par pixel et par seconde, à la température de fonctionnement. Depuis des nA/cm² : multiplier par la surface du pixel et diviser par la charge de l'électron."},
       // DSNU (03/10/2026) : clés explicites, identiques à celles du paramFile
       // (Detector.dsnu_1288 / dsnu_T_ref, cf. module_SNR.build_fixed_pattern).
       {k:"dsnu_1288", label:"DSNU (EMVA 1288)", unit:"e⁻", placeholder:"0 (défaut)", optional:true, advanced:true,
@@ -344,7 +362,8 @@ var SCHEMA = [
        help:"Profondeur du registre qui somme les étages. Vide : dimensionné pour ne jamais saturer. Sinon au moins égal à la résolution ADC."}
     ]},
     {id:"wfe", label:"Performance WFE", fields:[
-      {k:"W", label:"WFE RMS", unit:"nm", placeholder:"0 (défaut)"}
+      {k:"W", label:"WFE RMS", unit:"nm", placeholder:"0 (défaut)",
+       help:"Écart RMS entre le front d'onde réel et le front d'onde parfait, en nanomètres. Repère : λ/14, soit environ 39 nm à 550 nm, pour une optique limitée par la diffraction."}
     ]}
   ]},
   {id:"image", kind:"ctx", label:"Image I", sub:"produit brut, n bits"},
@@ -459,7 +478,13 @@ function fieldDisabled(f){
 }
 // Erreur BLOQUANTE (rouge) : message, ou "" si la valeur est acceptable.
 function hardMessage(f){
-  if(f.type === "select" || !isFilled(f.k) || fieldDisabled(f)) return "";
+  if(f.type === "select" || fieldDisabled(f)) return "";
+  // Épaisseur des supports : obligatoire et non nulle dès qu'un nombre de
+  // supports est saisi (sinon les supports n'auraient aucun effet).
+  if(f.k === "ESUP" && Number(state.values.NSUP) > 0 && !(Number(state.values.ESUP) > 0)){
+    return "Obligatoire dès qu'un nombre de supports est saisi.";
+  }
+  if(!isFilled(f.k)) return "";
   var r = fieldRule(f), v = Number(state.values[f.k]);
   if(isNaN(v)) return "Nombre attendu.";
   if(f.min !== undefined && (v < f.min || v > f.max)) return "Fraction attendue, entre " + f.min + " et " + f.max + " (0.62 pour 62 %).";
@@ -473,7 +498,7 @@ function hardMessage(f){
 // Alerte NON bloquante (orange) : valeur possible mais inhabituelle.
 function softMessage(f){
   if(f.type === "select" || !isFilled(f.k) || fieldDisabled(f) || hardMessage(f)) return "";
-  var r = fieldRule(f), v = Number(state.values[f.k]), u = f.unit && f.unit !== "τ" ? " " + f.unit : "";
+  var r = fieldRule(f), v = Number(state.values[f.k]), u = f.unit && f.unit !== "0 à 1" ? " " + f.unit : "";
   if(f.k === "E" && isFilled("D") && v > 0.5 * Number(state.values.D)) return "Valeur inhabituelle : obscuration supérieure à la moitié du diamètre.";
   if(!r.plausible) return "";
   var lo = r.plausible[0], hi = r.plausible[1];
@@ -486,7 +511,38 @@ function fieldOutOfRange(f){ return !!hardMessage(f); }
 // grisé, bordure rouge/orange et messages. Appelé à chaque frappe, car un
 // champ peut dépendre d'un autre (obscuration et diamètre, niveau noir et
 // résolution ADC, supports et obscuration).
+// Altitude de référence pour le pas au sol indicatif affiché sous l'iFoV
+// (valeur par défaut de la page Simulations).
+var GSD_REF_ALTITUDE_KM = 500;
+function fmt3(x){ return String(Number(Number(x).toPrecision(3))); }
+// Lignes d'information du bloc Optique (04/10/2026) :
+//  - sous l'iFoV, le pas au sol correspondant à l'altitude de référence ;
+//  - sous le schéma, la focale équivalente (pas pixel / iFoV) et
+//    l'ouverture (focale / diamètre), pour repérer une erreur d'unité.
+//    Le pas pixel vient du bloc Détecteur.
+function syncOpticsDerived(){
+  var I = Number(state.values.I), D = Number(state.values.D), PX = Number(state.values.PX);
+  var gsdEl = document.getElementById("gsd-I");
+  if(gsdEl){
+    var okI = isFilled("I") && I > 0;
+    gsdEl.hidden = !okI;
+    if(okI) gsdEl.textContent = "À " + GSD_REF_ALTITUDE_KM + " km d'altitude : pas au sol de " + fmt3(I * 1e-6 * GSD_REF_ALTITUDE_KM * 1000) + " m.";
+  }
+  var dEl = document.getElementById("opticsDerived");
+  if(dEl){
+    if(!(isFilled("I") && I > 0)){
+      dEl.innerHTML = "";
+    } else if(!(isFilled("PX") && PX > 0)){
+      dEl.textContent = "Focale équivalente : renseigner la largeur pixel (bloc Détecteur).";
+    } else {
+      var f = PX / I; // µm / µrad = m
+      dEl.innerHTML = "Focale équivalente <b>" + fmt3(f) + " m</b>" +
+        (isFilled("D") && D > 0 ? " · ouverture <b>f/" + fmt3(f / D) + "</b>" : "");
+    }
+  }
+}
 function syncBlockHints(block){
+  if(block.id === "optique") syncOpticsDerived();
   block.fields.forEach(function(f){
     var input = document.getElementById("f-"+f.k);
     if(!input || f.type === "select") return;
@@ -866,7 +922,9 @@ function renderPanel(){
           "<p class='oddhint' id='odd-"+f.k+"' hidden></p>"+
           (fieldRule(f).enabledIf ? "<p class='lockhint' id='en-"+f.k+"' hidden>Disponible avec une obscuration centrale.</p>" : ""));
     var oneField = "<div class='field' id='w-"+f.k+"'"+hiddenAttr+"><div class='labrow'><label for='f-"+f.k+"'>"+f.label+"</label>"+helpBtn+"</div>"+
-      modeSeg+inputRow+helpTxt+
+      modeSeg+inputRow+
+      (f.k === "I" ? "<p class='lockhint' id='gsd-I' hidden></p>" : "")+
+      helpTxt+
       "</div>";
     if(f.advanced) advancedHtml += oneField; else fieldsHtml += oneField;
     // Le WFE RMS scalaire ci-dessus reste le mode simplifié (utilisé si
@@ -921,6 +979,7 @@ function renderPanel(){
           "<svg width='13' height='13' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><circle cx='12' cy='12' r='9'/><circle cx='12' cy='12' r='1.5' fill='currentColor'/><line x1='12' y1='1' x2='12' y2='5'/><line x1='12' y1='19' x2='12' y2='23'/><line x1='1' y1='12' x2='5' y2='12'/><line x1='19' y1='12' x2='23' y2='12'/></svg>"+
           viewLabel+
         "</div>"+
+        (block.id === "optique" ? "<p class='geo-derived' id='opticsDerived'></p>" : "")+
       "</div>"+
       "<div class='optique-fields-col'>"+fieldsHtml+"</div>"+
     "</div>"+belowHtml;
@@ -2092,6 +2151,110 @@ function updateProgress(){
   var pct = overallPct();
   document.getElementById("pctLabel").textContent = pct + " %";
   document.getElementById("pctFill").style.width = pct + "%";
+  var exp = document.getElementById("btnExport");
+  if(exp) exp.hidden = !hasAnyEntry();
+}
+
+// ===================== Export de la configuration (04/10/2026) =====================
+// Au moins une saisie : un champ rempli, un point de courbe ou un cas WFE.
+function hasAnyEntry(){
+  return Object.keys(state.values).some(function(k){
+    var v = state.values[k];
+    if(Array.isArray(v)) return v.length > 0;
+    return v !== undefined && v !== null && v !== "";
+  });
+}
+// Construit un fichier au FORMAT DU PARAMFILE (mêmes blocs Telescope /
+// Detector, mêmes clés et mêmes unités SI que le backend), pour qu'il soit
+// relisible par « Charger une configuration ». Seuls les champs saisis sont
+// écrits. Ce que le paramFile ne sait pas porter (nom, WFE RMS, cas WFE,
+// mode « pleine échelle ») va dans un bloc "Formulaire".
+function buildExport(){
+  var v = state.values;
+  function has(k){ return isFilled(k); }
+  function num(k){ return Number(v[k]); }
+  function clean(x){ return Number(Number(x).toPrecision(12)); } // évite 2.0000000000000003e-6
+  var tel = {}, det = {}, form = {};
+
+  if(has("D")) tel.D = num("D");
+  if(has("I")) tel.iFoV = clean(num("I") * 1e-6);                       // µrad -> rad
+  if(has("E")) tel.central_obscuration = num("E");
+  if(num("E") > 0 && has("NSUP")) tel.n_supports = num("NSUP");
+  if(num("E") > 0 && has("ESUP")) tel.support_width = num("ESUP");
+  var tCurve = exportCurve("T");
+  if(tCurve) tel.T_opt_spectral = tCurve;
+
+  if(has("PX")) det.pixel_pitch = clean(num("PX") * 1e-6);              // µm -> m
+  var qeCurve = exportCurve("QE");
+  if(qeCurve) det.QE_spectral = qeCurve;
+  if(has("FW")) det.full_well = num("FW");
+  if(has("R")) det.read_noise = num("R");
+  if(has("K")) det.dark_current = num("K");
+  if(has("P")) det.prnu_sigma = clean(num("P") / 100);                  // % -> fraction
+  if(has("dsnu_1288")) det.dsnu_1288 = num("dsnu_1288");
+  if(has("dsnu_T_ref")) det.dsnu_T_ref = num("dsnu_T_ref");
+  if(has("ADC")) det.bits = num("ADC");
+  if(v.electronics_mode === "detailed"){
+    if(has("CVF_uV_per_e")) det.CVF_uV_per_e = num("CVF_uV_per_e");
+    if(has("G_PGA")) det.G_PGA = num("G_PGA");
+    if(has("V_range")) det.V_range = num("V_range");
+  } else if(v.electronics_mode === "datasheet"){
+    if(has("CWF")) det.CWF = num("CWF");
+  }
+  if(has("DN0")) det.DN0 = num("DN0");
+  if(has("bits_TDI")) det.bits_TDI = num("bits_TDI");
+
+  var name = document.getElementById("instName").value.trim();
+  if(name) form.name = name;
+  if(v.electronics_mode) form.electronics_mode = v.electronics_mode;
+  if(has("W")) form.WFE_RMS_nm = num("W");
+  if((v.wfeCases || []).length) form.wfeCases = v.wfeCases;
+
+  var out = {};
+  if(Object.keys(form).length) out.Formulaire = form;
+  if(Object.keys(tel).length) out.Telescope = tel;
+  if(Object.keys(det).length) out.Detector = det;
+  return out;
+}
+// Courbe {wavelength_nm, values} d'un champ spectral : les points saisis en
+// mode « Courbe », une courbe plate en mode « Valeur constante » (même
+// convention que l'envoi dans simulations.html), ou null si rien n'est saisi.
+function exportCurve(fieldKey){
+  var lock = SPECTRAL_LOCKS[fieldKey];
+  if(spectralActive(fieldKey)){
+    var pts = curveStatus(state.values[lock.arr], lock.key).valid.sort(function(a,b){ return a.wl - b.wl; });
+    if(pts.length < 2) return null;
+    return { wavelength_nm: pts.map(function(p){ return p.wl; }), values: pts.map(function(p){ return p.qe; }) };
+  }
+  if(!isFilled(fieldKey)) return null;
+  var c = Number(state.values[fieldKey]);
+  return { wavelength_nm: [300, 1100], values: [c, c] };
+}
+document.getElementById("btnExport").addEventListener("click", function(){
+  var name = document.getElementById("instName").value.trim();
+  var slug = (name || "instrument").toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "instrument";
+  var blob = new Blob([JSON.stringify(buildExport(), null, 2)], { type: "application/json" });
+  var a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = slug + ".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+});
+// Relecture d'une courbe {wavelength_nm, values} à l'import : valeurs toutes
+// égales -> mode « Valeur constante » ; sinon -> mode « Courbe » avec ses points.
+function importCurve(fieldKey, curve){
+  var lock = SPECTRAL_LOCKS[fieldKey];
+  var vals = (curve && curve.values) || [], wls = (curve && curve.wavelength_nm) || [];
+  if(!vals.length) return;
+  var flat = vals.every(function(x){ return x === vals[0]; });
+  if(flat || wls.length !== vals.length){
+    state.values[fieldKey] = flat ? vals[0] : vals.reduce(function(a,b){ return a+b; }, 0) / vals.length;
+    state.values[lock.mode] = "constant";
+  } else {
+    state.values[lock.arr] = vals.map(function(x, i){ var p = { wl: String(wls[i]) }; p[lock.key] = String(x); return p; });
+    state.values[lock.mode] = "curve";
+  }
 }
 
 document.getElementById("btnFile").addEventListener("click", function(){
@@ -2109,17 +2272,17 @@ document.getElementById("fileInput").addEventListener("change", function(e){
       // — même structure que produit paramfile_builder.py côté serveur.
       // Chaque champ est optionnel : un paramFile partiel ne casse pas
       // l'import, il remplit juste ce qu'il peut.
-      if(data.Telescope || data.Detector){
+      if(data.Telescope || data.Detector || data.Formulaire){
         var tel = data.Telescope || {};
         var det = data.Detector || {};
 
         if(tel.D != null) state.values.D = tel.D;
         if(tel.iFoV != null) state.values.I = tel.iFoV * 1e6;               // rad -> µrad
         if(tel.central_obscuration != null) state.values.E = tel.central_obscuration;
-        if(tel.T_opt_spectral && tel.T_opt_spectral.values && tel.T_opt_spectral.values.length){
-          var tVals = tel.T_opt_spectral.values;
-          state.values.T = tVals.reduce(function(a,b){return a+b;}, 0) / tVals.length;
-        }
+        if(tel.n_supports != null) state.values.NSUP = tel.n_supports;
+        if(tel.support_width != null) state.values.ESUP = tel.support_width;
+        // Courbe plate -> valeur constante ; sinon -> mode courbe (04/10/2026).
+        importCurve("T", tel.T_opt_spectral);
         // W (WFE RMS) : pas de champ scalaire direct dans un paramFile — le
         // front d'onde y est décrit par des coefficients de Zernike (CSV
         // séparé), pas importé ici. Laissé tel quel (vide ou valeur déjà
@@ -2131,12 +2294,8 @@ document.getElementById("fileInput").addEventListener("change", function(e){
         if(det.dark_current != null) state.values.K = det.dark_current;
         if(det.full_well != null) state.values.FW = det.full_well;
         if(det.bits != null) state.values.ADC = det.bits;
-        if(det.QE_spectral && det.QE_spectral.values && det.QE_spectral.values.length){
-          var qVals = det.QE_spectral.values;
-          // QE en fraction (0-1), comme le champ du formulaire — la
-          // multiplication par 100 d'avant le 03/10/2026 donnait des %.
-          state.values.QE = qVals.reduce(function(a,b){return a+b;}, 0) / qVals.length;
-        }
+        // QE en fraction (0-1), comme le champ du formulaire.
+        importCurve("QE", det.QE_spectral);
         if(det.dsnu_1288 != null) state.values.dsnu_1288 = det.dsnu_1288;
         if(det.dsnu_T_ref != null) state.values.dsnu_T_ref = det.dsnu_T_ref;
         if(det.DN0 != null) state.values.DN0 = det.DN0;
@@ -2152,6 +2311,13 @@ document.getElementById("fileInput").addEventListener("change", function(e){
           state.values.electronics_mode = "datasheet";
           state.values.CWF = det.CWF != null ? det.CWF : 1 / det.LSB;
         }
+        // Bloc "Formulaire" d'un fichier exporté d'ici : ce que le paramFile
+        // ne porte pas (nom, WFE RMS, cas WFE, mode « pleine échelle »).
+        var form = data.Formulaire || {};
+        if(form.name) document.getElementById("instName").value = form.name;
+        if(form.electronics_mode) state.values.electronics_mode = form.electronics_mode;
+        if(form.WFE_RMS_nm != null) state.values.W = form.WFE_RMS_nm;
+        if(Array.isArray(form.wfeCases)) state.values.wfeCases = form.wfeCases;
       } else {
         // Ancien format "plat" (clés directement D/I/E/T/W/PX/R/P/K/FW/QE/ADC)
         // — gardé pour compatibilité si un tel fichier existe déjà quelque part.
