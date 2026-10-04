@@ -2156,23 +2156,25 @@ async function saveToSupabase(){
   }
 
   markSaved(); // l'état enregistré devient la référence
+
+  // 04/10/2026 — après un enregistrement réussi, retour au menu principal
+  // (« Mes objets »). Exception : instrument complet créé depuis la page
+  // Simulations (returnTarget), qui y retourne comme avant. Pour un
+  // brouillon, le message qui liste ce qui manque reste affiché 3 secondes
+  // avant le retour, sinon il ne serait jamais lu.
   if(missing.length){
     hint.style.color = "var(--photon)";
     hint.textContent = "Enregistré comme brouillon. Il manque : " + missing.join(", ") + ".";
-    return; // pas de retour automatique vers la page Simulations pour un brouillon
+    setTimeout(function(){ window.location.href = "espace-personnel.html"; }, 3000);
+    return;
   }
   hint.style.color = "var(--ok)";
   hint.textContent = "Enregistré.";
-
-  // Retour vers simulations.html, étape 3, si on vient de là (cf.
-  // returnTarget ci-dessus) — uniquement à la toute première sauvegarde
-  // (result.data.id vient d'être créé juste au-dessus) : une fois
-  // revenu, on ne veut plus re-rediriger sur d'éventuelles sauvegardes
-  // suivantes de cette même session sur cette page.
   if(returnTarget === "simulations" && result.data){
     window.location.href = "simulations.html?newInstrument=" + result.data.id;
     return;
   }
+  window.location.href = "espace-personnel.html";
 }
 
 function updateProgress(){
