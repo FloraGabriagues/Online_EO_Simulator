@@ -157,6 +157,15 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
    Les mesures sont alignées en colonnes d'une ligne à l'autre, pour comparer
    d'un coup d'œil. Renommer / Supprimer sont dans le menu ⋮ de la ligne. */
 .resultslist{display:flex;flex-direction:column;gap:10px}
+/* Filtres de la liste (04/10/2026) */
+.resultsfilters{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:16px}
+.resultsfilters[hidden]{display:none}
+.resultsfilters input,.resultsfilters select{background:var(--panel);border:1px solid var(--line-soft);color:var(--paper);
+  border-radius:5px;padding:8px 11px;font-family:var(--body);font-size:13px}
+.resultsfilters input{flex:1;min-width:220px;max-width:360px}
+.resultsfilters input:focus,.resultsfilters select:focus{outline:none;border-color:var(--pixel)}
+.resultsfilters .count{margin-left:auto;font-family:var(--mono);font-size:11.5px;color:var(--muted-2)}
+.resultsfilters .reset{background:none;border:none;color:var(--pixel);cursor:pointer;font-family:var(--body);font-size:12.5px;padding:0;margin-left:8px}
 /* En-tête triable. Colonnes : [vignette + texte] | MTF | SNR | menu — mêmes
    largeurs que dans .resultrow (118px par mesure, 47px pour le menu). */
 .resultshead{display:grid;grid-template-columns:1fr 118px 118px 47px;padding:0 1px 8px;align-items:end}
@@ -168,10 +177,30 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .resultshead button.on{color:var(--pixel)}
 .resultshead button .arrow{margin-left:5px;font-size:10px}
 .resultrow{display:grid;grid-template-columns:1fr auto;align-items:stretch;background:var(--panel);
-  border:1px solid var(--line-soft);border-radius:8px;min-height:92px;transition:border-color .14s}
+  border:1px solid var(--line-soft);border-radius:8px;transition:border-color .14s}
+.resultrow[hidden]{display:none}
+.resultrow.open{border-color:var(--line)}
 .resultrow:hover{border-color:var(--pixel)}
 .resultrow .rowlink{display:grid;grid-template-columns:116px 1fr 118px 118px;align-items:stretch;
-  text-decoration:none;color:var(--paper);min-width:0}
+  text-decoration:none;color:var(--paper);min-width:0;min-height:92px;cursor:pointer}
+.resultrow .rowlink:focus-visible{outline:2px solid var(--pixel);outline-offset:-2px;border-radius:7px}
+.resultrow .more{font-size:12px;color:var(--muted-2);white-space:nowrap}
+.resultrow .rowlink:hover .more,.resultrow.open .more{color:var(--pixel)}
+.resultrow.open .thumb{border-radius:7px 0 0 0}
+/* Détail des entrées, déplié sous la ligne (04/10/2026) */
+.resultrow .inputs{grid-column:1 / -1;border-top:1px solid var(--line-soft);padding:16px 18px 18px;
+  display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:18px 26px}
+.resultrow .inputs[hidden]{display:none}
+.resultrow .inputs h4{font-family:var(--display);font-weight:600;font-size:13.5px;text-transform:uppercase;
+  letter-spacing:.03em;color:var(--muted);margin:0 0 8px}
+.resultrow .inputs dl{margin:0;display:grid;grid-template-columns:1fr auto;gap:5px 12px;font-size:12.5px}
+.resultrow .inputs dt{color:var(--muted-2)}
+.resultrow .inputs dd{margin:0;font-family:var(--mono);font-size:12px;color:var(--paper);text-align:right;white-space:nowrap}
+.resultrow .inputs .openfull{grid-column:1 / -1;display:flex;justify-content:flex-end}
+.resultrow .inputs .openfull a{border:1px solid var(--pixel);color:var(--pixel);text-decoration:none;border-radius:5px;
+  padding:8px 14px;font-family:var(--mono);font-size:12px;font-weight:600}
+.resultrow .inputs .openfull a:hover{background:rgba(95,220,208,.1)}
+@media(max-width:900px){.resultrow .inputs{grid-template-columns:repeat(2,minmax(0,1fr))}}
 .resultrow .thumb{background-size:cover;background-position:center;background-color:var(--void);
   border-radius:7px 0 0 7px}
 .resultrow .txt{padding:0 18px;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:5px}
@@ -407,6 +436,13 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
         <p class="pagesub" style="margin-bottom:22px">Retrouvez vos simulations sauvegardées.</p>
         <!-- 04/10/2026 — en-tête de la liste : chaque intitulé trie la liste.
              Les largeurs reprennent celles des colonnes d'une ligne. -->
+        <!-- 04/10/2026 — filtres sur les entrées de la simulation -->
+        <div class="resultsfilters" id="resultsFilters" hidden>
+          <input type="search" id="fSearch" placeholder="Rechercher un résultat, un instrument…" autocomplete="off">
+          <select id="fScene"><option value="">Toutes les scènes</option></select>
+          <select id="fInst"><option value="">Tous les instruments</option></select>
+          <span class="count" id="fCount"></span>
+        </div>
         <div class="resultshead" id="resultsHead" hidden>
           <button type="button" data-sort="date">Date</button>
           <button type="button" data-sort="mtf">MTF à Nyquist</button>
@@ -587,6 +623,103 @@ document.addEventListener("keydown", function(e){
 // "saved_results" (nom de simulation optionnel, éditable via "Renommer" —
 // cf. renameResult ci-dessous ; repli sur le nom de la scène si absent) :
 //   alter table saved_results add column if not exists name text;
+// ===================== Filtres de la liste (04/10/2026) =====================
+// Trois filtres cumulables : texte libre (nom du résultat, instrument, scène,
+// cas WFE), scène, instrument. Ils masquent les lignes sans rien recharger.
+// Les listes déroulantes sont remplies avec les valeurs réellement présentes.
+function fillResultFilters(){
+  function fill(selectId, values, allLabel){
+    var sel = document.getElementById(selectId), previous = sel.value;
+    sel.innerHTML = "";
+    var first = document.createElement("option"); first.value = ""; first.textContent = allLabel; sel.appendChild(first);
+    values.filter(function(v, i){ return v && values.indexOf(v) === i; }).sort().forEach(function(v){
+      var o = document.createElement("option"); o.value = v; o.textContent = v; sel.appendChild(o);
+    });
+    sel.value = previous; // conserve le choix après un renommage ou une suppression
+    if(sel.value !== previous) sel.value = "";
+  }
+  fill("fScene", resultRowEls.map(function(el){ return el._filter.scene; }), "Toutes les scènes");
+  fill("fInst", resultRowEls.map(function(el){ return el._filter.inst; }), "Tous les instruments");
+  document.getElementById("resultsFilters").hidden = false;
+}
+function applyResultFilters(){
+  var q = document.getElementById("fSearch").value.trim().toLowerCase();
+  var scene = document.getElementById("fScene").value, inst = document.getElementById("fInst").value;
+  var shown = 0;
+  resultRowEls.forEach(function(el){
+    var ok = (!q || el._filter.text.indexOf(q) >= 0)
+      && (!scene || el._filter.scene === scene)
+      && (!inst || el._filter.inst === inst);
+    el.hidden = !ok;
+    if(ok) shown++;
+  });
+  var total = resultRowEls.length, count = document.getElementById("fCount");
+  count.textContent = (shown === total)
+    ? total + " résultat" + (total > 1 ? "s" : "")
+    : shown + " sur " + total;
+  if(q || scene || inst){
+    var reset = document.createElement("button");
+    reset.type = "button"; reset.className = "reset"; reset.textContent = "Effacer les filtres";
+    reset.addEventListener("click", function(){
+      document.getElementById("fSearch").value = "";
+      document.getElementById("fScene").value = "";
+      document.getElementById("fInst").value = "";
+      applyResultFilters();
+    });
+    count.appendChild(reset);
+  }
+}
+["fSearch", "fScene", "fInst"].forEach(function(id){
+  document.getElementById(id).addEventListener("input", applyResultFilters);
+});
+
+// ===================== Détail des entrées d'un résultat (04/10/2026) =====================
+// Affiché sous la ligne, sans quitter la liste. Les valeurs viennent de la
+// copie de l'instrument gardée avec le résultat (instrument_snapshot.config)
+// et des conditions d'acquisition (conditions) : ce sont les entrées de CETTE
+// simulation, même si l'instrument a été modifié ou supprimé depuis. Seules
+// les valeurs renseignées sont listées.
+function inputsHtml(r){
+  var c = (r.instrument_snapshot && r.instrument_snapshot.config) || {};
+  var k = r.conditions || {};
+  function has(v){ return v !== undefined && v !== null && v !== ""; }
+  function esc(t){ var d = document.createElement("div"); d.textContent = String(t); return d.innerHTML; }
+  function num(v){ return Number(Number(v).toPrecision(4)); }
+  function line(label, v, unit){
+    return has(v) ? "<dt>" + label + "</dt><dd>" + esc(isNaN(Number(v)) ? v : num(v)) + (unit ? " " + unit : "") + "</dd>" : "";
+  }
+  // Transmission / rendement : valeur constante, ou courbe saisie point par point.
+  function spectral(label, modeKey, arrKey, valKey, scalarKey){
+    var pts = (c[arrKey] || []).filter(function(p){ return has(p.wl) && has(p[valKey]); });
+    var mode = c[modeKey] || (pts.length >= 2 ? "curve" : "constant");
+    if(mode === "curve" && pts.length >= 2) return "<dt>" + label + "</dt><dd>courbe, " + pts.length + " points</dd>";
+    return line(label, c[scalarKey]);
+  }
+  function block(title, body){ return body ? "<div><h4>" + title + "</h4><dl>" + body + "</dl></div>" : ""; }
+  var MODES = { detailed: "détaillé", datasheet: "datasheet", full_scale: "pleine échelle = full well" };
+
+  var gsd = (has(c.I) && has(k.H)) ? num(Number(c.I) * 1e-6 * Number(k.H) * 1000) : null;
+  var cond = line("Scène", r.scene) + line("Altitude", k.H, "km") + line("Pas au sol", gsd, "m") +
+    line("Élévation solaire", k.S, "°") + line("Temps d'intégration", k.TI, "µs") + line("Étages TDI", k.TDI) +
+    line("Cas WFE", k.wfeCaseName || "simplifié");
+  var opt = line("iFoV", c.I, "µrad") + line("Diamètre de pupille", c.D, "m") + line("Obscuration centrale", c.E, "m") +
+    (Number(c.E) > 0 && Number(c.NSUP) > 0 ? line("Supports", num(c.NSUP) + " × " + num(c.ESUP), "m") : "") +
+    spectral("Transmission", "T_mode", "tSpectral", "t", "T") + line("WFE RMS", c.W, "nm");
+  var det = line("Largeur pixel", c.PX, "µm") + spectral("Rendement quantique", "QE_mode", "qeSpectral", "qe", "QE") +
+    line("PRNU", c.P, "%") + line("Courant d'obscurité", c.K, "e⁻/s") +
+    line("DSNU", c.dsnu_1288, "e⁻") + line("Temps de réf. DSNU", c.dsnu_T_ref, "s");
+  var elec = line("Résolution ADC", c.ADC, "bits") + line("Full well", c.FW, "e⁻") + line("Bruit de lecture", c.R, "e⁻") +
+    line("Mode", MODES[c.electronics_mode]) +
+    (c.electronics_mode === "detailed"
+      ? line("Facteur de conversion", c.CVF_uV_per_e, "µV/e⁻") + line("Gain PGA", c.G_PGA) + line("Plage ADC", c.V_range, "V") : "") +
+    (c.electronics_mode === "datasheet" ? line("Gain global", c.CWF, "DN/e⁻") : "") +
+    line("Niveau noir", c.DN0, "DN") + line("Accumulateur TDI", c.bits_TDI, "bits");
+
+  var blocks = block("Conditions", cond) + block("Optique", opt) + block("Détecteur", det) + block("Électronique", elec);
+  return blocks +
+    "<div class='openfull'><a href='resultats.html?id=" + encodeURIComponent(r.id) + "'>Ouvrir le résultat complet</a></div>";
+}
+
 // ===================== Tri de la liste des résultats (04/10/2026) =====================
 // Les lignes sont construites une fois (renderResultsList), puis seulement
 // réordonnées ici : pas de nouvelle requête à chaque tri. Un clic sur un
@@ -636,6 +769,7 @@ document.addEventListener("click", function(){
 async function renderResultsList(){
   var grid = document.getElementById("resultsGrid");
   document.getElementById("resultsHead").hidden = true; // réaffiché plus bas s'il y a des résultats
+  document.getElementById("resultsFilters").hidden = true;
   // "instruments(name)" : jointure vers l'instrument vivant, absente si
   // supprimé depuis (cf. migration ON DELETE SET NULL) — on retombe alors
   // sur instrument_snapshot.name, sauvegardé au moment du résultat.
@@ -694,25 +828,43 @@ async function renderResultsList(){
     var card = document.createElement("div");
     card.className = "resultrow";
     card.innerHTML =
-      "<a class='rowlink' href='resultats.html?id=" + r.id + "'>"+
+      "<div class='rowlink' role='button' tabindex='0' aria-expanded='false'>"+
         "<span class='thumb' style='background-image:url(\"" + thumbUrl + "\")'></span>"+
         "<div class='txt'>"+
           "<div class='namerow'><span class='name'>" + esc(displayName) + "</span>"+
             (instGone ? "<span class='instgone'>Instrument supprimé</span>" : "")+"</div>"+
           "<div class='sub'><span>" + esc(instName) + "</span><span class='date'>" + dateLabel + "</span>"+
-            (wfeCaseName ? "<span class='wfebadge'>Cas WFE : " + esc(wfeCaseName) + "</span>" : "")+"</div>"+
+            (wfeCaseName ? "<span class='wfebadge'>Cas WFE : " + esc(wfeCaseName) + "</span>" : "")+
+            "<span class='more'>Entrées ▾</span></div>"+
         "</div>"+
         "<div class='metric'><div class='v'>" + (mtfAvg != null ? mtfAvg.toFixed(2) : "—") + "</div></div>"+
         "<div class='metric'><div class='v'>" + (snrAvg != null ? snrAvg.toFixed(1) : "—") + "</div></div>"+
-      "</a>"+
+      "</div>"+
       "<div class='rowmenu'>"+
         "<button type='button' class='menubtn' aria-label='Options'>⋮</button>"+
         "<div class='dropdown'>"+
           "<button type='button' data-act='rename'>Renommer</button>"+
           "<button type='button' class='danger' data-act='delete'>Supprimer</button>"+
         "</div>"+
-      "</div>";
+      "</div>"+
+      "<div class='inputs' hidden></div>";
     (function(resultRow, cardEl){
+      // 04/10/2026 — un clic sur la ligne déplie le détail des entrées, sans
+      // quitter la liste ; le résultat complet s'ouvre par le bouton du
+      // détail. Le contenu n'est construit qu'à la première ouverture.
+      var link = cardEl.querySelector(".rowlink"), panel = cardEl.querySelector(".inputs");
+      function toggleInputs(){
+        var open = panel.hidden;
+        if(open && !panel.innerHTML) panel.innerHTML = inputsHtml(resultRow);
+        panel.hidden = !open;
+        cardEl.classList.toggle("open", open);
+        link.setAttribute("aria-expanded", open ? "true" : "false");
+        cardEl.querySelector(".more").textContent = open ? "Entrées ▴" : "Entrées ▾";
+      }
+      link.addEventListener("click", toggleInputs);
+      link.addEventListener("keydown", function(e){
+        if(e.key === "Enter" || e.key === " "){ e.preventDefault(); toggleInputs(); }
+      });
       var dd = cardEl.querySelector(".dropdown");
       cardEl.querySelector(".menubtn").addEventListener("click", function(e){
         e.stopPropagation();
@@ -729,10 +881,15 @@ async function renderResultsList(){
     })(r, card);
     // Valeurs de tri de cette ligne (cf. drawResultRows).
     card._sort = { date: new Date(r.created_at).getTime(), mtf: mtfAvg, snr: snrAvg };
+    // Valeurs de filtre de cette ligne (cf. applyResultFilters).
+    card._filter = { scene: r.scene || "", inst: instName,
+      text: [displayName, instName, r.scene, wfeCaseName].join(" ").toLowerCase() };
     resultRowEls.push(card);
   }
   document.getElementById("resultsHead").hidden = false;
+  fillResultFilters();
   drawResultRows();
+  applyResultFilters();
 }
 
 async function renameResult(r, cardEl){
