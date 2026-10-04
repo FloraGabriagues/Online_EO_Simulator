@@ -386,9 +386,6 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
       <li><a href="resultats.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
         Résultats</a></li>
-      <li><a href="analyse.html">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/><path d="M8 11h6M11 8v6"/></svg>
-        Analyse</a></li>
     </ul>
     <div class="sidebar-bottom">
       <ul class="navlist">
@@ -1696,8 +1693,8 @@ async function autoSaveResult(){
     if(insErr) throw insErr;
 
     addLog("Résultat sauvegardé.");
-    actions.innerHTML = "<a class='viewresultsbtn' href='resultats.html?id=" + resultId + "'>📊 Voir les résultats</a>" +
-      "<a class='viewresultsbtn' href='analyse.html?id=" + resultId + "'>🔬 Analyser en détail</a>"; // 04/10/2026 : plus de marge gauche, qui décalait ce bouton pleine largeur
+    // 04/10/2026 : bouton « Analyser en détail » retiré avec l'onglet Analyse.
+    actions.innerHTML = "<a class='viewresultsbtn' href='resultats.html?id=" + resultId + "'>📊 Voir les résultats</a>";
   }catch(err){
     var msg = (err.message || "").includes("Limite de")
       ? err.message
