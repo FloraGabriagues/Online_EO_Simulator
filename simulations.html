@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Nouvelle simulation — du photon au pixel</title>
+<title>Nouvelle simulation — Nysa</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
@@ -34,7 +34,7 @@ button{font-family:inherit}
 .brand .mark i:nth-child(2),.brand .mark i:nth-child(3){background:var(--photon)}
 .brand .name{font-family:var(--display);font-weight:600;font-size:16.5px;letter-spacing:.02em;
   text-transform:uppercase;line-height:1.1}
-.brand .tag{font-family:var(--mono);font-size:10.5px;color:var(--muted-2);margin-top:1px}
+.brand .tag{font-family:var(--mono);font-size:10px;color:var(--muted-2);margin-top:1px;white-space:nowrap}
 .navlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
 .navlist a{display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:4px;
   text-decoration:none;color:var(--muted);font-size:14.5px;transition:background .14s,color .14s}
@@ -376,8 +376,8 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
     <div class="brand">
       <span class="mark"><i></i><i></i><i></i><i></i></span>
       <span>
-        <div class="name">EO Toolbox</div>
-        <div class="tag">Du photon au pixel</div>
+        <div class="name">Nysa</div>
+        <div class="tag">EO Imaging Engineering</div>
       </span>
     </div>
     <ul class="navlist">
@@ -1112,7 +1112,7 @@ function renderPaywall(atLaunch){
     text.textContent = generic;
   }
   document.getElementById("paywallList").innerHTML = pending ? "" :
-    "<li>La chaîne physique complète, du photon au pixel, sur vos propres paramètres</li>"+
+    "<li>La chaîne physique complète, sur vos propres paramètres</li>"+
     "<li>Image simulée, MTF et SNR par bande</li>"+
     "<li>Jusqu'à 20 instruments et 20 résultats sauvegardés</li>";
   document.getElementById("paywallCta").textContent = pending ? "Mettre à jour le paiement" : "S'abonner — 199 €/mois";
