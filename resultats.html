@@ -153,28 +153,52 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .downloadbtn:hover{background:#7CE8DC}
 
 /* ================= panneau droit (info) ================= */
-.resultcard{background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;overflow:hidden;
-  text-decoration:none;color:var(--paper);display:flex;flex-direction:column;transition:border-color .14s}
-.resultcard:hover{border-color:var(--pixel)}
-.resultcard .thumb{display:block;height:120px;background-size:cover;background-position:center;background-color:var(--void)}
-.resultcard .body{padding:12px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
-.resultcard .name{font-family:var(--display);font-weight:600;font-size:15px;text-transform:uppercase}
-.resultcard .inst{font-size:12.5px;color:var(--muted)}
-/* 04/10/2026 — résultat dont l'instrument a été supprimé */
+/* 04/10/2026 — liste des résultats : une ligne par résultat (proposition C).
+   Les mesures sont alignées en colonnes d'une ligne à l'autre, pour comparer
+   d'un coup d'œil. Renommer / Supprimer sont dans le menu ⋮ de la ligne. */
+.resultslist{display:flex;flex-direction:column;gap:10px}
+.resultrow{display:grid;grid-template-columns:1fr auto;align-items:stretch;background:var(--panel);
+  border:1px solid var(--line-soft);border-radius:8px;min-height:92px;transition:border-color .14s}
+.resultrow:hover{border-color:var(--pixel)}
+.resultrow .rowlink{display:grid;grid-template-columns:116px 1fr auto auto;align-items:stretch;
+  text-decoration:none;color:var(--paper);min-width:0}
+.resultrow .thumb{background-size:cover;background-position:center;background-color:var(--void);
+  border-radius:7px 0 0 7px}
+.resultrow .txt{padding:0 18px;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:5px}
+.resultrow .namerow{display:flex;align-items:center;gap:10px;min-width:0}
+.resultrow .name{font-family:var(--display);font-weight:600;font-size:20px;text-transform:uppercase;
+  letter-spacing:.01em;line-height:1.1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.resultrow .sub{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.resultrow .sub .date{font-family:var(--mono);font-size:11.5px;color:var(--muted-2)}
+.resultrow .wfebadge{font-family:var(--mono);font-size:10.5px;color:var(--pixel);
+  border:1px solid rgba(95,220,208,.45);border-radius:3px;padding:1px 7px;white-space:nowrap}
+.resultrow .metric{padding:0 22px;border-left:1px solid var(--line-soft);min-width:112px;
+  display:flex;flex-direction:column;justify-content:center}
+.resultrow .metric .v{font-family:var(--display);font-weight:500;font-size:28px;line-height:1;color:var(--paper)}
+.resultrow .metric .l{font-size:11px;color:var(--muted-2);margin-top:4px}
+.resultrow .rowmenu{position:relative;display:flex;align-items:center;padding:0 8px;border-left:1px solid var(--line-soft)}
+.resultrow .menubtn{background:transparent;border:none;color:var(--muted-2);font-size:19px;line-height:1;
+  width:30px;height:30px;border-radius:5px;cursor:pointer}
+.resultrow .menubtn:hover{color:var(--paper);background:var(--panel-2)}
+.resultrow .dropdown{display:none;position:absolute;top:calc(50% + 18px);right:8px;z-index:20;min-width:150px;
+  background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:5px;
+  box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.resultrow .dropdown.open{display:block}
+.resultrow .dropdown button{display:block;width:100%;text-align:left;background:none;border:none;
+  color:var(--paper);font-family:var(--body);font-size:13px;padding:8px 10px;border-radius:4px;cursor:pointer}
+.resultrow .dropdown button:hover{background:var(--panel)}
+.resultrow .dropdown button.danger{color:var(--alert)}
+.resultrow .dropdown button.danger:hover{background:rgba(240,119,109,.1)}
+@media(max-width:720px){
+  .resultrow .rowlink{grid-template-columns:72px 1fr auto auto}
+  .resultrow .txt{padding:0 12px}
+  .resultrow .name{font-size:17px}
+  .resultrow .metric{padding:0 12px;min-width:68px}
+  .resultrow .metric .v{font-size:21px}
+}
+/* résultat dont l'instrument a été supprimé (ligne de la liste et page de détail) */
 .instgone{font-family:var(--mono);font-size:10.5px;color:var(--photon);
-  border:1px solid var(--photon);border-radius:3px;padding:1px 6px;margin-left:8px;white-space:nowrap}
-/* Sur une carte de la liste : posée sur l'image, en haut à gauche, sur un
-   fond sombre pour rester lisible quelle que soit l'image. */
-.resultcard .thumb{position:relative}
-.resultcard .thumb .instgone{position:absolute;top:10px;left:10px;margin:0;padding:2px 7px;
-  background:rgba(9,14,19,.82)}
-.resultcard .meta{font-family:var(--mono);font-size:11px;color:var(--muted-2)}
-.resultcard .metrics{display:flex;gap:12px;font-family:var(--mono);font-size:11px;color:var(--muted-2);
-  border-top:1px solid var(--line-soft);padding-top:8px;margin-top:2px}
-.resultcard .metrics b{color:var(--paper);font-weight:500}
-.resultcard .wfebadge{display:inline-block;font-family:var(--mono);font-size:10px;color:var(--pixel);
-  border:1px solid var(--line);border-radius:3px;padding:1px 6px;width:fit-content}
-.resultcard .bottomrow{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:4px}
+  border:1px solid var(--photon);border-radius:3px;padding:1px 6px;white-space:nowrap;flex:none}
 .delbtn, .renbtn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:4px;
   font-family:var(--mono);font-size:11px;padding:5px 10px;cursor:pointer}
 .delbtn:hover{border-color:var(--alert);color:var(--alert)}
@@ -370,7 +394,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
         <p class="eyebrow">Résultats</p>
         <h1>Mes résultats</h1>
         <p class="pagesub" style="margin-bottom:22px">Retrouve tes simulations sauvegardées.</p>
-        <div id="resultsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px"></div>
+        <div id="resultsGrid" class="resultslist"></div>
       </div>
 
       <!-- ============ Vue détail (resultats.html?id=<uuid>) ============ -->
@@ -544,6 +568,11 @@ document.addEventListener("keydown", function(e){
 // "saved_results" (nom de simulation optionnel, éditable via "Renommer" —
 // cf. renameResult ci-dessous ; repli sur le nom de la scène si absent) :
 //   alter table saved_results add column if not exists name text;
+// Ferme le menu ⋮ d'une ligne de résultat quand on clique ailleurs.
+document.addEventListener("click", function(){
+  document.querySelectorAll(".resultrow .dropdown.open").forEach(function(o){ o.classList.remove("open"); });
+});
+
 async function renderResultsList(){
   var grid = document.getElementById("resultsGrid");
   // "instruments(name)" : jointure vers l'instrument vivant, absente si
@@ -597,45 +626,45 @@ async function renderResultsList(){
     var wfeCaseName = (r.conditions && r.conditions.wfeCaseName) || null;
     var displayName = r.name || r.scene; // "name" optionnel (cf. rename) — replie sur la scène si absent
 
+    // 04/10/2026 — une ligne par résultat. Les noms saisis par l'utilisateur
+    // (résultat, instrument, cas WFE) sont insérés en texte, pas en HTML.
+    function esc(t){ var d = document.createElement("div"); d.textContent = t == null ? "" : String(t); return d.innerHTML; }
     var card = document.createElement("div");
-    card.className = "resultcard";
+    card.className = "resultrow";
     card.innerHTML =
-      "<a href='resultats.html?id=" + r.id + "' style='text-decoration:none;color:inherit'>"+
-        "<span class='thumb' style='background-image:url(\"" + thumbUrl + "\")'>"+
-          (instGone ? "<span class='instgone'>Instrument supprimé</span>" : "")+"</span>"+
-        "<div class='body'>"+
-          "<div class='name'>" + displayName + "</div>"+
-          "<div class='inst'>" + instName + "</div>"+
-          "<div class='meta'>" + dateLabel + "</div>"+
-          (wfeCaseName ? "<span class='wfebadge'>Cas WFE : " + wfeCaseName + "</span>" : "")+
-          (mtfAvg != null || snrAvg != null
-            ? "<div class='metrics'>"+
-                (mtfAvg != null ? "<span>MTF@Nyq <b>" + mtfAvg.toFixed(2) + "</b></span>" : "")+
-                (snrAvg != null ? "<span>SNR <b>" + snrAvg.toFixed(1) + "</b></span>" : "")+
-              "</div>"
-            : "")+
+      "<a class='rowlink' href='resultats.html?id=" + r.id + "'>"+
+        "<span class='thumb' style='background-image:url(\"" + thumbUrl + "\")'></span>"+
+        "<div class='txt'>"+
+          "<div class='namerow'><span class='name'>" + esc(displayName) + "</span>"+
+            (instGone ? "<span class='instgone'>Instrument supprimé</span>" : "")+"</div>"+
+          "<div class='sub'><span>" + esc(instName) + "</span><span class='date'>" + dateLabel + "</span>"+
+            (wfeCaseName ? "<span class='wfebadge'>Cas WFE : " + esc(wfeCaseName) + "</span>" : "")+"</div>"+
         "</div>"+
-      "</a>";
-    var bottomRow = document.createElement("div");
-    bottomRow.className = "body bottomrow";
-    bottomRow.style.paddingTop = "0";
-    var renBtn = document.createElement("button");
-    renBtn.className = "renbtn";
-    renBtn.type = "button";
-    renBtn.textContent = "Renommer";
-    renBtn.addEventListener("click", function(resultRow, cardEl){
-      return function(){ renameResult(resultRow, cardEl); };
-    }(r, card));
-    var delBtn = document.createElement("button");
-    delBtn.className = "delbtn";
-    delBtn.type = "button";
-    delBtn.textContent = "Supprimer";
-    delBtn.addEventListener("click", function(resultRow){
-      return function(){ deleteResult(resultRow); };
-    }(r));
-    bottomRow.appendChild(renBtn);
-    bottomRow.appendChild(delBtn);
-    card.appendChild(bottomRow);
+        "<div class='metric'><div class='v'>" + (mtfAvg != null ? mtfAvg.toFixed(2) : "—") + "</div><div class='l'>MTF à Nyquist</div></div>"+
+        "<div class='metric'><div class='v'>" + (snrAvg != null ? snrAvg.toFixed(1) : "—") + "</div><div class='l'>SNR</div></div>"+
+      "</a>"+
+      "<div class='rowmenu'>"+
+        "<button type='button' class='menubtn' aria-label='Options'>⋮</button>"+
+        "<div class='dropdown'>"+
+          "<button type='button' data-act='rename'>Renommer</button>"+
+          "<button type='button' class='danger' data-act='delete'>Supprimer</button>"+
+        "</div>"+
+      "</div>";
+    (function(resultRow, cardEl){
+      var dd = cardEl.querySelector(".dropdown");
+      cardEl.querySelector(".menubtn").addEventListener("click", function(e){
+        e.stopPropagation();
+        var wasOpen = dd.classList.contains("open");
+        document.querySelectorAll(".resultrow .dropdown.open").forEach(function(o){ o.classList.remove("open"); });
+        if(!wasOpen) dd.classList.add("open");
+      });
+      dd.querySelector("[data-act='rename']").addEventListener("click", function(){
+        dd.classList.remove("open"); renameResult(resultRow, cardEl);
+      });
+      dd.querySelector("[data-act='delete']").addEventListener("click", function(){
+        dd.classList.remove("open"); deleteResult(resultRow);
+      });
+    })(r, card);
     grid.appendChild(card);
   }
 }
@@ -817,6 +846,7 @@ async function deleteResult(r){
     var gone = document.createElement("span");
     gone.className = "instgone";
     gone.textContent = "Instrument supprimé";
+    gone.style.marginLeft = "8px";
     document.getElementById("entInstName").appendChild(gone);
   }
 
