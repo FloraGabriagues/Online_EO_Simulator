@@ -160,6 +160,9 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .resultcard .body{padding:12px 14px;display:flex;flex-direction:column;gap:6px;flex:1}
 .resultcard .name{font-family:var(--display);font-weight:600;font-size:15px;text-transform:uppercase}
 .resultcard .inst{font-size:12.5px;color:var(--muted)}
+/* 04/10/2026 — résultat dont l'instrument a été supprimé */
+.instgone{font-family:var(--mono);font-size:10.5px;color:var(--photon);
+  border:1px solid var(--photon);border-radius:3px;padding:1px 6px;margin-left:8px;white-space:nowrap}
 .resultcard .meta{font-family:var(--mono);font-size:11px;color:var(--muted-2)}
 .resultcard .metrics{display:flex;gap:12px;font-family:var(--mono);font-size:11px;color:var(--muted-2);
   border-top:1px solid var(--line-soft);padding-top:8px;margin-top:2px}
@@ -623,7 +626,7 @@ async function renderResultsList(){
   // sur instrument_snapshot.name, sauvegardé au moment du résultat.
   var { data: results, error } = await supabaseClient
     .from("saved_results")
-    .select("*, instruments(name)")
+    .select("*, instruments(name, deleted_at)")
     .order("created_at", { ascending: false });
 
   if(error){
@@ -647,6 +650,11 @@ async function renderResultsList(){
     }
     var dateLabel = new Date(r.created_at).toLocaleDateString("fr-FR", {day:"numeric", month:"short", year:"numeric"});
     var instName = (r.instruments && r.instruments.name) || (r.instrument_snapshot && r.instrument_snapshot.name) || "Instrument";
+    // 04/10/2026 — un résultat survit à son instrument : on le signale sur
+    // la carte. « Supprimé » = marqué deleted_at (suppression douce) ou
+    // absent (purgé, lien instrument_id vidé par la base). Le nom vient
+    // alors de la copie gardée dans le résultat (instrument_snapshot).
+    var instGone = !r.instruments || !!r.instruments.deleted_at;
 
     // Résumé des métriques — moyenne sur les bandes disponibles (RGB/NIR),
     // pour donner un ordre de grandeur sur la carte sans avoir à ouvrir
@@ -671,7 +679,7 @@ async function renderResultsList(){
         "<span class='thumb' style='background-image:url(\"" + thumbUrl + "\")'></span>"+
         "<div class='body'>"+
           "<div class='name'>" + displayName + "</div>"+
-          "<div class='inst'>" + instName + "</div>"+
+          "<div class='inst'>" + instName + (instGone ? "<span class='instgone'>Instrument supprimé</span>" : "") + "</div>"+
           "<div class='meta'>" + dateLabel + "</div>"+
           (wfeCaseName ? "<span class='wfebadge'>Cas WFE : " + wfeCaseName + "</span>" : "")+
           (mtfAvg != null || snrAvg != null
@@ -925,7 +933,7 @@ async function initSettingsModal(session){
   if(resultId){
     var { data, error } = await supabaseClient
       .from("saved_results")
-      .select("*, instruments(name)")
+      .select("*, instruments(name, deleted_at)")
       .eq("id", resultId)
       .single();
     if(error) console.error("Erreur chargement résultat :", error);
@@ -1022,6 +1030,13 @@ async function initSettingsModal(session){
   document.getElementById("entSceneImg").src = sourceUrl;
   document.getElementById("entSceneName").textContent = sceneName;
   document.getElementById("entInstName").textContent = instName;
+  // Même signalement dans le détail d'un résultat.
+  if(result && (!result.instruments || result.instruments.deleted_at)){
+    var gone = document.createElement("span");
+    gone.className = "instgone";
+    gone.textContent = "Instrument supprimé";
+    document.getElementById("entInstName").appendChild(gone);
+  }
 
   var instConfig = (result && result.instrument_snapshot && result.instrument_snapshot.config) || {};
   var instConfigHtml = "";
