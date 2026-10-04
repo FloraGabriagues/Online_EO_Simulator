@@ -292,16 +292,16 @@ var SCHEMA = [
   {id:"instrument", kind:"group", label:"Instrument", blocks:[
     {id:"optique", label:"Optique", fields:[
       {k:"I", label:"iFoV", unit:"µrad", placeholder:"obligatoire",
-       help:"Angle sous lequel un pixel voit la scène : pas pixel divisé par la focale. Exemple : 5 µm / 2,5 m = 2 µrad. En microradians, pas en radians."},
+       help:"Angle sous lequel un pixel voit la scène : pas pixel divisé par la focale. Exemple : 5 µm / 2.5 m = 2 µrad."},
       {k:"D", label:"Diamètre de pupille", unit:"m", placeholder:"obligatoire",
-       help:"Diamètre utile du miroir primaire. Il fixe la limite de diffraction et le flux collecté, proportionnel à son carré."},
+       help:"Diamètre utile du miroir primaire dans le cas d'un télescope de type Cassegrain, Ritchey-Chrétien ou Korsch. Il fixe la limite de diffraction et le flux collecté, proportionnel à son carré."},
       {k:"E", label:"Obscuration centrale", unit:"m", placeholder:"0 (défaut)",
        help:"Diamètre de l'ombre du miroir secondaire, baffle compris, en mètres et non en ratio. Laisser vide pour un télescope sans obstruction."},
       // NSUP/ESUP : confirmés le 17/09/2026 (paramFile.Telescope.n_supports/
       // support_width, cf. module_MTF.py) — envoyés au payload de
       // simulation comme PX/QE/ADC (cf. simulations.html).
       {k:"NSUP", label:"Nombre de supports", unit:"", placeholder:"0 (défaut)",
-       help:"Nombre de bras qui tiennent le miroir secondaire, 3 ou 4 en général."},
+       help:"Nombre de bras qui tiennent le miroir secondaire."},
       {k:"ESUP", label:"Épaisseur des supports", unit:"m", placeholder:"0 (défaut)",
        help:"Largeur d'un bras vue de face. Obligatoire dès qu'un nombre de supports est saisi."},
       {k:"T", label:"Transmission optique", unit:"0 à 1", placeholder:"1 (défaut)", min:0, max:1,
@@ -530,10 +530,8 @@ function syncOpticsDerived(){
   }
   var dEl = document.getElementById("opticsDerived");
   if(dEl){
-    if(!(isFilled("I") && I > 0)){
-      dEl.innerHTML = "";
-    } else if(!(isFilled("PX") && PX > 0)){
-      dEl.textContent = "Focale équivalente : renseigner la largeur pixel (bloc Détecteur).";
+    if(!(isFilled("I") && I > 0) || !(isFilled("PX") && PX > 0)){
+      dEl.innerHTML = ""; // rien tant que l'iFoV ou la largeur pixel manque
     } else {
       var f = PX / I; // µm / µrad = m
       dEl.innerHTML = "Focale équivalente <b>" + fmt3(f) + " m</b>" +
