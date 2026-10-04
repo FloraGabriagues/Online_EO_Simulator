@@ -855,8 +855,14 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
   document.getElementById("settingsCreated").textContent = session.user.created_at
     ? formatDate(session.user.created_at) : "—";
 
+  // Même règle que le serveur (main.py, _require_active_plan) : plan payant,
+  // statut « active », et échéance absente ou future. Avant le 04/10/2026,
+  // l'échéance n'était pas regardée ici : un accès attribué à la main et
+  // expiré s'affichait encore comme « Actif ».
   function isSubscribed(){
-    return entitlement.plan !== "free" && entitlement.subscription_status === "active";
+    if(entitlement.plan === "free" || entitlement.subscription_status !== "active") return false;
+    if(entitlement.current_period_end && new Date(entitlement.current_period_end) <= new Date()) return false;
+    return true;
   }
 
   function renderSubscription(){
@@ -1009,9 +1015,15 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
     subBtn.disabled = true;
     subBtn.textContent = "Redirection…";
 
-    var neverSubscribed = entitlement.plan === "free"
-      && entitlement.subscription_status !== "past_due";
-    var fn = neverSubscribed ? "create-checkout-session" : "create-portal-session";
+    // 04/10/2026 — aiguillage corrigé. Le portail client ne sert qu'à gérer
+    // un abonnement qui existe : actif, ou en retard de paiement. Dans tous
+    // les autres cas (jamais abonné, abonnement résilié, accès expiré), on
+    // va vers la page de paiement. Avant, seul le plan « free » y menait :
+    // un compte au plan payant mais sans abonnement en cours partait vers
+    // le portail, où il ne pouvait pas s'abonner. La page de paiement
+    // réutilise le client Stripe existant (cf. create-checkout-session).
+    var manageExisting = isSubscribed() || entitlement.subscription_status === "past_due";
+    var fn = manageExisting ? "create-portal-session" : "create-checkout-session";
 
     var out = await callStripeFunction(fn);
     if(!out || !out.url){

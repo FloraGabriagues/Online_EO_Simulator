@@ -1201,8 +1201,8 @@ function openPaywall(atLaunch){
 }
 function closePaywall(){ document.getElementById("paywallOverlay").classList.remove("open"); }
 // Même aiguillage que le bouton d'abonnement des paramètres
-// (espace-personnel.html) : page de paiement pour un compte jamais abonné,
-// portail client sinon.
+// (espace-personnel.html) : portail client pour un abonnement à gérer,
+// page de paiement dans tous les autres cas.
 async function goSubscribe(){
   var cta = document.getElementById("paywallCta"), errEl = document.getElementById("paywallErr");
   var previous = cta.textContent;
@@ -1211,8 +1211,11 @@ async function goSubscribe(){
   try {
     var { data: { session: s } } = await supabaseClient.auth.getSession();
     if(!s){ window.location.href = "login.html"; return; }
-    var neverSubscribed = (!entitlement || entitlement.plan === "free") && !paymentPending();
-    var res = await fetch(FUNCTIONS_URL + "/" + (neverSubscribed ? "create-checkout-session" : "create-portal-session"), {
+    // Cette fenêtre ne s'affiche que pour un compte SANS accès. Le portail
+    // client ne sert qu'à régulariser un paiement en retard ; dans tous les
+    // autres cas (jamais abonné, résilié, accès expiré) on va vers la page
+    // de paiement, qui réutilise le client Stripe existant.
+    var res = await fetch(FUNCTIONS_URL + "/" + (paymentPending() ? "create-portal-session" : "create-checkout-session"), {
       method: "POST",
       headers: { "Authorization": "Bearer " + s.access_token, "Content-Type": "application/json" }
     });
