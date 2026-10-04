@@ -1546,7 +1546,7 @@ async function autoSaveResult(){
 
     addLog("Résultat sauvegardé.");
     actions.innerHTML = "<a class='viewresultsbtn' href='resultats.html?id=" + resultId + "'>📊 Voir les résultats</a>" +
-      "<a class='viewresultsbtn' href='analyse.html?id=" + resultId + "' style='margin-left:8px'>🔬 Analyser en détail</a>";
+      "<a class='viewresultsbtn' href='analyse.html?id=" + resultId + "'>🔬 Analyser en détail</a>"; // 04/10/2026 : plus de marge gauche, qui décalait ce bouton pleine largeur
   }catch(err){
     var msg = (err.message || "").includes("Limite de")
       ? err.message

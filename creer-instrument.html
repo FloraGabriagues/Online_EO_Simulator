@@ -2103,6 +2103,7 @@ async function saveToSupabase(){
   var missing = missingRequired();
   state.values._draft = missing.length > 0;
   state.values._missing = missing;
+  state.values._pct = overallPct(); // avancement affiché sur la carte de « Mes objets"
 
   btn.disabled = true;
   var hint = document.createElement("p");

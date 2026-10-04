@@ -122,6 +122,11 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
   font-size:11px;color:var(--muted);margin-bottom:6px}
 .instcard .track{height:5px;background:var(--line-soft);border-radius:2px;overflow:hidden}
 .instcard .fill{height:100%;background:var(--pixel)}
+/* 04/10/2026 — brouillon : instrument enregistré sans tous ses champs obligatoires */
+.instcard.draft{border-style:dashed}
+.instcard.draft .fill{background:var(--photon)}
+.instcard .draftbadge{font-family:var(--mono);font-size:10.5px;color:var(--photon);
+  border:1px solid var(--photon);border-radius:3px;padding:1px 6px;margin-left:8px}
 .instcard .datesrow{display:flex;flex-direction:column;gap:2px;font-family:var(--mono);
   font-size:10.5px;color:var(--muted-2)}
 .instcard .datesrow span{display:flex;align-items:center;gap:6px}
@@ -507,17 +512,27 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
     .order("updated_at", { ascending: false });
   if(instErr) console.error("Erreur chargement instruments :", instErr);
 
-  var allItems = (instruments || []).map(function(row){
+  // Ligne Supabase -> carte affichée (aussi utilisé après une duplication).
+  function toItem(row){
     return {
       id: row.id,
       name: row.name,
       type: "Multispectral", // seul type réellement disponible en V1 (Hyperspectral = à venir)
-      pct: 100, // un instrument sauvegardé est considéré complet en V1
+      // 04/10/2026 — brouillons : creer-instrument.html enregistre dans la
+      // config si l'instrument est incomplet (_draft), ce qui manque
+      // (_missing) et l'avancement sur les champs obligatoires (_pct). Un
+      // instrument enregistré avant ces clés est traité comme un brouillon :
+      // il n'a pas d'électronique, donc il ne peut pas servir à une simulation.
+      draft: !row.config || row.config._draft !== false,
+      missing: (row.config && row.config._missing) || [],
+      pct: (row.config && typeof row.config._pct === "number") ? row.config._pct
+           : ((row.config && row.config._draft === false) ? 100 : 0),
       desc: (row.config && row.config.description) || "Instrument configuré.",
-      modified: formatDate(row.updated_at),
+      modified: formatDate(row.updated_at || row.created_at),
       created: formatDate(row.created_at)
     };
-  });
+  }
+  var allItems = (instruments || []).map(toItem);
 
   var { data: results, error: resErr } = await supabaseClient
     .from("saved_results")
@@ -572,13 +587,21 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
     list.innerHTML = "";
     items.forEach(function(it){
       var a = document.createElement("a");
-      a.className = "instcard";
+      a.className = "instcard" + (it.draft ? " draft" : "");
       a.href = "creer-instrument.html?id=" + it.id;
+      // Carte d'un brouillon : tag, ce qui manque à la place de la
+      // description, avancement réel, et « Compléter » au lieu d'« Ouvrir ».
+      var desc = it.desc;
+      if(it.draft){
+        desc = it.missing.length
+          ? "Il manque : " + it.missing.slice(0, 4).join(", ") + (it.missing.length > 4 ? "…" : ".")
+          : "Instrument à compléter avant de pouvoir lancer une simulation.";
+      }
       a.innerHTML =
         "<div class='body'>"+
           "<div class='titlerow'>"+
             "<span><div class='name'>"+it.name+"</div>"+
-            "<div class='type'><i></i>"+it.type+"</div></span>"+
+            "<div class='type'><i></i>"+it.type+(it.draft ? "<span class='draftbadge'>Brouillon</span>" : "")+"</div></span>"+
             "<div class='menuwrap'>"+
               "<button class='menubtn' type='button' aria-label='Options' data-menu-toggle data-id='"+it.id+"'>⋮</button>"+
               "<div class='dropdown' data-menu='"+it.id+"'>"+
@@ -588,14 +611,14 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
               "</div>"+
             "</div>"+
           "</div>"+
-          "<p class='desc'>"+it.desc+"</p>"+
-          "<div><div class='pctrow'><span>Configuration complète</span><span>"+it.pct+" %</span></div>"+
+          "<p class='desc'>"+desc+"</p>"+
+          "<div><div class='pctrow'><span>"+(it.draft ? "Configuration incomplète" : "Configuration complète")+"</span><span>"+it.pct+" %</span></div>"+
           "<div class='track'><div class='fill' style='width:"+it.pct+"%'></div></div></div>"+
           "<div class='datesrow'>"+
             "<span>"+ICON_CAL+"Modifié le "+it.modified+"</span>"+
             "<span>"+ICON_CLOCK+"Créé le "+it.created+"</span>"+
           "</div>"+
-          "<div class='openrow'><span class='openbtn'>Ouvrir →</span></div>"+
+          "<div class='openrow'><span class='openbtn'>"+(it.draft ? "Compléter →" : "Ouvrir →")+"</span></div>"+
         "</div>";
       list.appendChild(a);
     });
@@ -716,15 +739,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
         alert("La duplication a échoué : " + insErr.message);
         return;
       }
-      allItems.unshift({
-        id: inserted.id,
-        name: inserted.name,
-        type: "Multispectral",
-        pct: 100,
-        desc: (inserted.config && inserted.config.description) || "Instrument configuré.",
-        modified: formatDate(inserted.updated_at || inserted.created_at),
-        created: formatDate(inserted.created_at)
-      });
+      allItems.unshift(toItem(inserted)); // la copie garde le tag brouillon de l'original
       render();
       return;
     }
