@@ -1026,6 +1026,14 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
     var fn = manageExisting ? "create-portal-session" : "create-checkout-session";
 
     var out = await callStripeFunction(fn);
+    // 04/10/2026 — la fonction a constaté dans Stripe que ce compte a déjà
+    // un abonnement en cours : aucune page de paiement n'est créée (pas
+    // d'abonnement en double). La base vient d'être réalignée ; on recharge
+    // en passant par l'affichage « activation » du retour de paiement.
+    if(out && out.already_subscribed){
+      window.location.href = "espace-personnel.html?checkout=success";
+      return;
+    }
     if(!out || !out.url){
       alert("Impossible d'ouvrir la page de paiement. Réessaie dans un instant.");
       subBtn.disabled = false;

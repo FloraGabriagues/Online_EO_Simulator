@@ -1219,8 +1219,14 @@ async function goSubscribe(){
       method: "POST",
       headers: { "Authorization": "Bearer " + s.access_token, "Content-Type": "application/json" }
     });
-    if(res.ok) url = (await res.json()).url;
-    else console.error("abonnement :", await res.text());
+    if(res.ok){
+      var out = await res.json();
+      // Déjà abonné d'après Stripe (base en retard ou fausse) : la fonction
+      // n'a pas créé de page de paiement et vient de réaligner la base. On
+      // recharge : l'accès est maintenant reconnu, la simulation peut partir.
+      if(out.already_subscribed){ window.location.reload(); return; }
+      url = out.url;
+    } else console.error("abonnement :", await res.text());
   } catch(e){ console.error("abonnement :", e); }
   if(!url){
     cta.disabled = false; cta.textContent = previous;
