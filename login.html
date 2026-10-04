@@ -133,6 +133,17 @@ if (urlParams.get("reason") === "other_device") {
   document.getElementById("authArea").insertBefore(banner, document.getElementById("authArea").firstChild);
 }
 
+// Retour après la suppression d'un compte (cf. espace-personnel.html,
+// Paramètres > Suppression) — confirmation que tout a été effacé.
+if (urlParams.get("reason") === "account_deleted") {
+  var delBanner = document.createElement("div");
+  delBanner.className = "msg ok";
+  delBanner.style.display = "block";
+  delBanner.style.marginBottom = "20px";
+  delBanner.textContent = "Votre compte et vos données ont été supprimés.";
+  document.getElementById("authArea").insertBefore(delBanner, document.getElementById("authArea").firstChild);
+}
+
 // ===================== Bascule connexion / inscription =====================
 document.querySelectorAll(".tab").forEach(function(tab){
   tab.addEventListener("click", function(){

@@ -772,6 +772,7 @@ async function loadInstruments(){
     var { data, error } = await supabaseClient
       .from("instruments")
       .select("*")
+      .is("deleted_at", null) // suppression douce (04/10/2026) : pas les instruments supprimés
       .order("updated_at", { ascending: false });
     if(error) throw error;
     instruments = data || [];

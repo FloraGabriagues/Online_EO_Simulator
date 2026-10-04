@@ -399,6 +399,7 @@ async function loadInstrument(){
     .from("instruments")
     .select("*")
     .eq("id", id)
+    .is("deleted_at", null) // suppression douce (04/10/2026) : un instrument supprimé ne s'ouvre plus
     .single();
 
   if(error || !data){
