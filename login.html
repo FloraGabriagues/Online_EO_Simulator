@@ -4,10 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Connexion — Nysa</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.00%22%20r%3D%229.4%22%20fill%3D%22none%22%20stroke%3D%22%235FDCD0%22%20stroke-width%3D%223.4%22/%3E%3Ccircle%20cx%3D%2233.53%22%20cy%3D%2218.50%22%20r%3D%229.4%22%20fill%3D%22none%22%20stroke%3D%22%235FDCD0%22%20stroke-width%3D%223.4%22/%3E%3Ccircle%20cx%3D%2233.53%22%20cy%3D%2229.50%22%20r%3D%229.4%22%20fill%3D%22none%22%20stroke%3D%22%235FDCD0%22%20stroke-width%3D%223.4%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2235.00%22%20r%3D%229.4%22%20fill%3D%22none%22%20stroke%3D%22%235FDCD0%22%20stroke-width%3D%223.4%22/%3E%3Ccircle%20cx%3D%2214.47%22%20cy%3D%2229.50%22%20r%3D%229.4%22%20fill%3D%22none%22%20stroke%3D%22%235FDCD0%22%20stroke-width%3D%223.4%22/%3E%3Ccircle%20cx%3D%2214.47%22%20cy%3D%2218.50%22%20r%3D%229.4%22%20fill%3D%22none%22%20stroke%3D%22%235FDCD0%22%20stroke-width%3D%223.4%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%224.6%22%20fill%3D%22%23F5AC57%22/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.70%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2234.30%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%225.3%22%20fill%3D%22%23FFB86B%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
@@ -15,7 +15,7 @@
   --line:#2E4152; --line-soft:#22323F;
   --paper:#E6EEF4; --muted:#9BADBD; --muted-2:#8497AA;
   --photon:#F5AC57; --pixel:#5FDCD0; --alert:#F0776D; --ok:#7FD88F;
-  --display:"Barlow Condensed",Impact,sans-serif;
+  --display:"Montserrat","IBM Plex Sans",system-ui,sans-serif;
   --body:"IBM Plex Sans",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
 }
@@ -27,15 +27,14 @@ body{background:var(--void);color:var(--paper);font-family:var(--body);
 
 .card{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--line-soft);
   border-radius:8px;padding:32px 30px}
-.brand{display:flex;align-items:center;gap:9px;margin-bottom:26px}
-.brand .mark{flex:none;width:30px;height:30px;display:block}
+.brand{display:flex;align-items:center;gap:11px;margin-bottom:26px}
+.brand .mark{flex:none;width:32px;height:32px;display:block}
 .brand .mark svg{width:100%;height:100%;display:block}
-.brand .name{font-family:var(--display);font-weight:600;font-size:20px;letter-spacing:.02em;
-  line-height:1.1}
-.brand .tag{font-family:var(--mono);font-size:10px;color:var(--muted-2);margin-top:1px;white-space:nowrap}
+.brand .name{font-family:var(--display);font-weight:500;font-size:21px;letter-spacing:.035em;line-height:1.05}
+.brand .tag{font-family:var(--display);font-weight:400;font-size:8.4px;letter-spacing:.115em;color:var(--muted-2);margin-top:3px;white-space:nowrap}
 
-h1{font-family:var(--display);font-weight:600;font-size:24px;text-transform:uppercase;
-  margin:0 0 6px;letter-spacing:-.005em}
+h1{font-family:var(--display);font-weight:500;font-size:21px;
+  margin:0 0 6px;letter-spacing:-.012em}
 .sub{font-size:13px;color:var(--muted);margin:0 0 22px}
 
 .tabs{display:flex;gap:0;border-bottom:1px solid var(--line-soft);margin-bottom:22px}
@@ -63,13 +62,18 @@ h1{font-family:var(--display);font-weight:600;font-size:24px;text-transform:uppe
 
 .formview{display:none}
 .formview.current{display:block}
+/* 05/10/2026 — charte Nysa : logo plus présent sur la page de connexion */
+.brand{gap:13px;margin-bottom:30px}
+.brand .mark{width:42px;height:42px}
+.brand .name{font-size:27px}
+.brand .tag{font-size:10px;margin-top:4px}
 </style>
 </head>
 <body>
 <div class="card">
   <div class="brand">
     <!-- 05/10/2026 — logo Nysa : la fleur à six pétales -->
-      <span class="mark"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24.00" cy="13.00" r="9.4" fill="none" stroke="#5FDCD0" stroke-width="2.6"/><circle cx="33.53" cy="18.50" r="9.4" fill="none" stroke="#5FDCD0" stroke-width="2.6"/><circle cx="33.53" cy="29.50" r="9.4" fill="none" stroke="#5FDCD0" stroke-width="2.6"/><circle cx="24.00" cy="35.00" r="9.4" fill="none" stroke="#5FDCD0" stroke-width="2.6"/><circle cx="14.47" cy="29.50" r="9.4" fill="none" stroke="#5FDCD0" stroke-width="2.6"/><circle cx="14.47" cy="18.50" r="9.4" fill="none" stroke="#5FDCD0" stroke-width="2.6"/><circle cx="24" cy="24" r="4.6" fill="#F5AC57"/></svg></span>
+      <span class="mark"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24.00" cy="13.70" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="32.92" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="32.92" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="24.00" cy="34.30" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="15.08" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="15.08" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="24" cy="24" r="5.3" fill="#FFB86B"/></svg></span>
     <span>
       <div class="name">Nysa</div>
       <div class="tag">EO Imaging Engineering</div>

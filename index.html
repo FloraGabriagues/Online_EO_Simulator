@@ -4,17 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Simulateur de qualité image — Nysa</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.00%22%20r%3D%229.4%22%20fill%3D%22none%22%20stroke%3D%22%235FDCD0%22%20stroke-width%3D%223.4%22/%3E%3Ccircle%20cx%3D%2233.53%22%20cy%3D%2218.50%22%20r%3D%229.4%22%20fill%3D%22none%22%20stroke%3D%22%235FDCD0%22%20stroke-width%3D%223.4%22/%3E%3Ccircle%20cx%3D%2233.53%22%20cy%3D%2229.50%22%20r%3D%229.4%22%20fill%3D%22none%22%20stroke%3D%22%235FDCD0%22%20stroke-width%3D%223.4%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2235.00%22%20r%3D%229.4%22%20fill%3D%22none%22%20stroke%3D%22%235FDCD0%22%20stroke-width%3D%223.4%22/%3E%3Ccircle%20cx%3D%2214.47%22%20cy%3D%2229.50%22%20r%3D%229.4%22%20fill%3D%22none%22%20stroke%3D%22%235FDCD0%22%20stroke-width%3D%223.4%22/%3E%3Ccircle%20cx%3D%2214.47%22%20cy%3D%2218.50%22%20r%3D%229.4%22%20fill%3D%22none%22%20stroke%3D%22%235FDCD0%22%20stroke-width%3D%223.4%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%224.6%22%20fill%3D%22%23F5AC57%22/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.70%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2234.30%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%225.3%22%20fill%3D%22%23FFB86B%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root{
   --void:#090E13; --panel:#131E27; --panel-2:#1A2833;
   --line:#2E4152; --line-soft:#22323F;
   --paper:#E6EEF4; --muted:#9BADBD; --muted-2:#8497AA;
   --photon:#F5AC57; --pixel:#5FDCD0; --alert:#F0776D;
-  --display:"Barlow Condensed",Impact,sans-serif;
+  --display:"Montserrat","IBM Plex Sans",system-ui,sans-serif;
   --body:"IBM Plex Sans",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,monospace;
 }
@@ -29,8 +29,8 @@ body{background:var(--void);color:var(--paper);font-family:var(--body);
 .eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.14em;
   text-transform:uppercase;color:var(--muted);margin:0 0 14px}
 .eyebrow b{color:var(--photon);font-weight:500}
-h1{font-family:var(--display);font-weight:600;font-size:clamp(32px,4.6vw,46px);
-  line-height:1.02;letter-spacing:-.005em;margin:0;text-transform:uppercase}
+h1{font-family:var(--display);font-weight:500;font-size:clamp(28px,4vw,39.5px);
+  line-height:1.18;margin:0;letter-spacing:-.012em}
 h1 .cool{color:var(--pixel)}
 .valueprop{margin:8px 0 0;color:var(--muted);font-size:15px}
 .thesis{max-width:60ch;margin:16px 0 0;color:var(--muted);font-size:17px;line-height:1.5}
@@ -79,8 +79,8 @@ h1 .cool{color:var(--pixel)}
   margin:0 0 16px;display:flex;align-items:center;gap:10px;color:var(--muted)}
 .grouphead .tag{margin-left:auto;letter-spacing:.08em;color:var(--muted-2);
   border:1px solid var(--line);border-radius:2px;padding:2px 7px;font-size:10px;text-transform:none}
-.steptitle{font-family:var(--display);font-weight:600;font-size:19px;
-  text-transform:uppercase;letter-spacing:.01em;color:var(--paper);margin:0 0 14px}
+.steptitle{font-family:var(--display);font-weight:600;font-size:16.5px;
+  color:var(--paper);margin:0 0 14px;letter-spacing:0}
 .steptitle .stepnum{color:var(--photon)}
 .dot{width:8px;height:8px;border-radius:50%;flex:none}
 .dot.warm{background:var(--photon)} .dot.cool{background:var(--pixel)} .dot.source{background:#b05bf1}
@@ -313,8 +313,8 @@ details.adv .inner{margin-top:16px}
 .headline.compact .hl-detail{margin-top:6px}
 .headline.compact .hl-detail summary{font-size:11px}
 .hl-item{background:var(--panel);padding:18px 20px}
-.hl-v{font-family:var(--display);font-size:clamp(28px,3.4vw,40px);font-weight:600;
-  line-height:1;color:var(--paper)}
+.hl-v{font-family:var(--display);font-size:clamp(24.5px,2.9vw,34.5px);font-weight:500;
+  line-height:1;color:var(--paper);letter-spacing:0;font-variant-numeric:tabular-nums}
 .hl-v.warm{color:var(--photon)} .hl-v.cool{color:var(--pixel)}
 .hl-k{font-size:12.5px;color:var(--muted);margin-top:6px}
 .hl-detail{margin-top:10px}
@@ -332,7 +332,7 @@ details.adv .inner{margin-top:16px}
 .metric.primary{background:#16232E}
 .metric-k{font-family:var(--mono);font-size:11.5px;letter-spacing:.11em;
   text-transform:uppercase;color:var(--muted)}
-.metric-v{font-family:var(--display);font-size:33px;line-height:1.05;margin-top:3px;font-weight:500}
+.metric-v{font-family:var(--display);font-size:26.5px;line-height:1.05;margin-top:3px;font-weight:500;letter-spacing:0;font-variant-numeric:tabular-nums}
 .metric-v u{text-decoration:none;font-size:17px;color:var(--muted);margin-left:4px;font-family:var(--mono)}
 .metric-v.warm{color:var(--photon)} .metric-v.cool{color:var(--pixel)}
 .metric-d{font-family:var(--mono);font-size:12.5px;margin-top:3px;min-height:19px;color:var(--muted-2)}
@@ -379,6 +379,12 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
   .col-r{position:static}
 }
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+/* 05/10/2026 — bloc de marque Nysa en tête de la démo */
+.nysabrand{display:inline-flex;align-items:center;gap:12px;text-decoration:none;margin:0 0 22px}
+.nysabrand .mark{flex:none;width:36px;height:36px;display:block}
+.nysabrand .mark svg{width:100%;height:100%;display:block}
+.nysabrand .name{display:block;font-family:var(--display);font-weight:500;font-size:23px;letter-spacing:.035em;line-height:1.05;color:var(--paper)}
+.nysabrand .tag{display:block;font-family:var(--display);font-weight:400;font-size:10px;letter-spacing:.115em;color:var(--muted);margin-top:3px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -386,6 +392,11 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
 
 <header class="masthead" style="display:flex;justify-content:space-between;align-items:flex-start;gap:24px">
   <div class="mast-l">
+    <!-- 05/10/2026 — charte Nysa : la démo publique porte maintenant la marque -->
+    <a class="nysabrand" href="index.html" aria-label="Nysa, EO Imaging Engineering">
+      <span class="mark"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24.00" cy="13.70" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="32.92" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="32.92" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="24.00" cy="34.30" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="15.08" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="15.08" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="24" cy="24" r="5.3" fill="#FFB86B"/></svg></span>
+      <span><span class="name">Nysa</span><span class="tag">EO Imaging Engineering</span></span>
+    </a>
     <h1>Simulateur d'imagerie <span class="cool">multispectrale</span></h1>
     <p class="valueprop">Optique, détecteur, acquisition : visualisez leur impact sur l'image avant de construire votre système.</p>
     <!-- retirée temporairement pour voir le rendu sans, cf. échange du 27/08
