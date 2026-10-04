@@ -1223,7 +1223,7 @@ function renderZernikeDetailHtml(cases){
           "<select id='zernColSel'></select>"+
         "</div>"+
         "<div id='zernOut'></div>"
-      : "<p class='empty'>Charge un cas WFE « fichier » ci-dessus pour voir le détail (un cas RMS n'a pas de coefficients détaillés).</p>")+
+      : "<p class='empty'>Chargez un cas WFE « fichier » ci-dessus pour voir le détail (un cas RMS n'a pas de coefficients détaillés).</p>")+
   "</div>";
 }
 
@@ -2084,7 +2084,7 @@ async function saveToSupabase(){
     var errHint = document.createElement("p");
     errHint.className = "savehint";
     errHint.style.color = "var(--alert)";
-    errHint.textContent = "Donne un nom à l'instrument avant de l'enregistrer.";
+    errHint.textContent = "Donnez un nom à l'instrument avant de l'enregistrer.";
     panelEl.appendChild(errHint);
     document.getElementById("instName").focus();
     return;

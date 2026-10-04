@@ -666,7 +666,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
             <img id="adminResultImg" style="display:block;max-width:none;
               image-rendering:pixelated;transform-origin:top left">
           </div>
-          <p class="note" style="margin-top:4px">Glisse le coin inférieur droit du cadre pour l'agrandir en hauteur, ou utilise le curseur "Hauteur du cadre" à droite.</p>
+          <p class="note" style="margin-top:4px">Glissez le coin inférieur droit du cadre pour l'agrandir en hauteur, ou utilisez le curseur "Hauteur du cadre" à droite.</p>
 
           <div style="margin-top:8px">
             <a id="adminDownloadLink" download="simulation_admin.png" class="reset"
@@ -788,7 +788,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
 
     <div class="tabpanel" id="admtp-graphs" role="tabpanel" aria-labelledby="admtab-graphs" hidden>
       <div id="adminGraphsContent">
-        <p class="note">Lance une simulation pour voir les graphes PSF et budget MTF par bande.</p>
+        <p class="note">Lancez une simulation pour voir les graphes PSF et budget MTF par bande.</p>
       </div>
     </div>
 
@@ -2186,7 +2186,7 @@ window.RENDER_HELP_G = {
       if(_cv) _cv.style.cursor = wbPicking ? "crosshair" : "";
       wbPickBtn.style.borderColor = wbPicking ? "var(--photon)" : "";
       wbPickBtn.style.color = wbPicking ? "var(--photon)" : "";
-      wbPickStatus.textContent = wbPicking ? "Clique sur un pixel qui devrait être neutre (blanc/gris)…" : "";
+      wbPickStatus.textContent = wbPicking ? "Cliquez sur un pixel qui devrait être neutre (blanc/gris)…" : "";
     });
   }
 
@@ -2236,7 +2236,7 @@ window.RENDER_HELP_G = {
       var r = sr / n, g = sg / n, b = sb / n;
 
       if(r < 5 && g < 5 && b < 5){
-        wbPickStatus.textContent = "Zone trop sombre (proche du noir) — choisis un point plus clair.";
+        wbPickStatus.textContent = "Zone trop sombre (proche du noir). Choisissez un point plus clair.";
         return;
       }
 

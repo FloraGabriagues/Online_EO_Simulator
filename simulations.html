@@ -1503,7 +1503,7 @@ async function launchSimulation(){
     // si besoin.
     var { data: freshSessionData, error: sessionErr } = await supabaseClient.auth.getSession();
     if(sessionErr || !freshSessionData.session){
-      throw new Error("Session expirée — reconnecte-toi puis relance la simulation.");
+      throw new Error("Session expirée : reconnectez-vous puis relancez la simulation.");
     }
     session = freshSessionData.session;
 

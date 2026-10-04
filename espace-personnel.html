@@ -619,7 +619,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
 
     if(items.length === 0){
       list.innerHTML = "<div class='instcard empty'><div class='elab'>Aucun instrument</div>"+
-        "<p class='esub'>Crée ton premier instrument pour commencer.</p></div>";
+        "<p class='esub'>Créez votre premier instrument pour commencer.</p></div>";
       return;
     }
     list.innerHTML = "";
@@ -903,7 +903,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
       subStatusDot.className = "pstatus warn";
       subStatusText.textContent = "Paiement échoué";
       subNote.className = "mnote err";
-      subNote.textContent = "Mets à jour ton moyen de paiement pour conserver l'accès.";
+      subNote.textContent = "Mettez à jour votre moyen de paiement pour conserver l'accès.";
       subBtn.textContent = "Mettre à jour le paiement";
       subBtn.className = "mbtn primary";
 
@@ -911,7 +911,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
       planBadge.textContent = "Gratuit";
       planBadge.classList.add("free");
       planName.textContent = "Aucun abonnement";
-      planDesc.textContent = "Passe au plan Individuel pour accéder au simulateur complet";
+      planDesc.textContent = "Passez au plan Individuel pour accéder au simulateur complet";
       subStatusDot.className = "pstatus pending";
       subStatusText.textContent = "Inactif";
       subNote.className = "mnote";
@@ -1057,7 +1057,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
       return;
     }
     if(!out || !out.url){
-      alert("Impossible d'ouvrir la page de paiement. Réessaie dans un instant.");
+      alert("Impossible d'ouvrir la page de paiement. Réessayez dans un instant.");
       subBtn.disabled = false;
       subBtn.textContent = previous;
       return;
@@ -1092,7 +1092,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
     }
     console.warn("Abonnement pas encore visible — webhook en retard ?");
     subNote.className = "mnote";
-    subNote.textContent = "Paiement enregistré. L'activation peut prendre quelques instants — recharge la page.";
+    subNote.textContent = "Paiement enregistré. L'activation peut prendre quelques instants : rechargez la page.";
     renderSubscription();
   })();
 

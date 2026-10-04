@@ -102,7 +102,7 @@ function frenchAuthError(error) {
     return "Adresse e-mail invalide.";
   }
   if (msg.includes("Email not confirmed")) {
-    return "Confirme d'abord ton adresse e-mail (lien envoyé à l'inscription) avant de te connecter.";
+    return "Confirmez d'abord votre adresse e-mail (lien envoyé à l'inscription) avant de vous connecter.";
   }
   return "Une erreur est survenue : " + msg;
 }

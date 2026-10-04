@@ -77,7 +77,7 @@ h1{font-family:var(--display);font-weight:600;font-size:24px;text-transform:uppe
 
   <div id="authArea">
     <h1>Accès au simulateur complet</h1>
-    <p class="sub">Connecte-toi ou crée un compte pour accéder à tes instruments et résultats.</p>
+    <p class="sub">Connectez-vous ou créez un compte pour accéder à vos instruments et résultats.</p>
 
     <div class="tabs" role="tablist">
       <button class="tab" type="button" data-view="login" aria-selected="true">Se connecter</button>
@@ -129,7 +129,7 @@ if (urlParams.get("reason") === "other_device") {
   banner.className = "msg err";
   banner.style.display = "block";
   banner.style.marginBottom = "20px";
-  banner.textContent = "Tu as été déconnecté·e car ce compte a été utilisé sur un autre appareil — une seule connexion à la fois est autorisée.";
+  banner.textContent = "Vous avez été déconnecté car ce compte a été utilisé sur un autre appareil. Une seule connexion à la fois est autorisée.";
   document.getElementById("authArea").insertBefore(banner, document.getElementById("authArea").firstChild);
 }
 
@@ -189,7 +189,17 @@ document.getElementById("signupForm").addEventListener("submit", async function(
   var email = document.getElementById("signupEmail").value.trim();
   var password = document.getElementById("signupPassword").value;
 
-  var { data, error } = await supabaseClient.auth.signUp({ email: email, password: password });
+  // 04/10/2026 — adresse de retour du lien de confirmation envoyé par e-mail.
+  // Sans elle, Supabase utilise son « Site URL », qui vaut localhost:3000
+  // par défaut : le lien menait à une page inaccessible. On revient sur
+  // cette page de connexion, à l'adresse réelle du site. Cette adresse doit
+  // aussi figurer dans Supabase (Authentication > URL Configuration >
+  // Redirect URLs), sinon Supabase l'ignore.
+  var { data, error } = await supabaseClient.auth.signUp({
+    email: email,
+    password: password,
+    options: { emailRedirectTo: new URL("login.html", window.location.href).href }
+  });
 
   btn.disabled = false;
   if (error) {
@@ -203,7 +213,7 @@ document.getElementById("signupForm").addEventListener("submit", async function(
   // alors null même si le compte est bien créé).
   if (!data.session) {
     msgEl.className = "msg ok";
-    msgEl.textContent = "Compte créé — vérifie ta boîte mail pour confirmer ton adresse avant de te connecter.";
+    msgEl.textContent = "Compte créé. Vérifiez votre boîte mail pour confirmer votre adresse avant de vous connecter.";
     return;
   }
   await registerSessionMarker(data.user.id);
