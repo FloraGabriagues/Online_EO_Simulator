@@ -163,6 +163,11 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 /* 04/10/2026 — résultat dont l'instrument a été supprimé */
 .instgone{font-family:var(--mono);font-size:10.5px;color:var(--photon);
   border:1px solid var(--photon);border-radius:3px;padding:1px 6px;margin-left:8px;white-space:nowrap}
+/* Sur une carte de la liste : posée sur l'image, en haut à gauche, sur un
+   fond sombre pour rester lisible quelle que soit l'image. */
+.resultcard .thumb{position:relative}
+.resultcard .thumb .instgone{position:absolute;top:10px;left:10px;margin:0;padding:2px 7px;
+  background:rgba(9,14,19,.82)}
 .resultcard .meta{font-family:var(--mono);font-size:11px;color:var(--muted-2)}
 .resultcard .metrics{display:flex;gap:12px;font-family:var(--mono);font-size:11px;color:var(--muted-2);
   border-top:1px solid var(--line-soft);padding-top:8px;margin-top:2px}
@@ -676,10 +681,11 @@ async function renderResultsList(){
     card.className = "resultcard";
     card.innerHTML =
       "<a href='resultats.html?id=" + r.id + "' style='text-decoration:none;color:inherit'>"+
-        "<span class='thumb' style='background-image:url(\"" + thumbUrl + "\")'></span>"+
+        "<span class='thumb' style='background-image:url(\"" + thumbUrl + "\")'>"+
+          (instGone ? "<span class='instgone'>Instrument supprimé</span>" : "")+"</span>"+
         "<div class='body'>"+
           "<div class='name'>" + displayName + "</div>"+
-          "<div class='inst'>" + instName + (instGone ? "<span class='instgone'>Instrument supprimé</span>" : "") + "</div>"+
+          "<div class='inst'>" + instName + "</div>"+
           "<div class='meta'>" + dateLabel + "</div>"+
           (wfeCaseName ? "<span class='wfebadge'>Cas WFE : " + wfeCaseName + "</span>" : "")+
           (mtfAvg != null || snrAvg != null
