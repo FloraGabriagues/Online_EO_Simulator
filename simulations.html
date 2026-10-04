@@ -247,6 +247,32 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .modal-overlay{position:fixed;inset:0;background:rgba(5,8,11,.72);backdrop-filter:blur(2px);
   display:none;align-items:center;justify-content:center;z-index:100;padding:24px}
 .modal-overlay.open{display:flex}
+/* 04/10/2026 — incitation à l'abonnement (compte sans accès au simulateur) */
+.paywall{width:100%;max-width:470px;background:var(--panel);border:1px solid var(--photon);
+  border-radius:12px;padding:30px 30px 24px;box-shadow:0 18px 60px rgba(0,0,0,.55);position:relative}
+.paywall .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--photon)}
+.paywall h2{font-family:var(--display);font-weight:600;font-size:27px;line-height:1.15;text-transform:uppercase;
+  margin:8px 0 12px;color:var(--paper)}
+.paywall p{font-size:14px;line-height:1.55;color:var(--muted);margin:0 0 16px}
+.paywall ul{list-style:none;margin:0 0 20px;padding:0;display:flex;flex-direction:column;gap:9px}
+.paywall li{display:flex;gap:10px;font-size:13.5px;line-height:1.45;color:var(--paper)}
+.paywall li::before{content:"✓";color:var(--pixel);flex:none;font-weight:600}
+.paywall .cta{width:100%;border:1px solid var(--photon);background:var(--photon);color:#0B1116;
+  font-family:var(--mono);font-size:13.5px;font-weight:600;letter-spacing:.02em;padding:13px 18px;
+  border-radius:6px;cursor:pointer;transition:background .14s}
+.paywall .cta:hover{background:#FFBE72}
+.paywall .cta:disabled{opacity:.6;cursor:default}
+.paywall .later{display:block;width:100%;background:none;border:none;color:var(--muted-2);
+  font-family:var(--body);font-size:12.5px;padding:12px 0 0;cursor:pointer}
+.paywall .later:hover{color:var(--paper)}
+.paywall .perr{font-size:12.5px;color:var(--alert);margin:10px 0 0;text-align:center}
+.paybanner{display:none;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;
+  background:rgba(245,172,87,.09);border:1px solid rgba(245,172,87,.45);border-radius:8px;
+  padding:11px 16px;margin:0 0 18px;font-size:13.5px;color:var(--paper)}
+.paybanner.show{display:flex}
+.paybanner button{flex:none;border:1px solid var(--photon);background:var(--photon);color:#0B1116;
+  font-family:var(--mono);font-size:12px;font-weight:600;padding:8px 14px;border-radius:5px;cursor:pointer}
+.paybanner button:hover{background:#FFBE72}
 .modal{width:100%;max-width:820px;height:min(640px,88vh);background:var(--panel);
   border:1px solid var(--line-soft);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
 .modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;
@@ -394,6 +420,11 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 
       <div class="steps" id="stepsHost"></div>
 
+      <!-- 04/10/2026 — compte sans abonnement actif : rappel permanent -->
+      <div class="paybanner" id="payBanner">
+        <span id="payBannerText">Vous pouvez préparer votre simulation ; l'abonnement permet de la lancer.</span>
+        <button type="button" id="payBannerBtn">S'abonner</button>
+      </div>
       <div class="wizardgrid" id="wizardGrid">
         <div class="wizardmain">
 
@@ -567,6 +598,21 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 
 </div>
 
+<!-- 04/10/2026 — fenêtre d'incitation à l'abonnement. Affichée à l'arrivée
+     sur la page pour un compte sans accès, et à chaque tentative de
+     lancement. Les textes sont remplis par renderPaywall(). -->
+<div class="modal-overlay" id="paywallOverlay">
+  <div class="paywall" role="dialog" aria-modal="true" aria-labelledby="paywallTitle">
+    <div class="eyebrow" id="paywallEyebrow">Simulateur complet</div>
+    <h2 id="paywallTitle">—</h2>
+    <p id="paywallText">—</p>
+    <ul id="paywallList"></ul>
+    <button class="cta" type="button" id="paywallCta">—</button>
+    <button class="later" type="button" id="paywallLater">—</button>
+    <p class="perr" id="paywallErr" hidden></p>
+  </div>
+</div>
+
 <div class="modal-overlay" id="settingsOverlay">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <div class="modal-head">
@@ -703,6 +749,7 @@ document.getElementById("fAeroLoadKind").addEventListener("change", function(e){
 
 var currentStep = 1;
 function showStep(n){
+  if(n === 4 && !hasSimAccess()){ openPaywall(); return; } // pas de lancement sans accès (04/10/2026)
   currentStep = n;
   document.querySelectorAll(".stepview").forEach(function(v){
     v.classList.toggle("current", Number(v.dataset.step) === n);
@@ -1074,9 +1121,112 @@ function updateSummary(){
     document.getElementById("sumCondSlot").innerHTML = "<span class='empty'>—</span>";
   }
 }
+// ===================== Accès au simulateur (04/10/2026) =====================
+// Un compte sans abonnement actif peut tout préparer (scène, instrument,
+// conditions) mais pas lancer. Avant, il ne l'apprenait qu'après avoir
+// cliqué sur « Lancer », par une ligne d'erreur du serveur. Désormais :
+//   - une fenêtre s'ouvre dès l'arrivée sur la page ;
+//   - un bandeau reste affiché au-dessus de l'assistant ;
+//   - le bouton de lancement devient « S'abonner pour lancer ».
+// Ce n'est qu'un affichage : le vrai contrôle reste celui du serveur
+// (main.py, _require_active_plan), dont la règle est reprise ici à
+// l'identique — plan payant, statut « active », échéance absente ou future.
+var FUNCTIONS_URL = "https://hmnlxbpcfqxdezucxsep.supabase.co/functions/v1";
+var PAID_PLANS = ["individuel", "equipe"];
+var entitlement = null;     // ligne account_entitlements du compte, ou null
+var accessKnown = false;    // false tant que la lecture n'a pas abouti : on ne bloque rien
+function hasSimAccess(){
+  if(!accessKnown) return true;
+  if(!entitlement) return false;
+  if(PAID_PLANS.indexOf(entitlement.plan) < 0 || entitlement.subscription_status !== "active") return false;
+  if(entitlement.current_period_end && new Date(entitlement.current_period_end) <= new Date()) return false;
+  return true;
+}
+function paymentPending(){ return !!entitlement && entitlement.subscription_status === "past_due"; }
+async function loadEntitlement(){
+  try {
+    var { data, error } = await supabaseClient
+      .from("account_entitlements")
+      .select("plan, subscription_status, current_period_end")
+      .maybeSingle();
+    if(error) throw error;
+    entitlement = data || null;
+    accessKnown = true;
+  } catch(e){
+    // Lecture impossible (aperçu, réseau) : on n'affiche rien, le serveur tranchera.
+    console.warn("Lecture de l'abonnement impossible :", e);
+  }
+}
+function renderPaywall(){
+  var pending = paymentPending();
+  document.getElementById("paywallTitle").textContent = pending
+    ? "Votre paiement n'a pas abouti"
+    : "Voyez l'image que produit votre instrument";
+  document.getElementById("paywallText").textContent = pending
+    ? "Votre abonnement est suspendu tant que le paiement n'est pas régularisé. Mettez à jour votre moyen de paiement pour relancer vos simulations."
+    : "Vos instruments et vos réglages sont prêts. L'abonnement lance la simulation et vous donne l'image, mesurée de bout en bout.";
+  document.getElementById("paywallList").innerHTML = pending ? "" :
+    "<li>La chaîne physique complète, du photon au pixel, sur vos propres paramètres</li>"+
+    "<li>Image simulée, MTF et SNR par bande</li>"+
+    "<li>Jusqu'à 20 instruments et 20 résultats sauvegardés</li>";
+  document.getElementById("paywallCta").textContent = pending ? "Mettre à jour le paiement" : "S'abonner — 199 €/mois";
+  document.getElementById("paywallLater").textContent = pending ? "Plus tard" : "Continuer sans lancer de simulation";
+  document.getElementById("payBannerText").textContent = pending
+    ? "Paiement en attente : vos simulations sont suspendues."
+    : "Vous pouvez préparer votre simulation ; l'abonnement permet de la lancer.";
+  document.getElementById("payBannerBtn").textContent = pending ? "Mettre à jour le paiement" : "S'abonner";
+}
+function openPaywall(){
+  renderPaywall();
+  document.getElementById("paywallErr").hidden = true;
+  document.getElementById("paywallOverlay").classList.add("open");
+}
+function closePaywall(){ document.getElementById("paywallOverlay").classList.remove("open"); }
+// Même aiguillage que le bouton d'abonnement des paramètres
+// (espace-personnel.html) : page de paiement pour un compte jamais abonné,
+// portail client sinon.
+async function goSubscribe(){
+  var cta = document.getElementById("paywallCta"), errEl = document.getElementById("paywallErr");
+  var previous = cta.textContent;
+  cta.disabled = true; cta.textContent = "Redirection…"; errEl.hidden = true;
+  var url = null;
+  try {
+    var { data: { session: s } } = await supabaseClient.auth.getSession();
+    if(!s){ window.location.href = "login.html"; return; }
+    var neverSubscribed = (!entitlement || entitlement.plan === "free") && !paymentPending();
+    var res = await fetch(FUNCTIONS_URL + "/" + (neverSubscribed ? "create-checkout-session" : "create-portal-session"), {
+      method: "POST",
+      headers: { "Authorization": "Bearer " + s.access_token, "Content-Type": "application/json" }
+    });
+    if(res.ok) url = (await res.json()).url;
+    else console.error("abonnement :", await res.text());
+  } catch(e){ console.error("abonnement :", e); }
+  if(!url){
+    cta.disabled = false; cta.textContent = previous;
+    errEl.textContent = "Impossible d'ouvrir la page de paiement. Réessayez dans un instant.";
+    errEl.hidden = false;
+    return;
+  }
+  window.location.href = url;
+}
+document.getElementById("paywallCta").addEventListener("click", goSubscribe);
+document.getElementById("paywallLater").addEventListener("click", closePaywall);
+document.getElementById("payBannerBtn").addEventListener("click", openPaywall);
+document.getElementById("paywallOverlay").addEventListener("click", function(e){
+  if(e.target === e.currentTarget) closePaywall(); // clic en dehors de la fenêtre
+});
+
 function updatePanelButton(){
   var btn = document.getElementById("panelActionBtn");
   if(currentStep === 3){
+    if(!hasSimAccess()){
+      // Compte sans accès : le bouton ouvre la fenêtre d'abonnement.
+      btn.textContent = paymentPending() ? "🔒 Régulariser le paiement" : "🔒 S'abonner pour lancer";
+      btn.disabled = false;
+      btn.onclick = openPaywall;
+      updateSummary();
+      return;
+    }
     btn.textContent = "▶ Lancer la simulation";
     btn.disabled = selectedInstIdx < 0;
     btn.onclick = function(){ showStep(4); };
@@ -1735,6 +1885,16 @@ async function initSettingsModal(session){
   }
 
   await loadInstruments();
+
+  // Accès au simulateur (04/10/2026) : sans abonnement actif, on le dit
+  // tout de suite — bandeau permanent et fenêtre à l'arrivée.
+  await loadEntitlement();
+  if(!hasSimAccess()){
+    renderPaywall();
+    document.getElementById("payBanner").classList.add("show");
+    updatePanelButton();
+    openPaywall();
+  }
 
   // Retour depuis creer-instrument.html?return=simulations (cf. échange
   // du 18/09/2026) : instrument tout juste créé, on le sélectionne et on

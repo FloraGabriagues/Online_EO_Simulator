@@ -1,0 +1,16 @@
+{
+  "Formulaire": {
+    "name": "Demo",
+    "electronics_mode": "full_scale"
+  },
+  "Telescope": {
+    "D": 0.3,
+    "iFoV": 0.000002,
+    "central_obscuration": 0.1
+  },
+  "Detector": {
+    "pixel_pitch": 0.0000044,
+    "full_well": 80000,
+    "bits": 12
+  }
+}
