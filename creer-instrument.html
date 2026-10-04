@@ -432,6 +432,7 @@ function inUnitRange(v){
 // ===================== Règles de saisie par champ (04/10/2026) =====================
 // UNE table pour toutes les contraintes, à ajuster ici :
 //   integer   : nombre entier (le point décimal est refusé à la frappe)
+//   signed    : signe moins autorisé en tête (WFE uniquement)
 //   positive  : strictement positif (0 refusé, en rouge, bloque l'enregistrement)
 //   enabledIf : champ saisissable seulement si cet autre champ est > 0
 //   plausible : [min, max] de la plage habituelle. En dehors, alerte ORANGE
@@ -464,7 +465,7 @@ var FIELD_RULES = {
   CWF:          {positive:true, plausible:[0.001, 10]},     // DN/e⁻
   DN0:          {integer:true},                             // DN
   bits_TDI:     {integer:true, plausible:[0, 32]},          // bits
-  W:            {plausible:[0, 200]}                        // nm
+  W:            {signed:true, plausible:[0, 200]}           // nm — signe moins autorisé
 };
 // Plage habituelle des longueurs d'onde d'une courbe spectrale (nm) : en
 // dehors, alerte orange (erreur d'unité probable, µm au lieu de nm).
@@ -501,6 +502,7 @@ function softMessage(f){
   var r = fieldRule(f), v = Number(state.values[f.k]), u = f.unit && f.unit !== "0 à 1" ? " " + f.unit : "";
   if(f.k === "E" && isFilled("D") && v > 0.5 * Number(state.values.D)) return "Valeur inhabituelle : obscuration supérieure à la moitié du diamètre.";
   if(!r.plausible) return "";
+  if(r.signed) v = Math.abs(v);
   var lo = r.plausible[0], hi = r.plausible[1];
   if(v > hi) return "Valeur inhabituelle : en général " + (lo > 0 ? "entre " + lo + " et " + hi : "jusqu'à " + hi) + u + ".";
   if(lo > 0 && v < lo) return "Valeur inhabituelle : en général entre " + lo + " et " + hi + u + ".";
@@ -594,7 +596,6 @@ function invalidEntries(){
         var st = curveStatus(state.values[lock.arr], lock.key);
         if(Object.keys(st.range).length) out.push("courbe spectrale (" + f.label.toLowerCase() + ") : valeur hors de 0 à 1");
         if(Object.keys(st.dup).length) out.push("courbe spectrale (" + f.label.toLowerCase() + ") : longueur d'onde en double");
-        if(st.valid.length < 2) out.push("courbe spectrale (" + f.label.toLowerCase() + ") : au moins 2 points valides");
       }
     });
   });
@@ -669,23 +670,41 @@ function wireSpectralEnter(selector, idxAttr, wlClass, valClass, addBtnId){
 function fieldVisible(f){
   return !f.modes || f.modes.indexOf(state.values.electronics_mode) >= 0;
 }
-function fieldCounts(f){
-  if(!fieldVisible(f) || f.optional || fieldDisabled(f)) return false;
-  if(f.requiredIf) return Number(state.values[f.requiredIf]) > 0;
-  return true;
+// 04/10/2026 — UNE définition de « champ obligatoire », partagée par
+// l'avancement (barre, coches des blocs) et par le statut de brouillon :
+//   - champs marqués « obligatoire » (iFoV, diamètre, largeur pixel,
+//     résolution ADC, full well, champs du mode d'électronique affiché) ;
+//   - le mode d'électronique ;
+//   - l'épaisseur des supports dès qu'un nombre de supports est saisi ;
+//   - le temps de référence dès qu'une DSNU est saisie ;
+//   - la courbe (2 points valides) quand le mode « Courbe » est choisi.
+// Les champs qui ont une valeur par défaut ne comptent plus : un
+// instrument sans obscuration atteint 100 % sans rien saisir dans ce champ.
+function fieldRequired(f){
+  if(!fieldVisible(f) || fieldDisabled(f)) return false;
+  if(SPECTRAL_LOCKS[f.k] && spectralActive(f.k)) return true;
+  if(f.k === "ESUP") return Number(state.values.NSUP) > 0;
+  return f.placeholder === "obligatoire" || f.k === "electronics_mode"
+    || (!!f.requiredIf && Number(state.values[f.requiredIf]) > 0);
 }
+function fieldCounts(f){ return fieldRequired(f); }
 // Champs manquants pour pouvoir enregistrer : électronique complète
 // (résolution ADC, full well, mode et champs du mode) et temps de
 // référence si une DSNU est saisie. Retourne la liste des libellés.
+// 04/10/2026 (brouillons) — ces manques n'empêchent plus d'enregistrer :
+// l'instrument est alors enregistré comme BROUILLON (config._draft = true),
+// tagué dans les listes et non sélectionnable pour une simulation tant
+// qu'il n'est pas complet. Sont exigés pour un instrument complet : tous
+// les champs marqués « obligatoire » (iFoV, diamètre, largeur pixel,
+// résolution ADC, full well, champs du mode d'électronique), le mode
+// d'électronique, le temps de référence si une DSNU est saisie, et au
+// moins 2 points valides pour une courbe en mode « Courbe ».
 function missingRequired(){
   var missing = [];
   instrumentNode.blocks.forEach(function(b){
-    if(b.id !== "electronique" && b.id !== "detecteur") return;
     b.fields.forEach(function(f){
-      var required = (b.id === "electronique" && (f.k === "ADC" || f.k === "FW" || f.k === "electronics_mode"))
-        || (f.modes && fieldVisible(f) && !f.optional)
-        || (f.requiredIf && Number(state.values[f.requiredIf]) > 0);
-      if(required && !isFilled(f.k)) missing.push(f.label);
+      if(!fieldRequired(f) || fieldFilled(f)) return;
+      missing.push(SPECTRAL_LOCKS[f.k] && spectralActive(f.k) ? "courbe spectrale (" + f.label.toLowerCase() + ")" : f.label);
     });
   });
   return missing;
@@ -698,9 +717,13 @@ function blockStatus(block){
     counted++;
     if(fieldFilled(f)) filled++;
   });
-  if(filled === 0) return "empty";
-  if(filled < counted) return "warn";
-  return "ok";
+  // Bloc sans champ obligatoire (ex. Performance WFE) : coché dès qu'il
+  // contient une saisie. Sinon : coché quand tous les obligatoires sont
+  // remplis, vide quand rien n'est saisi, en cours entre les deux.
+  var anyEntry = block.fields.some(function(f){ return isFilled(f.k); });
+  if(counted === 0) return anyEntry ? "ok" : "empty";
+  if(filled === counted) return "ok";
+  return (filled === 0 && !anyEntry) ? "empty" : "warn";
 }
 
 function overallPct(){
@@ -736,12 +759,14 @@ panelEl.addEventListener("input", function(e){
   if(!el.matches || !el.matches("input[data-num]")) return;
   var raw = el.value, pos = el.selectionStart;
   var v = raw.replace(/,/g, ".").replace(/[^0-9.]/g, "");
+  var neg = el.hasAttribute("data-neg") && /^\s*-/.test(raw); // un seul signe moins, en tête
   if(el.hasAttribute("data-int")){
     v = v.replace(/\./g, "");
   } else {
     var dot = v.indexOf(".");
     if(dot >= 0) v = v.slice(0, dot + 1) + v.slice(dot + 1).replace(/\./g, "");
   }
+  if(neg) v = "-" + v;
   if(v !== raw){
     el.value = v;
     try{ var p = Math.max(0, pos - (raw.length - v.length)); el.setSelectionRange(p, p); }catch(_){}
@@ -895,7 +920,7 @@ function renderPanel(){
           var ol = (typeof opt === "object") ? opt.label : opt;
           return "<option value='"+ov+"'"+(String(v) === String(ov) ? " selected" : "")+">"+ol+"</option>"; }).join("") + "</select>"
       : "<input type='text' inputmode='"+(fieldRule(f).integer ? "numeric" : "decimal")+"' autocomplete='off' data-num"+
-          (fieldRule(f).integer ? " data-int" : "")+" id='f-"+f.k+"'"+valueAttr+placeholderAttr+">";
+          (fieldRule(f).integer ? " data-int" : "")+(fieldRule(f).signed ? " data-neg" : "")+" id='f-"+f.k+"'"+valueAttr+placeholderAttr+">";
     var helpBtn = f.help ? "<button type='button' class='helpbtn' data-help='"+f.k+"' aria-label='Aide'>?</button>" : "";
     var helpTxt = f.help ? "<p class='fieldhelp' id='h-"+f.k+"' hidden>"+f.help+"</p>" : "";
     // Champ obligatoire seulement si un autre est non nul (ex. temps de
@@ -1412,8 +1437,11 @@ function wireWfeCasesUI(){
     if(name === null || !name.trim()) return;
     var rmsStr = prompt("WFE RMS pour ce cas (nm) :");
     if(rmsStr === null) return;
-    var rms = Number(String(rmsStr).replace(",", "."));
-    if(isNaN(rms)){ alert("Valeur RMS invalide."); return; }
+    // 04/10/2026 — chiffres uniquement, avec un point ou une virgule
+    // décimale et un signe moins en tête autorisé ; rien d'autre.
+    var rmsClean = String(rmsStr).trim().replace(",", ".");
+    if(!/^-?\d+(\.\d+)?$/.test(rmsClean)){ alert("Valeur invalide : un nombre est attendu (chiffres, signe moins autorisé)."); return; }
+    var rms = Number(rmsClean);
     if(!state.values.wfeCases) state.values.wfeCases = [];
     state.values.wfeCases.push({
       id: (crypto.randomUUID ? crypto.randomUUID() : String(Date.now())),
@@ -2070,15 +2098,11 @@ async function saveToSupabase(){
     panelEl.appendChild(invHint);
     return;
   }
+  // Brouillon : enregistré quand même, avec la liste de ce qui manque. Les
+  // deux clés commencent par « _ » : ce ne sont pas des saisies.
   var missing = missingRequired();
-  if(missing.length){
-    var missHint = document.createElement("p");
-    missHint.className = "savehint";
-    missHint.style.color = "var(--alert)";
-    missHint.textContent = "À renseigner avant d'enregistrer : " + missing.join(", ") + ".";
-    panelEl.appendChild(missHint);
-    return;
-  }
+  state.values._draft = missing.length > 0;
+  state.values._missing = missing;
 
   btn.disabled = true;
   var hint = document.createElement("p");
@@ -2131,6 +2155,12 @@ async function saveToSupabase(){
     window.history.replaceState(null, "", newUrl);
   }
 
+  markSaved(); // l'état enregistré devient la référence
+  if(missing.length){
+    hint.style.color = "var(--photon)";
+    hint.textContent = "Enregistré comme brouillon. Il manque : " + missing.join(", ") + ".";
+    return; // pas de retour automatique vers la page Simulations pour un brouillon
+  }
   hint.style.color = "var(--ok)";
   hint.textContent = "Enregistré.";
 
@@ -2153,10 +2183,29 @@ function updateProgress(){
   if(exp) exp.hidden = !hasAnyEntry();
 }
 
+// ===================== Modifications non enregistrées (04/10/2026) =====================
+// Rien n'est sauvegardé avant le clic sur « Enregistrer ». On garde une
+// photo de l'état au chargement et après chaque enregistrement ; si l'état
+// courant en diffère quand on quitte la page (fermeture d'onglet,
+// rechargement, clic sur « Mes objets »…), le navigateur demande
+// confirmation. Le texte de ce message est imposé par le navigateur.
+var savedSnapshot = null;
+function currentSnapshot(){
+  return JSON.stringify({ name: document.getElementById("instName").value, values: state.values });
+}
+function markSaved(){ savedSnapshot = currentSnapshot(); }
+function isDirty(){ return savedSnapshot !== null && currentSnapshot() !== savedSnapshot; }
+window.addEventListener("beforeunload", function(e){
+  if(!isDirty()) return;
+  e.preventDefault();
+  e.returnValue = "";
+});
+
 // ===================== Export de la configuration (04/10/2026) =====================
 // Au moins une saisie : un champ rempli, un point de courbe ou un cas WFE.
 function hasAnyEntry(){
   return Object.keys(state.values).some(function(k){
+    if(k.charAt(0) === "_") return false; // clés internes (_draft, _missing)
     var v = state.values[k];
     if(Array.isArray(v)) return v.length > 0;
     return v !== undefined && v !== null && v !== "";
@@ -2266,6 +2315,13 @@ document.getElementById("fileInput").addEventListener("change", function(e){
     try{
       var data = JSON.parse(reader.result);
 
+      // 04/10/2026 — le fichier REMPLACE la saisie en cours au lieu de s'y
+      // ajouter (avant, charger un second fichier mélangeait deux
+      // instruments). Confirmation si le formulaire contient déjà quelque
+      // chose. L'instrument ouvert reste le même : seul son contenu change.
+      if(hasAnyEntry() && !confirm("Charger ce fichier remplace toute la saisie en cours. Continuer ?")) return;
+      state.values = {};
+
       // Format réel du paramFile EO_Toolbox (imbriqué, Telescope/Detector/...)
       // — même structure que produit paramfile_builder.py côté serveur.
       // Chaque champ est optionnel : un paramFile partiel ne casse pas
@@ -2329,6 +2385,7 @@ document.getElementById("fileInput").addEventListener("change", function(e){
     }
   };
   reader.readAsText(file);
+  e.target.value = ""; // permet de recharger le même fichier ensuite
 });
 
 (async function(){
@@ -2336,6 +2393,7 @@ document.getElementById("fileInput").addEventListener("change", function(e){
   if(!session) return; // requireAuth a déjà redirigé vers login.html
 
   await loadInstrument(); // no-op si pas de ?id= dans l'URL (création)
+  markSaved(); // référence pour détecter les modifications non enregistrées
   updateProgress();
   renderSchema();
   renderChain();

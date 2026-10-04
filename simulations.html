@@ -116,9 +116,16 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(22px,2.6vw,28px);
 .specs{font-size:12px;color:var(--muted);margin-top:6px;line-height:1.6}
 
 .instoption{display:flex;gap:14px;align-items:center;width:100%;text-align:left;
+  color:var(--paper);font-family:inherit; /* 04/10/2026 : sans couleur, un <button> prend le noir du navigateur */
   background:var(--panel-2);border:2px solid var(--line-soft);border-radius:6px;
   padding:14px 16px;margin-bottom:10px;cursor:pointer;transition:border-color .14s}
 .instoption.selected{border-color:var(--pixel)}
+/* 04/10/2026 — instrument enregistré incomplet : tagué, non sélectionnable */
+.instoption.draft{border-style:dashed}
+.instoption.draft .name{color:var(--muted)}
+.instoption .draftbadge{font-family:var(--mono);font-size:10.5px;color:var(--photon);
+  border:1px solid var(--photon);border-radius:3px;padding:1px 6px;margin-right:8px}
+.instoption .draftgo{margin-left:auto;flex:none;font-family:var(--mono);font-size:11.5px;color:var(--photon)}
 .instoption .thumb{width:44px;height:44px;border-radius:4px;flex:none;
   background:linear-gradient(135deg,#182734 0%,#0E161E 100%);border:1px solid var(--line-soft)}
 .instoption .name{font-family:var(--display);font-weight:600;font-size:15px;text-transform:uppercase}
@@ -750,8 +757,15 @@ var instListEl = document.getElementById("instList");
 // pour prévisualiser l'UI. Sur le site réel, supabaseClient répond
 // normalement et ce repli n'est jamais utilisé.
 var PREVIEW_FALLBACK_INSTRUMENTS = [
-  { id: "preview-demo", name: "Instrument (aperçu)", config: { wfeCases: [] } }
+  { id: "preview-demo", name: "Instrument (aperçu)", config: { wfeCases: [], _draft: false } }
 ];
+// Brouillon (04/10/2026) : instrument enregistré sans tous ses champs
+// obligatoires (cf. creer-instrument.html, config._draft). Il apparaît dans
+// la liste avec un tag, mais ne peut pas servir à une simulation : le clic
+// ouvre l'instrument pour le compléter. Un instrument enregistré avant ce
+// tag n'a pas la clé : il est traité comme un brouillon, puisqu'il n'a pas
+// d'électronique.
+function isDraft(inst){ return !inst.config || inst.config._draft !== false; }
 async function loadInstruments(){
   try {
     if(typeof supabaseClient === "undefined") throw new Error("supabaseClient indisponible");
@@ -765,7 +779,7 @@ async function loadInstruments(){
     console.warn("Chargement instruments impossible, repli aperçu :", e);
     instruments = PREVIEW_FALLBACK_INSTRUMENTS;
   }
-  if(instruments.length > 0) selectedInstIdx = 0;
+  selectedInstIdx = instruments.findIndex(function(inst){ return !isDraft(inst); }); // premier instrument complet, ou -1
   renderInstruments();
   renderWfeCaseOptions();
   updateSummary();
@@ -783,6 +797,22 @@ function renderInstruments(){
   instruments.forEach(function(inst, i){
     var b = document.createElement("button");
     b.type = "button";
+    if(isDraft(inst)){
+      var miss = (inst.config && inst.config._missing) || [];
+      b.className = "instoption draft";
+      b.title = miss.length ? "Il manque : " + miss.join(", ") : "Instrument à compléter";
+      b.innerHTML =
+        "<span class='thumb'></span>"+
+        "<span><div class='name'>" + inst.name + "</div>"+
+        "<div class='meta'><span class='draftbadge'>Brouillon</span>" +
+          (miss.length ? miss.length + " champ" + (miss.length > 1 ? "s" : "") + " à renseigner" : "à compléter") + "</div></span>"+
+        "<span class='draftgo'>Compléter →</span>";
+      b.addEventListener("click", function(){
+        window.location.href = "creer-instrument.html?id=" + encodeURIComponent(inst.id);
+      });
+      instListEl.appendChild(b);
+      return;
+    }
     b.className = "instoption" + (i === selectedInstIdx ? " selected" : "");
     b.innerHTML =
       "<span class='thumb'></span>"+
