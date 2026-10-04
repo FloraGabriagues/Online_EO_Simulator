@@ -154,10 +154,15 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
 
 .bottomrow{display:grid;grid-template-columns:1.1fr 1fr;gap:20px;align-items:stretch}
 .activity{height:230px;display:flex;flex-direction:column}
-.activity ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px;flex:1;
-  background:var(--line-soft);border:1px solid var(--line-soft);border-radius:4px;overflow:hidden}
+/* 04/10/2026 — la liste défile dans son cadre (avant, les lignes en trop
+   étaient coupées). Chaque ligne garde sa hauteur ; les séparateurs sont
+   des bordures, pour que le fond reste uni quand la liste est courte. */
+.activity ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;flex:1;min-height:0;
+  background:var(--panel);border:1px solid var(--line-soft);border-radius:4px;
+  overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
 .activity li{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:10px;
-  background:var(--panel);padding:9px 14px;flex:1}
+  padding:9px 14px;flex:none;border-bottom:1px solid var(--line-soft)}
+.activity li:last-child{border-bottom:none}
 .activity li .adot{width:6px;height:6px;border-radius:50%;background:var(--line);flex:none}
 .activity li .alabel{color:var(--paper)}
 .activity li .asub{color:var(--muted-2);font-size:12px}
@@ -576,7 +581,7 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
     .from("saved_results")
     .select("*, instruments(name, deleted_at)") // deleted_at : pour signaler un instrument supprimé
     .order("created_at", { ascending: false })
-    .limit(5);
+    .limit(20); // 20 = plafond de résultats d'un compte ; la liste d'activité filtre ensuite par date
   if(resErr) console.error("Erreur chargement résultats :", resErr);
   var recentResults = results || [];
 
@@ -796,7 +801,12 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
   // ===================== Activité récente (dérivée des vraies données — pas de table dédiée) =====================
   var activityEl = document.getElementById("activityList");
   var activityItems = [];
-  (instruments || []).slice(0, 3).forEach(function(row){
+  // 04/10/2026 — on montre l'activité des 7 derniers jours, sans limite de
+  // nombre puisque la liste défile (avant : les 5 dernières entrées, toutes
+  // dates confondues, dont une partie était coupée par le cadre).
+  var ACTIVITY_DAYS = 7;
+  var activitySince = Date.now() - ACTIVITY_DAYS * 24 * 3600 * 1000;
+  (instruments || []).forEach(function(row){
     activityItems.push({label: row.name, sub: "Instrument enregistré", when: row.updated_at});
   });
   recentResults.forEach(function(r){
@@ -812,15 +822,17 @@ h1{font-family:var(--display);font-weight:600;font-size:clamp(24px,2.8vw,32px);
       sub: "Résultat sauvegardé (" + r.scene + ")" + (instGone ? " · instrument supprimé" : ""),
       when: r.created_at});
   });
+  activityItems = activityItems.filter(function(a){ return new Date(a.when).getTime() >= activitySince; });
   activityItems.sort(function(a, b){ return new Date(b.when) - new Date(a.when); });
-  activityItems = activityItems.slice(0, 5);
+  // Les noms viennent de l'utilisateur : insérés en texte, pas en HTML.
+  function escAct(t){ var d = document.createElement("div"); d.textContent = t == null ? "" : String(t); return d.innerHTML; }
 
   if(activityItems.length === 0){
-    activityEl.innerHTML = "<li><span class='adot'></span><span><span class='alabel'>Aucune activité pour l'instant</span></span></li>";
+    activityEl.innerHTML = "<li><span class='adot'></span><span><span class='alabel'>Aucune activité ces "+ACTIVITY_DAYS+" derniers jours</span></span></li>";
   } else {
     activityEl.innerHTML = activityItems.map(function(a){
-      return "<li><span class='adot'></span><span><span class='alabel'>"+a.label+"</span><br>"+
-        "<span class='asub'>"+a.sub+"</span></span><span>"+timeAgo(a.when)+"</span></li>";
+      return "<li><span class='adot'></span><span><span class='alabel'>"+escAct(a.label)+"</span><br>"+
+        "<span class='asub'>"+escAct(a.sub)+"</span></span><span>"+timeAgo(a.when)+"</span></li>";
     }).join("");
   }
 
