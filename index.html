@@ -1696,12 +1696,94 @@ var pending = null;
 // premier redessin.
 var simSource = "js", extImage = null;
 
+// ---- Cadrage de l'image calculée par le serveur (06/10/2026) ----
+// Le serveur renvoie toujours l'emprise complète (200 x 200 m, cf.
+// CORE_FOOTPRINT_M dans eo_adapter.py), alors que la scène affichée ici est
+// rognée en hauteur (200 x 140 m, cf. SCENES plus haut). Avant, l'image
+// simulée était donc carrée dans un cadre plus large : réduite, centrée, et
+// plus à la même échelle que l'image source.
+// On ne retaille pas l'image : on agrandit son calque pour qu'il ait la même
+// largeur que le cadre, et on le centre en hauteur. Les bandes du haut et du
+// bas dépassent du cadre, qui les masque. Les deux images se superposent
+// alors exactement, sans rééchantillonnage.
+// Renvoie la part de la hauteur de l'image qui reste visible (1 = tout).
+function extVisibleFracY(iw, ih){
+  var frameAspect = curW / curH, imgAspect = iw / ih;
+  if(!isFinite(imgAspect) || !isFinite(frameAspect) || imgAspect >= frameAspect * 0.985) return 1;
+  return imgAspect / frameAspect;
+}
+function fitSimLayer(fracVisibleY){
+  if(!(fracVisibleY < 0.999)){ simCv.style.top = ""; simCv.style.height = ""; return; }
+  var hPct = 100 / fracVisibleY;
+  simCv.style.height = hPct + "%";
+  simCv.style.top = (-(hPct - 100) / 2) + "%";
+}
+
+// ---- Rendu par défaut de l'image du serveur : étirement p2/p98 (06/10/2026) ----
+// Même calcul que l'option « Étirement p2/p98 » de la page d'un résultat
+// (resultats.html) : percentiles 2 et 98 par canal, puis remise à l'échelle
+// linéaire vers 0-255. Ici il est appliqué d'office et sans réglage visible,
+// pour ne pas compliquer la démo. Les percentiles sont mesurés sur la partie
+// visible de l'image seulement. Pour le désactiver : false ci-dessous.
+// À savoir : cet étirement égalise le niveau et la balance des couleurs d'une
+// simulation à l'autre. Il montre la netteté et le bruit, pas la luminosité.
+var DEMO_P2P98 = true;
+var extCanvas = null, extCanvasFor = null;   // image traitée, recalculée seulement quand l'image change
+function externalCanvas(){
+  if(extCanvas && extCanvasFor === extImage) return extCanvas;
+  var iw = extImage.naturalWidth || extImage.width, ih = extImage.naturalHeight || extImage.height;
+  var c = document.createElement("canvas");
+  c.width = iw; c.height = ih;
+  var g = c.getContext("2d", {willReadFrequently:true});
+  g.imageSmoothingEnabled = false;
+  g.drawImage(extImage, 0, 0);
+  if(DEMO_P2P98){
+    try{
+      var id = g.getImageData(0, 0, iw, ih), d = id.data;
+      var frac = extVisibleFracY(iw, ih);
+      var y0 = Math.floor(ih * (1 - frac) / 2), y1 = ih - y0;
+      var hist = [new Uint32Array(256), new Uint32Array(256), new Uint32Array(256)], n = 0;
+      for(var y = y0; y < y1; y++){
+        for(var x = 0; x < iw; x++){
+          var i = (y * iw + x) * 4;
+          hist[0][d[i]]++; hist[1][d[i+1]]++; hist[2][d[i+2]]++; n++;
+        }
+      }
+      var lo = [0,0,0], hi = [255,255,255];
+      for(var ch = 0; ch < 3; ch++){
+        var cum = 0, gotLo = false;
+        for(var v = 0; v < 256; v++){
+          cum += hist[ch][v];
+          if(!gotLo && cum >= n * 0.02){ lo[ch] = v; gotLo = true; }
+          if(cum >= n * 0.98){ hi[ch] = v; break; }
+        }
+      }
+      for(var k = 0; k < d.length; k += 4){
+        for(var c3 = 0; c3 < 3; c3++){
+          if(hi[c3] > lo[c3]){
+            var val = (d[k+c3] - lo[c3]) / (hi[c3] - lo[c3]) * 255;
+            d[k+c3] = val < 0 ? 0 : (val > 255 ? 255 : val);
+          }
+        }
+      }
+      g.putImageData(id, 0, 0);
+    }catch(e){
+      // Image illisible pixel par pixel (origine différente) : affichée telle quelle.
+      console.warn("Étirement p2/p98 impossible :", e);
+    }
+  }
+  extCanvas = c; extCanvasFor = extImage;
+  return c;
+}
+
 function paintExternal(){
   if(!extImage) return;
-  simCv.width = extImage.naturalWidth || extImage.width;
-  simCv.height = extImage.naturalHeight || extImage.height;
+  var c = externalCanvas();
+  simCv.width = c.width;
+  simCv.height = c.height;
   sctx.imageSmoothingEnabled = false;
-  sctx.drawImage(extImage, 0, 0);
+  sctx.drawImage(c, 0, 0);
+  fitSimLayer(extVisibleFracY(c.width, c.height));
 }
 function useJsEngine(){
   simSource = "js"; extImage = null;
@@ -1727,7 +1809,7 @@ function refresh(){
   if(pending) cancelAnimationFrame(pending);
   pending = requestAnimationFrame(function(){
     if(simSource === "ext" && extImage) paintExternal();
-    else renderSim();
+    else { fitSimLayer(1); renderSim(); }   // aperçu navigateur : déjà au cadrage de la scène
     paintLeft();
     pending = null;
   });

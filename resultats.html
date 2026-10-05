@@ -111,16 +111,20 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
 .viewercaption{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-top:9px;flex:none}
 .viewerhint{font-size:12px;color:var(--muted-2)}
-.zoompresets{display:flex;gap:6px;flex:none}
-.zoombtn{background:transparent;border:1px solid var(--line);color:var(--paper);border-radius:4px;
-  font-family:var(--mono);font-size:11.5px;padding:6px 12px;cursor:pointer;transition:border-color .14s,color .14s}
-.zoombtn:hover{border-color:var(--pixel);color:var(--pixel)}
-.zoombtn.active{border-color:var(--photon);color:var(--photon)}
 
-.comparewrap{position:relative;width:100%;height:100%}
-.compareimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none}
-.compareimg.right{clip-path:inset(0 0 0 50%)}
-.comparehandle{position:absolute;top:0;bottom:0;left:50%;width:2px;background:var(--paper);cursor:ew-resize;z-index:4}
+/* 06/10/2026 — comparateur rendu fluide :
+   - les images ne reçoivent plus la souris (sinon le navigateur démarrait un
+     glisser-déposer de l'image et le mouvement se figeait) ;
+   - touch-action:none : sur écran tactile, le doigt déplace le curseur au
+     lieu de faire défiler la page ;
+   - la poignée se déplace par transform, sans recalcul de mise en page. */
+.comparewrap{position:relative;width:100%;height:100%;cursor:ew-resize;touch-action:none;outline:none}
+.comparewrap:focus-visible{box-shadow:inset 0 0 0 2px var(--pixel)}
+.compareimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none;
+  -webkit-user-drag:none;pointer-events:none}
+.compareimg.right{clip-path:inset(0 0 0 50%);will-change:clip-path}
+.comparehandle{position:absolute;top:0;bottom:0;left:0;margin-left:-1px;width:2px;background:var(--paper);
+  cursor:ew-resize;z-index:4;will-change:transform;pointer-events:none}
 .comparehandle .grip{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
   width:34px;height:34px;border-radius:50%;background:var(--void);border:1px solid var(--line);
   display:flex;align-items:center;justify-content:center;color:var(--paper);font-size:13px}
@@ -496,11 +500,6 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
             <div class="viewercaption">
               <span class="viewerhint">Glissez sur l'image pour comparer</span>
-              <div class="zoompresets">
-                <button type="button" class="zoombtn active" id="zoomFitBtn" data-zoom="1">Ajusté</button>
-                <button type="button" class="zoombtn" id="zoom2Btn" data-zoom="2">×2</button>
-                <button type="button" class="zoombtn" id="zoom4Btn" data-zoom="4">×4</button>
-              </div>
             </div>
 
             <div class="bandsrow">
@@ -1209,29 +1208,59 @@ async function deleteResult(r){
   var imgSimClip = document.getElementById("imgSim");  // couche recouvrante, clip piloté par le curseur
   var dragging = false;
 
+  // 06/10/2026 — déplacement fluide du curseur de comparaison :
+  //  - une seule mise à jour par image affichée (requestAnimationFrame),
+  //    quel que soit le nombre de mouvements de souris reçus entre-temps ;
+  //  - la position du cadre est lue une fois au début du geste, pas à
+  //    chaque mouvement ;
+  //  - le pointeur est « capturé » : le geste continue même si la souris
+  //    sort de l'image, et le navigateur ne lance plus de glisser-déposer.
+  var splitPct = 50, splitRaf = 0, dragRect = null;
+  function applySplit(){
+    splitRaf = 0;
+    handle.style.transform = "translateX(" + (splitPct / 100 * wrap.clientWidth) + "px)";
+    imgSimClip.style.clipPath = "inset(0 0 0 " + splitPct + "%)";
+  }
   function setSplit(pct){
-    pct = Math.max(0, Math.min(100, pct));
-    handle.style.left = pct + "%";
-    imgSimClip.style.clipPath = "inset(0 0 0 " + pct + "%)";
+    splitPct = Math.max(0, Math.min(100, pct));
+    if(!splitRaf) splitRaf = requestAnimationFrame(applySplit);
   }
   setSplit(50);
+  // Le cadre change de taille (affichage du détail, plein écran, fenêtre) :
+  // la poignée est replacée, puisqu'elle est positionnée en pixels.
+  if(window.ResizeObserver) new ResizeObserver(function(){ setSplit(splitPct); }).observe(wrap);
+  else window.addEventListener("resize", function(){ setSplit(splitPct); });
 
   function splitFromEvent(e){
-    var rect = wrap.getBoundingClientRect();
-    setSplit(((e.clientX - rect.left) / rect.width) * 100);
+    var rect = dragRect || wrap.getBoundingClientRect();
+    if(rect.width) setSplit(((e.clientX - rect.left) / rect.width) * 100);
   }
   // Clic ou glissé n'importe où sur l'image (pas seulement sur la poignée)
   // déplace le curseur de comparaison — sauf en mode "point blanc" (géré
   // plus bas), qui a priorité sur ce clic.
   wrap.addEventListener("pointerdown", function(e){
     if(pickingWhite) return;
+    if(e.pointerType === "mouse" && e.button !== 0) return;
     dragging = true;
+    dragRect = wrap.getBoundingClientRect();
+    try { wrap.setPointerCapture(e.pointerId); } catch(err){ /* sans gravité */ }
     splitFromEvent(e);
+    e.preventDefault();
   });
-  window.addEventListener("pointerup", function(){ dragging = false; });
-  window.addEventListener("pointermove", function(e){
-    if(!dragging) return;
-    splitFromEvent(e);
+  wrap.addEventListener("pointermove", function(e){
+    if(dragging) splitFromEvent(e);
+  });
+  ["pointerup", "pointercancel"].forEach(function(evName){
+    wrap.addEventListener(evName, function(e){
+      dragging = false; dragRect = null;
+      try { if(wrap.hasPointerCapture(e.pointerId)) wrap.releasePointerCapture(e.pointerId); } catch(err){ /* sans gravité */ }
+    });
+  });
+  // Au clavier : flèches gauche et droite, comme sur la démo.
+  wrap.tabIndex = 0;
+  wrap.addEventListener("keydown", function(e){
+    if(e.key === "ArrowLeft"){ setSplit(splitPct - 2); e.preventDefault(); }
+    if(e.key === "ArrowRight"){ setSplit(splitPct + 2); e.preventDefault(); }
   });
 
   // ===================== Contrôles d'affichage (panneau "Affichage") =====================
@@ -1455,20 +1484,8 @@ async function deleteResult(r){
 
   imagesReady.then(updateDisplay);
 
-  // ===================== Zoom (presets Ajusté / ×2 / ×4) =====================
-  var zoom = 1;
-  function applyZoom(){
-    imgSim.style.transform = "scale(" + zoom + ")";
-    imgSrcRight.style.transform = "scale(" + zoom + ")";
-  }
-  var zoomBtns = document.querySelectorAll(".zoombtn");
-  zoomBtns.forEach(function(btn){
-    btn.addEventListener("click", function(){
-      zoom = Number(btn.dataset.zoom);
-      zoomBtns.forEach(function(b){ b.classList.toggle("active", b === btn); });
-      applyZoom();
-    });
-  });
+  // 06/10/2026 — les boutons de zoom « Ajusté / ×2 / ×4 » sont retirés de
+  // cette page. Le plein écran reste disponible.
   document.getElementById("fullscreenBtn").addEventListener("click", function(){
     if(document.fullscreenElement) document.exitFullscreen();
     else document.getElementById("viewerBox").requestFullscreen();

@@ -216,6 +216,19 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .progresswrap{display:flex;align-items:center;gap:10px;margin-bottom:9px}
 .ptrack{flex:1;height:5px;background:var(--line-soft);border-radius:3px;overflow:hidden}
 .pfill{height:100%;background:var(--pixel);width:0%;transition:width .5s linear}
+/* 06/10/2026 — pendant le calcul, la barre défile en continu, comme sur la
+   démo. Le calcul est synchrone : le serveur ne donne aucun pourcentage
+   avant la fin, donc une barre figée à 30 % laissait croire à un blocage. */
+.pfill.running{width:40% !important;border-radius:3px;transition:none;
+  background:linear-gradient(90deg,transparent,var(--pixel),transparent);
+  animation:pfill-sweep 1.4s ease-in-out infinite}
+@keyframes pfill-sweep{
+  0%{transform:translateX(-120%)}
+  100%{transform:translateX(320%)}
+}
+@media (prefers-reduced-motion:reduce){
+  .pfill.running{animation:none;width:100% !important;opacity:.45}
+}
 .ppct{font-family:var(--mono);font-size:12px;color:var(--pixel);flex:none;width:36px;text-align:right}
 .etarow{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;
   color:var(--muted);margin-bottom:12px}
@@ -1240,6 +1253,14 @@ function setStatus(kind, text){
   pulse.className = "pulse" + (kind === "ok" ? " ok" : kind === "error" ? " alert" : kind === "interrupted" ? " muted" : "");
   textEl.textContent = text;
   interruptBtn.style.display = kind === "running" ? "inline-flex" : "none";
+  // La barre défile tant que le calcul tourne, et s'arrête dans tous les
+  // autres états (terminé, échec, interrompu) : c'est ici que passent
+  // toutes les fins de simulation.
+  var fill = document.getElementById("pfill");
+  if(fill){
+    fill.classList.toggle("running", kind === "running");
+    if(kind === "error" || kind === "interrupted"){ fill.style.transition = "none"; fill.style.width = "0%"; }
+  }
 }
 
 // Libellés lisibles des champs du payload — utilisés pour traduire les
@@ -1329,8 +1350,8 @@ async function launchSimulation(){
   var etaText = document.getElementById("etaText");
   var logList = document.getElementById("logList");
   logList.innerHTML = "";
-  pfill.style.width = "30%"; pfill.style.transition = "width 8s ease-out";
-  ppct.textContent = "…";
+  pfill.style.transition = "none"; pfill.style.width = "0%"; // l'animation de défilement est lancée par setStatus("running")
+  ppct.textContent = "";
   etaText.textContent = "calcul en cours (peut prendre 1-2 minutes)";
   setStatus("running", "Simulation en cours");
   addLog("Simulation lancée — la progression détaillée n'est visible qu'à la fin (calcul synchrone).");
