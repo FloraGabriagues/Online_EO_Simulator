@@ -55,6 +55,12 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
 .progresswrap .row{display:flex;justify-content:space-between;align-items:baseline;font-size:11.5px;
   color:var(--muted);margin-bottom:7px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.07em}
 .progresswrap .row span:last-child{font-size:13px;letter-spacing:0;text-transform:none;color:var(--pixel)}
+/* 05/10/2026 — depuis que la page charge ses vraies polices, ce titre passait
+   sur deux lignes et « 0 % » se coupait en deux. Lettres resserrées, et le
+   pourcentage ne se coupe plus. */
+.progresswrap .row{gap:10px;letter-spacing:0;font-size:10.5px}
+.progresswrap .row span:first-child{min-width:0;white-space:nowrap}
+.progresswrap .row span:last-child{white-space:nowrap;flex:none}
 .progresswrap .track{height:5px;background:var(--line-soft);border-radius:3px;overflow:hidden}
 .progresswrap .fill{height:100%;background:var(--pixel);transition:width .25s ease}
 
@@ -243,9 +249,11 @@ details.advanced summary .count{font-family:var(--mono);font-size:11.5px;color:v
   border:1px solid var(--line-soft);border-radius:4px;padding:5px 8px;font-size:11.5px}
 .zterm .zk{color:var(--muted)}
 .zterm .zv{font-family:var(--mono);color:var(--pixel)}
-.helpline{margin:12px 4px 0;font-size:12px;line-height:1.4}
-.helpline a{color:var(--muted);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
-.helpline a:hover{color:var(--pixel);text-decoration-color:var(--pixel)}
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.helplink{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--paper);text-decoration:none;
+  border:1px solid var(--line);border-radius:5px;padding:7px 12px;transition:border-color .14s,color .14s}
+.helplink svg{width:15px;height:15px;flex:none;color:var(--pixel)}
+.helplink:hover{border-color:var(--pixel);color:var(--pixel)}
 </style>
 </head>
 <body>
@@ -255,6 +263,12 @@ details.advanced summary .count{font-family:var(--mono);font-size:11.5px;color:v
 
   <header>
     <a class="back" href="espace-personnel.html">← Mes objets</a>
+    <!-- 05/10/2026 — accompagnement proposé à la demande (fenêtre dans aide.js).
+         Placé dans l'en-tête : en bas de la colonne de gauche, il fallait
+         faire défiler pour le voir. -->
+    <a class="helplink" href="mailto:contact@nysa-imaging.com" data-help="instrument">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.9.3-1.2.9-1.2 1.8"/><circle cx="12" cy="16.6" r=".6" fill="currentColor"/></svg>
+      Besoin d'aide pour configurer votre instrument&nbsp;?</a>
   </header>
 
   <div class="layout">
@@ -285,8 +299,6 @@ details.advanced summary .count{font-family:var(--mono);font-size:11.5px;color:v
         </div>
       </div>
       <div class="chainlistcard instgroup" id="chainList"></div>
-      <!-- 05/10/2026 — accompagnement proposé à la demande (fenêtre dans aide.js) -->
-      <p class="helpline"><a href="mailto:contact@nysa-imaging.com" data-help="instrument">Besoin d'aide pour configurer votre instrument ?</a></p>
     </div>
     <div class="rightcol">
       <div class="schemawrap" id="schemaWrap"></div>
