@@ -12,7 +12,7 @@
 :root{
   --void:#090E13; --panel:#131E27; --panel-2:#1A2833;
   --line:#2E4152; --line-soft:#22323F;
-  --paper:#E6EEF4; --muted:#9BADBD; --muted-2:#8497AA;
+  --paper:#C4D6D4; --muted:#9BADBD; --muted-2:#8497AA;
   --photon:#F5AC57; --pixel:#5FDCD0; --alert:#F0776D;
   --display:"Montserrat","IBM Plex Sans",system-ui,sans-serif;
   --body:"IBM Plex Sans",system-ui,sans-serif;
@@ -1413,7 +1413,7 @@ function drawMtfChart(){
   ctx.textAlign="left"; ctx.font="11.5px "+MONO;
   items.forEach(function(e,i){
     ctx.fillStyle=e[0]; ctx.fillRect(lx+10, ly+15+i*17-5, 14, 3);
-    ctx.fillStyle="#E6EEF4"; ctx.fillText(e[1], lx+31, ly+15+i*17);
+    ctx.fillStyle="#C4D6D4"; ctx.fillText(e[1], lx+31, ly+15+i*17);
   });
 }
 
