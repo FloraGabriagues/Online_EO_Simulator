@@ -101,8 +101,14 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   border-radius:4px;border:1px solid var(--line)}
 .cornerlabel.src{left:12px;color:var(--photon);border-color:var(--photon)}
 .cornerlabel.sim{right:12px;color:var(--pixel);border-color:var(--pixel)}
-.scalebar{position:absolute;bottom:12px;left:12px;background:rgba(9,14,19,.75);color:var(--paper);
-  font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:3px;z-index:5}
+/* 05/10/2026 — vraie échelle graphique (avant : le texte fixe « 100 m », sans
+   barre, quelle que soit la taille d'affichage). Même dessin que sur la démo. */
+.scalebar{position:absolute;left:14px;bottom:14px;z-index:5;pointer-events:none;
+  display:flex;flex-direction:column-reverse;gap:5px;align-items:flex-start}
+.scalebar .sbar{display:block;height:7px;border:1px solid rgba(196,214,212,.95);border-top:none;
+  box-shadow:0 1px 3px rgba(0,0,0,.7)}
+.scalebar .slab{font-family:var(--mono);font-size:11px;color:var(--paper);letter-spacing:.04em;
+  text-align:center;text-shadow:0 1px 3px rgba(0,0,0,.95)}
 .viewer-tools{position:absolute;bottom:12px;right:12px;z-index:5;display:flex;flex-direction:column;gap:6px}
 .viewer-tools button{width:32px;height:32px;border-radius:5px;border:1px solid var(--line-soft);
   background:rgba(19,30,39,.85);color:var(--muted);display:flex;align-items:center;justify-content:center;
@@ -412,13 +418,15 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       <li><a class="active" href="resultats.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
         Résultats</a></li>
+      <!-- 05/10/2026 — annoncé pour la V1, non développé pendant la bêta -->
+      <li><a class="soon" href="#" title="Comparateur d'architectures : à venir dans Nysa V1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="7" height="14" rx="1"/><rect x="13.5" y="5" width="7" height="14" rx="1"/></svg>
+        Comparateur <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto">à venir</em></a></li>
     </ul>
     <div class="sidebar-bottom">
       <ul class="navlist">
-        <li><a href="index.html" class="demolink">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
-          Retour à la démo</a></li>
-        <li><a href="#">
+        <!-- 05/10/2026 — « Retour à la démo » retiré du menu connecté : la démo reste publique à l'adresse du site -->
+        <li><a href="mailto:contact@nysa-imaging.com" data-help="general">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.9.3-1.2.9-1.2 1.8"/><circle cx="12" cy="16.6" r=".4" fill="currentColor" stroke="none"/></svg>
           Aide</a></li>
         <!-- 04/10/2026 : une seule fenêtre de paramètres, celle de l'espace personnel -->
@@ -489,7 +497,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/></svg>
                 </button>
               </div>
-              <span class="scalebar" id="scalebar">100 m</span>
+              <span class="scalebar" id="scalebar" style="visibility:hidden"><span class="sbar" id="scalebarBar"></span><span class="slab" id="scalebarLab"></span></span>
 
               <div class="comparewrap" id="compareWrap">
                 <img class="compareimg left" id="imgSrc" alt="Image source">
@@ -524,7 +532,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                 <label><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 15l5-5 4 4 4-6 5 7"/></svg>Rendu de l'image</label>
                 <select id="renderSel">
                   <option value="none">Aucun (brut)</option>
-                  <option value="p2p98">Étirement p2/p98 — netteté seulement</option>
+                  <option value="p2p98" selected>Étirement p2/p98 — netteté seulement</option>
                 </select>
               </div>
 
@@ -584,14 +592,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         </div>
       </div>
 
-      <!-- ============ Onglet Logs ============ -->
-      <div class="tabpanel" data-tab="logs">
-        <div class="rpanel">
-          <h3>Logs</h3>
-          <pre id="logsContent" style="white-space:pre-wrap;font-family:var(--mono);font-size:11.5px;
-            color:var(--muted);line-height:1.7;margin:0">—</pre>
-        </div>
-      </div>
+      <!-- 05/10/2026 — l'onglet Logs est retiré de l'interface. Les logs du
+           serveur restent enregistrés avec chaque résultat (colonne
+           saved_results.logs), consultables dans Supabase pour le diagnostic. -->
 
       </div>
 
@@ -1118,8 +1121,6 @@ async function deleteResult(r){
       "<p style='padding:40px;color:var(--muted);text-align:center'>Résultat introuvable. Vérifiez le lien, ou revenez depuis <a href='resultats.html' style='color:var(--pixel)'>la liste des résultats</a>.</p>";
   }
 
-  // ===================== Logs (réel) =====================
-  document.getElementById("logsContent").textContent = resultLogs || "Aucun log disponible pour ce résultat.";
 
   // ===================== MTF / SNR (réel, par bande) =====================
   var BAND_COLORS = {Rouge:"#F0776D", Vert:"#7FD88F", Bleu:"#5FDCD0"};
@@ -1181,8 +1182,7 @@ async function deleteResult(r){
     {id:"image", label:"Image"},
     {id:"mtf", label:"Graphes MTF"},
     {id:"snr", label:"Graphes SNR"},
-    {id:"entrees", label:"Entrées"},
-    {id:"logs", label:"Logs"}
+    {id:"entrees", label:"Entrées"}
   ];
   var tabsHost = document.getElementById("restabsHost");
   TABS.forEach(function(t, i){
@@ -1273,7 +1273,9 @@ async function deleteResult(r){
   // s'appliquent qu'à l'image SIMULÉE — la source reste toujours brute.
   var adj = {
     contrast:100,
-    band:"RGB", render:"none", showSat:false,
+    // 05/10/2026 — le rendu par défaut est l'étirement p2/p98 (avant :
+    // « Aucun (brut) »). Le rendu brut reste disponible dans la liste.
+    band:"RGB", render:"p2p98", showSat:false,
     whitePointSim:null,
   };
 
@@ -1456,10 +1458,10 @@ async function deleteResult(r){
 
   // ---- Réinitialiser l'affichage ----
   document.getElementById("resetDisplayBtn").addEventListener("click", function(){
-    adj = { contrast:100, band:"RGB", render:"none",
+    adj = { contrast:100, band:"RGB", render:"p2p98",   // retour au rendu par défaut
       showSat:false, whitePointSim:null };
     document.getElementById("ctrlContrast").value = 100; document.getElementById("valContrast").textContent = "100 %";
-    document.getElementById("renderSel").value = "none";
+    document.getElementById("renderSel").value = "p2p98";
     document.getElementById("satChk").checked = false;
     bandThumbs.querySelectorAll(".bandthumb").forEach(function(x){ x.classList.toggle("selected", x.dataset.key === "RGB"); });
     updateDisplay();
@@ -1484,6 +1486,39 @@ async function deleteResult(r){
 
   imagesReady.then(updateDisplay);
 
+  // ===================== Échelle graphique (05/10/2026) =====================
+  // L'image simulée couvre toujours la même emprise au sol : 200 m de large
+  // (CORE_FOOTPRINT_M dans eo_adapter.py). Elle est affichée en « cover » :
+  // agrandie jusqu'à remplir le cadre, quitte à dépasser sur un côté. Le
+  // nombre de mètres par pixel d'écran dépend donc de la taille du cadre, et
+  // l'échelle est recalculée à chaque changement de taille (fenêtre, plein
+  // écran). Tant que les dimensions de l'image sont inconnues, l'échelle
+  // reste masquée plutôt que d'afficher une valeur fausse.
+  var RESULT_FOOTPRINT_M = 200;
+  function niceScaleMeters(x){
+    var exp = Math.floor(Math.log10(x));
+    var f = x / Math.pow(10, exp);
+    var nf = f < 1.5 ? 1 : (f < 3.5 ? 2 : (f < 7.5 ? 5 : 10));
+    return nf * Math.pow(10, exp);
+  }
+  function updateScaleBar(){
+    var box = document.getElementById("scalebar");
+    var bar = document.getElementById("scalebarBar"), lab = document.getElementById("scalebarLab");
+    var nw = simImgObj.naturalWidth || imgSim.naturalWidth, nh = simImgObj.naturalHeight || imgSim.naturalHeight;
+    var bw = wrap.clientWidth, bh = wrap.clientHeight;
+    if(!nw || !nh || !bw || !bh){ box.style.visibility = "hidden"; return; }
+    var scale = Math.max(bw / nw, bh / nh);              // object-fit: cover
+    var mPerPx = RESULT_FOOTPRINT_M / (nw * scale);      // mètres au sol par pixel d'écran
+    var meters = niceScaleMeters(bw * mPerPx * 0.2);     // valeur ronde, environ 1/5 de la largeur visible
+    var px = (meters / mPerPx).toFixed(1) + "px";
+    bar.style.width = px; lab.style.width = px;
+    lab.textContent = meters >= 1000 ? (meters / 1000) + " km" : meters + " m";
+    box.style.visibility = "visible";
+  }
+  imagesReady.then(updateScaleBar);
+  if(window.ResizeObserver) new ResizeObserver(updateScaleBar).observe(wrap);
+  else window.addEventListener("resize", updateScaleBar);
+
   // 06/10/2026 — les boutons de zoom « Ajusté / ×2 / ×4 » sont retirés de
   // cette page. Le plein écran reste disponible.
   document.getElementById("fullscreenBtn").addEventListener("click", function(){
@@ -1492,5 +1527,6 @@ async function deleteResult(r){
   });
 })();
 </script>
+<script src="aide.js"></script>
 </body>
 </html>

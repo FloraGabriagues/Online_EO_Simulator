@@ -326,13 +326,15 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       <li><a href="resultats.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
         Résultats</a></li>
+      <!-- 05/10/2026 — annoncé pour la V1, non développé pendant la bêta -->
+      <li><a class="soon" href="#" title="Comparateur d'architectures : à venir dans Nysa V1">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="7" height="14" rx="1"/><rect x="13.5" y="5" width="7" height="14" rx="1"/></svg>
+        Comparateur <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto">à venir</em></a></li>
     </ul>
     <div class="sidebar-bottom">
       <ul class="navlist">
-        <li><a href="index.html" class="demolink">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/></svg>
-          Retour à la démo</a></li>
-        <li><a href="#">
+        <!-- 05/10/2026 — « Retour à la démo » retiré du menu connecté : la démo reste publique à l'adresse du site -->
+        <li><a href="mailto:contact@nysa-imaging.com" data-help="general">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.9.3-1.2.9-1.2 1.8"/><circle cx="12" cy="16.6" r=".4" fill="currentColor" stroke="none"/></svg>
           Aide</a></li>
         <li><a href="#" id="settingsLink">
@@ -851,6 +853,19 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   // qui doit vérifier le plan avant de lancer un calcul.
   var entitlement = { plan: "free", subscription_status: "inactive", current_period_end: null };
 
+  // 05/10/2026 — bêta gratuite : tout compte reçoit l'accès au simulateur
+  // jusqu'à la fin de la bêta. C'est la base qui l'accorde (fonction
+  // claim_beta_access, cf. beta-gratuite.sql) : elle écrit une vraie ligne
+  // d'abonnement, celle que le serveur de simulation vérifie. Elle ne fait
+  // rien pour un abonné payant, ni après la date de fin. Si la fonction
+  // n'existe pas encore, l'appel échoue sans conséquence.
+  try {
+    if(typeof supabaseClient.rpc === "function"){
+      var betaRes = await supabaseClient.rpc("claim_beta_access");
+      if(betaRes && betaRes.error) console.warn("Accès bêta non accordé :", betaRes.error.message);
+    }
+  } catch(e){ console.warn("Accès bêta non accordé :", e); }
+
   var { data: entRow, error: entErr } = await supabaseClient
     .from("account_entitlements")
     .select("*") // toute la ligne : si la colonne cancel_at_period_end n'existe pas encore, la lecture ne casse pas
@@ -886,12 +901,33 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     return true;
   }
 
+  // Accès bêta : accordé par la base (beta_access), sans abonnement Stripe.
+  // Dès qu'un vrai abonnement existe, le compte est traité comme un abonné.
+  function isBeta(){
+    return entitlement.beta_access === true && !entitlement.stripe_subscription_id;
+  }
+
   function renderSubscription(){
-    if(isSubscribed()){
+    subBtn.hidden = false;
+    if(isSubscribed() && isBeta()){
+      // 05/10/2026 — bêta gratuite : aucun prix, aucun abonnement à gérer.
+      planBadge.textContent = "Bêta";
+      planBadge.classList.remove("free");
+      planName.textContent = "Accès bêta";
+      planDesc.textContent = "Gratuit pendant la phase d'essai";
+      subStatusDot.className = "pstatus";
+      subStatusText.textContent = "Actif";
+      subNote.className = "mnote";
+      subNote.textContent = entitlement.current_period_end
+        ? "Votre accès bêta est actif jusqu'au " + formatDate(entitlement.current_period_end) + "."
+        : "Votre accès bêta est actif.";
+      subBtn.hidden = true;
+
+    } else if(isSubscribed()){
       planBadge.textContent = "Individuel";
       planBadge.classList.remove("free");
       planName.textContent = "Plan Individuel";
-      planDesc.textContent = "Accès complet — 199 €/mois";
+      planDesc.textContent = "Accès complet";   // 05/10/2026 — plus de prix affiché pendant la bêta
       subStatusDot.className = "pstatus";
       subStatusText.textContent = "Actif";
       // 04/10/2026 — date affichée sous l'offre : renouvellement, ou fin
@@ -942,7 +978,16 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         subNote.textContent = "Votre abonnement a pris fin le " + formatDate(endedAt.toISOString()) +
           ". Sans réabonnement, votre compte et vos données seront supprimés le " + formatDate(keptUntil.toISOString()) + ".";
       }
-      subBtn.textContent = "S'abonner — 199 €/mois";
+      // Bêta terminée pour ce compte : on le dit, plutôt que « Aucun abonnement ».
+      if(isBeta()){
+        planName.textContent = "Accès bêta terminé";
+        planDesc.textContent = "La phase d'essai est terminée";
+        if(entitlement.current_period_end){
+          subNote.className = "mnote";
+          subNote.textContent = "Votre accès bêta a pris fin le " + formatDate(entitlement.current_period_end) + ".";
+        }
+      }
+      subBtn.textContent = "S'abonner";   // 05/10/2026 — plus de prix affiché (tarif décidé après la bêta)
       subBtn.className = "mbtn primary";
     }
     subBtn.disabled = false;
@@ -1162,5 +1207,6 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   });
 })();
 </script>
+<script src="aide.js"></script>
 </body>
 </html>

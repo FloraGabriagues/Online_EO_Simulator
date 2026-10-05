@@ -115,6 +115,12 @@ h1{font-family:var(--display);font-weight:500;font-size:21px;
         <label for="signupPassword">Mot de passe</label>
         <input type="password" id="signupPassword" required minlength="6" autocomplete="new-password">
       </div>
+      <!-- 05/10/2026 — confirmation du mot de passe : une faute de frappe à
+           l'inscription créait un compte dont personne ne connaissait le mot de passe. -->
+      <div class="field">
+        <label for="signupPassword2">Confirmer le mot de passe</label>
+        <input type="password" id="signupPassword2" required minlength="6" autocomplete="new-password">
+      </div>
       <button class="submitbtn" type="submit">Créer mon compte</button>
       <div class="msg" id="signupMsg"></div>
     </form>
@@ -195,6 +201,17 @@ document.getElementById("signupForm").addEventListener("submit", async function(
 
   var email = document.getElementById("signupEmail").value.trim();
   var password = document.getElementById("signupPassword").value;
+
+  // Les deux saisies doivent être identiques : sinon rien n'est envoyé.
+  var password2El = document.getElementById("signupPassword2");
+  if (password !== password2El.value) {
+    btn.disabled = false;
+    msgEl.className = "msg err";
+    msgEl.textContent = "Les deux mots de passe ne sont pas identiques.";
+    password2El.focus();
+    password2El.select();
+    return;
+  }
 
   // 04/10/2026 — adresse de retour du lien de confirmation envoyé par e-mail.
   // Sans elle, Supabase utilise son « Site URL », qui vaut localhost:3000

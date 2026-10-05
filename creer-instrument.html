@@ -241,6 +241,9 @@ details.advanced summary .count{font-family:var(--mono);font-size:11.5px;color:v
   border:1px solid var(--line-soft);border-radius:4px;padding:5px 8px;font-size:11.5px}
 .zterm .zk{color:var(--muted)}
 .zterm .zv{font-family:var(--mono);color:var(--pixel)}
+.helpline{margin:12px 4px 0;font-size:12px;line-height:1.4}
+.helpline a{color:var(--muted);text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:3px}
+.helpline a:hover{color:var(--pixel);text-decoration-color:var(--pixel)}
 </style>
 </head>
 <body>
@@ -280,6 +283,8 @@ details.advanced summary .count{font-family:var(--mono);font-size:11.5px;color:v
         </div>
       </div>
       <div class="chainlistcard instgroup" id="chainList"></div>
+      <!-- 05/10/2026 — accompagnement proposé à la demande (fenêtre dans aide.js) -->
+      <p class="helpline"><a href="mailto:contact@nysa-imaging.com" data-help="instrument">Besoin d'aide pour configurer votre instrument ?</a></p>
     </div>
     <div class="rightcol">
       <div class="schemawrap" id="schemaWrap"></div>
@@ -2410,5 +2415,6 @@ document.getElementById("fileInput").addEventListener("change", function(e){
   renderPanel();
 })();
 </script>
+<script src="aide.js"></script>
 </body>
 </html>
