@@ -22,11 +22,11 @@ var BETA_CONTACT = "contact@nysa-imaging.com";
     "#betaBar{position:fixed;top:0;left:0;right:0;z-index:40;display:flex;align-items:center;justify-content:center;"+
       "gap:10px;flex-wrap:wrap;padding:6px 16px;background:#1D1810;border-bottom:1px solid rgba(245,172,87,.45);"+
       "font-family:var(--body,system-ui,sans-serif);font-size:12.5px;line-height:1.35;color:var(--paper,#C4D6D4);text-align:center}"+
-    "#betaBar .chip{font-family:var(--mono,monospace);font-size:10.5px;letter-spacing:.08em;color:#0B1116;"+
+    "#betaBar .betachip{position:static;display:inline-block;margin:0;border:none;text-transform:none;font-family:var(--mono,monospace);font-size:10.5px;letter-spacing:.08em;color:#0B1116;"+
       "background:var(--photon,#F5AC57);border-radius:3px;padding:1px 7px;font-weight:600}"+
     "#betaBar a{color:var(--photon,#F5AC57);text-decoration:none;white-space:nowrap}"+
     "#betaBar a:hover{text-decoration:underline}"+
-    "@media(max-width:640px){#betaBar .long{display:none}}"+
+    "@media(max-width:640px){#betaBar .betalong{display:none}}"+
     // La page se décale de la hauteur du bandeau (mesurée, car il peut passer sur deux lignes sur un petit écran).
     "html.beta-on body{padding-top:var(--beta-h,32px)}"+
     "html.beta-on .app,html.beta-on .main{height:calc(100vh - var(--beta-h,32px))}"+
@@ -40,10 +40,10 @@ var BETA_CONTACT = "contact@nysa-imaging.com";
   var bar = document.createElement("div");
   bar.id = "betaBar";
   bar.setAttribute("role", "note");
-  var chip = document.createElement("span"); chip.className = "chip"; chip.textContent = "BÊTA";
+  var chip = document.createElement("span"); chip.className = "betachip"; chip.textContent = "BÊTA";
   // Sur un petit écran, seule la partie « Une remarque ? » reste, pour que le bandeau tienne sur une ligne.
   var txt = document.createElement("span");
-  var long = document.createElement("span"); long.className = "long"; long.textContent = BETA_TEXT + " ";
+  var long = document.createElement("span"); long.className = "betalong"; long.textContent = BETA_TEXT + " ";
   txt.appendChild(long); txt.appendChild(document.createTextNode("Une remarque ? "));
   var link = document.createElement("a"); link.href = "mailto:" + BETA_CONTACT; link.textContent = BETA_CONTACT;
   txt.appendChild(link);
