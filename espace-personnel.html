@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Espace personnel — Nysa</title>
+<title data-i18n="home.doc_title">Espace personnel — Nysa</title>
 <!-- Traduction FR / EN : textes et moteur dans i18n.js -->
 <script src="i18n.js"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.70%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2234.30%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%225.3%22%20fill%3D%22%23FFB86B%22/%3E%3C/svg%3E">
@@ -318,41 +318,42 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     <ul class="navlist">
       <li><a class="active" href="espace-personnel.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>
-        Instruments</a></li>
+        <span data-i18n="nav.instruments">Instruments</span></a></li>
       <li><a class="soon" href="#">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 4V2M15 4V2M9 22v-2M15 22v-2M4 9H2M4 15H2M22 9h-2M22 15h-2"/></svg>
-        Plateforme <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto">à venir</em></a></li>
+        <span data-i18n="nav.platform">Plateforme</span> <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto" data-i18n="nav.soon">à venir</em></a></li>
       <li><a href="simulations.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 4l14 8-14 8V4z"/></svg>
-        Simulations</a></li>
+        <span data-i18n="nav.simulations">Simulations</span></a></li>
       <li><a href="resultats.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
-        Résultats</a></li>
+        <span data-i18n="nav.results">Résultats</span></a></li>
       <!-- 05/10/2026 — annoncé pour la V1, non développé pendant la bêta -->
-      <li><a class="soon" href="#" title="Comparateur d'architectures : à venir dans Nysa V1">
+      <li><a class="soon" href="#" title="Comparateur d'architectures : à venir dans Nysa V1" data-i18n-title="nav.compare.title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="7" height="14" rx="1"/><rect x="13.5" y="5" width="7" height="14" rx="1"/></svg>
-        Comparateur <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto">à venir</em></a></li>
+        <span data-i18n="nav.compare">Comparateur</span> <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto" data-i18n="nav.soon">à venir</em></a></li>
     </ul>
     <div class="sidebar-bottom">
+      <div data-lang-switch style="margin:0 0 10px 12px"></div>
       <ul class="navlist">
         <!-- 05/10/2026 — « Retour à la démo » retiré du menu connecté : la démo reste publique à l'adresse du site -->
         <li><a href="mailto:contact@nysa-imaging.com" data-help="general">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.9.3-1.2.9-1.2 1.8"/><circle cx="12" cy="16.6" r=".4" fill="currentColor" stroke="none"/></svg>
-          Aide</a></li>
+          <span data-i18n="nav.help">Aide</span></a></li>
         <li><a href="#" id="settingsLink">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V20a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.96 18.34a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.66 8.96a1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 7.09 4.2l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04z"/></svg>
-          Paramètres</a></li>
+          <span data-i18n="nav.settings">Paramètres</span></a></li>
       </ul>
     </div>
   </aside>
 
   <div class="main">
     <div class="topbar">
-      <button class="iconbtn" aria-label="Notifications" type="button">
+      <button class="iconbtn" aria-label="Notifications" data-i18n-aria="top.notifications" type="button">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
       </button>
       <span class="userchip" id="userChip"><span class="avatar" id="userAvatar">…</span><span id="userEmail">—</span></span>
-      <button class="iconbtn" aria-label="Se déconnecter" type="button" id="signOutBtn" title="Se déconnecter">
+      <button class="iconbtn" aria-label="Se déconnecter" data-i18n-aria="top.signout" type="button" id="signOutBtn" title="Se déconnecter" data-i18n-title="top.signout">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
       </button>
     </div>
@@ -361,13 +362,13 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
       <div class="pageheader">
         <div>
-          <p class="eyebrow">Instruments</p>
-          <h1>Mes instruments</h1>
-          <p class="pagesub">Créez, configurez et gérez vos instruments d'imagerie.</p>
+          <p class="eyebrow" data-i18n="home.eyebrow">Instruments</p>
+          <h1 data-i18n="home.h1">Mes instruments</h1>
+          <p class="pagesub" data-i18n="home.sub">Créez, configurez et gérez vos instruments d'imagerie.</p>
         </div>
         <div style="display:flex;gap:10px;align-items:center">
-          <button class="mbtn danger" type="button" id="btnDeleteAllInst">Tout supprimer</button>
-          <a class="simbtn" href="creer-instrument.html">+ Créer un instrument</a>
+          <button class="mbtn danger" type="button" id="btnDeleteAllInst" data-i18n="home.delete_all">Tout supprimer</button>
+          <a class="simbtn" href="creer-instrument.html" data-i18n="home.create">+ Créer un instrument</a>
         </div>
       </div>
 
@@ -379,18 +380,18 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
       <div class="bottomrow">
         <div class="activity">
-          <p class="grouphead"><span class="dot"></span>Activité récente</p>
+          <p class="grouphead"><span class="dot"></span><span data-i18n="home.activity">Activité récente</span></p>
           <ul id="activityList"></ul>
         </div>
 
         <div class="doccol">
-          <p class="grouphead"><span class="dot"></span>Documentation</p>
+          <p class="grouphead"><span class="dot"></span><span data-i18n="home.doc">Documentation</span></p>
           <div class="hero">
             <span class="earth" aria-hidden="true"></span>
             <div class="content">
-              <h2>Analysez la performance de vos <span class="cool">instruments d'imagerie</span></h2>
-              <p>Créez vos instruments, configurez vos scénarios et obtenez des métriques détaillées sur la qualité de vos images.</p>
-              <a href="hypotheses.html">Voir les hypothèses physiques du modèle →</a>
+              <h2><span data-i18n="home.hero.h2a">Analysez la performance de vos</span> <span class="cool" data-i18n="home.hero.h2b">instruments d'imagerie</span></h2>
+              <p data-i18n="home.hero.p">Créez vos instruments, configurez vos scénarios et obtenez des métriques détaillées sur la qualité de vos images.</p>
+              <a href="hypotheses.html" data-i18n="home.hero.link">Voir les hypothèses physiques du modèle →</a>
             </div>
           </div>
         </div>
@@ -406,28 +407,28 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     <div class="modal-head">
       <div class="htitle">
         <span class="hicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V20a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.96 18.34a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.66 8.96a1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 7.09 4.2l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04z"/></svg></span>
-        <h2 id="settingsTitle">Paramètres</h2>
+        <h2 id="settingsTitle" data-i18n="settings.title">Paramètres</h2>
       </div>
-      <button class="modal-close" id="settingsCloseBtn" type="button" aria-label="Fermer">✕</button>
+      <button class="modal-close" id="settingsCloseBtn" type="button" aria-label="Fermer" data-i18n-aria="common.close">✕</button>
     </div>
 
     <div class="modal-shell">
       <nav class="modal-rail">
         <button class="railbtn active" type="button" data-target="settingsSectionCompte">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.3-3.6 4.2-5.5 7.5-5.5s6.2 1.9 7.5 5.5"/></svg>
-          Compte
+          <span data-i18n="settings.rail.account">Compte</span>
         </button>
         <button class="railbtn" type="button" data-target="settingsSectionPwd">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="10.5" width="14" height="9.5" rx="1.6"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg>
-          Mot de passe
+          <span data-i18n="settings.rail.pwd">Mot de passe</span>
         </button>
         <button class="railbtn" type="button" data-target="settingsSectionSub">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10.5h18"/></svg>
-          Abonnement
+          <span data-i18n="settings.rail.sub">Abonnement</span>
         </button>
         <button class="railbtn" type="button" data-target="settingsSectionDelete">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5M10 11v5.5M14 11v5.5"/></svg>
-          Suppression
+          <span data-i18n="settings.rail.delete">Suppression</span>
         </button>
       </nav>
 
@@ -437,12 +438,12 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           <div class="msection-head">
             <div class="htxt">
               <span class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="8" r="3.6"/><path d="M4.5 20c1.3-3.6 4.2-5.5 7.5-5.5s6.2 1.9 7.5 5.5"/></svg></span>
-              <div><h3>Compte</h3><p>Vos informations personnelles et votre adresse e-mail</p></div>
+              <div><h3 data-i18n="settings.account.h">Compte</h3><p data-i18n="settings.account.p">Vos informations personnelles et votre adresse e-mail</p></div>
             </div>
           </div>
           <div class="msection-body">
-            <div class="minfo-row"><span class="label">E-mail</span><span class="value" id="settingsEmail">—</span></div>
-            <div class="minfo-row"><span class="label">Membre depuis</span><span class="value" id="settingsCreated">—</span></div>
+            <div class="minfo-row"><span class="label" data-i18n="settings.account.email">E-mail</span><span class="value" id="settingsEmail">—</span></div>
+            <div class="minfo-row"><span class="label" data-i18n="settings.account.since">Membre depuis</span><span class="value" id="settingsCreated">—</span></div>
           </div>
         </div>
 
@@ -450,20 +451,20 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           <div class="msection-head">
             <div class="htxt">
               <span class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="5" y="10.5" width="14" height="9.5" rx="1.6"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/></svg></span>
-              <div><h3>Mot de passe</h3><p>Modifiez votre mot de passe pour sécuriser votre compte</p></div>
+              <div><h3 data-i18n="settings.pwd.h">Mot de passe</h3><p data-i18n="settings.pwd.p">Modifiez votre mot de passe pour sécuriser votre compte</p></div>
             </div>
           </div>
           <div class="mform-group">
-            <label for="settingsNewPwd">Nouveau mot de passe</label>
-            <input type="password" id="settingsNewPwd" autocomplete="new-password" placeholder="8 caractères minimum">
+            <label for="settingsNewPwd" data-i18n="settings.pwd.new">Nouveau mot de passe</label>
+            <input type="password" id="settingsNewPwd" autocomplete="new-password" placeholder="8 caractères minimum" data-i18n-ph="settings.pwd.ph">
           </div>
           <div class="mform-group">
-            <label for="settingsConfirmPwd">Confirmer le nouveau mot de passe</label>
+            <label for="settingsConfirmPwd" data-i18n="settings.pwd.confirm">Confirmer le nouveau mot de passe</label>
             <input type="password" id="settingsConfirmPwd" autocomplete="new-password">
           </div>
           <div class="msection-actions">
             <p class="mnote" id="settingsPwdMsg"></p>
-            <button class="mbtn primary" id="settingsPwdBtn" type="button" style="align-self:flex-start">Mettre à jour le mot de passe</button>
+            <button class="mbtn primary" id="settingsPwdBtn" type="button" style="align-self:flex-start" data-i18n="settings.pwd.btn">Mettre à jour le mot de passe</button>
           </div>
         </div>
 
@@ -471,7 +472,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           <div class="msection-head">
             <div class="htxt">
               <span class="sicon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10.5h18"/></svg></span>
-              <div><h3>Abonnement</h3><p>Votre offre et vos options d'abonnement</p></div>
+              <div><h3 data-i18n="settings.sub.h">Abonnement</h3><p data-i18n="settings.sub.p">Votre offre et vos options d'abonnement</p></div>
             </div>
           </div>
           <div class="planrow">
@@ -495,21 +496,21 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           <div class="msection-head">
             <div class="htxt">
               <span class="sicon" style="color:var(--alert)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 12.5h9l1-12.5M10 11v5.5M14 11v5.5"/></svg></span>
-              <div><h3>Supprimer mon compte</h3><p>Effacement immédiat et définitif de toutes vos données</p></div>
+              <div><h3 data-i18n="settings.del.h">Supprimer mon compte</h3><p data-i18n="settings.del.p">Effacement immédiat et définitif de toutes vos données</p></div>
             </div>
           </div>
           <ul class="mdelete-list">
-            <li>Vos instruments, vos résultats et leurs images sont effacés immédiatement, sans récupération possible.</li>
-            <li>Votre abonnement est arrêté tout de suite : aucun nouveau prélèvement, et la période déjà payée n'est pas remboursée.</li>
-            <li>Vos factures restent conservées par notre prestataire de paiement (Stripe), comme l'exigent nos obligations comptables.</li>
+            <li data-i18n="settings.del.li1">Vos instruments, vos résultats et leurs images sont effacés immédiatement, sans récupération possible.</li>
+            <li data-i18n="settings.del.li2">Votre abonnement est arrêté tout de suite : aucun nouveau prélèvement, et la période déjà payée n'est pas remboursée.</li>
+            <li data-i18n="settings.del.li3">Vos factures restent conservées par notre prestataire de paiement (Stripe), comme l'exigent nos obligations comptables.</li>
           </ul>
           <div class="mform-group">
-            <label for="settingsDeleteConfirm">Pour confirmer, tapez SUPPRIMER</label>
+            <label for="settingsDeleteConfirm" id="settingsDeleteLabel">Pour confirmer, tapez SUPPRIMER</label>
             <input type="text" id="settingsDeleteConfirm" autocomplete="off" spellcheck="false">
           </div>
           <div class="msection-actions">
             <p class="mnote" id="settingsDeleteMsg"></p>
-            <button class="mbtn danger" id="settingsDeleteBtn" type="button" style="align-self:flex-start" disabled>Supprimer définitivement mon compte</button>
+            <button class="mbtn danger" id="settingsDeleteBtn" type="button" style="align-self:flex-start" disabled data-i18n="settings.del.btn">Supprimer définitivement mon compte</button>
           </div>
         </div>
 
@@ -539,14 +540,14 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
   function formatDate(iso){
     var d = new Date(iso);
-    return d.toLocaleDateString("fr-FR", {day:"numeric", month:"short", year:"numeric"});
+    return d.toLocaleDateString(nysaLocale(), {day:"numeric", month:"short", year:"numeric"});
   }
   function timeAgo(iso){
     var diffMs = Date.now() - new Date(iso).getTime();
     var days = Math.floor(diffMs / 86400000);
-    if(days <= 0) return "aujourd'hui";
-    if(days === 1) return "hier";
-    return "il y a " + days + " jours";
+    if(days <= 0) return t("time.today");
+    if(days === 1) return t("time.yesterday");
+    return t("time.days_ago", { n: days });
   }
 
   // ===================== Chargement des vraies données (Supabase) =====================
@@ -577,7 +578,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       missing: (row.config && row.config._missing) || [],
       pct: (row.config && typeof row.config._pct === "number") ? row.config._pct
            : ((row.config && row.config._draft === false) ? 100 : 0),
-      desc: (row.config && row.config.description) || "Instrument configuré.",
+      desc: (row.config && row.config.description) || t("inst.configured"),
       modified: formatDate(row.updated_at || row.created_at),
       created: formatDate(row.created_at)
     };
@@ -595,23 +596,23 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   // ===================== Onglets (Tous / Multispectral / Hyperspectral) =====================
   function countByType(t){ return allItems.filter(function(i){ return i.type === t; }).length; }
   var TABS = [
-    {id:"all", label:"Tous", count: allItems.length},
-    {id:"Multispectral", label:"Multispectral", count: countByType("Multispectral")},
-    {id:"Hyperspectral", label:"Hyperspectral", soon:true}
+    {id:"all", label:t("home.tab.all"), count: allItems.length},
+    {id:"Multispectral", label:t("inst.type.multi"), count: countByType("Multispectral")},
+    {id:"Hyperspectral", label:t("inst.type.hyper"), soon:true}
   ];
   var activeTab = "all";
 
   var tabsHost = document.getElementById("tabsHost");
-  TABS.forEach(function(t){
+  TABS.forEach(function(tab){   // « tab » et non « t » : t() est la fonction de traduction
     var b = document.createElement("button");
-    b.className = "tab" + (t.soon ? " soon" : ""); b.type = "button"; b.dataset.id = t.id;
-    b.setAttribute("aria-selected", t.id === activeTab ? "true" : "false");
-    b.textContent = t.label + (t.soon ? " (à venir)" : " (" + t.count + ")");
-    if(t.soon){ tabsHost.appendChild(b); return; } // pas d'écouteur de clic — onglet inactif
+    b.className = "tab" + (tab.soon ? " soon" : ""); b.type = "button"; b.dataset.id = tab.id;
+    b.setAttribute("aria-selected", tab.id === activeTab ? "true" : "false");
+    b.textContent = tab.label + (tab.soon ? " (" + t("common.coming_soon") + ")" : " (" + tab.count + ")");
+    if(tab.soon){ tabsHost.appendChild(b); return; } // pas d'écouteur de clic — onglet inactif
     b.addEventListener("click", function(){
-      activeTab = t.id;
+      activeTab = tab.id;
       tabsHost.querySelectorAll(".tab").forEach(function(x){
-        x.setAttribute("aria-selected", x.dataset.id === activeTab ? "true" : "false");
+        x.setAttribute("aria-selected", x.datasetab.id === activeTab ? "true" : "false");
       });
       render();
     });
@@ -630,8 +631,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     });
 
     if(items.length === 0){
-      list.innerHTML = "<div class='instcard empty'><div class='elab'>Aucun instrument</div>"+
-        "<p class='esub'>Créez votre premier instrument pour commencer.</p></div>";
+      list.innerHTML = "<div class='instcard empty'><div class='elab'>" + t("inst.empty.title") + "</div>"+
+        "<p class='esub'>" + t("inst.empty.sub") + "</p></div>";
       return;
     }
     list.innerHTML = "";
@@ -644,31 +645,31 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       var desc = it.desc;
       if(it.draft){
         desc = it.missing.length
-          ? "Il manque : " + it.missing.slice(0, 4).join(", ") + (it.missing.length > 4 ? "…" : ".")
-          : "Instrument à compléter avant de pouvoir lancer une simulation.";
+          ? t("inst.missing", { list: it.missing.slice(0, 4).map(tField).join(", ") + (it.missing.length > 4 ? "…" : ".") })
+          : t("inst.draft.desc");
       }
       a.innerHTML =
         "<div class='body'>"+
           "<div class='titlerow'>"+
             "<span><div class='name'>"+it.name+"</div>"+
-            "<div class='type'><i></i>"+it.type+(it.draft ? "<span class='draftbadge'>Brouillon</span>" : "")+"</div></span>"+
+            "<div class='type'><i></i>"+t("inst.type.multi")+(it.draft ? "<span class='draftbadge'>" + t("inst.badge.draft") + "</span>" : "")+"</div></span>"+
             "<div class='menuwrap'>"+
-              "<button class='menubtn' type='button' aria-label='Options' data-menu-toggle data-id='"+it.id+"'>⋮</button>"+
+              "<button class='menubtn' type='button' aria-label='" + t("inst.menu.options") + "' data-menu-toggle data-id='"+it.id+"'>⋮</button>"+
               "<div class='dropdown' data-menu='"+it.id+"'>"+
-                "<button type='button' data-action='rename' data-id='"+it.id+"'>Renommer</button>"+
-                "<button type='button' data-action='duplicate' data-id='"+it.id+"'>Dupliquer</button>"+
-                "<button type='button' class='danger' data-action='delete' data-id='"+it.id+"'>Supprimer</button>"+
+                "<button type='button' data-action='rename' data-id='"+it.id+"'>" + t("inst.menu.rename") + "</button>"+
+                "<button type='button' data-action='duplicate' data-id='"+it.id+"'>" + t("inst.menu.duplicate") + "</button>"+
+                "<button type='button' class='danger' data-action='delete' data-id='"+it.id+"'>" + t("inst.menu.delete") + "</button>"+
               "</div>"+
             "</div>"+
           "</div>"+
           "<p class='desc'>"+desc+"</p>"+
-          "<div><div class='pctrow'><span>"+(it.draft ? "Configuration incomplète" : "Configuration complète")+"</span><span>"+it.pct+" %</span></div>"+
+          "<div><div class='pctrow'><span>"+(it.draft ? t("inst.config.incomplete") : t("inst.config.complete"))+"</span><span>"+it.pct+" %</span></div>"+
           "<div class='track'><div class='fill' style='width:"+it.pct+"%'></div></div></div>"+
           "<div class='datesrow'>"+
-            "<span>"+ICON_CAL+"Modifié le "+it.modified+"</span>"+
-            "<span>"+ICON_CLOCK+"Créé le "+it.created+"</span>"+
+            "<span>"+ICON_CAL+t("inst.modified", { date: it.modified })+"</span>"+
+            "<span>"+ICON_CLOCK+t("inst.created", { date: it.created })+"</span>"+
           "</div>"+
-          "<div class='openrow'><span class='openbtn'>"+(it.draft ? "Compléter →" : "Ouvrir →")+"</span></div>"+
+          "<div class='openrow'><span class='openbtn'>"+(it.draft ? t("inst.complete_cta") : t("inst.open"))+"</span></div>"+
         "</div>";
       list.appendChild(a);
     });
@@ -678,27 +679,27 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   // ===================== "Tout supprimer" =====================
   document.getElementById("btnDeleteAllInst").addEventListener("click", async function(){
     if(allItems.length === 0) return;
-    var ok = confirm("Supprimer les " + allItems.length + " instrument(s) de ce compte ?");
+    var ok = confirm(t("home.confirm.delete_all", { n: allItems.length }));
     if(!ok) return;
     // Double confirmation — action destructive et irréversible sur
     // l'ensemble des instruments du compte, pas juste ceux affichés sous
     // l'onglet actif.
-    var ok2 = confirm("Dernière confirmation : tous vos instruments disparaîtront de vos listes. Ils peuvent être restaurés sur demande pendant 30 jours. Continuer ?");
+    var ok2 = confirm(t("home.confirm.delete_all2"));
     if(!ok2) return;
 
     var btn = this;
     btn.disabled = true;
-    btn.textContent = "Suppression…";
+    btn.textContent = t("common.deleting");
 
     var { error } = await supabaseClient.from("instruments")
       .update({ deleted_at: new Date().toISOString() })
       .eq("account_id", session.user.id)
       .is("deleted_at", null);
 
-    btn.textContent = "Tout supprimer";
+    btn.textContent = t("home.delete_all");
     if(error){
       console.error("Erreur suppression de tous les instruments :", error);
-      alert("La suppression a échoué : " + error.message);
+      alert(t("home.err.delete", { msg: error.message }));
       btn.disabled = allItems.length === 0;
       return;
     }
@@ -739,14 +740,14 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
     if(action === "delete"){
       var toDelete = allItems.find(function(i){ return String(i.id) === String(id); });
-      var ok = confirm("Supprimer l'instrument « "+(toDelete ? toDelete.name : "")+" » ? Il peut être restauré sur demande pendant 30 jours.");
+      var ok = confirm(t("home.confirm.delete_one", { name: (toDelete ? toDelete.name : "") }));
       if(!ok) return;
       var { error } = await supabaseClient.from("instruments")
         .update({ deleted_at: new Date().toISOString() })
         .eq("id", id);
       if(error){
         console.error("Erreur suppression instrument :", error);
-        alert("La suppression a échoué : " + error.message);
+        alert(t("home.err.delete", { msg: error.message }));
         return;
       }
       allItems = allItems.filter(function(i){ return String(i.id) !== String(id); });
@@ -756,7 +757,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
     if(action === "rename"){
       var toRename = allItems.find(function(i){ return String(i.id) === String(id); });
-      var newName = prompt("Nouveau nom :", toRename ? toRename.name : "");
+      var newName = prompt(t("home.prompt.rename"), toRename ? toRename.name : "");
       if(newName === null || newName.trim() === "") return;
       newName = newName.trim();
       var { error } = await supabaseClient
@@ -765,7 +766,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         .eq("id", id);
       if(error){
         console.error("Erreur renommage instrument :", error);
-        alert("Le renommage a échoué : " + error.message);
+        alert(t("home.err.rename", { msg: error.message }));
         return;
       }
       toRename.name = newName;
@@ -781,17 +782,17 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         .from("instruments").select("*").eq("id", id).single();
       if(fetchErr || !original){
         console.error("Erreur lecture instrument à dupliquer :", fetchErr);
-        alert("La duplication a échoué.");
+        alert(t("home.err.duplicate"));
         return;
       }
       var { data: inserted, error: insErr } = await supabaseClient
         .from("instruments")
-        .insert({ name: original.name + " (copie)", config: original.config, account_id: session.user.id })
+        .insert({ name: original.name + t("home.copy_suffix"), config: original.config, account_id: session.user.id })
         .select()
         .single();
       if(insErr){
         console.error("Erreur duplication instrument :", insErr);
-        alert("La duplication a échoué : " + insErr.message);
+        alert(t("home.err.duplicate_msg", { msg: insErr.message }));
         return;
       }
       allItems.unshift(toItem(inserted)); // la copie garde le tag brouillon de l'original
@@ -814,7 +815,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   var ACTIVITY_DAYS = 7;
   var activitySince = Date.now() - ACTIVITY_DAYS * 24 * 3600 * 1000;
   (instruments || []).forEach(function(row){
-    activityItems.push({label: row.name, sub: "Instrument enregistré", when: row.updated_at});
+    activityItems.push({label: row.name, sub: t("activity.inst_saved"), when: row.updated_at});
   });
   recentResults.forEach(function(r){
     var instName = (r.instruments && r.instruments.name)
@@ -826,7 +827,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     // gardée dans le résultat (instrument_snapshot).
     var instGone = !r.instruments || !!r.instruments.deleted_at;
     activityItems.push({label: instName,
-      sub: "Résultat sauvegardé (" + r.scene + ")" + (instGone ? " · instrument supprimé" : ""),
+      sub: t("activity.result_saved", { scene: tScene(r.scene) }) + (instGone ? t("activity.inst_deleted") : ""),
       when: r.created_at});
   });
   activityItems = activityItems.filter(function(a){ return new Date(a.when).getTime() >= activitySince; });
@@ -835,7 +836,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   function escAct(t){ var d = document.createElement("div"); d.textContent = t == null ? "" : String(t); return d.innerHTML; }
 
   if(activityItems.length === 0){
-    activityEl.innerHTML = "<li><span class='adot'></span><span><span class='alabel'>Aucune activité ces "+ACTIVITY_DAYS+" derniers jours</span></span></li>";
+    activityEl.innerHTML = "<li><span class='adot'></span><span><span class='alabel'>" + t("activity.none", { n: ACTIVITY_DAYS }) + "</span></span></li>";
   } else {
     activityEl.innerHTML = activityItems.map(function(a){
       return "<li><span class='adot'></span><span><span class='alabel'>"+escAct(a.label)+"</span><br>"+
@@ -913,60 +914,60 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     subBtn.hidden = false;
     if(isSubscribed() && isBeta()){
       // 05/10/2026 — bêta gratuite : aucun prix, aucun abonnement à gérer.
-      planBadge.textContent = "Bêta";
+      planBadge.textContent = t("sub.badge.beta");
       planBadge.classList.remove("free");
-      planName.textContent = "Accès bêta";
-      planDesc.textContent = "Gratuit pendant la phase d'essai";
+      planName.textContent = t("sub.beta.name");
+      planDesc.textContent = t("sub.beta.desc");
       subStatusDot.className = "pstatus";
-      subStatusText.textContent = "Actif";
+      subStatusText.textContent = t("sub.status.active");
       subNote.className = "mnote";
       subNote.textContent = entitlement.current_period_end
-        ? "Votre accès bêta est actif jusqu'au " + formatDate(entitlement.current_period_end) + "."
-        : "Votre accès bêta est actif.";
+        ? t("sub.beta.until", { date: formatDate(entitlement.current_period_end) })
+        : t("sub.beta.active");
       subBtn.hidden = true;
 
     } else if(isSubscribed()){
-      planBadge.textContent = "Individuel";
+      planBadge.textContent = t("sub.badge.individual");
       planBadge.classList.remove("free");
-      planName.textContent = "Plan Individuel";
-      planDesc.textContent = "Accès complet";   // 05/10/2026 — plus de prix affiché pendant la bêta
+      planName.textContent = t("sub.plan.individual");
+      planDesc.textContent = t("sub.full");   // 05/10/2026 — plus de prix affiché pendant la bêta
       subStatusDot.className = "pstatus";
-      subStatusText.textContent = "Actif";
+      subStatusText.textContent = t("sub.status.active");
       // 04/10/2026 — date affichée sous l'offre : renouvellement, ou fin
       // d'accès si l'abonnement a été résilié (il reste actif jusqu'à la
       // fin de la période payée). Les deux informations viennent du
       // webhook Stripe (current_period_end, cancel_at_period_end).
       if(entitlement.current_period_end && entitlement.cancel_at_period_end){
         subNote.className = "mnote warn";
-        subNote.textContent = "Résilié : expire le " + formatDate(entitlement.current_period_end) + ".";
+        subNote.textContent = t("sub.cancelled_until", { date: formatDate(entitlement.current_period_end) });
       } else {
         subNote.className = "mnote";
         subNote.textContent = entitlement.current_period_end
-          ? "Renouvellement le " + formatDate(entitlement.current_period_end) + "."
+          ? t("sub.renews", { date: formatDate(entitlement.current_period_end) })
           : "";
       }
-      subBtn.textContent = "Gérer mon abonnement";
+      subBtn.textContent = t("sub.manage");
       subBtn.className = "mbtn";
 
     } else if(entitlement.subscription_status === "past_due"){
-      planBadge.textContent = "Individuel";
+      planBadge.textContent = t("sub.badge.individual");
       planBadge.classList.remove("free");
-      planName.textContent = "Plan Individuel";
-      planDesc.textContent = "Paiement en attente";
+      planName.textContent = t("sub.plan.individual");
+      planDesc.textContent = t("sub.pending");
       subStatusDot.className = "pstatus warn";
-      subStatusText.textContent = "Paiement échoué";
+      subStatusText.textContent = t("sub.failed");
       subNote.className = "mnote err";
-      subNote.textContent = "Mettez à jour votre moyen de paiement pour conserver l'accès.";
-      subBtn.textContent = "Mettre à jour le paiement";
+      subNote.textContent = t("sub.update_note");
+      subBtn.textContent = t("sub.update_btn");
       subBtn.className = "mbtn primary";
 
     } else {
-      planBadge.textContent = "Gratuit";
+      planBadge.textContent = t("sub.badge.free");
       planBadge.classList.add("free");
-      planName.textContent = "Aucun abonnement";
-      planDesc.textContent = "Passez au plan Individuel pour accéder au simulateur complet";
+      planName.textContent = t("sub.none");
+      planDesc.textContent = t("sub.none.desc");
       subStatusDot.className = "pstatus pending";
-      subStatusText.textContent = "Inactif";
+      subStatusText.textContent = t("sub.status.inactive");
       subNote.className = "mnote";
       subNote.textContent = "";
       // 04/10/2026 — abonnement terminé : le compte reste utilisable sans
@@ -977,19 +978,18 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         var endedAt = new Date(entitlement.subscription_ended_at);
         var keptUntil = new Date(endedAt.getTime() + 365 * 24 * 3600 * 1000);
         subNote.className = "mnote warn";
-        subNote.textContent = "Votre abonnement a pris fin le " + formatDate(endedAt.toISOString()) +
-          ". Sans réabonnement, votre compte et vos données seront supprimés le " + formatDate(keptUntil.toISOString()) + ".";
+        subNote.textContent = t("sub.ended", { end: formatDate(endedAt.toISOString()), del: formatDate(keptUntil.toISOString()) });
       }
       // Bêta terminée pour ce compte : on le dit, plutôt que « Aucun abonnement ».
       if(isBeta()){
-        planName.textContent = "Accès bêta terminé";
-        planDesc.textContent = "La phase d'essai est terminée";
+        planName.textContent = t("sub.beta.ended.name");
+        planDesc.textContent = t("sub.beta.ended.desc");
         if(entitlement.current_period_end){
           subNote.className = "mnote";
-          subNote.textContent = "Votre accès bêta a pris fin le " + formatDate(entitlement.current_period_end) + ".";
+          subNote.textContent = t("sub.beta.ended.note", { date: formatDate(entitlement.current_period_end) });
         }
       }
-      subBtn.textContent = "S'abonner";   // 05/10/2026 — plus de prix affiché (tarif décidé après la bêta)
+      subBtn.textContent = t("sub.subscribe");   // 05/10/2026 — plus de prix affiché (tarif décidé après la bêta)
       subBtn.className = "mbtn primary";
     }
     subBtn.disabled = false;
@@ -1002,7 +1002,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   // l'abonnement Stripe, effacement des images, puis suppression de
   // l'utilisateur (qui efface en cascade compte, instruments, résultats et
   // abonnement en base). Le mot de confirmation est revérifié côté serveur.
-  var DELETE_WORD = "SUPPRIMER";
+  var DELETE_WORD_SERVER = "SUPPRIMER";            // mot attendu par la fonction delete-account, quelle que soit la langue
+  var DELETE_WORD = t("settings.del.word");        // mot que l'utilisateur tape, dans la langue de l'interface
+  document.getElementById("settingsDeleteLabel").textContent = t("settings.del.label", { word: DELETE_WORD });
   var delInput = document.getElementById("settingsDeleteConfirm");
   var delBtn = document.getElementById("settingsDeleteBtn");
   var delMsg = document.getElementById("settingsDeleteMsg");
@@ -1012,7 +1014,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   delBtn.addEventListener("click", async function(){
     if(delInput.value.trim() !== DELETE_WORD) return;
     delBtn.disabled = true; delInput.disabled = true;
-    delMsg.className = "mnote"; delMsg.textContent = "Suppression en cours, ne fermez pas cette page…";
+    delMsg.className = "mnote"; delMsg.textContent = t("settings.del.busy");
     var ok = false, detail = "";
     try {
       var { data: { session: s } } = await supabaseClient.auth.getSession();
@@ -1020,7 +1022,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       var res = await fetch(FUNCTIONS_URL + "/delete-account", {
         method: "POST",
         headers: { "Authorization": "Bearer " + s.access_token, "Content-Type": "application/json" },
-        body: JSON.stringify({ confirm: DELETE_WORD })
+        body: JSON.stringify({ confirm: DELETE_WORD_SERVER })
       });
       ok = res.ok;
       if(!ok) detail = await res.text();
@@ -1029,7 +1031,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     if(!ok){
       console.error("delete-account :", detail);
       delMsg.className = "mnote err";
-      delMsg.textContent = "La suppression n'a pas pu aller au bout. Votre compte existe toujours : réessayez, et contactez-nous si l'erreur persiste.";
+      delMsg.textContent = t("settings.del.fail");
       delInput.disabled = false; delBtn.disabled = false;
       return;
     }
@@ -1108,7 +1110,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   subBtn.addEventListener("click", async function(){
     var previous = subBtn.textContent;
     subBtn.disabled = true;
-    subBtn.textContent = "Redirection…";
+    subBtn.textContent = t("sub.redirect");
 
     // 04/10/2026 — aiguillage corrigé. Le portail client ne sert qu'à gérer
     // un abonnement qui existe : actif, ou en retard de paiement. Dans tous
@@ -1130,7 +1132,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       return;
     }
     if(!out || !out.url){
-      alert("Impossible d'ouvrir la page de paiement. Réessayez dans un instant.");
+      alert(t("sub.pay_fail"));
       subBtn.disabled = false;
       subBtn.textContent = previous;
       return;
@@ -1148,7 +1150,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
     openSettings();
     subBtn.disabled = true;
-    subBtn.textContent = "Activation en cours…";
+    subBtn.textContent = t("sub.activating");
 
     for(var i = 0; i < 10; i++){
       var { data: fresh } = await supabaseClient
@@ -1165,7 +1167,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     }
     console.warn("Abonnement pas encore visible — webhook en retard ?");
     subNote.className = "mnote";
-    subNote.textContent = "Paiement enregistré. L'activation peut prendre quelques instants : rechargez la page.";
+    subNote.textContent = t("sub.paid_wait");
     renderSubscription();
   })();
 
@@ -1181,28 +1183,28 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     pwdMsg.className = "mnote";
 
     if(pwd.length < 8){
-      pwdMsg.textContent = "8 caractères minimum.";
+      pwdMsg.textContent = t("pwd.min");
       pwdMsg.className = "mnote err";
       return;
     }
     if(pwd !== confirmPwd){
-      pwdMsg.textContent = "Les mots de passe ne correspondent pas.";
+      pwdMsg.textContent = t("pwd.mismatch");
       pwdMsg.className = "mnote err";
       return;
     }
 
     pwdBtn.disabled = true;
-    pwdBtn.textContent = "Mise à jour…";
+    pwdBtn.textContent = t("pwd.updating");
     var { error } = await supabaseClient.auth.updateUser({ password: pwd });
     pwdBtn.disabled = false;
-    pwdBtn.textContent = "Mettre à jour le mot de passe";
+    pwdBtn.textContent = t("settings.pwd.btn");
 
     if(error){
-      pwdMsg.textContent = "Erreur : " + error.message;
+      pwdMsg.textContent = t("common.error_msg", { msg: error.message });
       pwdMsg.className = "mnote err";
       return;
     }
-    pwdMsg.textContent = "Mot de passe mis à jour.";
+    pwdMsg.textContent = t("pwd.done");
     pwdMsg.className = "mnote ok";
     newPwdInput.value = "";
     confirmPwdInput.value = "";

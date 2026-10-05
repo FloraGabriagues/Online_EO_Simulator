@@ -68,6 +68,162 @@ var I18N = {
                             en: "Please confirm your email address first (link sent at sign-up) before signing in." },
   "auth.err.other":       { fr: "Une erreur est survenue : {msg}", en: "An error occurred: {msg}" },
 
+  // ---------------- commun à l'espace connecté ----------------
+  "common.close":        { fr: "Fermer", en: "Close" },
+  "common.deleting":     { fr: "Suppression…", en: "Deleting…" },
+  "common.error_msg":    { fr: "Erreur : {msg}", en: "Error: {msg}" },
+  "time.today":          { fr: "aujourd'hui", en: "today" },
+  "time.yesterday":      { fr: "hier", en: "yesterday" },
+  "time.days_ago":       { fr: "il y a {n} jours", en: "{n} days ago" },
+
+  // menu de gauche et barre du haut
+  "nav.instruments":     { fr: "Instruments", en: "Instruments" },
+  "nav.platform":        { fr: "Plateforme", en: "Platform" },
+  "nav.simulations":     { fr: "Simulations", en: "Simulations" },
+  "nav.results":         { fr: "Résultats", en: "Results" },
+  "nav.compare":         { fr: "Comparateur", en: "Comparator" },
+  "nav.compare.title":   { fr: "Comparateur d'architectures : à venir dans Nysa V1",
+                           en: "Architecture comparator: coming in Nysa V1" },
+  "nav.soon":            { fr: "à venir", en: "soon" },            // menu étroit : « coming soon » passait sur deux lignes
+  "common.coming_soon":  { fr: "à venir", en: "coming soon" },
+  "nav.help":            { fr: "Aide", en: "Help" },
+  "nav.settings":        { fr: "Paramètres", en: "Settings" },
+  "top.notifications":   { fr: "Notifications", en: "Notifications" },
+  "top.signout":         { fr: "Se déconnecter", en: "Sign out" },
+
+  // scènes (le nom français est celui enregistré avec chaque résultat)
+  "scene.Ville":         { fr: "Ville", en: "City" },
+  "scene.Avion":         { fr: "Avion", en: "Aircraft" },
+  "scene.Port":          { fr: "Port", en: "Port" },
+
+  // types d'instrument
+  "inst.type.multi":     { fr: "Multispectral", en: "Multispectral" },
+  "inst.type.hyper":     { fr: "Hyperspectral", en: "Hyperspectral" },
+
+  // ---------------- espace personnel (espace-personnel.html) ----------------
+  "home.doc_title":      { fr: "Espace personnel — Nysa", en: "My workspace — Nysa" },
+  "home.eyebrow":        { fr: "Instruments", en: "Instruments" },
+  "home.h1":             { fr: "Mes instruments", en: "My instruments" },
+  "home.sub":            { fr: "Créez, configurez et gérez vos instruments d'imagerie.",
+                           en: "Create, configure and manage your imaging instruments." },
+  "home.delete_all":     { fr: "Tout supprimer", en: "Delete all" },
+  "home.create":         { fr: "+ Créer un instrument", en: "+ Create instrument" },
+  "home.tab.all":        { fr: "Tous", en: "All" },
+  "home.activity":       { fr: "Activité récente", en: "Recent activity" },
+  "home.doc":            { fr: "Documentation", en: "Documentation" },
+  "home.hero.h2a":       { fr: "Analysez la performance de vos", en: "Analyze the performance of your" },
+  "home.hero.h2b":       { fr: "instruments d'imagerie", en: "imaging instruments" },
+  "home.hero.p":         { fr: "Créez vos instruments, configurez vos scénarios et obtenez des métriques détaillées sur la qualité de vos images.",
+                           en: "Create your instruments, configure your scenarios and get detailed metrics on the quality of your images." },
+  "home.hero.link":      { fr: "Voir les hypothèses physiques du modèle →", en: "See the model's physical assumptions →" },
+  "home.confirm.delete_all":  { fr: "Supprimer les {n} instrument(s) de ce compte ?", en: "Delete the {n} instrument(s) in this account?" },
+  "home.confirm.delete_all2": { fr: "Dernière confirmation : tous vos instruments disparaîtront de vos listes. Ils peuvent être restaurés sur demande pendant 30 jours. Continuer ?",
+                                en: "Final confirmation: all your instruments will disappear from your lists. They can be restored on request for 30 days. Continue?" },
+  "home.confirm.delete_one":  { fr: "Supprimer l'instrument « {name} » ? Il peut être restauré sur demande pendant 30 jours.",
+                                en: "Delete the instrument “{name}”? It can be restored on request for 30 days." },
+  "home.prompt.rename":  { fr: "Nouveau nom :", en: "New name:" },
+  "home.copy_suffix":    { fr: " (copie)", en: " (copy)" },
+  "home.err.delete":     { fr: "La suppression a échoué : {msg}", en: "Deletion failed: {msg}" },
+  "home.err.rename":     { fr: "Le renommage a échoué : {msg}", en: "Renaming failed: {msg}" },
+  "home.err.duplicate":  { fr: "La duplication a échoué.", en: "Duplication failed." },
+  "home.err.duplicate_msg": { fr: "La duplication a échoué : {msg}", en: "Duplication failed: {msg}" },
+
+  // cartes d'instrument
+  "inst.empty.title":    { fr: "Aucun instrument", en: "No instrument yet" },
+  "inst.empty.sub":      { fr: "Créez votre premier instrument pour commencer.", en: "Create your first instrument to get started." },
+  "inst.missing":        { fr: "Il manque : {list}", en: "Missing: {list}" },
+  "inst.draft.desc":     { fr: "Instrument à compléter avant de pouvoir lancer une simulation.",
+                           en: "Complete this instrument before you can run a simulation." },
+  "inst.configured":     { fr: "Instrument configuré.", en: "Instrument configured." },
+  "inst.badge.draft":    { fr: "Brouillon", en: "Draft" },
+  "inst.menu.options":   { fr: "Options", en: "Options" },
+  "inst.menu.rename":    { fr: "Renommer", en: "Rename" },
+  "inst.menu.duplicate": { fr: "Dupliquer", en: "Duplicate" },
+  "inst.menu.delete":    { fr: "Supprimer", en: "Delete" },
+  "inst.config.incomplete": { fr: "Configuration incomplète", en: "Configuration incomplete" },
+  "inst.config.complete":   { fr: "Configuration complète", en: "Configuration complete" },
+  "inst.modified":       { fr: "Modifié le {date}", en: "Modified {date}" },
+  "inst.created":        { fr: "Créé le {date}", en: "Created {date}" },
+  "inst.open":           { fr: "Ouvrir →", en: "Open →" },
+  "inst.complete_cta":   { fr: "Compléter →", en: "Complete →" },
+
+  // activité récente
+  "activity.inst_saved":   { fr: "Instrument enregistré", en: "Instrument saved" },
+  "activity.result_saved": { fr: "Résultat sauvegardé ({scene})", en: "Result saved ({scene})" },
+  "activity.inst_deleted": { fr: " · instrument supprimé", en: " · instrument deleted" },
+  "activity.none":         { fr: "Aucune activité ces {n} derniers jours", en: "No activity in the last {n} days" },
+
+  // paramètres
+  "settings.title":         { fr: "Paramètres", en: "Settings" },
+  "settings.rail.account":  { fr: "Compte", en: "Account" },
+  "settings.rail.pwd":      { fr: "Mot de passe", en: "Password" },
+  "settings.rail.sub":      { fr: "Abonnement", en: "Subscription" },
+  "settings.rail.delete":   { fr: "Suppression", en: "Delete account" },
+  "settings.account.h":     { fr: "Compte", en: "Account" },
+  "settings.account.p":     { fr: "Vos informations personnelles et votre adresse e-mail", en: "Your personal information and email address" },
+  "settings.account.email": { fr: "E-mail", en: "Email" },
+  "settings.account.since": { fr: "Membre depuis", en: "Member since" },
+  "settings.pwd.h":         { fr: "Mot de passe", en: "Password" },
+  "settings.pwd.p":         { fr: "Modifiez votre mot de passe pour sécuriser votre compte", en: "Change your password to keep your account secure" },
+  "settings.pwd.new":       { fr: "Nouveau mot de passe", en: "New password" },
+  "settings.pwd.ph":        { fr: "8 caractères minimum", en: "At least 8 characters" },
+  "settings.pwd.confirm":   { fr: "Confirmer le nouveau mot de passe", en: "Confirm new password" },
+  "settings.pwd.btn":       { fr: "Mettre à jour le mot de passe", en: "Update password" },
+  "pwd.min":                { fr: "8 caractères minimum.", en: "At least 8 characters." },
+  "pwd.mismatch":           { fr: "Les mots de passe ne correspondent pas.", en: "The passwords do not match." },
+  "pwd.updating":           { fr: "Mise à jour…", en: "Updating…" },
+  "pwd.done":               { fr: "Mot de passe mis à jour.", en: "Password updated." },
+  "settings.sub.h":         { fr: "Abonnement", en: "Subscription" },
+  "settings.sub.p":         { fr: "Votre offre et vos options d'abonnement", en: "Your plan and subscription options" },
+  "settings.del.h":         { fr: "Supprimer mon compte", en: "Delete my account" },
+  "settings.del.p":         { fr: "Effacement immédiat et définitif de toutes vos données", en: "Immediate and permanent erasure of all your data" },
+  "settings.del.li1":       { fr: "Vos instruments, vos résultats et leurs images sont effacés immédiatement, sans récupération possible.",
+                              en: "Your instruments, your results and their images are erased immediately, with no possible recovery." },
+  "settings.del.li2":       { fr: "Votre abonnement est arrêté tout de suite : aucun nouveau prélèvement, et la période déjà payée n'est pas remboursée.",
+                              en: "Your subscription is stopped right away: no further charge, and the period already paid is not refunded." },
+  "settings.del.li3":       { fr: "Vos factures restent conservées par notre prestataire de paiement (Stripe), comme l'exigent nos obligations comptables.",
+                              en: "Your invoices remain stored by our payment provider (Stripe), as required by our accounting obligations." },
+  "settings.del.label":     { fr: "Pour confirmer, tapez {word}", en: "To confirm, type {word}" },
+  "settings.del.word":      { fr: "SUPPRIMER", en: "DELETE" },
+  "settings.del.btn":       { fr: "Supprimer définitivement mon compte", en: "Permanently delete my account" },
+  "settings.del.busy":      { fr: "Suppression en cours, ne fermez pas cette page…", en: "Deletion in progress, do not close this page…" },
+  "settings.del.fail":      { fr: "La suppression n'a pas pu aller au bout. Votre compte existe toujours : réessayez, et contactez-nous si l'erreur persiste.",
+                              en: "The deletion could not be completed. Your account still exists: try again, and contact us if the error persists." },
+
+  // abonnement et accès bêta
+  "sub.badge.beta":        { fr: "Bêta", en: "Beta" },
+  "sub.beta.name":         { fr: "Accès bêta", en: "Beta access" },
+  "sub.beta.desc":         { fr: "Gratuit pendant la phase d'essai", en: "Free during the trial phase" },
+  "sub.beta.until":        { fr: "Votre accès bêta est actif jusqu'au {date}.", en: "Your beta access is active until {date}." },
+  "sub.beta.active":       { fr: "Votre accès bêta est actif.", en: "Your beta access is active." },
+  "sub.beta.ended.name":   { fr: "Accès bêta terminé", en: "Beta access ended" },
+  "sub.beta.ended.desc":   { fr: "La phase d'essai est terminée", en: "The trial phase is over" },
+  "sub.beta.ended.note":   { fr: "Votre accès bêta a pris fin le {date}.", en: "Your beta access ended on {date}." },
+  "sub.status.active":     { fr: "Actif", en: "Active" },
+  "sub.status.inactive":   { fr: "Inactif", en: "Inactive" },
+  "sub.badge.individual":  { fr: "Individuel", en: "Individual" },
+  "sub.plan.individual":   { fr: "Plan Individuel", en: "Individual plan" },
+  "sub.full":              { fr: "Accès complet", en: "Full access" },
+  "sub.cancelled_until":   { fr: "Résilié : expire le {date}.", en: "Cancelled: expires on {date}." },
+  "sub.renews":            { fr: "Renouvellement le {date}.", en: "Renews on {date}." },
+  "sub.manage":            { fr: "Gérer mon abonnement", en: "Manage my subscription" },
+  "sub.pending":           { fr: "Paiement en attente", en: "Payment pending" },
+  "sub.failed":            { fr: "Paiement échoué", en: "Payment failed" },
+  "sub.update_note":       { fr: "Mettez à jour votre moyen de paiement pour conserver l'accès.", en: "Update your payment method to keep your access." },
+  "sub.update_btn":        { fr: "Mettre à jour le paiement", en: "Update payment" },
+  "sub.badge.free":        { fr: "Gratuit", en: "Free" },
+  "sub.none":              { fr: "Aucun abonnement", en: "No subscription" },
+  "sub.none.desc":         { fr: "Passez au plan Individuel pour accéder au simulateur complet", en: "Switch to the Individual plan to access the full simulator" },
+  "sub.ended":             { fr: "Votre abonnement a pris fin le {end}. Sans réabonnement, votre compte et vos données seront supprimés le {del}.",
+                             en: "Your subscription ended on {end}. Unless you resubscribe, your account and your data will be deleted on {del}." },
+  "sub.subscribe":         { fr: "S'abonner", en: "Subscribe" },
+  "sub.redirect":          { fr: "Redirection…", en: "Redirecting…" },
+  "sub.activating":        { fr: "Activation en cours…", en: "Activating…" },
+  "sub.paid_wait":         { fr: "Paiement enregistré. L'activation peut prendre quelques instants : rechargez la page.",
+                             en: "Payment recorded. Activation may take a few moments: reload the page." },
+  "sub.pay_fail":          { fr: "Impossible d'ouvrir la page de paiement. Réessayez dans un instant.",
+                             en: "Unable to open the payment page. Please try again in a moment." },
+
   // ---------------- page de connexion (login.html) ----------------
   "login.doc_title":     { fr: "Connexion — Nysa", en: "Sign in — Nysa" },
   "login.h1":            { fr: "Accès au simulateur complet", en: "Access the full simulator" },
@@ -131,6 +287,18 @@ var I18N = {
       s = s.replace(/\{(\w+)\}/g, function(m, name){ return vars[name] != null ? vars[name] : m; });
     }
     return s;
+  };
+
+  // Nom de scène : la base enregistre le nom français (« Ville », « Port »…).
+  window.tScene = function(name){
+    return (name != null && I18N["scene." + name]) ? t("scene." + name) : name;
+  };
+  // Nom d'un champ manquant d'un brouillon : enregistré en français avec
+  // l'instrument. La table I18N_FIELD_FR (libellé français → clé) sera
+  // remplie avec la traduction de la page de création d'instrument.
+  window.tField = function(frLabel){
+    var key = (typeof I18N_FIELD_FR !== "undefined") ? I18N_FIELD_FR[frLabel] : null;
+    return key ? t(key) : frLabel;
   };
 
   // Applique les textes aux éléments marqués. Sans effet sur le reste de la page.
