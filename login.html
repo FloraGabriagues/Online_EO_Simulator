@@ -3,7 +3,9 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Connexion — Nysa</title>
+<title data-i18n="login.doc_title">Connexion — Nysa</title>
+<!-- Traduction FR / EN : textes et moteur dans i18n.js -->
+<script src="i18n.js"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.70%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2234.30%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%225.3%22%20fill%3D%22%23FFB86B%22/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -67,12 +69,16 @@ h1{font-family:var(--display);font-weight:500;font-size:21px;
 .brand .mark{width:42px;height:42px}
 .brand .name{font-size:27px}
 .brand .tag{font-size:10px;margin-top:4px}
+/* sélecteur de langue, en haut à droite de la carte (affiché au basculement, cf. i18n.js) */
+.card{position:relative}
+.card > [data-lang-switch]{position:absolute;top:16px;right:16px}
 </style>
 </head>
 <body>
 <!-- Bandeau « version bêta » : se désactive dans beta.js (BETA_ACTIVE = false) -->
 <script src="beta.js"></script>
 <div class="card">
+  <div data-lang-switch></div>
   <div class="brand">
     <!-- 05/10/2026 — logo Nysa : la fleur à six pétales -->
       <span class="mark"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24.00" cy="13.70" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="32.92" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="32.92" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="24.00" cy="34.30" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="15.08" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="15.08" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="24" cy="24" r="5.3" fill="#FFB86B"/></svg></span>
@@ -83,45 +89,45 @@ h1{font-family:var(--display);font-weight:500;font-size:21px;
   </div>
 
   <div id="authArea">
-    <h1>Accès au simulateur complet</h1>
-    <p class="sub">Connectez-vous ou créez un compte pour accéder à vos instruments et résultats.</p>
+    <h1 data-i18n="login.h1">Accès au simulateur complet</h1>
+    <p class="sub" data-i18n="login.sub">Connectez-vous ou créez un compte pour accéder à vos instruments et résultats.</p>
 
     <div class="tabs" role="tablist">
-      <button class="tab" type="button" data-view="login" aria-selected="true">Se connecter</button>
-      <button class="tab" type="button" data-view="signup" aria-selected="false">Créer un compte</button>
+      <button class="tab" type="button" data-view="login" aria-selected="true" data-i18n="login.tab.login">Se connecter</button>
+      <button class="tab" type="button" data-view="signup" aria-selected="false" data-i18n="login.tab.signup">Créer un compte</button>
     </div>
 
     <!-- ============ Connexion ============ -->
     <form class="formview current" id="loginForm" data-view="login">
       <div class="field">
-        <label for="loginEmail">E-mail</label>
+        <label for="loginEmail" data-i18n="login.email">E-mail</label>
         <input type="email" id="loginEmail" required autocomplete="email">
       </div>
       <div class="field">
-        <label for="loginPassword">Mot de passe</label>
+        <label for="loginPassword" data-i18n="login.password">Mot de passe</label>
         <input type="password" id="loginPassword" required autocomplete="current-password">
       </div>
-      <button class="submitbtn" type="submit">Se connecter</button>
+      <button class="submitbtn" type="submit" data-i18n="login.btn.login">Se connecter</button>
       <div class="msg" id="loginMsg"></div>
     </form>
 
     <!-- ============ Inscription ============ -->
     <form class="formview" id="signupForm" data-view="signup">
       <div class="field">
-        <label for="signupEmail">E-mail</label>
+        <label for="signupEmail" data-i18n="login.email">E-mail</label>
         <input type="email" id="signupEmail" required autocomplete="email">
       </div>
       <div class="field">
-        <label for="signupPassword">Mot de passe</label>
+        <label for="signupPassword" data-i18n="login.password">Mot de passe</label>
         <input type="password" id="signupPassword" required minlength="6" autocomplete="new-password">
       </div>
       <!-- 05/10/2026 — confirmation du mot de passe : une faute de frappe à
            l'inscription créait un compte dont personne ne connaissait le mot de passe. -->
       <div class="field">
-        <label for="signupPassword2">Confirmer le mot de passe</label>
+        <label for="signupPassword2" data-i18n="login.password2">Confirmer le mot de passe</label>
         <input type="password" id="signupPassword2" required minlength="6" autocomplete="new-password">
       </div>
-      <button class="submitbtn" type="submit">Créer mon compte</button>
+      <button class="submitbtn" type="submit" data-i18n="login.btn.signup">Créer mon compte</button>
       <div class="msg" id="signupMsg"></div>
     </form>
   </div>
@@ -142,7 +148,7 @@ if (urlParams.get("reason") === "other_device") {
   banner.className = "msg err";
   banner.style.display = "block";
   banner.style.marginBottom = "20px";
-  banner.textContent = "Vous avez été déconnecté car ce compte a été utilisé sur un autre appareil. Une seule connexion à la fois est autorisée.";
+  banner.textContent = t("login.msg.other_device");
   document.getElementById("authArea").insertBefore(banner, document.getElementById("authArea").firstChild);
 }
 
@@ -153,7 +159,7 @@ if (urlParams.get("reason") === "account_deleted") {
   delBanner.className = "msg ok";
   delBanner.style.display = "block";
   delBanner.style.marginBottom = "20px";
-  delBanner.textContent = "Votre compte et vos données ont été supprimés.";
+  delBanner.textContent = t("login.msg.deleted");
   document.getElementById("authArea").insertBefore(delBanner, document.getElementById("authArea").firstChild);
 }
 
@@ -207,7 +213,7 @@ document.getElementById("signupForm").addEventListener("submit", async function(
   if (password !== password2El.value) {
     btn.disabled = false;
     msgEl.className = "msg err";
-    msgEl.textContent = "Les deux mots de passe ne sont pas identiques.";
+    msgEl.textContent = t("login.msg.mismatch");
     password2El.focus();
     password2El.select();
     return;
@@ -237,7 +243,7 @@ document.getElementById("signupForm").addEventListener("submit", async function(
   // alors null même si le compte est bien créé).
   if (!data.session) {
     msgEl.className = "msg ok";
-    msgEl.textContent = "Compte créé. Vérifiez votre boîte mail pour confirmer votre adresse avant de vous connecter.";
+    msgEl.textContent = t("login.msg.created");
     return;
   }
   await registerSessionMarker(data.user.id);

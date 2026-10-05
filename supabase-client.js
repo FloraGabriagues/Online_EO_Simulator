@@ -83,26 +83,18 @@ async function signOut() {
 }
 
 /**
- * Message d'erreur lisible en français pour les erreurs Supabase Auth les
- * plus courantes — Supabase renvoie ses messages en anglais par défaut.
+ * Message d'erreur lisible pour les erreurs Supabase Auth les plus courantes,
+ * dans la langue de l'interface (textes dans i18n.js, clés auth.err.*).
+ * Le nom historique frenchAuthError est conservé : les pages l'appellent.
  */
 function frenchAuthError(error) {
   if (!error) return "";
   const msg = error.message || "";
-  if (msg.includes("Invalid login credentials")) {
-    return "E-mail ou mot de passe incorrect.";
-  }
-  if (msg.includes("User already registered")) {
-    return "Un compte existe déjà avec cette adresse e-mail.";
-  }
-  if (msg.includes("Password should be at least")) {
-    return "Le mot de passe doit faire au moins 6 caractères.";
-  }
-  if (msg.includes("Unable to validate email address")) {
-    return "Adresse e-mail invalide.";
-  }
-  if (msg.includes("Email not confirmed")) {
-    return "Confirmez d'abord votre adresse e-mail (lien envoyé à l'inscription) avant de vous connecter.";
-  }
-  return "Une erreur est survenue : " + msg;
+  const tr = (typeof t === "function") ? t : function(key, vars){ return (vars && vars.msg) || key; };
+  if (msg.includes("Invalid login credentials")) return tr("auth.err.credentials");
+  if (msg.includes("User already registered")) return tr("auth.err.exists");
+  if (msg.includes("Password should be at least")) return tr("auth.err.pwd_short");
+  if (msg.includes("Unable to validate email address")) return tr("auth.err.email");
+  if (msg.includes("Email not confirmed")) return tr("auth.err.unconfirmed");
+  return tr("auth.err.other", { msg: msg });
 }

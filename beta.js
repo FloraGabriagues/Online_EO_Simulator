@@ -11,11 +11,13 @@
 // ============================================================================
 var BETA_ACTIVE = true;
 var BETA_END = "";
-var BETA_TEXT = "Nysa est en phase d'essai : certaines fonctions peuvent encore évoluer.";
+// Les textes du bandeau sont dans i18n.js (clés beta.chip, beta.text, beta.feedback),
+// en français et en anglais. Sans i18n.js, le bandeau ne s'affiche pas.
 var BETA_CONTACT = "contact@nysa-imaging.com";
 
 (function(){
   if(!BETA_ACTIVE) return;
+  if(typeof t !== "function") return;
   if(BETA_END && new Date() > new Date(BETA_END + "T23:59:59")) return;
 
   var css =
@@ -40,11 +42,11 @@ var BETA_CONTACT = "contact@nysa-imaging.com";
   var bar = document.createElement("div");
   bar.id = "betaBar";
   bar.setAttribute("role", "note");
-  var chip = document.createElement("span"); chip.className = "betachip"; chip.textContent = "BÊTA";
+  var chip = document.createElement("span"); chip.className = "betachip"; chip.textContent = t("beta.chip");
   // Sur un petit écran, seule la partie « Une remarque ? » reste, pour que le bandeau tienne sur une ligne.
   var txt = document.createElement("span");
-  var long = document.createElement("span"); long.className = "betalong"; long.textContent = BETA_TEXT + " ";
-  txt.appendChild(long); txt.appendChild(document.createTextNode("Une remarque ? "));
+  var long = document.createElement("span"); long.className = "betalong"; long.textContent = t("beta.text") + " ";
+  txt.appendChild(long); txt.appendChild(document.createTextNode(t("beta.feedback") + " "));
   var link = document.createElement("a"); link.href = "mailto:" + BETA_CONTACT; link.textContent = BETA_CONTACT;
   txt.appendChild(link);
   bar.appendChild(chip); bar.appendChild(txt);

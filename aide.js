@@ -7,27 +7,11 @@
 //
 // Ces éléments sont aussi de vrais liens mailto: : si ce fichier ne se charge
 // pas, cliquer dessus ouvre quand même un e-mail vers l'adresse de contact.
-// Les textes sont regroupés ci-dessous, à un seul endroit.
+// Sans i18n.js, ce fichier ne fait rien et les liens mailto: prennent le relais.
 // ============================================================================
 var HELP_CONTACT = "contact@nysa-imaging.com";
-var HELP_TEXTS = {
-  general: {
-    title: "Besoin d'aide ?",
-    lines: [
-      "Une question, un blocage, un résultat qui vous surprend ? Écrivez à l'adresse ci-dessous.",
-      "Vous pouvez également demander un accompagnement pour configurer votre premier instrument."
-    ]
-  },
-  instrument: {
-    title: "Besoin d'aide pour configurer votre instrument ?",
-    lines: [
-      "Je peux vous accompagner pendant une journée pour construire votre première configuration dans Nysa.",
-      "Cet accompagnement est proposé à la demande : il n'est pas nécessaire pour utiliser le simulateur."
-    ]
-  }
-};
-var HELP_CLOSE_LABEL = "Fermer";
-var HELP_WRITE_LABEL = "Écrire à ";
+// Les textes sont dans i18n.js (clés help.*), en français et en anglais.
+var HELP_KINDS = { general: true, instrument: true };
 
 (function(){
   var overlay = null, lastFocus = null;
@@ -70,17 +54,17 @@ var HELP_WRITE_LABEL = "Écrire à ";
 
   function open(kind){
     if(!overlay) build();
-    var t = HELP_TEXTS[kind] || HELP_TEXTS.general;
-    document.getElementById("helpTitle").textContent = t.title;
+    var k = HELP_KINDS[kind] ? kind : "general";
+    document.getElementById("helpTitle").textContent = t("help." + k + ".title");
     var host = document.getElementById("helpLines");
     host.textContent = "";
-    t.lines.forEach(function(line){
-      var p = document.createElement("p"); p.textContent = line; host.appendChild(p);
+    ["line1", "line2"].forEach(function(line){
+      var p = document.createElement("p"); p.textContent = t("help." + k + "." + line); host.appendChild(p);
     });
     var mail = document.getElementById("helpMail");
     mail.href = "mailto:" + HELP_CONTACT;
-    mail.textContent = HELP_WRITE_LABEL + HELP_CONTACT;
-    document.getElementById("helpClose").textContent = HELP_CLOSE_LABEL;
+    mail.textContent = t("help.write", { email: HELP_CONTACT });
+    document.getElementById("helpClose").textContent = t("help.close");
     lastFocus = document.activeElement;
     overlay.classList.add("open");
     document.getElementById("helpClose").focus();
@@ -93,6 +77,7 @@ var HELP_WRITE_LABEL = "Écrire à ";
   // Un seul écouteur pour toute la page : fonctionne aussi pour les liens
   // ajoutés après le chargement.
   document.addEventListener("click", function(e){
+    if(typeof t !== "function") return;   // pas de traduction chargée : le lien mailto: s'ouvre normalement
     var el = e.target.closest ? e.target.closest("[data-help]") : null;
     if(!el) return;
     e.preventDefault();
