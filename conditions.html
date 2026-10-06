@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Mentions légales et conditions d'essai — Nysa</title>
+<!-- Page bilingue : chaque texte existe en lang="fr" et en lang="en" ;
+     seule la langue en cours (i18n.js) est affichée. -->
+<script src="i18n.js"></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.70%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2234.30%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%225.3%22%20fill%3D%22%23FFB86B%22/%3E%3C/svg%3E">
+<!-- Polices hébergées avec le site (dossier fonts/) : aucun appel à Google. -->
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+:root{
+  --void:#090E13; --panel:#131E27; --panel-2:#1A2833;
+  --line:#2E4152; --line-soft:#22323F;
+  --paper:#C4D6D4; --muted:#9BADBD; --muted-2:#8497AA;
+  --photon:#F5AC57; --pixel:#5FDCD0; --alert:#F0776D; --ok:#7FD88F;
+  --display:"Montserrat","IBM Plex Sans",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--void);color:var(--paper);font-family:var(--body);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+/* une seule langue à l'écran */
+html[lang="en"] [lang="fr"], html[lang="fr"] [lang="en"]{display:none}
+.wrap{max-width:1040px;margin:0 auto;padding:0 28px 80px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:22px 0;border-bottom:1px solid var(--line-soft)}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.brand .mark{width:34px;height:34px;flex:none}
+.brand .name{display:block;font-family:var(--display);font-weight:500;font-size:21px;letter-spacing:.035em;line-height:1.05;color:var(--paper)}
+.brand .tag{display:block;font-family:var(--display);font-size:9.5px;letter-spacing:.115em;color:var(--muted);margin-top:3px;white-space:nowrap}
+.topright{display:flex;align-items:center;gap:16px}
+.back{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none}
+.back:hover{color:var(--pixel)}
+.intro{padding:44px 0 8px;max-width:720px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);margin:0 0 10px}
+h1{font-family:var(--display);font-weight:500;font-size:34px;line-height:1.2;margin:0 0 14px;color:var(--paper)}
+.lead{font-size:17px;color:var(--muted);margin:0}
+.layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:56px;margin-top:40px;align-items:start}
+nav.toc{position:sticky;top:24px;font-size:13px}
+nav.toc p{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin:0 0 10px}
+nav.toc a{display:block;padding:6px 0 6px 12px;border-left:1px solid var(--line-soft);color:var(--muted);text-decoration:none;line-height:1.35}
+nav.toc a:hover{color:var(--pixel);border-left-color:var(--pixel)}
+main{max-width:720px;min-width:0}
+section{padding:0 0 34px;margin:0 0 34px;border-bottom:1px solid var(--line-soft);scroll-margin-top:20px}
+section:last-of-type{border-bottom:none}
+h2{font-family:var(--display);font-weight:500;font-size:21px;line-height:1.3;margin:0 0 14px;color:var(--paper)}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:20px}
+li{margin:0 0 9px}
+li::marker{color:var(--muted-2)}
+ol.chain{list-style:none;padding:0;counter-reset:step}
+ol.chain li{counter-increment:step;position:relative;padding:10px 14px 10px 46px;margin:0 0 8px;background:var(--panel);border:1px solid var(--line-soft);border-radius:6px}
+ol.chain li::before{content:counter(step);position:absolute;left:14px;top:10px;width:22px;height:22px;border-radius:50%;border:1px solid var(--pixel);color:var(--pixel);font-family:var(--mono);font-size:11.5px;display:flex;align-items:center;justify-content:center}
+b{font-weight:500;color:var(--paper)}
+a{color:var(--pixel)}
+.credit{background:var(--panel);border:1px solid var(--line-soft);border-left:2px solid var(--photon);border-radius:4px;padding:14px 16px;font-size:14.5px;color:var(--muted)}
+footer{margin-top:20px;padding-top:24px;border-top:1px solid var(--line-soft);font-size:12.5px;color:var(--muted-2)}
+footer a{color:var(--muted)}
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr;gap:28px}
+  nav.toc{position:static}
+  h1{font-size:28px}
+}
+
+.todo{background:rgba(245,172,87,.16);border:1px dashed var(--photon);border-radius:3px;padding:0 5px;color:var(--photon);font-family:var(--mono);font-size:.86em}
+.draft{margin:22px 0 0;padding:12px 16px;border:1px dashed var(--photon);border-radius:6px;color:var(--photon);font-size:13.5px;background:rgba(245,172,87,.07)}
+table{width:100%;border-collapse:collapse;margin:0 0 16px;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--line-soft)}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);font-weight:400}
+td:first-child{color:var(--paper);white-space:nowrap}
+.tablewrap{overflow-x:auto}
+.updated{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);margin:14px 0 0}
+h3{font-family:var(--display);font-weight:500;font-size:16px;margin:22px 0 8px;color:var(--paper)}
+</style>
+</head>
+<body>
+<script src="beta.js"></script>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="index.html" aria-label="Nysa, EO Imaging Engineering">
+      <svg class="mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="512" height="512" xmlns:c2pa="http://c2pa.org/manifest"><metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTphM2Q1YmNiZC04NzU5LTQ4ODAtOTc5MS02OGVmYzg1NTdkYTAAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaHjpWtoiaP9Q0b3W83PqnpIAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDoxZTlkMmE0Zi0xYzI3LTQ4NGEtOTc3OC1kNmZlNGMwMmFjOWNscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNoYrQ17mSTfpvQkQeQOQRriwAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggNg9U5Jcv6iqw1bUChOyMmfUozctoDD9yfMn7lULaDmKkZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaKsrSFRVmqVZ2brsW1Q9qmwAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRNAAAAAAAAAAAAAAAAAGRoYXNoWCD86WQBEKnz77QeNPIOAqB8dCbTaJV3f3S+BXZXNLKSi2RuYW1lbmp1bWJmIG1hbmlmZXN0amV4Y2x1c2lvbnOBomVzdGFydBiUZmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOmEzZDViY2JkLTg3NTktNDg4MC05NzkxLTY4ZWZjODU1N2RhMC9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOmRmOGVmM2NiLWQzZmQtNDM2MC1iOTNhLTIyOWJiMjUwNjhkYXJjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCA2D1Tkly/qKrDVtQKE7IyZ9SjNy2gMP3J8yfuVQtoOYqJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggAyBHYTcqmIB7YDnmMjw5ZfRg1Qt2O5Imm04vsX3o/vmiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFgga+SPoRGn2OXPSi/7di917egpzjSThAG6UHH1379VwMh0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQH/s8diUNOslrrPmGXgZoiAtptkrxkEkpN9OH62GuJnMOCsISHIb4/5JD9YGBCyDrdTDo33rWAAmnHKGm07J2fI=</c2pa:manifest></metadata><circle cx="24.00" cy="13.70" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="32.92" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="32.92" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="24.00" cy="34.30" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="15.08" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="15.08" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="24" cy="24" r="5.3" fill="#FFB86B"/></svg>
+      <span><span class="name">Nysa</span><span class="tag">EO Imaging Engineering</span></span>
+    </a>
+    <div class="topright">
+      <a class="back" href="index.html"><span lang="fr">← Retour au site</span><span lang="en">← Back to the site</span></a>
+      <span data-lang-switch></span>
+    </div>
+  </header>
+  <div class="intro">
+    <p class="eyebrow"><span lang="fr">Informations légales</span><span lang="en">Legal information</span></p>
+    <h1><span lang="fr">Mentions légales et conditions d'essai</span><span lang="en">Legal notice and beta terms</span></h1>
+    <p class="lead"><span lang="fr">Qui édite Nysa, et à quelles conditions vous l'utilisez pendant la phase d'essai.</span><span lang="en">Who publishes Nysa, and on what terms you use it during the beta.</span></p>
+    <p class="updated"><span lang="fr">Dernière mise à jour : 6 octobre 2026</span><span lang="en">Last updated: 6 October 2026</span></p>
+    <p class="draft"><span lang="fr">PROJET À VALIDER. Les passages encadrés en orange sont à compléter ou à confirmer avant mise en ligne.</span><span lang="en">DRAFT TO BE VALIDATED. The passages framed in orange must be completed or confirmed before going online.</span></p>
+  </div>
+  <div class="layout">
+    <nav class="toc" aria-label="Sommaire">
+      <p><span lang="fr">Sur cette page</span><span lang="en">On this page</span></p>
+      <a href="#mentions"><span lang="fr">Mentions légales</span><span lang="en">Legal notice</span></a>
+      <a href="#objet"><span lang="fr">Objet de la phase d'essai</span><span lang="en">Purpose of the beta</span></a>
+      <a href="#resultats"><span lang="fr">Portée des résultats</span><span lang="en">Scope of the results</span></a>
+      <a href="#compte"><span lang="fr">Votre compte</span><span lang="en">Your account</span></a>
+      <a href="#usage"><span lang="fr">Usage du service</span><span lang="en">Use of the service</span></a>
+      <a href="#propriete"><span lang="fr">Propriété intellectuelle</span><span lang="en">Intellectual property</span></a>
+      <a href="#responsabilite"><span lang="fr">Disponibilité et responsabilité</span><span lang="en">Availability and liability</span></a>
+      <a href="#fin"><span lang="fr">Fin de la phase d'essai</span><span lang="en">End of the beta</span></a>
+      <a href="#droit"><span lang="fr">Modification et droit applicable</span><span lang="en">Changes and governing law</span></a>
+    </nav>
+    <main>
+  <section id="mentions">
+    <h2><span lang="fr">Mentions légales</span><span lang="en">Legal notice</span></h2>
+    <div lang="fr"><p><b>Éditrice du site.</b> Flora Gabriagues, entrepreneure individuelle (EI).<br>
+SIRET : <span class="todo">SIRET À 14 CHIFFRES À COMPLÉTER (SIREN 989 424 403)</span><br>
+Adresse : <span class="todo">ADRESSE DE DOMICILIATION À COMPLÉTER</span><br>
+TVA non applicable, article 293 B du Code général des impôts.<br>
+Contact : <a href="mailto:contact@nysa-imaging.com">contact@nysa-imaging.com</a></p>
+<p><b>Directrice de la publication.</b> Flora Gabriagues.</p>
+<p><b>Hébergement des pages du site.</b> GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis.</p>
+<p><b>Hébergement du calcul.</b> Scaleway SAS, 8 rue de la Ville-l'Évêque, 75008 Paris, France.</p>
+<p><b>Sources des scènes.</b> IGN, BD ORTHO®, édition 2023, Licence Ouverte Etalab 2.0. Voir <a href="hypotheses.html">Hypothèses et sources</a>.</p></div>
+    <div lang="en"><p><b>Publisher of the site.</b> Flora Gabriagues, sole proprietor (EI, France).<br>
+SIRET: <span class="todo">14-DIGIT SIRET TO BE COMPLETED (SIREN 989 424 403)</span><br>
+Address: <span class="todo">DOMICILIATION ADDRESS TO BE COMPLETED</span><br>
+VAT not applicable, article 293 B of the French General Tax Code.<br>
+Contact: <a href="mailto:contact@nysa-imaging.com">contact@nysa-imaging.com</a></p>
+<p><b>Publication director.</b> Flora Gabriagues.</p>
+<p><b>Hosting of the site pages.</b> GitHub, Inc., 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, United States.</p>
+<p><b>Hosting of the computation.</b> Scaleway SAS, 8 rue de la Ville-l'Évêque, 75008 Paris, France.</p>
+<p><b>Sources of the scenes.</b> IGN, BD ORTHO®, 2023 edition, Etalab Open Licence 2.0. See <a href="hypotheses.html">Assumptions and sources</a>.</p></div>
+  </section>
+  <section id="objet">
+    <h2><span lang="fr">Objet de la phase d'essai</span><span lang="en">Purpose of the beta</span></h2>
+    <div lang="fr"><p>Nysa est un service en ligne de simulation d'images pour instruments optiques d'observation de la Terre. Il est actuellement proposé en phase d'essai, dite « bêta ».</p>
+<p>Ces conditions s'appliquent à toute personne qui crée un compte pendant cette phase. Créer un compte vaut acceptation.</p>
+<ul>
+  <li>L'accès est <b>gratuit</b> jusqu'au 30 octobre 2026.</li>
+  <li>Le service est fourni <b>en l'état</b>. Des fonctions peuvent changer, être interrompues ou retirées sans préavis.</li>
+  <li>La phase d'essai sert à recueillir vos retours. Vous n'avez aucune obligation d'en donner.</li>
+</ul></div>
+    <div lang="en"><p>Nysa is an online image simulation service for Earth observation optical instruments. It is currently offered as a trial, known as the “beta”.</p>
+<p>These terms apply to anyone who creates an account during this phase. Creating an account means accepting them.</p>
+<ul>
+  <li>Access is <b>free</b> until 30 October 2026.</li>
+  <li>The service is provided <b>as is</b>. Features may change, be interrupted or be withdrawn without notice.</li>
+  <li>The beta is meant to gather your feedback. You are under no obligation to give any.</li>
+</ul></div>
+  </section>
+  <section id="resultats">
+    <h2><span lang="fr">Portée des résultats</span><span lang="en">Scope of the results</span></h2>
+    <div lang="fr"><p>Les résultats de Nysa reposent sur des modèles et des hypothèses décrits dans la page <a href="hypotheses.html">Hypothèses et sources</a>. La chaîne complète n'a pas encore été validée par comparaison avec des images satellitaires réelles.</p>
+<ul>
+  <li>Les résultats sont des <b>ordres de grandeur</b> et des <b>comparaisons relatives</b> entre architectures.</li>
+  <li>Ils ne constituent ni une prédiction de performance en vol, ni une étude d'ingénierie, ni un engagement de résultat.</li>
+  <li>Vous restez seul responsable de l'usage que vous en faites. Ils ne doivent pas servir seuls de base à une décision de conception, d'achat ou d'investissement.</li>
+</ul></div>
+    <div lang="en"><p>Nysa's results rely on models and assumptions described on the <a href="hypotheses.html">Assumptions and sources</a> page. The full chain has not yet been validated against real satellite images.</p>
+<ul>
+  <li>Results are <b>orders of magnitude</b> and <b>relative comparisons</b> between architectures.</li>
+  <li>They are neither a prediction of in-flight performance, nor an engineering study, nor a commitment to a result.</li>
+  <li>You remain solely responsible for the use you make of them. They must not be used alone as the basis for a design, purchasing or investment decision.</li>
+</ul></div>
+  </section>
+  <section id="compte">
+    <h2><span lang="fr">Votre compte</span><span lang="en">Your account</span></h2>
+    <div lang="fr"><ul>
+  <li>Un compte est <b>personnel</b>. Il ne se partage pas, et une seule session est active à la fois.</li>
+  <li>Vous êtes responsable de la confidentialité de votre mot de passe.</li>
+  <li>Un compte peut contenir jusqu'à 20 instruments et 20 résultats.</li>
+  <li>Vous pouvez supprimer votre compte à tout moment depuis Paramètres. La suppression est immédiate et définitive.</li>
+</ul></div>
+    <div lang="en"><ul>
+  <li>An account is <b>personal</b>. It is not to be shared, and only one session is active at a time.</li>
+  <li>You are responsible for keeping your password confidential.</li>
+  <li>An account can hold up to 20 instruments and 20 results.</li>
+  <li>You can delete your account at any time from Settings. Deletion is immediate and permanent.</li>
+</ul></div>
+  </section>
+  <section id="usage">
+    <h2><span lang="fr">Usage du service</span><span lang="en">Use of the service</span></h2>
+    <div lang="fr"><p>Vous vous engagez à ne pas :</p>
+<ul>
+  <li>tenter d'accéder aux données d'un autre utilisateur ;</li>
+  <li>surcharger le service par des appels automatisés ;</li>
+  <li>chercher à reproduire le logiciel, à en extraire le code ou à en contourner les protections ;</li>
+  <li>utiliser le service en violation d'une loi ou d'une réglementation qui s'applique à vous, notamment en matière de contrôle des exportations.</li>
+</ul>
+<p>En cas de manquement, l'accès peut être suspendu.</p></div>
+    <div lang="en"><p>You agree not to:</p>
+<ul>
+  <li>attempt to access another user's data;</li>
+  <li>overload the service with automated calls;</li>
+  <li>try to reproduce the software, extract its code or bypass its protections;</li>
+  <li>use the service in breach of a law or regulation that applies to you, in particular regarding export control.</li>
+</ul>
+<p>In case of a breach, access may be suspended.</p></div>
+  </section>
+  <section id="propriete">
+    <h2><span lang="fr">Propriété intellectuelle</span><span lang="en">Intellectual property</span></h2>
+    <div lang="fr"><ul>
+  <li><b>Ce qui est à vous.</b> Les instruments, les paramètres et les fichiers que vous saisissez restent votre propriété. Les images et les résultats que vous obtenez vous appartiennent : vous pouvez les utiliser librement, y compris dans un cadre professionnel.</li>
+  <li><b>Ce qui est à nous.</b> Le logiciel, ses modèles, son interface et la marque Nysa restent la propriété de l'éditrice. Ces conditions ne vous en transfèrent aucun droit.</li>
+  <li><b>Les scènes.</b> Elles proviennent de l'IGN, sous Licence Ouverte Etalab 2.0. Si vous publiez une image issue de Nysa, mentionnez « Source : IGN, BD ORTHO® 2023 ».</li>
+  <li><b>Vos retours.</b> Les remarques et suggestions que vous nous envoyez peuvent être utilisées pour améliorer le service, sans contrepartie.</li>
+</ul>
+<p>La façon dont vos données sont protégées est décrite dans la <a href="confidentialite.html">politique de confidentialité</a>.</p></div>
+    <div lang="en"><ul>
+  <li><b>What is yours.</b> The instruments, parameters and files you enter remain your property. The images and results you obtain belong to you: you may use them freely, including professionally.</li>
+  <li><b>What is ours.</b> The software, its models, its interface and the Nysa brand remain the property of the publisher. These terms do not transfer any right to them.</li>
+  <li><b>The scenes.</b> They come from IGN, under the Etalab Open Licence 2.0. If you publish an image produced with Nysa, mention “Source: IGN, BD ORTHO® 2023”.</li>
+  <li><b>Your feedback.</b> The remarks and suggestions you send us may be used to improve the service, without compensation.</li>
+</ul>
+<p>How your data is protected is described in the <a href="confidentialite.html">privacy policy</a>.</p></div>
+  </section>
+  <section id="responsabilite">
+    <h2><span lang="fr">Disponibilité et responsabilité</span><span lang="en">Availability and liability</span></h2>
+    <div lang="fr"><ul>
+  <li>Aucun niveau de disponibilité n'est garanti pendant la phase d'essai. Le service peut être interrompu pour maintenance ou pour correction.</li>
+  <li>Aucune restauration de données n'est garantie pendant la phase d'essai. Exportez les instruments auxquels vous tenez : chaque instrument a un bouton d'export.</li>
+  <li>L'accès étant gratuit, la responsabilité de l'éditrice ne peut être engagée pour un dommage indirect, une perte de données ou une perte d'exploitation, sauf faute lourde ou intentionnelle et dans les limites permises par la loi.</li>
+</ul></div>
+    <div lang="en"><ul>
+  <li>No level of availability is guaranteed during the beta. The service may be interrupted for maintenance or fixes.</li>
+  <li>No data restoration is guaranteed during the beta. Export the instruments that matter to you: each instrument has an export button.</li>
+  <li>As access is free, the publisher cannot be held liable for indirect damage, loss of data or loss of business, except in case of gross or intentional misconduct and within the limits allowed by law.</li>
+</ul></div>
+  </section>
+  <section id="fin">
+    <h2><span lang="fr">Fin de la phase d'essai</span><span lang="en">End of the beta</span></h2>
+    <div lang="fr"><ul>
+  <li>Le 30 octobre 2026, l'accès gratuit prend fin. Vous n'êtes engagé à rien : aucun paiement n'est déclenché automatiquement.</li>
+  <li>Pour continuer à lancer des simulations, un abonnement vous sera proposé. Ses conditions et son prix seront communiqués avant toute souscription.</li>
+  <li>Sans abonnement, vous gardez l'accès à votre espace et à vos résultats. Votre compte et vos données sont conservés 12 mois, puis supprimés après un e-mail d'avertissement.</li>
+</ul></div>
+    <div lang="en"><ul>
+  <li>On 30 October 2026, free access ends. You are not committed to anything: no payment is triggered automatically.</li>
+  <li>To keep running simulations, a subscription will be offered. Its terms and price will be communicated before any sign-up.</li>
+  <li>Without a subscription, you keep access to your workspace and results. Your account and data are kept for 12 months, then deleted after a warning email.</li>
+</ul></div>
+  </section>
+  <section id="droit">
+    <h2><span lang="fr">Modification et droit applicable</span><span lang="en">Changes and governing law</span></h2>
+    <div lang="fr"><p>Ces conditions peuvent évoluer. En cas de changement important, les titulaires d'un compte sont prévenus par e-mail.</p>
+<p>Elles sont soumises au droit français. En cas de différend, une solution amiable est recherchée en priorité ; à défaut, les tribunaux français sont compétents, sous réserve des règles protectrices qui s'appliqueraient à un consommateur.</p>
+<p>La version française de ces conditions fait foi.</p></div>
+    <div lang="en"><p>These terms may change. In case of a significant change, account holders are notified by email.</p>
+<p>They are governed by French law. In case of a dispute, an amicable solution is sought first; failing that, the French courts have jurisdiction, subject to the protective rules that would apply to a consumer.</p>
+<p>The French version of these terms prevails.</p></div>
+  </section>
+      <footer>
+        <span lang="fr">Une question ? </span><span lang="en">A question? </span><a href="mailto:contact@nysa-imaging.com">contact@nysa-imaging.com</a>
+      </footer>
+    </main>
+  </div>
+</div>
+<script>
+document.title = (typeof nysaLang === "function" && nysaLang() === "fr") ? "Mentions légales et conditions d'essai — Nysa" : "Legal notice and beta terms — Nysa";
+</script>
+</body>
+</html>

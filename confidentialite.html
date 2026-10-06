@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Politique de confidentialité — Nysa</title>
+<!-- Page bilingue : chaque texte existe en lang="fr" et en lang="en" ;
+     seule la langue en cours (i18n.js) est affichée. -->
+<script src="i18n.js"></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.70%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2234.30%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%225.3%22%20fill%3D%22%23FFB86B%22/%3E%3C/svg%3E">
+<!-- Polices hébergées avec le site (dossier fonts/) : aucun appel à Google. -->
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+:root{
+  --void:#090E13; --panel:#131E27; --panel-2:#1A2833;
+  --line:#2E4152; --line-soft:#22323F;
+  --paper:#C4D6D4; --muted:#9BADBD; --muted-2:#8497AA;
+  --photon:#F5AC57; --pixel:#5FDCD0; --alert:#F0776D; --ok:#7FD88F;
+  --display:"Montserrat","IBM Plex Sans",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--void);color:var(--paper);font-family:var(--body);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+/* une seule langue à l'écran */
+html[lang="en"] [lang="fr"], html[lang="fr"] [lang="en"]{display:none}
+.wrap{max-width:1040px;margin:0 auto;padding:0 28px 80px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:22px 0;border-bottom:1px solid var(--line-soft)}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.brand .mark{width:34px;height:34px;flex:none}
+.brand .name{display:block;font-family:var(--display);font-weight:500;font-size:21px;letter-spacing:.035em;line-height:1.05;color:var(--paper)}
+.brand .tag{display:block;font-family:var(--display);font-size:9.5px;letter-spacing:.115em;color:var(--muted);margin-top:3px;white-space:nowrap}
+.topright{display:flex;align-items:center;gap:16px}
+.back{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none}
+.back:hover{color:var(--pixel)}
+.intro{padding:44px 0 8px;max-width:720px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);margin:0 0 10px}
+h1{font-family:var(--display);font-weight:500;font-size:34px;line-height:1.2;margin:0 0 14px;color:var(--paper)}
+.lead{font-size:17px;color:var(--muted);margin:0}
+.layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:56px;margin-top:40px;align-items:start}
+nav.toc{position:sticky;top:24px;font-size:13px}
+nav.toc p{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin:0 0 10px}
+nav.toc a{display:block;padding:6px 0 6px 12px;border-left:1px solid var(--line-soft);color:var(--muted);text-decoration:none;line-height:1.35}
+nav.toc a:hover{color:var(--pixel);border-left-color:var(--pixel)}
+main{max-width:720px;min-width:0}
+section{padding:0 0 34px;margin:0 0 34px;border-bottom:1px solid var(--line-soft);scroll-margin-top:20px}
+section:last-of-type{border-bottom:none}
+h2{font-family:var(--display);font-weight:500;font-size:21px;line-height:1.3;margin:0 0 14px;color:var(--paper)}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:20px}
+li{margin:0 0 9px}
+li::marker{color:var(--muted-2)}
+ol.chain{list-style:none;padding:0;counter-reset:step}
+ol.chain li{counter-increment:step;position:relative;padding:10px 14px 10px 46px;margin:0 0 8px;background:var(--panel);border:1px solid var(--line-soft);border-radius:6px}
+ol.chain li::before{content:counter(step);position:absolute;left:14px;top:10px;width:22px;height:22px;border-radius:50%;border:1px solid var(--pixel);color:var(--pixel);font-family:var(--mono);font-size:11.5px;display:flex;align-items:center;justify-content:center}
+b{font-weight:500;color:var(--paper)}
+a{color:var(--pixel)}
+.credit{background:var(--panel);border:1px solid var(--line-soft);border-left:2px solid var(--photon);border-radius:4px;padding:14px 16px;font-size:14.5px;color:var(--muted)}
+footer{margin-top:20px;padding-top:24px;border-top:1px solid var(--line-soft);font-size:12.5px;color:var(--muted-2)}
+footer a{color:var(--muted)}
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr;gap:28px}
+  nav.toc{position:static}
+  h1{font-size:28px}
+}
+
+.todo{background:rgba(245,172,87,.16);border:1px dashed var(--photon);border-radius:3px;padding:0 5px;color:var(--photon);font-family:var(--mono);font-size:.86em}
+.draft{margin:22px 0 0;padding:12px 16px;border:1px dashed var(--photon);border-radius:6px;color:var(--photon);font-size:13.5px;background:rgba(245,172,87,.07)}
+table{width:100%;border-collapse:collapse;margin:0 0 16px;font-size:14px}
+th,td{text-align:left;vertical-align:top;padding:9px 10px;border-bottom:1px solid var(--line-soft)}
+th{font-family:var(--mono);font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted-2);font-weight:400}
+td:first-child{color:var(--paper);white-space:nowrap}
+.tablewrap{overflow-x:auto}
+.updated{font-family:var(--mono);font-size:11.5px;color:var(--muted-2);margin:14px 0 0}
+h3{font-family:var(--display);font-weight:500;font-size:16px;margin:22px 0 8px;color:var(--paper)}
+</style>
+</head>
+<body>
+<script src="beta.js"></script>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="index.html" aria-label="Nysa, EO Imaging Engineering">
+      <svg class="mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="512" height="512" xmlns:c2pa="http://c2pa.org/manifest"><metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTphM2Q1YmNiZC04NzU5LTQ4ODAtOTc5MS02OGVmYzg1NTdkYTAAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaHjpWtoiaP9Q0b3W83PqnpIAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDoxZTlkMmE0Zi0xYzI3LTQ4NGEtOTc3OC1kNmZlNGMwMmFjOWNscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNoYrQ17mSTfpvQkQeQOQRriwAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggNg9U5Jcv6iqw1bUChOyMmfUozctoDD9yfMn7lULaDmKkZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaKsrSFRVmqVZ2brsW1Q9qmwAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRNAAAAAAAAAAAAAAAAAGRoYXNoWCD86WQBEKnz77QeNPIOAqB8dCbTaJV3f3S+BXZXNLKSi2RuYW1lbmp1bWJmIG1hbmlmZXN0amV4Y2x1c2lvbnOBomVzdGFydBiUZmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOmEzZDViY2JkLTg3NTktNDg4MC05NzkxLTY4ZWZjODU1N2RhMC9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOmRmOGVmM2NiLWQzZmQtNDM2MC1iOTNhLTIyOWJiMjUwNjhkYXJjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCA2D1Tkly/qKrDVtQKE7IyZ9SjNy2gMP3J8yfuVQtoOYqJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggAyBHYTcqmIB7YDnmMjw5ZfRg1Qt2O5Imm04vsX3o/vmiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFgga+SPoRGn2OXPSi/7di917egpzjSThAG6UHH1379VwMh0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQH/s8diUNOslrrPmGXgZoiAtptkrxkEkpN9OH62GuJnMOCsISHIb4/5JD9YGBCyDrdTDo33rWAAmnHKGm07J2fI=</c2pa:manifest></metadata><circle cx="24.00" cy="13.70" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="32.92" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="32.92" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="24.00" cy="34.30" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="15.08" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="15.08" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="24" cy="24" r="5.3" fill="#FFB86B"/></svg>
+      <span><span class="name">Nysa</span><span class="tag">EO Imaging Engineering</span></span>
+    </a>
+    <div class="topright">
+      <a class="back" href="index.html"><span lang="fr">← Retour au site</span><span lang="en">← Back to the site</span></a>
+      <span data-lang-switch></span>
+    </div>
+  </header>
+  <div class="intro">
+    <p class="eyebrow"><span lang="fr">Informations légales</span><span lang="en">Legal information</span></p>
+    <h1><span lang="fr">Politique de confidentialité</span><span lang="en">Privacy policy</span></h1>
+    <p class="lead"><span lang="fr">Quelles données Nysa collecte, pourquoi, pendant combien de temps, et ce que vous pouvez en faire.</span><span lang="en">What data Nysa collects, why, for how long, and what you can do about it.</span></p>
+    <p class="updated"><span lang="fr">Dernière mise à jour : 6 octobre 2026</span><span lang="en">Last updated: 6 October 2026</span></p>
+    <p class="draft"><span lang="fr">PROJET À VALIDER. Les passages encadrés en orange sont à compléter ou à confirmer avant mise en ligne.</span><span lang="en">DRAFT TO BE VALIDATED. The passages framed in orange must be completed or confirmed before going online.</span></p>
+  </div>
+  <div class="layout">
+    <nav class="toc" aria-label="Sommaire">
+      <p><span lang="fr">Sur cette page</span><span lang="en">On this page</span></p>
+      <a href="#responsable"><span lang="fr">Qui traite vos données</span><span lang="en">Who processes your data</span></a>
+      <a href="#donnees"><span lang="fr">Les données collectées</span><span lang="en">The data collected</span></a>
+      <a href="#instruments"><span lang="fr">Confidentialité de vos instruments</span><span lang="en">Confidentiality of your instruments</span></a>
+      <a href="#duree"><span lang="fr">Durées de conservation</span><span lang="en">Retention periods</span></a>
+      <a href="#prestataires"><span lang="fr">Prestataires</span><span lang="en">Providers</span></a>
+      <a href="#droits"><span lang="fr">Vos droits</span><span lang="en">Your rights</span></a>
+      <a href="#securite"><span lang="fr">Sécurité</span><span lang="en">Security</span></a>
+    </nav>
+    <main>
+  <section id="responsable">
+    <h2><span lang="fr">Qui traite vos données</span><span lang="en">Who processes your data</span></h2>
+    <div lang="fr"><p>Le responsable du traitement est Flora Gabriagues, entrepreneure individuelle, qui édite le service Nysa.</p>
+<p>Adresse : <span class="todo">ADRESSE DE DOMICILIATION À COMPLÉTER</span><br>Contact : <a href="mailto:contact@nysa-imaging.com">contact@nysa-imaging.com</a></p></div>
+    <div lang="en"><p>The data controller is Flora Gabriagues, sole proprietor, who publishes the Nysa service.</p>
+<p>Address: <span class="todo">DOMICILIATION ADDRESS TO BE COMPLETED</span><br>Contact: <a href="mailto:contact@nysa-imaging.com">contact@nysa-imaging.com</a></p></div>
+  </section>
+  <section id="donnees">
+    <h2><span lang="fr">Les données collectées</span><span lang="en">The data collected</span></h2>
+    <div lang="fr"><p>Nysa ne collecte que ce qui est nécessaire au fonctionnement du service.</p>
+<div class="tablewrap"><table>
+<tr><th>Donnée</th><th>À quoi elle sert</th><th>Fondement</th></tr>
+<tr><td>Adresse e-mail</td><td>Créer votre compte, vous connecter, vous écrire au sujet du service</td><td>Exécution du contrat</td></tr>
+<tr><td>Mot de passe</td><td>Vous authentifier. Il est conservé sous une forme illisible : personne ne peut le retrouver, pas même nous</td><td>Exécution du contrat</td></tr>
+<tr><td>Langue de préférence</td><td>Afficher l'interface et rédiger les e-mails dans votre langue</td><td>Exécution du contrat</td></tr>
+<tr><td>Instruments et paramètres saisis</td><td>Réaliser vos simulations et les retrouver</td><td>Exécution du contrat</td></tr>
+<tr><td>Résultats et images simulées</td><td>Vous les présenter et les conserver dans votre espace</td><td>Exécution du contrat</td></tr>
+<tr><td>Adresse IP et journaux techniques</td><td>Protéger le service contre les abus, diagnostiquer les pannes</td><td>Intérêt légitime</td></tr>
+<tr><td>Données de facturation</td><td>Gérer un abonnement payant. Elles sont saisies chez notre prestataire de paiement : nous n'avons jamais accès à votre numéro de carte</td><td>Contrat et obligation légale</td></tr>
+</table></div>
+<p>Pendant la phase d'essai, l'accès est gratuit et aucune donnée de paiement n'est demandée.</p>
+<p>Nysa n'utilise ni publicité, ni outil de mesure d'audience, ni cookie de suivi. Les polices et les bibliothèques du site sont hébergées avec lui : afficher une page ne transmet rien à un tiers. Votre navigateur conserve seulement deux informations techniques : votre session et votre langue.</p></div>
+    <div lang="en"><p>Nysa only collects what is needed for the service to work.</p>
+<div class="tablewrap"><table>
+<tr><th>Data</th><th>What it is used for</th><th>Legal basis</th></tr>
+<tr><td>Email address</td><td>Creating your account, signing you in, writing to you about the service</td><td>Performance of the contract</td></tr>
+<tr><td>Password</td><td>Authenticating you. It is stored in an unreadable form: nobody can recover it, not even us</td><td>Performance of the contract</td></tr>
+<tr><td>Preferred language</td><td>Displaying the interface and writing emails in your language</td><td>Performance of the contract</td></tr>
+<tr><td>Instruments and parameters entered</td><td>Running your simulations and letting you find them again</td><td>Performance of the contract</td></tr>
+<tr><td>Results and simulated images</td><td>Showing them to you and keeping them in your workspace</td><td>Performance of the contract</td></tr>
+<tr><td>IP address and technical logs</td><td>Protecting the service against abuse, diagnosing failures</td><td>Legitimate interest</td></tr>
+<tr><td>Billing data</td><td>Managing a paid subscription. It is entered with our payment provider: we never have access to your card number</td><td>Contract and legal obligation</td></tr>
+</table></div>
+<p>During the beta, access is free and no payment data is requested.</p>
+<p>Nysa uses no advertising, no audience measurement tool and no tracking cookie. The site's fonts and libraries are hosted with it: displaying a page sends nothing to a third party. Your browser only keeps two technical items: your session and your language.</p></div>
+  </section>
+  <section id="instruments">
+    <h2><span lang="fr">La confidentialité de vos instruments</span><span lang="en">The confidentiality of your instruments</span></h2>
+    <div lang="fr"><p>Les paramètres d'un instrument peuvent être sensibles. Voici nos engagements :</p>
+<ul>
+  <li>Vos instruments, vos fichiers et vos résultats ne sont visibles que de vous. Les autres utilisateurs n'y ont aucun accès.</li>
+  <li>Nous ne les utilisons que pour faire fonctionner le service : exécuter vos simulations et vous en présenter le résultat.</li>
+  <li>Nous ne les vendons pas, ne les partageons pas et ne les utilisons pas pour un autre client ou un autre projet.</li>
+  <li>L'accès technique à la base est limité à l'éditrice du service. Elle ne consulte vos données que pour répondre à une demande d'aide de votre part ou pour corriger une panne.</li>
+</ul>
+<p>Si vos paramètres relèvent d'un secret industriel ou d'une réglementation particulière, contactez-nous avant de les saisir.</p></div>
+    <div lang="en"><p>The parameters of an instrument can be sensitive. Here are our commitments:</p>
+<ul>
+  <li>Your instruments, files and results are visible only to you. Other users have no access to them.</li>
+  <li>We use them only to operate the service: running your simulations and showing you the result.</li>
+  <li>We do not sell them, share them or use them for another client or another project.</li>
+  <li>Technical access to the database is limited to the publisher of the service. She only looks at your data to answer a support request from you or to fix a failure.</li>
+</ul>
+<p>If your parameters are covered by trade secrecy or by a specific regulation, contact us before entering them.</p></div>
+  </section>
+  <section id="duree">
+    <h2><span lang="fr">Combien de temps elles sont conservées</span><span lang="en">How long it is kept</span></h2>
+    <div lang="fr"><ul>
+  <li><b>Tant que votre compte existe</b> : votre adresse, vos instruments et vos résultats.</li>
+  <li><b>Instrument supprimé</b> : il disparaît de vos listes tout de suite et il est effacé définitivement au bout de 30 jours. Pendant ce délai, il peut être restauré sur demande.</li>
+  <li><b>Compte supprimé par vous</b> : toutes vos données sont effacées immédiatement et définitivement.</li>
+  <li><b>Abonnement terminé</b> : votre compte et vos données sont conservés 12 mois, puis supprimés. Un e-mail vous prévient 30 jours avant.</li>
+  <li><b>Factures</b> : conservées 10 ans par notre prestataire de paiement, comme l'exige la loi.</li>
+  <li><b>Journaux techniques</b> : <span class="todo">DURÉE À CONFIRMER</span>.</li>
+</ul></div>
+    <div lang="en"><ul>
+  <li><b>As long as your account exists</b>: your address, instruments and results.</li>
+  <li><b>Deleted instrument</b>: it disappears from your lists right away and is permanently erased after 30 days. During that time, it can be restored on request.</li>
+  <li><b>Account deleted by you</b>: all your data is erased immediately and permanently.</li>
+  <li><b>Subscription ended</b>: your account and data are kept for 12 months, then deleted. An email warns you 30 days beforehand.</li>
+  <li><b>Invoices</b>: kept for 10 years by our payment provider, as required by law.</li>
+  <li><b>Technical logs</b>: <span class="todo">DURATION TO BE CONFIRMED</span>.</li>
+</ul></div>
+  </section>
+  <section id="prestataires">
+    <h2><span lang="fr">Les prestataires qui interviennent</span><span lang="en">The providers involved</span></h2>
+    <div lang="fr"><p>Nysa s'appuie sur des prestataires techniques. Chacun ne reçoit que les données nécessaires à son rôle.</p>
+<div class="tablewrap"><table>
+<tr><th>Prestataire</th><th>Rôle</th><th>Lieu</th></tr>
+<tr><td>Supabase</td><td>Comptes, base de données, stockage des résultats</td><td><span class="todo">RÉGION DU PROJET SUPABASE À CONFIRMER</span></td></tr>
+<tr><td>Scaleway</td><td>Calcul des simulations</td><td>France</td></tr>
+<tr><td>GitHub</td><td>Hébergement des pages du site</td><td>États-Unis</td></tr>
+<tr><td>Brevo</td><td>Envoi des e-mails du service</td><td>France</td></tr>
+<tr><td>OVHcloud</td><td>Nom de domaine et messagerie</td><td>France</td></tr>
+<tr><td>Stripe</td><td>Paiement des abonnements, hors phase d'essai</td><td>Irlande, États-Unis</td></tr>
+</table></div>
+<p>Quand des données sortent de l'Union européenne, le transfert est encadré par les clauses contractuelles types de la Commission européenne ou par un mécanisme équivalent mis en place par le prestataire.</p></div>
+    <div lang="en"><p>Nysa relies on technical providers. Each of them only receives the data needed for its role.</p>
+<div class="tablewrap"><table>
+<tr><th>Provider</th><th>Role</th><th>Location</th></tr>
+<tr><td>Supabase</td><td>Accounts, database, storage of results</td><td><span class="todo">SUPABASE PROJECT REGION TO BE CONFIRMED</span></td></tr>
+<tr><td>Scaleway</td><td>Running the simulations</td><td>France</td></tr>
+<tr><td>GitHub</td><td>Hosting of the site pages</td><td>United States</td></tr>
+<tr><td>Brevo</td><td>Sending the service emails</td><td>France</td></tr>
+<tr><td>OVHcloud</td><td>Domain name and mailbox</td><td>France</td></tr>
+<tr><td>Stripe</td><td>Subscription payments, outside the beta</td><td>Ireland, United States</td></tr>
+</table></div>
+<p>When data leaves the European Union, the transfer is governed by the European Commission's standard contractual clauses or by an equivalent mechanism set up by the provider.</p></div>
+  </section>
+  <section id="droits">
+    <h2><span lang="fr">Vos droits</span><span lang="en">Your rights</span></h2>
+    <div lang="fr"><p>Vous pouvez à tout moment :</p>
+<ul>
+  <li><b>accéder</b> à vos données et en obtenir une copie ;</li>
+  <li>les faire <b>rectifier</b> ;</li>
+  <li>les faire <b>effacer</b> : la suppression de votre compte se fait directement depuis Paramètres ;</li>
+  <li>en demander la <b>portabilité</b> : chaque instrument peut déjà être exporté depuis sa page ;</li>
+  <li>vous <b>opposer</b> à un traitement ou en demander la <b>limitation</b>.</li>
+</ul>
+<p>Écrivez à <a href="mailto:contact@nysa-imaging.com">contact@nysa-imaging.com</a>. Nous répondons dans un délai d'un mois.</p>
+<p>Si vous estimez que vos droits ne sont pas respectés, vous pouvez saisir la CNIL, sur <a href="https://www.cnil.fr" target="_blank" rel="noopener">cnil.fr</a>, ou l'autorité de protection des données de votre pays.</p></div>
+    <div lang="en"><p>At any time, you can:</p>
+<ul>
+  <li><b>access</b> your data and obtain a copy;</li>
+  <li>have it <b>corrected</b>;</li>
+  <li>have it <b>erased</b>: you can delete your account directly from Settings;</li>
+  <li>request its <b>portability</b>: each instrument can already be exported from its page;</li>
+  <li><b>object</b> to a processing operation or ask for its <b>restriction</b>.</li>
+</ul>
+<p>Write to <a href="mailto:contact@nysa-imaging.com">contact@nysa-imaging.com</a>. We reply within one month.</p>
+<p>If you believe your rights are not being respected, you can lodge a complaint with the CNIL, at <a href="https://www.cnil.fr" target="_blank" rel="noopener">cnil.fr</a>, or with the data protection authority of your country.</p></div>
+  </section>
+  <section id="securite">
+    <h2><span lang="fr">Sécurité</span><span lang="en">Security</span></h2>
+    <div lang="fr"><ul>
+  <li>Les échanges avec le site sont chiffrés (HTTPS).</li>
+  <li>Chaque compte n'a accès qu'à ses propres données, par des règles appliquées dans la base elle-même.</li>
+  <li>Une seule session est active à la fois par compte.</li>
+</ul>
+<p>Aucun système n'est infaillible. En cas d'incident touchant vos données, vous seriez prévenu dans les délais prévus par la réglementation.</p></div>
+    <div lang="en"><ul>
+  <li>Exchanges with the site are encrypted (HTTPS).</li>
+  <li>Each account only has access to its own data, through rules enforced in the database itself.</li>
+  <li>Only one session is active at a time per account.</li>
+</ul>
+<p>No system is infallible. In the event of an incident affecting your data, you would be notified within the time limits set by regulation.</p></div>
+  </section>
+      <footer>
+        <span lang="fr">Une question ? </span><span lang="en">A question? </span><a href="mailto:contact@nysa-imaging.com">contact@nysa-imaging.com</a>
+      </footer>
+    </main>
+  </div>
+</div>
+<script>
+document.title = (typeof nysaLang === "function" && nysaLang() === "fr") ? "Politique de confidentialité — Nysa" : "Privacy policy — Nysa";
+</script>
+</body>
+</html>
