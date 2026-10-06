@@ -1,0 +1,15 @@
+Bibliothèques tierces hébergées avec le site Nysa
+=================================================
+
+supabase.js — @supabase/supabase-js, version 2.117.2, licence MIT
+              https://github.com/supabase/supabase-js
+
+Avant le 06/10/2026, cette bibliothèque était chargée depuis cdn.jsdelivr.net,
+ce qui transmettait l'adresse IP de chaque visiteur à ce service, et sans
+numéro de version précis : le site pouvait recevoir une nouvelle version sans
+qu'on le sache. Elle est maintenant servie depuis ce dossier, dans une version
+figée.
+
+Pour la mettre à jour un jour :
+    npm pack @supabase/supabase-js@2
+    puis copier package/dist/umd/supabase.js ici, et tester la connexion.

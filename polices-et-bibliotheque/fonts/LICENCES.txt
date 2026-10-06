@@ -1,0 +1,15 @@
+Polices distribuées avec le site Nysa
+=====================================
+
+Montserrat      — Copyright The Montserrat Project Authors (https://github.com/JulietaUla/Montserrat)
+IBM Plex Sans   — Copyright IBM Corp. (https://github.com/IBM/plex)
+IBM Plex Mono   — Copyright IBM Corp. (https://github.com/IBM/plex)
+
+Ces trois polices sont publiées sous la SIL Open Font License, version 1.1 :
+https://openfontlicense.org
+
+Cette licence autorise l'utilisation, la copie et la redistribution des
+polices, y compris dans un produit commercial, à condition de conserver cette
+mention et de ne pas vendre les polices seules.
+
+Fichiers issus des paquets @fontsource (format woff2), sans modification.
