@@ -120,5 +120,6 @@ function frenchAuthError(error) {
   if (msg.includes("Password should be at least")) return tr("auth.err.pwd_short");
   if (msg.includes("Unable to validate email address")) return tr("auth.err.email");
   if (msg.includes("Email not confirmed")) return tr("auth.err.unconfirmed");
+  if (msg.includes("should be different from the old password")) return tr("auth.err.same_password");
   return tr("auth.err.other", { msg: msg });
 }

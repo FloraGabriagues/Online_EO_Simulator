@@ -478,6 +478,22 @@ var I18N = {
   "res.snr_mean":        { fr: "SNR moyen", en: "Mean SNR" },
   "res.fill":            { fr: "Remplissage", en: "Well fill" },
 
+  // mot de passe oublié (login.html)
+  "login.forgot":        { fr: "Mot de passe oublié ?", en: "Forgot your password?" },
+  "login.forgot.intro":  { fr: "Saisissez l'adresse e-mail de votre compte : nous vous envoyons un lien pour choisir un nouveau mot de passe.",
+                           en: "Enter the email address of your account: we will send you a link to choose a new password." },
+  "login.forgot.btn":    { fr: "Envoyer le lien", en: "Send the link" },
+  "login.forgot.back":   { fr: "← Retour à la connexion", en: "← Back to sign in" },
+  "login.forgot.sent":   { fr: "Si un compte existe avec cette adresse, un e-mail vient d'être envoyé. Pensez à regarder dans vos courriers indésirables.",
+                           en: "If an account exists with this address, an email has just been sent. Remember to check your spam folder." },
+  "login.forgot.rate":   { fr: "Trop de demandes. Réessayez dans quelques minutes.", en: "Too many requests. Please try again in a few minutes." },
+  "login.reset.intro":   { fr: "Choisissez votre nouveau mot de passe.", en: "Choose your new password." },
+  "login.reset.btn":     { fr: "Enregistrer le mot de passe", en: "Save password" },
+  "login.reset.checking":{ fr: "Vérification du lien…", en: "Checking the link…" },
+  "login.reset.expired": { fr: "Ce lien n'est plus valable. Demandez un nouvel e-mail ci-dessous.", en: "This link is no longer valid. Request a new email below." },
+  "login.reset.done":    { fr: "Mot de passe mis à jour. Connexion…", en: "Password updated. Signing you in…" },
+  "auth.err.same_password": { fr: "Le nouveau mot de passe doit être différent de l'ancien.", en: "The new password must be different from the old one." },
+
   // ---------------- page de connexion (login.html) ----------------
   "login.doc_title":     { fr: "Connexion — Nysa", en: "Sign in — Nysa" },
   "login.h1":            { fr: "Accès au simulateur complet", en: "Access the full simulator" },

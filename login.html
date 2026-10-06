@@ -75,6 +75,12 @@ h1{font-family:var(--display);font-weight:500;font-size:21px;
 /* sélecteur de langue, en haut à droite de la carte (affiché au basculement, cf. i18n.js) */
 .card{position:relative}
 .card > [data-lang-switch]{position:absolute;top:16px;right:16px}
+.linkbtn{display:block;margin:14px auto 0;background:none;border:none;padding:2px 4px;cursor:pointer;
+  font-family:var(--body);font-size:12.5px;color:var(--muted);text-decoration:underline;
+  text-decoration-color:var(--line);text-underline-offset:3px}
+.linkbtn:hover{color:var(--pixel);text-decoration-color:var(--pixel)}
+.viewintro{margin:0 0 18px;font-size:13px;line-height:1.5;color:var(--muted)}
+.submitbtn:disabled{opacity:.5;cursor:default}
 </style>
 </head>
 <body>
@@ -111,6 +117,7 @@ h1{font-family:var(--display);font-weight:500;font-size:21px;
         <input type="password" id="loginPassword" required autocomplete="current-password">
       </div>
       <button class="submitbtn" type="submit" data-i18n="login.btn.login">Se connecter</button>
+      <button class="linkbtn" type="button" id="forgotLink" data-i18n="login.forgot">Mot de passe oublié ?</button>
       <div class="msg" id="loginMsg"></div>
     </form>
 
@@ -142,19 +149,56 @@ h1{font-family:var(--display);font-weight:500;font-size:21px;
       <button class="submitbtn" type="submit" data-i18n="login.btn.signup">Créer mon compte</button>
       <div class="msg" id="signupMsg"></div>
     </form>
+
+    <!-- ============ Mot de passe oublié (06/10/2026) ============
+         1. l'utilisateur donne son adresse : Supabase lui envoie un lien ;
+         2. le lien le ramène sur cette page (login.html?reset=1), où il
+            choisit son nouveau mot de passe (vue suivante). -->
+    <form class="formview" id="forgotForm" data-view="forgot">
+      <p class="viewintro" data-i18n="login.forgot.intro">Saisissez l'adresse e-mail de votre compte : nous vous envoyons un lien pour choisir un nouveau mot de passe.</p>
+      <div class="field">
+        <label for="forgotEmail" data-i18n="login.email">E-mail</label>
+        <input type="email" id="forgotEmail" required autocomplete="email">
+      </div>
+      <button class="submitbtn" type="submit" data-i18n="login.forgot.btn">Envoyer le lien</button>
+      <button class="linkbtn" type="button" id="forgotBack" data-i18n="login.forgot.back">← Retour à la connexion</button>
+      <div class="msg" id="forgotMsg"></div>
+    </form>
+
+    <form class="formview" id="resetForm" data-view="reset">
+      <p class="viewintro" data-i18n="login.reset.intro">Choisissez votre nouveau mot de passe.</p>
+      <div class="field">
+        <label for="resetPassword" data-i18n="settings.pwd.new">Nouveau mot de passe</label>
+        <input type="password" id="resetPassword" required minlength="8" autocomplete="new-password" data-i18n-ph="settings.pwd.ph" placeholder="8 caractères minimum">
+      </div>
+      <div class="field">
+        <label for="resetPassword2" data-i18n="settings.pwd.confirm">Confirmer le nouveau mot de passe</label>
+        <input type="password" id="resetPassword2" required minlength="8" autocomplete="new-password">
+      </div>
+      <button class="submitbtn" type="submit" id="resetBtn" data-i18n="login.reset.btn" disabled>Enregistrer le mot de passe</button>
+      <div class="msg" id="resetMsg"></div>
+    </form>
   </div>
 </div>
 
 <script src="supabase-client.js"></script>
 <script>
+var urlParams = new URLSearchParams(window.location.search);
+
+// Retour depuis l'e-mail « mot de passe oublié » : le lien ouvre une session
+// provisoire sur cette page, qui sert uniquement à choisir un nouveau mot de
+// passe. Il ne faut donc pas rediriger vers l'espace personnel.
+var RESET_MODE = urlParams.get("reset") === "1";
+
 // Si déjà connecté, inutile de repasser par cette page.
-supabaseClient.auth.getSession().then(function(res){
-  if (res.data.session) window.location.href = "espace-personnel.html";
-});
+if (!RESET_MODE) {
+  supabaseClient.auth.getSession().then(function(res){
+    if (res.data.session) window.location.href = "espace-personnel.html";
+  });
+}
 
 // Déconnecté·e automatiquement car ce compte a été utilisé ailleurs
 // (une seule session active à la fois, cf. requireAuth dans supabase-client.js).
-var urlParams = new URLSearchParams(window.location.search);
 if (urlParams.get("reason") === "other_device") {
   var banner = document.createElement("div");
   banner.className = "msg err";
@@ -187,14 +231,112 @@ if (urlParams.get("reason") === "account_deleted") {
 document.getElementById("signupLang").value = nysaLang();
 
 // ===================== Bascule connexion / inscription =====================
-document.querySelectorAll(".tab").forEach(function(tab){
-  tab.addEventListener("click", function(){
-    document.querySelectorAll(".tab").forEach(function(t){ t.setAttribute("aria-selected", "false"); });
-    tab.setAttribute("aria-selected", "true");
-    document.querySelectorAll(".formview").forEach(function(v){
-      v.classList.toggle("current", v.dataset.view === tab.dataset.view);
-    });
+// Affiche une des quatre vues : login, signup, forgot, reset. Les onglets
+// ne concernent que les deux premières ; ils sont masqués pendant le choix
+// d'un nouveau mot de passe.
+function showView(name){
+  document.querySelectorAll(".tab").forEach(function(tabEl){
+    tabEl.setAttribute("aria-selected", tabEl.dataset.view === name ? "true" : "false");
   });
+  document.querySelector(".tabs").style.display = name === "reset" ? "none" : "";
+  document.querySelectorAll(".formview").forEach(function(v){
+    v.classList.toggle("current", v.dataset.view === name);
+  });
+}
+document.querySelectorAll(".tab").forEach(function(tab){
+  tab.addEventListener("click", function(){ showView(tab.dataset.view); });
+});
+
+// ===================== Mot de passe oublié =====================
+document.getElementById("forgotLink").addEventListener("click", function(){
+  // l'adresse déjà saisie pour se connecter est reprise
+  document.getElementById("forgotEmail").value = document.getElementById("loginEmail").value.trim();
+  showView("forgot");
+  document.getElementById("forgotEmail").focus();
+});
+document.getElementById("forgotBack").addEventListener("click", function(){ showView("login"); });
+
+document.getElementById("forgotForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+  var btn = e.target.querySelector(".submitbtn");
+  var msgEl = document.getElementById("forgotMsg");
+  msgEl.className = "msg"; msgEl.textContent = "";
+  btn.disabled = true;
+  var email = document.getElementById("forgotEmail").value.trim();
+  var { error } = await supabaseClient.auth.resetPasswordForEmail(email, {
+    redirectTo: new URL("login.html?reset=1", window.location.href).href
+  });
+  btn.disabled = false;
+  if (error && (error.status === 429 || /security purposes|rate limit/i.test(error.message || ""))) {
+    msgEl.className = "msg err";
+    msgEl.textContent = t("login.forgot.rate");
+    return;
+  }
+  // Même message qu'un compte existe ou non : la page ne révèle pas quelles
+  // adresses ont un compte.
+  if (error) console.warn("Demande de réinitialisation :", error.message);
+  msgEl.className = "msg ok";
+  msgEl.textContent = t("login.forgot.sent");
+});
+
+// ===================== Nouveau mot de passe (retour depuis l'e-mail) =====================
+if (RESET_MODE) {
+  showView("reset");
+  var resetMsg = document.getElementById("resetMsg");
+  var resetBtn = document.getElementById("resetBtn");
+  resetMsg.className = "msg ok";
+  resetMsg.textContent = t("login.reset.checking");
+
+  // Le lien est-il valable ? Supabase ouvre la session en lisant l'adresse ;
+  // on lui laisse quelques secondes, puis on conclut.
+  (async function(){
+    var session = null;
+    var failed = /error=|error_code=/.test(window.location.hash + window.location.search);
+    for (var i = 0; i < 12 && !session && !failed; i++) {
+      var res = await supabaseClient.auth.getSession();
+      session = res.data.session;
+      if (!session) await new Promise(function(r){ setTimeout(r, 400); });
+    }
+    if (session) {
+      resetMsg.className = "msg"; resetMsg.textContent = "";
+      resetBtn.disabled = false;
+      document.getElementById("resetPassword").focus();
+    } else {
+      // Lien expiré ou déjà utilisé : on repropose l'envoi d'un e-mail.
+      showView("forgot");
+      var fm = document.getElementById("forgotMsg");
+      fm.className = "msg err";
+      fm.textContent = t("login.reset.expired");
+    }
+  })();
+}
+
+document.getElementById("resetForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+  var btn = document.getElementById("resetBtn");
+  var msgEl = document.getElementById("resetMsg");
+  var p1 = document.getElementById("resetPassword").value, p2 = document.getElementById("resetPassword2").value;
+  msgEl.className = "msg"; msgEl.textContent = "";
+  if (p1.length < 8) { msgEl.className = "msg err"; msgEl.textContent = t("pwd.min"); return; }
+  if (p1 !== p2) { msgEl.className = "msg err"; msgEl.textContent = t("pwd.mismatch"); return; }
+  btn.disabled = true;
+  var { data, error } = await supabaseClient.auth.updateUser({ password: p1 });
+  if (error) {
+    btn.disabled = false;
+    msgEl.className = "msg err";
+    msgEl.textContent = frenchAuthError(error);
+    return;
+  }
+  msgEl.className = "msg ok";
+  msgEl.textContent = t("login.reset.done");
+  // L'utilisateur est connecté par le lien : on enregistre cette session
+  // comme la session active du compte, puis on ouvre l'espace personnel.
+  if (data && data.user) {
+    await registerSessionMarker(data.user.id);
+    var pref = data.user.user_metadata ? data.user.user_metadata.lang : null;
+    if (pref === "en" || pref === "fr") nysaStoreLang(pref);
+  }
+  window.location.href = "espace-personnel.html";
 });
 
 // ===================== Connexion =====================
