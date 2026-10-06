@@ -494,6 +494,9 @@ var I18N = {
   "login.reset.done":    { fr: "Mot de passe mis à jour. Connexion…", en: "Password updated. Signing you in…" },
   "auth.err.same_password": { fr: "Le nouveau mot de passe doit être différent de l'ancien.", en: "The new password must be different from the old one." },
 
+  "nav.menu":            { fr: "Menu", en: "Menu" },
+  "nav.menu.close":      { fr: "Fermer le menu", en: "Close menu" },
+
   // ---------------- page de connexion (login.html) ----------------
   "login.doc_title":     { fr: "Connexion — Nysa", en: "Sign in — Nysa" },
   "login.h1":            { fr: "Accès au simulateur complet", en: "Access the full simulator" },

@@ -384,6 +384,13 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .navlist a.demolink:hover{background:rgba(245,172,87,.1);color:#FFBE72}
 /* « à venir » ne se coupe pas en deux lignes dans le menu */
 .sidebar .navlist a em{white-space:nowrap}
+/* 06/10/2026 — téléphone : seule l'étape en cours garde son nom dans le fil d'étapes */
+@media(max-width:640px){
+  .wrap{padding:16px 16px 20px}
+  .step-label:not(.active){display:none}
+  .step-line{margin:0 6px;min-width:8px}
+  .scenegrid{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
@@ -1767,5 +1774,7 @@ async function autoSaveResult(){
 })();
 </script>
 <script src="aide.js"></script>
+<!-- Menu de gauche repliable sur petit écran -->
+<script src="menu.js"></script>
 </body>
 </html>

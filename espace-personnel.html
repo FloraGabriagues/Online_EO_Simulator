@@ -197,10 +197,14 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   .bottomrow{grid-template-columns:1fr}
   .hero .content{max-width:100%}
 }
-@media(max-width:760px){
-  .sidebar{position:fixed;inset:0 auto 0 0;transform:translateX(-100%);z-index:50;
-    transition:transform .18s ease;box-shadow:10px 0 30px rgba(0,0,0,.4)}
-  .app{display:block}
+/* 06/10/2026 — le menu de gauche sur petit écran est géré par menu.js
+   (bouton en haut à gauche). L'ancienne règle le faisait sortir de l'écran
+   sans aucun moyen de le rouvrir. */
+@media(max-width:640px){
+  .wrap{padding:16px 16px 20px}
+  .pageheader{flex-wrap:wrap;align-items:flex-start;gap:14px}
+  .bottomrow > *{min-width:0}
+  .activity,.doccol{height:auto;min-height:200px}
 }
 
 /* ===================== Modal Paramètres ===================== */
@@ -370,7 +374,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           <h1 data-i18n="home.h1">Mes instruments</h1>
           <p class="pagesub" data-i18n="home.sub">Créez, configurez et gérez vos instruments d'imagerie.</p>
         </div>
-        <div style="display:flex;gap:10px;align-items:center">
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
           <button class="mbtn danger" type="button" id="btnDeleteAllInst" data-i18n="home.delete_all">Tout supprimer</button>
           <a class="simbtn" href="creer-instrument.html" data-i18n="home.create">+ Créer un instrument</a>
         </div>
@@ -533,6 +537,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 <!-- Bibliothèque Supabase hébergée avec le site (dossier vendor/), version figée. -->
 <script src="vendor/supabase.js"></script>
 <script src="supabase-client.js"></script>
+<!-- Instrument d'exemple ajouté aux nouveaux comptes (fichier facultatif) -->
+<script src="instrument-exemple.js"></script>
 <script>
 (async function(){
   var session = await requireAuth();
@@ -574,6 +580,35 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     .is("deleted_at", null)
     .order("updated_at", { ascending: false });
   if(instErr) console.error("Erreur chargement instruments :", instErr);
+
+  // 06/10/2026 — instrument d'exemple, créé une seule fois par compte.
+  // À la première visite d'un compte sans aucun instrument, on lui ajoute
+  // l'instrument décrit dans instrument-exemple.js : il sert de point de
+  // départ pour lancer une première simulation. Le compte en garde la
+  // trace (example_created) : si l'utilisateur supprime l'exemple, il ne
+  // revient pas. Sans le fichier instrument-exemple.js, rien n'est créé.
+  try {
+    var meta = session.user.user_metadata || {};
+    if(typeof NYSA_EXAMPLE_INSTRUMENT !== "undefined" && !instErr && (instruments || []).length === 0 && !meta.example_created){
+      var lg = nysaLang();
+      var exCfg = JSON.parse(JSON.stringify(NYSA_EXAMPLE_INSTRUMENT.config));
+      exCfg.description = NYSA_EXAMPLE_INSTRUMENT.description[lg] || NYSA_EXAMPLE_INSTRUMENT.description.en;
+      var { data: exRow, error: exErr } = await supabaseClient
+        .from("instruments")
+        .insert({ name: NYSA_EXAMPLE_INSTRUMENT.name[lg] || NYSA_EXAMPLE_INSTRUMENT.name.en, config: exCfg, account_id: session.user.id })
+        .select()
+        .single();
+      if(exErr){
+        console.error("Instrument d'exemple non créé :", exErr);
+      } else {
+        instruments = [exRow];
+        var { error: flagErr } = await supabaseClient.auth.updateUser({ data: { example_created: true } });
+        if(flagErr) console.warn("Marqueur de l'instrument d'exemple non enregistré :", flagErr.message);
+      }
+    }
+  } catch(e){
+    console.error("Instrument d'exemple :", e);
+  }
 
   // Ligne Supabase -> carte affichée (aussi utilisé après une duplication).
   function toItem(row){
@@ -1238,5 +1273,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 })();
 </script>
 <script src="aide.js"></script>
+<!-- Menu de gauche repliable sur petit écran -->
+<script src="menu.js"></script>
 </body>
 </html>

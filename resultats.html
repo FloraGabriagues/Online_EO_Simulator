@@ -401,6 +401,18 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .navlist a.demolink:hover{background:rgba(245,172,87,.1);color:#FFBE72}
 /* « à venir » ne se coupe pas en deux lignes dans le menu */
 .sidebar .navlist a em{white-space:nowrap}
+/* 06/10/2026 — téléphone : liste des résultats resserrée */
+@media(max-width:520px){
+  .wrap{padding:16px 14px 20px}
+  .resultrow .rowlink{grid-template-columns:54px 1fr 60px 60px}
+  .resultshead{grid-template-columns:1fr 60px 60px 40px}
+  .resultshead button{padding:4px 6px;font-size:10px}
+  .resultrow .txt{padding:8px 8px}
+  .resultrow .name{font-size:15px;white-space:normal}
+  .resultrow .namerow{flex-wrap:wrap;gap:4px 8px}   /* le nom ne disparaît plus derrière le badge */
+  .resultrow .metric{padding:0 6px}
+  .resultrow .metric .v{font-size:16px}
+}
 </style>
 </head>
 <body>
@@ -855,6 +867,7 @@ async function renderResultsList(){
     function esc(t){ var d = document.createElement("div"); d.textContent = t == null ? "" : String(t); return d.innerHTML; }
     var card = document.createElement("div");
     card.className = "resultrow";
+    card.dataset.id = r.id;   // repère de la ligne (utilisé par le test automatique du parcours)
     card.innerHTML =
       "<div class='rowlink' role='button' tabindex='0' aria-expanded='false'>"+
         "<span class='thumb' style='background-image:url(\"" + thumbUrl + "\")'></span>"+
@@ -1571,5 +1584,7 @@ async function deleteResult(r){
 })();
 </script>
 <script src="aide.js"></script>
+<!-- Menu de gauche repliable sur petit écran -->
+<script src="menu.js"></script>
 </body>
 </html>
