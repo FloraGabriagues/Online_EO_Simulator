@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Hypothèses et sources — Nysa</title>
+<!-- Traduction FR / EN : cette page porte ses deux versions côte à côte.
+     Chaque texte existe en <… lang="fr"> et en <… lang="en"> ; seule la
+     version de la langue en cours est affichée (règle CSS plus bas).
+     La langue en cours vient de i18n.js, comme sur le reste du site. -->
+<script src="i18n.js"></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.70%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2234.30%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%225.3%22%20fill%3D%22%23FFB86B%22/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --void:#090E13; --panel:#131E27; --panel-2:#1A2833;
+  --line:#2E4152; --line-soft:#22323F;
+  --paper:#C4D6D4; --muted:#9BADBD; --muted-2:#8497AA;
+  --photon:#F5AC57; --pixel:#5FDCD0; --alert:#F0776D; --ok:#7FD88F;
+  --display:"Montserrat","IBM Plex Sans",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{background:var(--void);color:var(--paper);font-family:var(--body);font-size:16px;line-height:1.65;-webkit-font-smoothing:antialiased}
+/* une seule langue à l'écran */
+html[lang="en"] [lang="fr"], html[lang="fr"] [lang="en"]{display:none}
+.wrap{max-width:1040px;margin:0 auto;padding:0 28px 80px}
+header.top{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:22px 0;border-bottom:1px solid var(--line-soft)}
+.brand{display:flex;align-items:center;gap:12px;text-decoration:none}
+.brand .mark{width:34px;height:34px;flex:none}
+.brand .name{display:block;font-family:var(--display);font-weight:500;font-size:21px;letter-spacing:.035em;line-height:1.05;color:var(--paper)}
+.brand .tag{display:block;font-family:var(--display);font-size:9.5px;letter-spacing:.115em;color:var(--muted);margin-top:3px;white-space:nowrap}
+.topright{display:flex;align-items:center;gap:16px}
+.back{font-family:var(--mono);font-size:12px;color:var(--muted);text-decoration:none}
+.back:hover{color:var(--pixel)}
+.intro{padding:44px 0 8px;max-width:720px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted-2);margin:0 0 10px}
+h1{font-family:var(--display);font-weight:500;font-size:34px;line-height:1.2;margin:0 0 14px;color:var(--paper)}
+.lead{font-size:17px;color:var(--muted);margin:0}
+.layout{display:grid;grid-template-columns:220px minmax(0,1fr);gap:56px;margin-top:40px;align-items:start}
+nav.toc{position:sticky;top:24px;font-size:13px}
+nav.toc p{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted-2);margin:0 0 10px}
+nav.toc a{display:block;padding:6px 0 6px 12px;border-left:1px solid var(--line-soft);color:var(--muted);text-decoration:none;line-height:1.35}
+nav.toc a:hover{color:var(--pixel);border-left-color:var(--pixel)}
+main{max-width:720px;min-width:0}
+section{padding:0 0 34px;margin:0 0 34px;border-bottom:1px solid var(--line-soft);scroll-margin-top:20px}
+section:last-of-type{border-bottom:none}
+h2{font-family:var(--display);font-weight:500;font-size:21px;line-height:1.3;margin:0 0 14px;color:var(--paper)}
+p{margin:0 0 14px}
+ul,ol{margin:0 0 14px;padding-left:20px}
+li{margin:0 0 9px}
+li::marker{color:var(--muted-2)}
+ol.chain{list-style:none;padding:0;counter-reset:step}
+ol.chain li{counter-increment:step;position:relative;padding:10px 14px 10px 46px;margin:0 0 8px;background:var(--panel);border:1px solid var(--line-soft);border-radius:6px}
+ol.chain li::before{content:counter(step);position:absolute;left:14px;top:10px;width:22px;height:22px;border-radius:50%;border:1px solid var(--pixel);color:var(--pixel);font-family:var(--mono);font-size:11.5px;display:flex;align-items:center;justify-content:center}
+b{font-weight:500;color:var(--paper)}
+a{color:var(--pixel)}
+.credit{background:var(--panel);border:1px solid var(--line-soft);border-left:2px solid var(--photon);border-radius:4px;padding:14px 16px;font-size:14.5px;color:var(--muted)}
+footer{margin-top:20px;padding-top:24px;border-top:1px solid var(--line-soft);font-size:12.5px;color:var(--muted-2)}
+footer a{color:var(--muted)}
+@media (max-width:860px){
+  .layout{grid-template-columns:1fr;gap:28px}
+  nav.toc{position:static}
+  h1{font-size:28px}
+}
+</style>
+</head>
+<body>
+<script src="beta.js"></script>
+<div class="wrap">
+  <header class="top">
+    <a class="brand" href="index.html" aria-label="Nysa, EO Imaging Engineering">
+      <svg class="mark" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="512" height="512" xmlns:c2pa="http://c2pa.org/manifest"><metadata><c2pa:manifest>AAAWgmp1bWIAAAAeanVtZGMycGEAEQAQgAAAqgA4m3EDYzJwYQAAABZcanVtYgAAAEdqdW1kYzJtYQARABCAAACqADibcQN1cm46YzJwYTphM2Q1YmNiZC04NzU5LTQ4ODAtOTc5MS02OGVmYzg1NTdkYTAAAAADl2p1bWIAAAApanVtZGMyYXMAEQAQgAAAqgA4m3EDYzJwYS5hc3NlcnRpb25zAAAAALxqdW1iAAAARGp1bWRjYm9yABEAEIAAAKoAOJtxE2MycGEuaW5ncmVkaWVudC52MwAAAAAYYzJzaHjpWtoiaP9Q0b3W83PqnpIAAABwY2JvcqNpZGM6Zm9ybWF0bWltYWdlL3N2Zyt4bWxqaW5zdGFuY2VJRHgseG1wOmlpZDoxZTlkMmE0Zi0xYzI3LTQ4NGEtOTc3OC1kNmZlNGMwMmFjOWNscmVsYXRpb25zaGlwaHBhcmVudE9mAAAB4mp1bWIAAABBanVtZGNib3IAEQAQgAAAqgA4m3ETYzJwYS5hY3Rpb25zLnYyAAAAABhjMnNoYrQ17mSTfpvQkQeQOQRriwAAAZljYm9yomdhY3Rpb25zgqJmYWN0aW9ua2MycGEub3BlbmVkanBhcmFtZXRlcnOha2luZ3JlZGllbnRzgaJjdXJseC1zZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmluZ3JlZGllbnQudjNkaGFzaFggNg9U5Jcv6iqw1bUChOyMmfUozctoDD9yfMn7lULaDmKkZmFjdGlvbngdY29tLmFudGhyb3BpYy5jbGF1ZGUucHJvdmlkZWRqcGFyYW1ldGVyc6F4H2NvbS5hbnRocm9waWMub3JpZ2luLWNvbmZpZGVuY2VndW5rbm93bmtkZXNjcmlwdGlvbnhmQ2xhdWRlIHByb3ZpZGVkIHRoaXMgZmlsZSBhdCB0aGUgcmVxdWVzdCBvZiBhIHVzZXIgYW5kIG1heSBoYXZlIGNyZWF0ZWQgb3IgbW9kaWZpZWQgdGhlIGZpbGUgY29udGVudHMubXNvZnR3YXJlQWdlbnShZG5hbWVmQ2xhdWRlcmFsbEFjdGlvbnNJbmNsdWRlZPUAAADIanVtYgAAAEBqdW1kY2JvcgARABCAAACqADibcRNjMnBhLmhhc2guZGF0YQAAAAAYYzJzaKsrSFRVmqVZ2brsW1Q9qmwAAACAY2JvcqVjYWxnZnNoYTI1NmNwYWRNAAAAAAAAAAAAAAAAAGRoYXNoWCD86WQBEKnz77QeNPIOAqB8dCbTaJV3f3S+BXZXNLKSi2RuYW1lbmp1bWJmIG1hbmlmZXN0amV4Y2x1c2lvbnOBomVzdGFydBiUZmxlbmd0aBkeBAAAAj5qdW1iAAAAJ2p1bWRjMmNsABEAEIAAAKoAOJtxA2MycGEuY2xhaW0udjIAAAACD2Nib3KlY2FsZ2ZzaGEyNTZpc2lnbmF0dXJleE1zZWxmI2p1bWJmPS9jMnBhL3VybjpjMnBhOmEzZDViY2JkLTg3NTktNDg4MC05NzkxLTY4ZWZjODU1N2RhMC9jMnBhLnNpZ25hdHVyZWppbnN0YW5jZUlEeCx4bXA6aWlkOmRmOGVmM2NiLWQzZmQtNDM2MC1iOTNhLTIyOWJiMjUwNjhkYXJjcmVhdGVkX2Fzc2VydGlvbnODomN1cmx4LXNlbGYjanVtYmY9YzJwYS5hc3NlcnRpb25zL2MycGEuaW5ncmVkaWVudC52M2RoYXNoWCA2D1Tkly/qKrDVtQKE7IyZ9SjNy2gMP3J8yfuVQtoOYqJjdXJseCpzZWxmI2p1bWJmPWMycGEuYXNzZXJ0aW9ucy9jMnBhLmFjdGlvbnMudjJkaGFzaFggAyBHYTcqmIB7YDnmMjw5ZfRg1Qt2O5Imm04vsX3o/vmiY3VybHgpc2VsZiNqdW1iZj1jMnBhLmFzc2VydGlvbnMvYzJwYS5oYXNoLmRhdGFkaGFzaFgga+SPoRGn2OXPSi/7di917egpzjSThAG6UHH1379VwMh0Y2xhaW1fZ2VuZXJhdG9yX2luZm+jZG5hbWVvQW50aHJvcGljIEZpbGVzZ3ZlcnNpb25lMS4wLjBrc3BlY1ZlcnNpb25lMi40LjAAABA4anVtYgAAAChqdW1kYzJjcwARABCAAACqADibcQNjMnBhLnNpZ25hdHVyZQAAABAIY2JvctKEWQISogEmGCFZAgowggIGMIIBjaADAgECAhRA5aAK7sI50L64g/oGQgU9Z1UTADAKBggqhkjOPQQDAzBJMRcwFQYDVQQKEw5BbnRocm9waWMsIFBCQzEuMCwGA1UEAxMlQW50aHJvcGljIENvbnRlbnQgQ3JlZGVudGlhbHMgUm9vdCBDQTAeFw0yNjA4MDcxODQzNTZaFw0yODA4MDYxOTQzNTZaMEQxFzAVBgNVBAoTDkFudGhyb3BpYywgUEJDMSkwJwYDVQQDEyBBbnRocm9waWMgQ2xhdWRlIENvbnRlbnQgU2lnbmluZzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABJh6CmvLUBgFFNU0vUKlOVtE6djd17L5SuwX0LemFisBM3dkd/3cyjxFA3Qo5S46fX0/ihY0VZ7mfb9KF703t5OjWDBWMA4GA1UdDwEB/wQEAwIHgDAVBgNVHSUEDjAMBgorBgEEAYPoXgIBMAwGA1UdEwEB/wQCMAAwHwYDVR0jBBgwFoAUzlHiBIFOZFsj+OPEz5o+nMHXXMIwCgYIKoZIzj0EAwMDZwAwZAIwMXMdFJ4BetLLVY7ORuE9noqbbAZOZn/aArXyTwFAZfKrPzxF2vPoJNf1+UCdg1XGAjBwX1zd9WGqYkqmL5SFqw1QySjr1zJfpJM9+1rdDwSPLMOPOjKuiXjoU/pUUeG9RwmhY3BhZFkNngAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAPZYQH/s8diUNOslrrPmGXgZoiAtptkrxkEkpN9OH62GuJnMOCsISHIb4/5JD9YGBCyDrdTDo33rWAAmnHKGm07J2fI=</c2pa:manifest></metadata><circle cx="24.00" cy="13.70" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="32.92" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="32.92" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="24.00" cy="34.30" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="15.08" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="15.08" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3"/><circle cx="24" cy="24" r="5.3" fill="#FFB86B"/></svg>
+      <span><span class="name">Nysa</span><span class="tag">EO Imaging Engineering</span></span>
+    </a>
+    <div class="topright">
+      <a class="back" href="index.html"><span lang="fr">← Retour au site</span><span lang="en">← Back to the site</span></a>
+      <span data-lang-switch></span>
+    </div>
+  </header>
+
+  <div class="intro">
+    <p class="eyebrow"><span lang="fr">Documentation</span><span lang="en">Documentation</span></p>
+    <h1><span lang="fr">Hypothèses et sources</span><span lang="en">Assumptions and sources</span></h1>
+    <p class="lead"><span lang="fr">Ce que Nysa calcule, avec quelles données et quels modèles, et ce qu'il ne calcule pas. Cette page est là pour que vous sachiez quel crédit accorder à un résultat.</span><span lang="en">What Nysa computes, with which data and models, and what it does not compute. This page is here so that you know how much weight to give a result.</span></p>
+  </div>
+
+  <div class="layout">
+    <nav class="toc" aria-label="Sommaire">
+      <p><span lang="fr">Sur cette page</span><span lang="en">On this page</span></p>
+      <a href="#chaine"><span lang="fr">Ce que simule Nysa</span><span lang="en">What Nysa simulates</span></a>
+      <a href="#donnees"><span lang="fr">Scènes et sources</span><span lang="en">Scenes and sources</span></a>
+      <a href="#radiometrie"><span lang="fr">Atmosphère et radiométrie</span><span lang="en">Atmosphere and radiometry</span></a>
+      <a href="#optique"><span lang="fr">Optique</span><span lang="en">Optics</span></a>
+      <a href="#detecteur"><span lang="fr">Détecteur et électronique</span><span lang="en">Detector and electronics</span></a>
+      <a href="#resultats"><span lang="fr">Lecture des résultats</span><span lang="en">Reading the results</span></a>
+      <a href="#limites"><span lang="fr">Ce qui n'est pas modélisé</span><span lang="en">What is not modeled</span></a>
+      <a href="#validation"><span lang="fr">État de la validation</span><span lang="en">Validation status</span></a>
+    </nav>
+    <main>
+  <section id="chaine">
+    <h2><span lang="fr">Ce que simule Nysa</span><span lang="en">What Nysa simulates</span></h2>
+    <div lang="fr"><p>Nysa calcule l'image que produirait un instrument optique d'observation de la Terre, à partir d'une scène au sol et de la description de l'instrument. Le calcul suit le trajet de la lumière, étape par étape :</p>
+<ol class="chain">
+  <li><b>Scène</b> : une image du sol, prise comme carte de réflectance.</li>
+  <li><b>Atmosphère</b> : passage de la réflectance au sol à la luminance en entrée d'instrument.</li>
+  <li><b>Optique</b> : dégradation de la netteté par la pupille, ses obstructions et les défauts de front d'onde.</li>
+  <li><b>Détecteur</b> : conversion des photons en électrons, avec ses bruits.</li>
+  <li><b>Électronique</b> : conversion des électrons en comptes numériques (DN), avec saturation et quantification.</li>
+</ol>
+<p>Chaque bande spectrale est calculée séparément, puis les bandes sont assemblées pour l'affichage.</p></div>
+    <div lang="en"><p>Nysa computes the image an Earth observation optical instrument would produce, from a ground scene and a description of the instrument. The computation follows the path of light, step by step:</p>
+<ol class="chain">
+  <li><b>Scene</b>: an image of the ground, taken as a reflectance map.</li>
+  <li><b>Atmosphere</b>: from ground reflectance to radiance at the instrument entrance.</li>
+  <li><b>Optics</b>: loss of sharpness caused by the pupil, its obstructions and wavefront errors.</li>
+  <li><b>Detector</b>: conversion of photons into electrons, with its noise sources.</li>
+  <li><b>Electronics</b>: conversion of electrons into digital numbers (DN), with saturation and quantization.</li>
+</ol>
+<p>Each spectral band is computed separately, then the bands are combined for display.</p></div>
+  </section>
+  <section id="donnees">
+    <h2><span lang="fr">Scènes et sources de données</span><span lang="en">Scenes and data sources</span></h2>
+    <div lang="fr"><p>Les trois scènes proposées (Ville, Avion, Port) sont des extraits d'orthophotographies aériennes de l'IGN, d'une emprise de 200 m × 200 m et d'un pas de 0,2 m.</p>
+<p class="credit">Source : IGN, BD ORTHO®, édition 2023. Données diffusées sous <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" target="_blank" rel="noopener">Licence Ouverte Etalab 2.0</a>. Les images présentées sur ce site sont des extraits de ces données, modifiés par la simulation. Nysa n'est pas affilié à l'IGN, et cette mention ne confère aucun caractère officiel aux images produites.</p>
+<p><b>Limite importante.</b> Ces orthophotographies sont des images déjà traitées pour l'affichage, pas des mesures de réflectance étalonnées. Nysa utilise la valeur de chaque pixel comme une approximation de la réflectance au sol. Les niveaux absolus de signal obtenus sont donc indicatifs. Les comparaisons entre deux instruments sur une même scène, elles, restent pertinentes, puisque la scène d'entrée est la même.</p>
+<p>Les scènes sont aujourd'hui limitées aux bandes rouge, verte et bleue.</p></div>
+    <div lang="en"><p>The three scenes offered (City, Aircraft, Port) are extracts from IGN aerial orthophotos, covering 200 m × 200 m with a 0.2 m sampling distance.</p>
+<p class="credit">Source: IGN, BD ORTHO®, 2023 edition. Data released under the <a href="https://www.etalab.gouv.fr/licence-ouverte-open-licence/" target="_blank" rel="noopener">Etalab Open Licence 2.0</a>. The images shown on this site are extracts from these data, modified by the simulation. Nysa is not affiliated with IGN, and this notice does not give any official status to the images produced.</p>
+<p><b>Important limitation.</b> These orthophotos are images already processed for display, not calibrated reflectance measurements. Nysa uses the value of each pixel as an approximation of ground reflectance. The absolute signal levels obtained are therefore indicative. Comparisons between two instruments on the same scene remain meaningful, since the input scene is the same.</p>
+<p>Scenes are currently limited to the red, green and blue bands.</p></div>
+  </section>
+  <section id="radiometrie">
+    <h2><span lang="fr">Atmosphère et radiométrie</span><span lang="en">Atmosphere and radiometry</span></h2>
+    <div lang="fr"><ul>
+  <li>Le transfert radiatif est calculé avec le code 6S, appelé par la bibliothèque Py6S.</li>
+  <li>La luminance en entrée d'instrument est la somme de trois termes : le trajet atmosphérique, indépendant du sol ; l'environnement du pixel ; et la cible elle-même.</li>
+  <li>La luminance est supposée uniforme sur le champ de vue instantané d'un pixel.</li>
+  <li>Le sol est supposé lambertien : il n'y a pas de réflexion spéculaire, par exemple sur l'eau.</li>
+  <li>L'environnement est supposé uniforme, de réflectance égale à la moyenne de la scène.</li>
+  <li>La visée est au nadir.</li>
+  <li>Le flux collecté par un pixel est calculé dans l'approximation paraxiale, valable près de l'axe optique et pour un système peu ouvert.</li>
+  <li>Chaque bande est rectangulaire, entre deux longueurs d'onde. Elle est découpée en intervalles d'environ 2,5 nm, ce qui correspond à la résolution spectrale de 6S. La luminance est calculée par 6S aux bornes de chaque intervalle, sans interpolation, puis intégrée.</li>
+  <li>La transmission de l'optique et le rendement quantique peuvent varier avec la longueur d'onde. La transmission du filtre de bande est constante sur la bande.</li>
+  <li>Le profil atmosphérique, le type et la charge d'aérosols, la vapeur d'eau et l'ozone se règlent dans les paramètres avancés d'une simulation. Des valeurs par défaut s'appliquent sinon.</li>
+</ul></div>
+    <div lang="en"><ul>
+  <li>Radiative transfer is computed with the 6S code, called through the Py6S library.</li>
+  <li>Radiance at the instrument entrance is the sum of three terms: the atmospheric path, independent of the ground; the pixel's environment; and the target itself.</li>
+  <li>Radiance is assumed uniform over the instantaneous field of view of a pixel.</li>
+  <li>The ground is assumed Lambertian: there is no specular reflection, for example on water.</li>
+  <li>The environment is assumed uniform, with a reflectance equal to the scene average.</li>
+  <li>Viewing is at nadir.</li>
+  <li>The flux collected by a pixel is computed in the paraxial approximation, valid close to the optical axis and for a slow system.</li>
+  <li>Each band is rectangular, between two wavelengths. It is split into intervals of about 2.5 nm, which matches the spectral resolution of 6S. Radiance is computed by 6S at the edges of each interval, without interpolation, then integrated.</li>
+  <li>Optical transmission and quantum efficiency can vary with wavelength. The band filter transmission is constant over the band.</li>
+  <li>Atmospheric profile, aerosol type and load, water vapor and ozone can be set in the advanced settings of a simulation. Default values apply otherwise.</li>
+</ul></div>
+  </section>
+  <section id="optique">
+    <h2><span lang="fr">Optique</span><span lang="en">Optics</span></h2>
+    <div lang="fr"><ul>
+  <li>La réponse impulsionnelle (PSF) est calculée par optique de Fourier à partir de la pupille, avec la bibliothèque POPPY.</li>
+  <li>La pupille est circulaire. Elle peut porter une obscuration centrale et des supports de miroir secondaire, définis par leur nombre et leur épaisseur.</li>
+  <li>Le défaut de front d'onde se décrit de deux façons : une valeur RMS unique, ou un fichier de coefficients de Zernike qui peut varier le long du champ.</li>
+  <li>La PSF de chaque bande est calculée à sa longueur d'onde centrale.</li>
+  <li>La scène, plus fine que l'instrument simulé, est ramenée au pas d'échantillonnage au sol de l'instrument, déduit de l'iFoV et de l'altitude.</li>
+</ul></div>
+    <div lang="en"><ul>
+  <li>The point spread function (PSF) is computed by Fourier optics from the pupil, using the POPPY library.</li>
+  <li>The pupil is circular. It can include a central obscuration and secondary mirror spider vanes, defined by their number and thickness.</li>
+  <li>Wavefront error is described in two ways: a single RMS value, or a file of Zernike coefficients that can vary across the field.</li>
+  <li>The PSF of each band is computed at its central wavelength.</li>
+  <li>The scene, finer than the simulated instrument, is brought to the instrument's ground sampling distance, derived from the iFoV and the altitude.</li>
+</ul></div>
+  </section>
+  <section id="detecteur">
+    <h2><span lang="fr">Détecteur et électronique</span><span lang="en">Detector and electronics</span></h2>
+    <div lang="fr"><p>Le détecteur est un CMOS à TDI numérique : chaque étage est lu et numérisé séparément, puis les étages sont additionnés. Pour chaque étage, le calcul enchaîne les opérations dans cet ordre.</p>
+<ol class="chain">
+  <li><b>Photons et électrons.</b> Le nombre de photons reçus fluctue selon une loi de Poisson : c'est le bruit de photons. Les photons sont convertis en électrons par le rendement quantique.</li>
+  <li><b>Courant d'obscurité.</b> Les électrons qu'il génère pendant le temps d'intégration suivent aussi une loi de Poisson, indépendante du signal.</li>
+  <li><b>Saturation du pixel.</b> La charge totale, signal et obscurité, est limitée par le full well.</li>
+  <li><b>Bruit de lecture.</b> Un bruit gaussien est ajouté à chaque lecture, donc de façon indépendante à chaque étage.</li>
+  <li><b>Conversion en comptes numériques.</b> La charge est convertie en tension, amplifiée, décalée du niveau noir, puis numérisée, avec la saturation de l'ADC.</li>
+</ol>
+<p>Les étages sont ensuite additionnés, avec une dernière saturation possible : celle de l'accumulateur TDI.</p>
+<ul>
+  <li><b>PRNU.</b> La valeur saisie, en %, est l'écart-type relatif de la réponse d'un pixel à l'autre. Elle donne une carte fixe, une valeur par pixel physique, qui module le rendement quantique. Elle est la même pour toutes les longueurs d'onde.</li>
+  <li><b>DSNU.</b> Elle se saisit selon la norme EMVA 1288, en électrons RMS mesurés à un temps de référence. Elle est entièrement attribuée au courant d'obscurité, donc proportionnelle au temps d'intégration.</li>
+  <li><b>Motif fixe.</b> Les cartes de PRNU et de DSNU sont propres au détecteur : elles ne changent pas d'une simulation à l'autre.</li>
+  <li><b>Niveau noir.</b> C'est un décalage constant, identique pour tous les pixels. Il occupe une partie de la dynamique de l'ADC mais n'ajoute pas de bruit.</li>
+  <li><b>Quantification.</b> Elle n'est pas ajoutée comme un bruit séparé : son effet vient directement de l'arrondi lors de la numérisation.</li>
+  <li><b>ADC.</b> Il est supposé idéal : linéaire, sans bruit propre, sur une plage d'entrée allant de zéro à la valeur saisie.</li>
+  <li><b>Trois modes de saisie.</b> Détaillé (facteur de conversion, gain, plage de l'ADC), datasheet (gain global en DN/e⁻), ou pleine échelle de l'ADC égale au full well.</li>
+</ul></div>
+    <div lang="en"><p>The detector is a CMOS with digital TDI: each stage is read and digitized separately, then the stages are summed. For each stage, the computation chains the operations in this order.</p>
+<ol class="chain">
+  <li><b>Photons and electrons.</b> The number of photons received fluctuates following a Poisson distribution: this is photon noise. Photons are converted into electrons through the quantum efficiency.</li>
+  <li><b>Dark current.</b> The electrons it generates during the integration time also follow a Poisson distribution, independent of the signal.</li>
+  <li><b>Pixel saturation.</b> The total charge, signal and dark, is limited by the full well.</li>
+  <li><b>Read noise.</b> Gaussian noise is added at each readout, hence independently at each stage.</li>
+  <li><b>Conversion into digital numbers.</b> The charge is converted into a voltage, amplified, shifted by the black level, then digitized, with ADC saturation.</li>
+</ol>
+<p>The stages are then summed, with one last possible saturation: that of the TDI accumulator.</p>
+<ul>
+  <li><b>PRNU.</b> The value entered, in %, is the relative standard deviation of the response from one pixel to another. It produces a fixed map, one value per physical pixel, which modulates the quantum efficiency. It is the same at all wavelengths.</li>
+  <li><b>DSNU.</b> It is entered following the EMVA 1288 standard, in electrons RMS measured at a reference time. It is entirely attributed to dark current, hence proportional to the integration time.</li>
+  <li><b>Fixed pattern.</b> The PRNU and DSNU maps belong to the detector: they do not change from one simulation to the next.</li>
+  <li><b>Black level.</b> It is a constant offset, identical for all pixels. It takes up part of the ADC dynamic range but adds no noise.</li>
+  <li><b>Quantization.</b> It is not added as a separate noise: its effect comes directly from rounding during digitization.</li>
+  <li><b>ADC.</b> It is assumed ideal: linear, with no noise of its own, over an input range from zero to the value entered.</li>
+  <li><b>Three input modes.</b> Detailed (conversion factor, gain, ADC range), datasheet (overall gain in DN/e⁻), or ADC full scale equal to the full well.</li>
+</ul></div>
+  </section>
+  <section id="resultats">
+    <h2><span lang="fr">Lecture des résultats</span><span lang="en">Reading the results</span></h2>
+    <div lang="fr"><ul>
+  <li><b>MTF à Nyquist</b> : contraste transmis par l'instrument à la fréquence de Nyquist du détecteur, optique et pixel compris.</li>
+  <li><b>SNR</b> : rapport entre le signal moyen et le bruit, calculé par bande.</li>
+  <li><b>Remplissage</b> : part du full well occupée par le signal.</li>
+  <li><b>Image affichée</b> : les réglages d'affichage (étirement p2/p98, contraste, point blanc) ne modifient que le rendu dans le navigateur. L'image téléchargée est celle calculée par le serveur.</li>
+  <li><b>Équilibre des couleurs</b> : pour l'affichage, les bandes sont ramenées à une référence commune. Ce n'est pas un étalonnage radiométrique absolu.</li>
+</ul></div>
+    <div lang="en"><ul>
+  <li><b>MTF at Nyquist</b>: contrast transmitted by the instrument at the detector Nyquist frequency, optics and pixel included.</li>
+  <li><b>SNR</b>: ratio between mean signal and noise, computed per band.</li>
+  <li><b>Well fill</b>: share of the full well occupied by the signal.</li>
+  <li><b>Displayed image</b>: display settings (p2/p98 stretch, contrast, white point) only change the rendering in the browser. The downloaded image is the one computed by the server.</li>
+  <li><b>Color balance</b>: for display, the bands are brought to a common reference. This is not an absolute radiometric calibration.</li>
+</ul></div>
+  </section>
+  <section id="limites">
+    <h2><span lang="fr">Ce qui n'est pas modélisé</span><span lang="en">What is not modeled</span></h2>
+    <div lang="fr"><p>Ces effets sont absents de la version actuelle. Il faut en tenir compte avant de tirer une conclusion d'un résultat.</p>
+<ul>
+  <li>Le filé dû au défilement du satellite, et plus largement tout ce qui relève de la plateforme : stabilité de pointage, vibrations.</li>
+  <li>La visée dépointée : toutes les simulations sont au nadir.</li>
+  <li>La baisse de signal en bord de champ, en cos⁴ de l'angle de champ.</li>
+  <li>Les effets d'adjacence détaillés et les réflexions spéculaires.</li>
+  <li>La variation de la PSF à l'intérieur d'une bande spectrale.</li>
+  <li>La diffusion et la diaphonie entre pixels du détecteur.</li>
+  <li>La dépendance de la PRNU à la longueur d'onde.</li>
+  <li>La non-uniformité de l'offset électronique. Si la DSNU d'un détecteur en dépend surtout, le modèle la représente mal.</li>
+  <li>Les défauts de l'ADC : non-linéarité, bruit propre.</li>
+  <li>La lumière parasite, les distorsions géométriques et la compression des images.</li>
+  <li>Les traitements au sol : restauration, déconvolution, débruitage.</li>
+  <li>Les bandes autres que le rouge, le vert et le bleu.</li>
+</ul></div>
+    <div lang="en"><p>These effects are absent from the current version. They must be kept in mind before drawing a conclusion from a result.</p>
+<ul>
+  <li>Smear caused by satellite motion, and more broadly everything related to the platform: pointing stability, vibrations.</li>
+  <li>Off-nadir viewing: all simulations are at nadir.</li>
+  <li>Signal falloff at the edge of the field, as cos⁴ of the field angle.</li>
+  <li>Detailed adjacency effects and specular reflections.</li>
+  <li>PSF variation within a spectral band.</li>
+  <li>Diffusion and crosstalk between detector pixels.</li>
+  <li>The wavelength dependence of PRNU.</li>
+  <li>Non-uniformity of the electronic offset. If a detector's DSNU mostly comes from it, the model represents it poorly.</li>
+  <li>ADC imperfections: non-linearity, intrinsic noise.</li>
+  <li>Stray light, geometric distortions and image compression.</li>
+  <li>Ground processing: restoration, deconvolution, denoising.</li>
+  <li>Bands other than red, green and blue.</li>
+</ul></div>
+  </section>
+  <section id="validation">
+    <h2><span lang="fr">État de la validation</span><span lang="en">Validation status</span></h2>
+    <div lang="fr"><p>Nysa est en phase d'essai. La chaîne complète n'a pas encore été validée par comparaison avec des images satellitaires réelles. Une comparaison avec Sentinel-2 est prévue.</p>
+<p>D'ici là, les résultats sont à lire comme des ordres de grandeur et des comparaisons relatives entre architectures, pas comme une prédiction de performance en vol.</p>
+<p>Si un résultat vous surprend, écrivez-nous : c'est précisément ce que cette phase d'essai cherche à faire remonter.</p></div>
+    <div lang="en"><p>Nysa is in beta. The full chain has not yet been validated against real satellite images. A comparison with Sentinel-2 is planned.</p>
+<p>Until then, results should be read as orders of magnitude and relative comparisons between architectures, not as a prediction of in-flight performance.</p>
+<p>If a result surprises you, write to us: this is precisely what this beta phase is meant to surface.</p></div>
+  </section>
+      <footer>
+        <span lang="fr">Une question sur une hypothèse ? </span><span lang="en">A question about an assumption? </span><a href="mailto:contact@nysa-imaging.com">contact@nysa-imaging.com</a>
+      </footer>
+    </main>
+  </div>
+</div>
+<script>
+// Titre de l'onglet dans la langue en cours (le reste de la page se règle en CSS).
+document.title = (typeof nysaLang === "function" && nysaLang() === "fr")
+  ? "Hypothèses et sources — Nysa" : "Assumptions and sources — Nysa";
+</script>
+</body>
+</html>
