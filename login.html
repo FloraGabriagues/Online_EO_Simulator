@@ -50,6 +50,9 @@ h1{font-family:var(--display);font-weight:500;font-size:21px;
 .field input{width:100%;box-sizing:border-box;background:var(--panel-2);border:1px solid var(--line-soft);
   color:var(--paper);border-radius:5px;padding:10px 13px;font-family:var(--body);font-size:14px}
 .field input:focus{outline:none;border-color:var(--pixel)}
+.field select{width:100%;box-sizing:border-box;background:var(--panel-2);border:1px solid var(--line-soft);
+  color:var(--paper);border-radius:5px;padding:10px 13px;font-family:var(--body);font-size:14px}
+.field select:focus{outline:none;border-color:var(--pixel)}
 
 .submitbtn{width:100%;border:1px solid var(--pixel);background:var(--pixel);color:#0A141A;
   font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.03em;
@@ -127,6 +130,15 @@ h1{font-family:var(--display);font-weight:500;font-size:21px;
         <label for="signupPassword2" data-i18n="login.password2">Confirmer le mot de passe</label>
         <input type="password" id="signupPassword2" required minlength="6" autocomplete="new-password">
       </div>
+      <!-- 06/10/2026 — langue de préférence, enregistrée avec le compte : elle
+           vaut pour l'interface et pour les e-mails. Modifiable dans Paramètres. -->
+      <div class="field">
+        <label for="signupLang" data-i18n="login.lang">Langue de l'interface et des e-mails</label>
+        <select id="signupLang">
+          <option value="en">English</option>
+          <option value="fr">Français</option>
+        </select>
+      </div>
       <button class="submitbtn" type="submit" data-i18n="login.btn.signup">Créer mon compte</button>
       <div class="msg" id="signupMsg"></div>
     </form>
@@ -154,6 +166,14 @@ if (urlParams.get("reason") === "other_device") {
 
 // Retour après la suppression d'un compte (cf. espace-personnel.html,
 // Paramètres > Suppression) — confirmation que tout a été effacé.
+if (urlParams.get("reason") === "account_created") {
+  var newBanner = document.createElement("div");
+  newBanner.className = "msg ok";
+  newBanner.style.display = "block";
+  newBanner.style.marginBottom = "20px";
+  newBanner.textContent = t("login.msg.created");
+  document.getElementById("authArea").insertBefore(newBanner, document.getElementById("authArea").firstChild);
+}
 if (urlParams.get("reason") === "account_deleted") {
   var delBanner = document.createElement("div");
   delBanner.className = "msg ok";
@@ -162,6 +182,9 @@ if (urlParams.get("reason") === "account_deleted") {
   delBanner.textContent = t("login.msg.deleted");
   document.getElementById("authArea").insertBefore(delBanner, document.getElementById("authArea").firstChild);
 }
+
+// Langue proposée à l'inscription : celle de l'interface en cours.
+document.getElementById("signupLang").value = nysaLang();
 
 // ===================== Bascule connexion / inscription =====================
 document.querySelectorAll(".tab").forEach(function(tab){
@@ -194,6 +217,9 @@ document.getElementById("loginForm").addEventListener("submit", async function(e
     return;
   }
   await registerSessionMarker(loginData.user.id);
+  // L'interface s'ouvre dans la langue de préférence du compte.
+  var prefLang = loginData.user.user_metadata ? loginData.user.user_metadata.lang : null;
+  if (prefLang === "en" || prefLang === "fr") nysaStoreLang(prefLang);
   window.location.href = "espace-personnel.html";
 });
 
@@ -219,6 +245,8 @@ document.getElementById("signupForm").addEventListener("submit", async function(
     return;
   }
 
+  var signupLang = document.getElementById("signupLang").value === "fr" ? "fr" : "en";
+
   // 04/10/2026 — adresse de retour du lien de confirmation envoyé par e-mail.
   // Sans elle, Supabase utilise son « Site URL », qui vaut localhost:3000
   // par défaut : le lien menait à une page inaccessible. On revient sur
@@ -228,7 +256,10 @@ document.getElementById("signupForm").addEventListener("submit", async function(
   var { data, error } = await supabaseClient.auth.signUp({
     email: email,
     password: password,
-    options: { emailRedirectTo: new URL("login.html", window.location.href).href }
+    options: {
+      emailRedirectTo: new URL("login.html", window.location.href).href,
+      data: { lang: signupLang }   // préférence de langue du compte (interface et e-mails)
+    }
   });
 
   btn.disabled = false;
@@ -241,7 +272,11 @@ document.getElementById("signupForm").addEventListener("submit", async function(
   // Selon la configuration du projet Supabase, une confirmation par e-mail
   // peut être requise avant que la session soit active (data.session est
   // alors null même si le compte est bien créé).
+  nysaStoreLang(signupLang);
   if (!data.session) {
+    // La langue choisie n'est pas celle affichée : la page se recharge dans
+    // la langue du compte et y répète le message de confirmation.
+    if (signupLang !== nysaLang()) { window.location.href = "login.html?reason=account_created"; return; }
     msgEl.className = "msg ok";
     msgEl.textContent = t("login.msg.created");
     return;

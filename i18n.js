@@ -17,18 +17,16 @@
 // et les unités ne sont pas traduits : ils s'écrivent pareil dans les deux langues.
 //
 // ----------------------------------------------------------------------------
-// ÉTAT ACTUEL : mise en place progressive, page par page.
-// Tant que toutes les pages ne sont pas traduites, le site reste en français
-// et le sélecteur de langue est masqué, pour ne jamais mélanger les deux
-// langues à l'écran. Pour prévisualiser l'anglais sur une page déjà traduite :
-// ajouter ?lang=en à son adresse (et ?lang=fr pour revenir).
-//
-// LE JOUR DU BASCULEMENT, deux lignes à changer ci-dessous :
-//     I18N_DEFAULT = "en"      l'anglais devient la langue des nouveaux visiteurs
-//     I18N_SWITCH  = true      le sélecteur EN / FR s'affiche
+// LANGUE AFFICHÉE (basculement fait le 06/10/2026)
+//   - un nouveau visiteur voit le site en anglais (I18N_DEFAULT) ;
+//   - le sélecteur EN / FR est visible partout (I18N_SWITCH) ;
+//   - un utilisateur connecté a une langue de préférence, enregistrée avec
+//     son compte : choisie à l'inscription, modifiable dans Paramètres ou par
+//     le sélecteur. Elle s'applique à l'interface et aux e-mails.
+// Pour revenir à un site tout en français : "fr" et false ci-dessous.
 // ============================================================================
-var I18N_DEFAULT = "fr";
-var I18N_SWITCH = false;
+var I18N_DEFAULT = "en";
+var I18N_SWITCH = true;
 var I18N_LANGS = ["en", "fr"];
 var I18N_STORAGE_KEY = "nysa_lang";
 
@@ -36,6 +34,11 @@ var I18N = {
   // ---------------- commun ----------------
   "brand.tagline":       { fr: "EO Imaging Engineering", en: "EO Imaging Engineering" },
   "lang.switch.label":   { fr: "Langue", en: "Language" },
+  "lang.en":             { fr: "English", en: "English" },
+  "lang.fr":             { fr: "Français", en: "Français" },
+  "login.lang":          { fr: "Langue de l'interface et des e-mails", en: "Language for the interface and emails" },
+  "settings.lang.label": { fr: "Langue", en: "Language" },
+  "settings.lang.note":  { fr: "Langue de l'interface et des e-mails que vous recevez.", en: "Language of the interface and of the emails you receive." },
   "demo.h1":             { fr: "Simulateur d'imagerie <span class=\"cool\">multispectrale</span>",
                            en: "<span class=\"cool\">Multispectral</span> imaging simulator" },
 
@@ -856,6 +859,9 @@ var I18N_API_FR = {
   // Tant que le basculement n'a pas eu lieu, seul un choix explicite par
   // ?lang= active l'anglais : un visiteur ordinaire reste en français.
   var explicit = !!fromUrl || (I18N_LANGS.indexOf(saved) >= 0);
+  // Langue choisie par l'adresse (?lang=) : pour un utilisateur connecté, elle
+  // devient sa préférence au lieu d'être remplacée par celle-ci (cf. requireAuth).
+  window.__nysaLangFromUrl = !!fromUrl;
 
   window.nysaLang = function(){ return lang; };
   window.nysaLocale = function(){ return lang === "fr" ? "fr-FR" : "en-GB"; };
@@ -948,10 +954,27 @@ var I18N_API_FR = {
     each("[data-i18n-html]",  function(el){ el.innerHTML = t(el.getAttribute("data-i18n-html")); });
   };
 
-  window.setNysaLang = function(next){
+  // Mémorise une langue sans recharger la page (inscription, connexion).
+  window.nysaStoreLang = function(code){
+    if(I18N_LANGS.indexOf(code) >= 0) store(code);
+  };
+
+  // Change de langue : mémorise le choix, l'enregistre comme préférence du
+  // compte si un utilisateur est connecté, puis recharge la page pour que
+  // tous les textes construits en JavaScript repartent dans la bonne langue.
+  window.setNysaLang = async function(next){
     if(I18N_LANGS.indexOf(next) < 0 || next === lang) return;
     store(next);
-    // Rechargement : tous les textes construits en JavaScript repartent dans la bonne langue.
+    try {
+      if(typeof supabaseClient !== "undefined" && supabaseClient.auth && supabaseClient.auth.updateUser){
+        var save = (async function(){
+          var res = await supabaseClient.auth.getSession();
+          if(res && res.data && res.data.session) await supabaseClient.auth.updateUser({ data: { lang: next } });
+        })();
+        // On n'attend pas plus de 3 secondes : la langue change de toute façon dans ce navigateur.
+        await Promise.race([save, new Promise(function(r){ setTimeout(r, 3000); })]);
+      }
+    } catch(e){ console.warn("Préférence de langue non enregistrée :", e); }
     window.location.reload();
   };
 

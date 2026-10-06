@@ -299,6 +299,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     padding:8px 10px;overflow-x:auto}
   .railbtn{white-space:nowrap}
 }
+.langselect{background:var(--panel-2);border:1px solid var(--line);color:var(--paper);border-radius:5px;
+  padding:6px 10px;font-family:var(--body);font-size:13px;cursor:pointer}
+.langselect:focus{outline:none;border-color:var(--pixel)}
 </style>
 </head>
 <body>
@@ -443,8 +446,15 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           </div>
           <div class="msection-body">
             <div class="minfo-row"><span class="label" data-i18n="settings.account.email">E-mail</span><span class="value" id="settingsEmail">—</span></div>
+            <!-- 06/10/2026 — langue de préférence du compte : interface et e-mails -->
+            <div class="minfo-row"><span class="label" data-i18n="settings.lang.label">Langue</span><span class="value">
+              <select id="settingsLang" class="langselect" data-i18n-aria="settings.lang.label">
+                <option value="en">English</option>
+                <option value="fr">Français</option>
+              </select></span></div>
             <div class="minfo-row"><span class="label" data-i18n="settings.account.since">Membre depuis</span><span class="value" id="settingsCreated">—</span></div>
           </div>
+          <p class="mnote" data-i18n="settings.lang.note" style="margin-top:10px">Langue de l'interface et des e-mails que vous recevez.</p>
         </div>
 
         <div class="msection" id="settingsSectionPwd">
@@ -886,6 +896,20 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   var subBtn = document.getElementById("settingsSubBtn");
 
   document.getElementById("settingsEmail").textContent = email;
+  // Langue de préférence : la liste montre la langue en cours ; un changement
+  // l'enregistre avec le compte et recharge la page (setNysaLang, i18n.js).
+  var langSel = document.getElementById("settingsLang");
+  langSel.value = nysaLang();
+  // Compte créé avant l'ajout de cette préférence : on y enregistre la langue
+  // affichée, pour que ses e-mails aient une langue définie.
+  var accountLang = session.user.user_metadata ? session.user.user_metadata.lang : null;
+  if(accountLang !== "en" && accountLang !== "fr" && supabaseClient.auth.updateUser){
+    supabaseClient.auth.updateUser({ data: { lang: nysaLang() } }).catch(function(e){ console.warn("Préférence de langue non enregistrée :", e); });
+  }
+  langSel.addEventListener("change", function(){
+    langSel.disabled = true;
+    setNysaLang(langSel.value);
+  });
   document.getElementById("settingsCreated").textContent = session.user.created_at
     ? formatDate(session.user.created_at) : "—";
 

@@ -44,8 +44,13 @@ function json(body: unknown, status = 200): Response {
   });
 }
 
-function formatDateFr(d: Date): string {
-  return d.toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" });
+// 06/10/2026 — l'e-mail part dans la langue de préférence du compte
+// (user_metadata.lang, choisie à l'inscription et modifiable dans les
+// paramètres). Sans préférence enregistrée : anglais, langue par défaut du site.
+type Lang = "en" | "fr";
+
+function formatDate(d: Date, lang: Lang): string {
+  return d.toLocaleDateString(lang === "fr" ? "fr-FR" : "en-GB", { day: "numeric", month: "long", year: "numeric" });
 }
 
 // Liste tous les fichiers sous un dossier du bucket, sous-dossiers compris
@@ -88,20 +93,33 @@ async function deleteAccount(admin: SupabaseClient, accountId: string): Promise<
 
 // Envoi de l'e-mail d'alerte par l'API de Brevo. Lève une erreur si Brevo
 // ne confirme pas l'envoi : l'alerte n'est alors pas marquée comme faite.
-async function sendWarning(to: string, deletionDate: Date): Promise<void> {
+async function sendWarning(to: string, deletionDate: Date, lang: Lang): Promise<void> {
   const site = Deno.env.get("SITE_URL")!;
-  const dateTxt = formatDateFr(deletionDate);
-  const subject = `Votre compte sera supprimé le ${dateTxt}`;
-  const text =
-    `Bonjour,\n\n` +
-    `Votre abonnement à Nysa a pris fin il y a bientôt un an. ` +
-    `Conformément à nos conditions, votre compte et toutes ses données ` +
-    `(instruments, résultats et images) seront supprimés le ${dateTxt}.\n\n` +
-    `Pour les conserver, il suffit de vous réabonner avant cette date :\n` +
-    `${site}/espace-personnel.html?settings=1\n\n` +
-    `Vous pouvez aussi vous connecter pour exporter vos instruments avant la suppression.\n\n` +
-    `Si vous ne faites rien, la suppression sera définitive et vous n'avez aucune démarche à effectuer.\n\n` +
-    `${Deno.env.get("MAIL_FROM_NAME") ?? ""}`;
+  const dateTxt = formatDate(deletionDate, lang);
+  const link = `${site}/espace-personnel.html?settings=1`;
+  const signature = Deno.env.get("MAIL_FROM_NAME") ?? "";
+  const subject = lang === "fr"
+    ? `Votre compte sera supprimé le ${dateTxt}`
+    : `Your account will be deleted on ${dateTxt}`;
+  const text = lang === "fr"
+    ? `Bonjour,\n\n` +
+      `Votre abonnement à Nysa a pris fin il y a bientôt un an. ` +
+      `Conformément à nos conditions, votre compte et toutes ses données ` +
+      `(instruments, résultats et images) seront supprimés le ${dateTxt}.\n\n` +
+      `Pour les conserver, il suffit de vous réabonner avant cette date :\n` +
+      `${link}\n\n` +
+      `Vous pouvez aussi vous connecter pour exporter vos instruments avant la suppression.\n\n` +
+      `Si vous ne faites rien, la suppression sera définitive et vous n'avez aucune démarche à effectuer.\n\n` +
+      `${signature}`
+    : `Hello,\n\n` +
+      `Your Nysa subscription ended almost a year ago. ` +
+      `In accordance with our terms, your account and all its data ` +
+      `(instruments, results and images) will be deleted on ${dateTxt}.\n\n` +
+      `To keep them, simply resubscribe before that date:\n` +
+      `${link}\n\n` +
+      `You can also sign in to export your instruments before the deletion.\n\n` +
+      `If you do nothing, the deletion will be final and no action is required on your part.\n\n` +
+      `${signature}`;
   const html = text
     .replace(/&/g, "&amp;").replace(/</g, "&lt;")
     .replace(/(https?:\/\/\S+)/g, '<a href="$1">$1</a>')
@@ -174,7 +192,8 @@ Deno.serve(async (req) => {
 
         const { data: u, error: uErr } = await admin.auth.admin.getUserById(row.account_id);
         if (uErr || !u?.user?.email) throw new Error(`e-mail introuvable : ${uErr?.message ?? "aucune adresse"}`);
-        await sendWarning(u.user.email, effectiveDeletion);
+        const lang: Lang = u.user.user_metadata?.lang === "fr" ? "fr" : "en";
+        await sendWarning(u.user.email, effectiveDeletion, lang);
         const { error: upErr } = await admin
           .from("account_entitlements")
           .update({ deletion_warned_at: new Date().toISOString() })

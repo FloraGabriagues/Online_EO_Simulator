@@ -72,6 +72,30 @@ async function requireAuth() {
     return null;
   }
 
+  // 06/10/2026 — langue de préférence du compte (user_metadata.lang).
+  // Elle sert aussi à choisir la langue des e-mails envoyés à l'utilisateur.
+  //   - préférence enregistrée, différente de la langue affichée : la page
+  //     se recharge dans la langue du compte (cas d'un autre navigateur) ;
+  //   - compte sans préférence, ou langue choisie à l'instant par ?lang= :
+  //     la langue affichée devient la préférence du compte.
+  try {
+    if (typeof nysaLang === "function") {
+      const pref = session.user.user_metadata ? session.user.user_metadata.lang : null;
+      const shown = nysaLang();
+      if ((pref === "en" || pref === "fr") && pref !== shown && !window.__nysaLangFromUrl) {
+        nysaStoreLang(pref);
+        window.location.reload();
+        return null;
+      }
+      if (pref !== shown) {
+        const { error: langErr } = await supabaseClient.auth.updateUser({ data: { lang: shown } });
+        if (langErr) console.warn("Préférence de langue non enregistrée :", langErr.message);
+      }
+    }
+  } catch (e) {
+    console.warn("Préférence de langue non synchronisée :", e);
+  }
+
   return session;
 }
 
