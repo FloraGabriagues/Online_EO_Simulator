@@ -1074,22 +1074,37 @@ async function deleteResult(r){
     spher:t("res.z.spher"), trefo:t("res.z.trefo")};
   // Libellés réels des paramètres instrument — mêmes clés/unités que dans
   // le schéma Optique/Détecteur/Électronique de creer-instrument.html.
+  // Libellé et unité de chaque paramètre d'instrument affiché dans l'onglet Entrées.
+  // 06/10/2026 — liste complétée (électronique, DSNU), et deux unités corrigées :
+  // le rendement quantique et la transmission sont des fractions, pas des %.
   var INST_FIELD_LABELS = {
-    D:   {label:t("field.D"), unit:" m"},
     I:   {label:t("field.I"), unit:" µrad"},
+    D:   {label:t("field.D"), unit:" m"},
     E:   {label:t("field.E"), unit:" m"},
-    T:   {label:t("field.T"), unit:" τ"},
-    W:   {label:t("field.W"), unit:" nm"},
-    PX:  {label:t("field.PX"), unit:" µm"},
-    R:   {label:t("field.R"), unit:" e⁻"},
-    P:   {label:t("field.P"), unit:" %"},
-    K:   {label:t("field.K"), unit:" e⁻/s"},
-    FW:  {label:t("field.FW"), unit:" e⁻"},
-    QE:  {label:t("field.QE"), unit:" %"},
-    ADC: {label:t("field.ADC"), unit:" bits"},
     NSUP: {label:t("field.NSUP"), unit:""},
     ESUP: {label:t("field.ESUP"), unit:" m"},
+    T:   {label:t("field.T"), unit:""},
+    W:   {label:t("field.W"), unit:" nm"},
+    PX:  {label:t("field.PX"), unit:" µm"},
+    QE:  {label:t("field.QE"), unit:""},
+    P:   {label:t("field.P"), unit:" %"},
+    K:   {label:t("field.K"), unit:" e⁻/s"},
+    dsnu_1288:  {label:"DSNU", unit:" e⁻"},
+    dsnu_T_ref: {label:t("res.in.dsnu_tref"), unit:" s"},
+    ADC: {label:t("field.ADC"), unit:" bits"},
+    FW:  {label:t("field.FW"), unit:" e⁻"},
+    R:   {label:t("field.R"), unit:" e⁻"},
+    electronics_mode: {label:t("res.in.mode"), unit:""},
+    CVF_uV_per_e: {label:t("res.in.cvf"), unit:" µV/e⁻", only:"detailed"},
+    G_PGA:   {label:t("res.in.pga"), unit:"", only:"detailed"},
+    V_range: {label:t("res.in.adc_range"), unit:" V", only:"detailed"},
+    CWF:     {label:t("res.in.cwf"), unit:" DN/e⁻", only:"datasheet"},
+    DN0:      {label:t("res.in.black"), unit:" DN"},
+    bits_TDI: {label:t("res.in.tdi_acc"), unit:" bits"}
   };
+  var INST_FIELD_ORDER = ["I","D","E","NSUP","ESUP","T","W","PX","QE","P","K","dsnu_1288","dsnu_T_ref",
+                          "ADC","FW","R","electronics_mode","CVF_uV_per_e","G_PGA","V_range","CWF","DN0","bits_TDI"];
+  var ELEC_MODE_NAMES = { detailed: t("res.in.mode.detailed"), datasheet: t("res.in.mode.datasheet"), full_scale: t("res.in.mode.full_scale") };
   function entTile(label, value){
     return "<div><div style='font-family:var(--mono);font-size:10px;color:var(--muted-2);text-transform:uppercase'>"+
       label + "</div><div style='font-family:var(--mono);font-size:15px;color:var(--paper)'>" + value + "</div></div>";
@@ -1108,14 +1123,22 @@ async function deleteResult(r){
 
   var instConfig = (result && result.instrument_snapshot && result.instrument_snapshot.config) || {};
   var instConfigHtml = "";
-  for(var ck in instConfig){
-    if(instConfig[ck] == null || typeof instConfig[ck] === "object") continue;
-    if(ck.charAt(0) === "_") continue;   // marqueurs internes (_draft, _pct…) : pas des paramètres d'instrument
-    var meta = INST_FIELD_LABELS[ck];
-    var label = meta ? meta.label : ck; // repli sur la clé brute si un champ inconnu apparaît
-    var unit = meta ? meta.unit : "";
-    instConfigHtml += entTile(label, instConfig[ck] + unit);
-  }
+  // Les paramètres connus, dans l'ordre du formulaire. Les clés internes
+  // (marqueurs, modes de saisie) ne sont pas affichées.
+  INST_FIELD_ORDER.forEach(function(ck){
+    var meta = INST_FIELD_LABELS[ck], v = instConfig[ck];
+    if(meta.only && instConfig.electronics_mode !== meta.only) return;     // champ d'un autre mode d'électronique
+    // Transmission ou rendement saisis en courbe : on l'indique au lieu d'une valeur unique.
+    var curve = (ck === "T" && instConfig.T_mode === "spectral") ? instConfig.tSpectral
+              : (ck === "QE" && instConfig.QE_mode === "spectral") ? instConfig.qeSpectral : null;
+    if(Array.isArray(curve)){
+      instConfigHtml += entTile(meta.label, t("res.in.curve", { n: curve.length }));
+      return;
+    }
+    if(v == null || v === "" || typeof v === "object") return;
+    if(ck === "electronics_mode") v = ELEC_MODE_NAMES[v] || v;
+    instConfigHtml += entTile(meta.label, v + meta.unit);
+  });
   document.getElementById("entInstConfig").innerHTML = instConfigHtml ||
     "<span style='color:var(--muted);font-size:12.5px'>" + t("res.ent.no_config") + "</span>";
 
