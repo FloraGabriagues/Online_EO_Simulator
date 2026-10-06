@@ -25,19 +25,19 @@ var NYSA_EXAMPLE_INSTRUMENT = {
   },
   config: {
     // --- Optique ---
-    I: "1.905",          // iFoV                    [µrad]   préréglage Pléiades Neo
-    D: "0.91",           // Diamètre de pupille     [m]      préréglage Pléiades Neo
-    E: "0.3185",         // Obscuration centrale    [m]      préréglage Pléiades Neo
-    T: "0.62",           // Transmission optique    [0 à 1]  préréglage Pléiades Neo
+    I: "2.2",          // iFoV                    [µrad]   préréglage Pléiades Neo
+    D: "0.35",           // Diamètre de pupille     [m]      préréglage Pléiades Neo
+    E: "0.1",         // Obscuration centrale    [m]      préréglage Pléiades Neo
+    T: "0.80",           // Transmission optique    [0 à 1]  préréglage Pléiades Neo
     // --- Détecteur ---
     DET_TYPE: "CMOS",
-    PX: "10",            // Largeur pixel           [µm]     valeur par défaut de la démo
-    QE: "0.65",          // Rendement quantique     [0 à 1]  À VALIDER
+    PX: "4.6",            // Largeur pixel           [µm]     valeur par défaut de la démo
+    QE: "0.75",          // Rendement quantique     [0 à 1]  À VALIDER
     P: "1.6",            // PRNU                    [%]      préréglage Pléiades Neo
     K: "150",            // Courant d'obscurité     [e⁻/s]   préréglage Pléiades Neo
     // --- Électronique ---
     ADC: "12",           // Résolution ADC          [bits]   À VALIDER
-    FW: "190000",        // Full well               [e⁻]     préréglage Pléiades Neo
+    FW: "50000",        // Full well               [e⁻]     préréglage Pléiades Neo
     R: "12",             // Bruit de lecture        [e⁻]     préréglage Pléiades Neo
     electronics_mode: "full_scale",   // pleine échelle ADC = full well : aucun autre champ requis
     // --- Performance WFE ---
