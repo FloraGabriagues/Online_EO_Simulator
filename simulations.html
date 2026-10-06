@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Nouvelle simulation — Nysa</title>
+<title data-i18n="sim.doc_title">Nouvelle simulation — Nysa</title>
 <!-- Traduction FR / EN : textes et moteur dans i18n.js -->
 <script src="i18n.js"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.70%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2234.30%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%225.3%22%20fill%3D%22%23FFB86B%22/%3E%3C/svg%3E">
@@ -402,50 +402,51 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     <ul class="navlist">
       <li><a href="espace-personnel.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>
-        Instruments</a></li>
+        <span data-i18n="nav.instruments">Instruments</span></a></li>
       <li><a class="soon" href="#">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 4V2M15 4V2M9 22v-2M15 22v-2M4 9H2M4 15H2M22 9h-2M22 15h-2"/></svg>
-        Plateforme <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto">à venir</em></a></li>
+        <span data-i18n="nav.platform">Plateforme</span> <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto" data-i18n="nav.soon">à venir</em></a></li>
       <li><a class="active" href="simulations.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 4l14 8-14 8V4z"/></svg>
-        Simulations</a></li>
+        <span data-i18n="nav.simulations">Simulations</span></a></li>
       <li><a href="resultats.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
-        Résultats</a></li>
+        <span data-i18n="nav.results">Résultats</span></a></li>
       <!-- 05/10/2026 — annoncé pour la V1, non développé pendant la bêta -->
-      <li><a class="soon" href="#" title="Comparateur d'architectures : à venir dans Nysa V1">
+      <li><a class="soon" href="#" title="Comparateur d'architectures : à venir dans Nysa V1" data-i18n-title="nav.compare.title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="7" height="14" rx="1"/><rect x="13.5" y="5" width="7" height="14" rx="1"/></svg>
-        Comparateur <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto">à venir</em></a></li>
+        <span data-i18n="nav.compare">Comparateur</span> <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto" data-i18n="nav.soon">à venir</em></a></li>
     </ul>
     <div class="sidebar-bottom">
+      <div data-lang-switch style="margin:0 0 10px 12px"></div>
       <ul class="navlist">
         <!-- 05/10/2026 — « Retour à la démo » retiré du menu connecté : la démo reste publique à l'adresse du site -->
-        <li><a href="mailto:contact@nysa-imaging.com" data-help="general">
+        <li><a href="mailto:contact@nysa-imaging.com" data-nysa-help="general">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.9.3-1.2.9-1.2 1.8"/><circle cx="12" cy="16.6" r=".4" fill="currentColor" stroke="none"/></svg>
-          Aide</a></li>
+          <span data-i18n="nav.help">Aide</span></a></li>
         <!-- 04/10/2026 : une seule fenêtre de paramètres, celle de l'espace personnel -->
         <li><a href="espace-personnel.html?settings=1" id="settingsLink">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V20a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.96 18.34a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.66 8.96a1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 7.09 4.2l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04z"/></svg>
-          Paramètres</a></li>
+          <span data-i18n="nav.settings">Paramètres</span></a></li>
       </ul>
     </div>
   </aside>
 
   <div class="main">
     <div class="topbar">
-      <button class="iconbtn" aria-label="Notifications" type="button">
+      <button class="iconbtn" aria-label="Notifications" data-i18n-aria="top.notifications" type="button">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
       </button>
       <span class="userchip" id="userChip"><span class="avatar" id="userAvatar">…</span><span id="userEmail">—</span></span>
-      <button class="iconbtn" aria-label="Se déconnecter" type="button" id="signOutBtn" title="Se déconnecter">
+      <button class="iconbtn" aria-label="Se déconnecter" data-i18n-aria="top.signout" type="button" id="signOutBtn" title="Se déconnecter" data-i18n-title="top.signout">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
       </button>
     </div>
 
     <div class="wrap">
-      <p class="eyebrow">Simulations</p>
-      <h1>Nouvelle simulation</h1>
-      <p class="pagesub">Configurez votre scène, votre instrument et vos conditions d'acquisition, puis lancez la simulation.</p>
+      <p class="eyebrow" data-i18n="sim.eyebrow">Simulations</p>
+      <h1 data-i18n="sim.h1">Nouvelle simulation</h1>
+      <p class="pagesub" data-i18n="sim.sub">Configurez votre scène, votre instrument et vos conditions d'acquisition, puis lancez la simulation.</p>
 
       <div class="steps" id="stepsHost"></div>
 
@@ -459,125 +460,125 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
           <div class="stepview current" data-step="1">
             <div class="stepbody">
-              <div class="stephead"><span class="ttl">1. Scène</span></div>
-              <p class="stepintro">Choisissez une image dans la bibliothèque de scènes.</p>
+              <div class="stephead"><span class="ttl" data-i18n="sim.step1.title">1. Scène</span></div>
+              <p class="stepintro" data-i18n="sim.step1.intro">Choisissez une image dans la bibliothèque de scènes.</p>
               <div class="scenegrid" id="sceneGrid"></div>
             </div>
-            <a class="backlink" href="espace-personnel.html">← Retour</a>
+            <a class="backlink" href="espace-personnel.html" data-i18n="common.back">← Retour</a>
           </div>
 
           <div class="stepview" data-step="2">
             <div class="stepbody">
-              <div class="stephead"><span class="ttl">2. Instrument</span></div>
-              <p class="stepintro">Choisissez l'instrument à utiliser pour cette simulation.</p>
+              <div class="stephead"><span class="ttl" data-i18n="sim.step2.title">2. Instrument</span></div>
+              <p class="stepintro" data-i18n="sim.step2.intro">Choisissez l'instrument à utiliser pour cette simulation.</p>
               <div id="instList"></div>
             </div>
-            <button class="backlink" type="button" data-goto="1">← Précédent</button>
+            <button class="backlink" type="button" data-goto="1" data-i18n="common.previous">← Précédent</button>
           </div>
 
           <div class="stepview" data-step="3">
             <div class="stepbody">
-              <div class="stephead"><span class="ttl">3. Conditions d'acquisition</span></div>
-              <p class="stepintro">Définissez le scénario d'acquisition de la scène.</p>
+              <div class="stephead"><span class="ttl" data-i18n="sim.step3.title">3. Conditions d'acquisition</span></div>
+              <p class="stepintro" data-i18n="sim.step3.intro">Définissez le scénario d'acquisition de la scène.</p>
               <div class="acq-layout">
                 <div class="acq-illustration" id="acqDiagram"></div>
                 <div class="acq-fields">
                   <div class="field">
-                    <label>Altitude</label>
+                    <label data-i18n="field.H">Altitude</label>
                     <div class="row"><input type="number" id="fH" value="500" min="380" max="900" step="5"><span class="unit">km</span></div>
                   </div>
                   <div class="field">
-                    <label>Élévation solaire</label>
+                    <label data-i18n="field.S">Élévation solaire</label>
                     <div class="row"><input type="number" id="fS" value="45" min="8" max="80" step="1"><span class="unit">°</span></div>
                   </div>
                   <div class="field">
-                    <label>Temps d'intégration</label>
+                    <label data-i18n="field.TI">Temps d'intégration</label>
                     <div class="row"><input type="number" id="fTI" value="200" min="5" max="2000" step="5"><span class="unit">µs</span></div>
                   </div>
                   <div class="field">
-                    <label>Étages TDI</label>
+                    <label data-i18n="field.TDI">Étages TDI</label>
                     <div class="row"><input type="number" id="fTDI" value="8" min="1" max="64" step="1"><span class="unit">×</span></div>
                   </div>
                   <div class="field">
-                    <label>Cas WFE</label>
+                    <label data-i18n="field.wfe_case">Cas WFE</label>
                     <select id="fWfeCase">
-                      <option value="">Simplifié (RMS)</option>
+                      <option value="" data-i18n="sim.wfe.simplified">Simplifié (RMS)</option>
                     </select>
                   </div>
                   <!-- Angle de visée : non modélisé en V1 (visée au nadir), affiché grisé. -->
                   <div class="field">
-                    <label>Angle de visée <span class="soon">à venir</span></label>
+                    <label><span data-i18n="sim.view_angle">Angle de visée</span> <span class="soon" data-i18n="nav.soon">à venir</span></label>
                     <div class="row"><input type="number" id="fView" value="0" disabled><span class="unit">°</span></div>
                   </div>
                   <!-- Réglages atmosphériques (03/10/2026) : paramètres avancés, repliés par
                        défaut. Mêmes clés et mêmes valeurs par défaut que
                        radiometry.resolve_atmosphere (SIXS_DEFAULTS). -->
                   <details class="acq-advanced">
-                    <summary>Atmosphère (paramètres avancés)</summary>
+                    <summary data-i18n="sim.atm.summary">Atmosphère (paramètres avancés)</summary>
                     <div class="acq-fields">
                       <div class="field">
-                        <label>Profil atmosphérique</label>
+                        <label data-i18n="sim.atm.profile">Profil atmosphérique</label>
                         <select id="fAtmosProfile">
-                          <option value="Tropical">Tropical</option>
-                          <option value="MidlatitudeSummer" selected>Latitudes moyennes, été</option>
-                          <option value="MidlatitudeWinter">Latitudes moyennes, hiver</option>
-                          <option value="SubarcticSummer">Subarctique, été</option>
-                          <option value="SubarcticWinter">Subarctique, hiver</option>
-                          <option value="USStandard1962">US Standard 1962</option>
-                          <option value="custom">Personnalisé</option>
+                          <option value="Tropical" data-i18n="sim.atm.p.tropical">Tropical</option>
+                          <option value="MidlatitudeSummer" selected data-i18n="sim.atm.p.mls">Latitudes moyennes, été</option>
+                          <option value="MidlatitudeWinter" data-i18n="sim.atm.p.mlw">Latitudes moyennes, hiver</option>
+                          <option value="SubarcticSummer" data-i18n="sim.atm.p.sas">Subarctique, été</option>
+                          <option value="SubarcticWinter" data-i18n="sim.atm.p.saw">Subarctique, hiver</option>
+                          <option value="USStandard1962" data-i18n="sim.atm.p.us62">US Standard 1962</option>
+                          <option value="custom" data-i18n="sim.atm.p.custom">Personnalisé</option>
                         </select>
                       </div>
                       <div class="field">
-                        <label>Type d'aérosols</label>
+                        <label data-i18n="sim.atm.aero_type">Type d'aérosols</label>
                         <select id="fAeroProfile">
-                          <option value="Continental" selected>Continental</option>
-                          <option value="Maritime">Maritime</option>
-                          <option value="Urban">Urbain</option>
-                          <option value="Desert">Désertique</option>
+                          <option value="Continental" selected data-i18n="sim.atm.a.continental">Continental</option>
+                          <option value="Maritime" data-i18n="sim.atm.a.maritime">Maritime</option>
+                          <option value="Urban" data-i18n="sim.atm.a.urban">Urbain</option>
+                          <option value="Desert" data-i18n="sim.atm.a.desert">Désertique</option>
                         </select>
                       </div>
                       <div class="field atm-custom" hidden>
-                        <label>Vapeur d'eau</label>
-                        <div class="row"><input type="number" id="fWater" min="0" max="10" step="0.1" placeholder="0 à 10"><span class="unit">g/cm²</span></div>
+                        <label data-i18n="sim.atm.water">Vapeur d'eau</label>
+                        <div class="row"><input type="number" id="fWater" min="0" max="10" step="0.1" placeholder="0 à 10" data-i18n-ph="sim.atm.ph.water"><span class="unit">g/cm²</span></div>
                       </div>
                       <div class="field atm-custom" hidden>
-                        <label>Ozone</label>
-                        <div class="row"><input type="number" id="fOzone" min="0" max="1" step="0.01" placeholder="0 à 1"><span class="unit">cm-atm</span></div>
+                        <label data-i18n="sim.atm.ozone">Ozone</label>
+                        <div class="row"><input type="number" id="fOzone" min="0" max="1" step="0.01" placeholder="0 à 1" data-i18n-ph="sim.atm.ph.ozone"><span class="unit">cm-atm</span></div>
                       </div>
                       <div class="field">
-                        <label>Charge en aérosols</label>
+                        <label data-i18n="sim.atm.aero_load">Charge en aérosols</label>
                         <select id="fAeroLoadKind">
-                          <option value="visibility_km" selected>Visibilité (km)</option>
-                          <option value="aot550">Épaisseur optique 550 nm</option>
+                          <option value="visibility_km" selected data-i18n="sim.atm.l.visibility">Visibilité (km)</option>
+                          <option value="aot550" data-i18n="sim.atm.l.aot">Épaisseur optique 550 nm</option>
                         </select>
                       </div>
                       <div class="field">
-                        <label>Valeur</label>
-                        <div class="row"><input type="number" id="fAeroLoad" min="0" step="any" placeholder="23 km (défaut)"><span class="unit" id="fAeroLoadUnit">km</span></div>
+                        <label data-i18n="sim.atm.value">Valeur</label>
+                        <div class="row"><input type="number" id="fAeroLoad" min="0" step="any" placeholder="23 km (défaut)" data-i18n-ph="sim.atm.ph.vis"><span class="unit" id="fAeroLoadUnit">km</span></div>
                       </div>
                     </div>
                   </details>
                 </div>
               </div>
             </div>
-            <button class="backlink" type="button" data-goto="2">← Précédent</button>
+            <button class="backlink" type="button" data-goto="2" data-i18n="common.previous">← Précédent</button>
           </div>
 
         </div>
 
         <div class="summarypanel">
-          <h2>Résumé de la configuration</h2>
+          <h2 data-i18n="sim.sum.title">Résumé de la configuration</h2>
 
           <div class="sumsection">
-            <div class="lbl">Scène</div>
+            <div class="lbl" data-i18n="field.scene">Scène</div>
             <div id="sumSceneSlot"><span class="empty">—</span></div>
           </div>
           <div class="sumsection">
-            <div class="lbl">Instrument</div>
+            <div class="lbl" data-i18n="sim.sum.instrument">Instrument</div>
             <div id="sumInstSlot"><span class="empty">—</span></div>
           </div>
           <div class="sumsection">
-            <div class="lbl">Conditions</div>
+            <div class="lbl" data-i18n="sim.sum.conditions">Conditions</div>
             <div id="sumCondSlot"><span class="empty">—</span></div>
           </div>
 
@@ -590,22 +591,22 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       <div class="stepview" data-step="4" style="flex-direction:column">
         <div class="finalgrid">
           <div class="summarybox">
-            <p class="grouphead"><span class="dot"></span>Résumé des paramètres</p>
-            <div class="sumrow"><span class="k">Scène</span><span class="v" id="sumScene">—</span></div>
-            <div class="sumrow"><span class="k">Résolution</span><span class="v" id="sumRes">—</span></div>
-            <div class="sumrow"><span class="k">Instrument</span><span class="v" id="sumInst">—</span></div>
-            <div class="sumrow"><span class="k">Altitude</span><span class="v" id="sumAlt">—</span></div>
-            <div class="sumrow"><span class="k">Élévation solaire</span><span class="v" id="sumS">—</span></div>
-            <div class="sumrow"><span class="k">Temps d'intégration</span><span class="v" id="sumTI">—</span></div>
-            <div class="sumrow"><span class="k">Étages TDI</span><span class="v" id="sumTDI">—</span></div>
-            <div class="sumrow"><span class="k">Cas WFE</span><span class="v" id="sumWfeCase">—</span></div>
+            <p class="grouphead"><span class="dot"></span><span data-i18n="sim.sum.params">Résumé des paramètres</span></p>
+            <div class="sumrow"><span class="k" data-i18n="field.scene">Scène</span><span class="v" id="sumScene">—</span></div>
+            <div class="sumrow"><span class="k" data-i18n="sim.sum.resolution">Résolution</span><span class="v" id="sumRes">—</span></div>
+            <div class="sumrow"><span class="k" data-i18n="sim.sum.instrument">Instrument</span><span class="v" id="sumInst">—</span></div>
+            <div class="sumrow"><span class="k" data-i18n="field.H">Altitude</span><span class="v" id="sumAlt">—</span></div>
+            <div class="sumrow"><span class="k" data-i18n="field.S">Élévation solaire</span><span class="v" id="sumS">—</span></div>
+            <div class="sumrow"><span class="k" data-i18n="field.TI">Temps d'intégration</span><span class="v" id="sumTI">—</span></div>
+            <div class="sumrow"><span class="k" data-i18n="field.TDI">Étages TDI</span><span class="v" id="sumTDI">—</span></div>
+            <div class="sumrow"><span class="k" data-i18n="field.wfe_case">Cas WFE</span><span class="v" id="sumWfeCase">—</span></div>
           </div>
 
           <div class="statuspanel">
             <div class="stathead" id="statHead">
               <span class="pulse" id="statPulse"></span>
               <span id="statText">Simulation en cours</span>
-              <button class="interruptbtn" type="button" id="interruptBtn">⏹ Interrompre</button>
+              <button class="interruptbtn" type="button" id="interruptBtn" data-i18n="sim.stop">⏹ Interrompre</button>
             </div>
             <div class="progresswrap">
               <div class="ptrack"><div class="pfill" id="pfill"></div></div>
@@ -613,13 +614,13 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
             </div>
             <div class="etarow">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
-              <span>Temps estimé restant : <span id="etaText">—</span></span>
+              <span><span data-i18n="sim.eta">Temps estimé restant :</span> <span id="etaText">—</span></span>
             </div>
             <div class="loglist" id="logList"></div>
             <div class="statusactions" id="statusActions"></div>
           </div>
         </div>
-        <button class="backlink" type="button" data-goto="3" id="step4Back">← Précédent</button>
+        <button class="backlink" type="button" data-goto="3" id="step4Back" data-i18n="common.previous">← Précédent</button>
       </div>
 
     </div>
@@ -645,6 +646,13 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
 <script>
+// Textes par défaut des éléments que ce script met ensuite à jour lui-même :
+// ils ne portent pas d'attribut data-i18n, qui écraserait la valeur calculée.
+document.getElementById("statText").textContent = t("sim.status.running");
+document.getElementById("payBannerText").textContent = t("paywall.banner");
+document.getElementById("payBannerBtn").textContent = t("sub.subscribe");
+document.getElementById("paywallEyebrow").textContent = t("paywall.eyebrow");
+document.getElementById("panelActionBtn").textContent = t("common.next");
 // URL du conteneur Scaleway — à vérifier/ajuster si elle a changé depuis.
 var API_URL = "https://nssharphopper7bba2963-container-kind-mcclintock.functions.fnc.fr-par.scw.cloud";
 
@@ -652,7 +660,7 @@ var session = null;
 var accountId = null;
 
 // ===================== Indicateur d'étapes =====================
-var STEP_LABELS = ["Scène", "Instrument", "Conditions d'acquisition", "Lancement"];
+var STEP_LABELS = [t("sim.steps.scene"), t("sim.steps.instrument"), t("sim.steps.conditions"), t("sim.steps.run")];
 var stepsHost = document.getElementById("stepsHost");
 function renderSteps(current){
   stepsHost.innerHTML = "";
@@ -684,7 +692,7 @@ document.getElementById("fAtmosProfile").addEventListener("change", function(e){
 document.getElementById("fAeroLoadKind").addEventListener("change", function(e){
   var vis = e.target.value === "visibility_km";
   document.getElementById("fAeroLoadUnit").textContent = vis ? "km" : "";
-  document.getElementById("fAeroLoad").placeholder = vis ? "23 km (défaut)" : "ex. 0.2";
+  document.getElementById("fAeroLoad").placeholder = vis ? t("sim.atm.ph.vis") : t("sim.atm.ph.aot");
   document.getElementById("fAeroLoad").value = "";
 });
 
@@ -722,7 +730,7 @@ function renderScenes(){
     card.className = "scenecard" + (i === selectedSceneIdx ? " selected" : "");
     card.innerHTML =
       "<span class='img' style=\"background-image:url('" + s.thumb + "');background-size:cover;background-position:center\"></span>"+
-      "<div class='meta'><div class='name'>" + s.name + "</div>"+
+      "<div class='meta'><div class='name'>" + tScene(s.name) + "</div>"+
       "<div class='dims'>" + s.sub + " <span class='badge'>" + s.badge + "</span></div></div>";
     card.addEventListener("click", function(){
       selectedSceneIdx = i;
@@ -745,7 +753,7 @@ var instListEl = document.getElementById("instList");
 // pour prévisualiser l'UI. Sur le site réel, supabaseClient répond
 // normalement et ce repli n'est jamais utilisé.
 var PREVIEW_FALLBACK_INSTRUMENTS = [
-  { id: "preview-demo", name: "Instrument (aperçu)", config: { wfeCases: [], _draft: false } }
+  { id: "preview-demo", name: t("sim.inst.preview"), config: { wfeCases: [], _draft: false } }
 ];
 // Brouillon (04/10/2026) : instrument enregistré sans tous ses champs
 // obligatoires (cf. creer-instrument.html, config._draft). Il apparaît dans
@@ -777,8 +785,8 @@ async function loadInstruments(){
 function renderInstruments(){
   if(instruments.length === 0){
     instListEl.innerHTML = "<div class='empty-inst'>"+
-      "<p style='margin:0'>Aucun instrument enregistré.</p>"+
-      "<a class='nextbtn' href='creer-instrument.html?return=simulations'>+ Créer un instrument</a>"+
+      "<p style='margin:0'>" + t("sim.inst.none") + "</p>"+
+      "<a class='nextbtn' href='creer-instrument.html?return=simulations'>" + t("home.create") + "</a>"+
     "</div>";
     return;
   }
@@ -789,13 +797,13 @@ function renderInstruments(){
     if(isDraft(inst)){
       var miss = (inst.config && inst.config._missing) || [];
       b.className = "instoption draft";
-      b.title = miss.length ? "Il manque : " + miss.join(", ") : "Instrument à compléter";
+      b.title = miss.length ? t("inst.missing", { list: miss.map(tField).join(", ") }) : t("sim.inst.to_complete");
       b.innerHTML =
         "<span class='thumb'></span>"+
         "<span><div class='name'>" + inst.name + "</div>"+
-        "<div class='meta'><span class='draftbadge'>Brouillon</span>" +
-          (miss.length ? miss.length + " champ" + (miss.length > 1 ? "s" : "") + " à renseigner" : "à compléter") + "</div></span>"+
-        "<span class='draftgo'>Compléter →</span>";
+        "<div class='meta'><span class='draftbadge'>" + t("inst.badge.draft") + "</span>" +
+          (miss.length ? t(miss.length > 1 ? "sim.inst.fields_many" : "sim.inst.fields_one", { n: miss.length }) : t("sim.inst.to_complete_short")) + "</div></span>"+
+        "<span class='draftgo'>" + t("inst.complete_cta") + "</span>";
       b.addEventListener("click", function(){
         window.location.href = "creer-instrument.html?id=" + encodeURIComponent(inst.id);
       });
@@ -806,7 +814,7 @@ function renderInstruments(){
     b.innerHTML =
       "<span class='thumb'></span>"+
       "<span><div class='name'>" + inst.name + "</div>"+
-      "<div class='meta'>Multispectral</div></span>"+
+      "<div class='meta'>" + t("inst.type.multi") + "</div></span>"+
       "<span class='check'>✓</span>";
     b.addEventListener("click", function(){
       selectedInstIdx = i;
@@ -826,8 +834,8 @@ function renderWfeCaseOptions(){
   var sel = document.getElementById("fWfeCase");
   var cases = (selectedInstIdx >= 0 && instruments[selectedInstIdx].config && instruments[selectedInstIdx].config.wfeCases) || [];
   var current = sel.value;
-  sel.innerHTML = "<option value=\"\">Simplifié (RMS)</option>" +
-    cases.map(function(c){ return "<option value='"+c.id+"'>"+c.name+(c.mode === "rms" ? " (RMS)" : " (fichier)")+"</option>"; }).join("");
+  sel.innerHTML = "<option value=\"\">" + t("sim.wfe.simplified") + "</option>" +
+    cases.map(function(c){ return "<option value='"+c.id+"'>"+c.name+(c.mode === "rms" ? " (RMS)" : t("sim.wfe.file_suffix"))+"</option>"; }).join("");
   sel.value = cases.some(function(c){ return c.id === current; }) ? current : "";
 }
 
@@ -931,7 +939,7 @@ function renderAcquisitionDiagram(){
   var dimMidY = (dimTopY + groundY) / 2;
 
   host.innerHTML =
-    "<svg viewBox='0 0 "+VBW+" "+VBH.toFixed(1)+"' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='Géométrie d acquisition'>"+
+    "<svg viewBox='0 0 "+VBW+" "+VBH.toFixed(1)+"' xmlns='http://www.w3.org/2000/svg' role='img' aria-label='" + t("sim.diag.aria") + "'>"+
       "<defs>"+
         "<linearGradient id='acqSatBody' x1='0' y1='0' x2='0' y2='1'>"+
           "<stop offset='0%' stop-color='#294655'/><stop offset='100%' stop-color='#13222A'/>"+
@@ -951,8 +959,8 @@ function renderAcquisitionDiagram(){
       "<path d='M0 "+atmTopY.toFixed(1)+" Q305 "+(atmTopY-7*scaleY).toFixed(1)+" "+VBW+" "+atmTopY.toFixed(1)+"' fill='none' stroke='#587887' stroke-width='1' opacity='.42'/>"+
       "<path d='M0 "+atmBottomY.toFixed(1)+" Q305 "+(atmBottomY-5*scaleY).toFixed(1)+" "+VBW+" "+atmBottomY.toFixed(1)+"' fill='none' stroke='#446373' stroke-width='1' opacity='.28'/>"+
       "<path d='M0 "+groundY.toFixed(1)+" Q305 "+(groundY-12*scaleY).toFixed(1)+" "+VBW+" "+(groundY+1*scaleY).toFixed(1)+"' fill='none' stroke='#5A7A88' stroke-width='1.2' opacity='.68'/>"+
-      haloText(92, atmTopY-9, "ATMOSPHÈRE", "#718896", 10, "start")+
-      haloText(VBW-18, groundY+24, "SURFACE", "#718896", 10, "end")+
+      haloText(92, atmTopY-9, t("sim.diag.atmosphere"), "#718896", 10, "start")+
+      haloText(VBW-18, groundY+24, t("sim.diag.surface"), "#718896", 10, "end")+
 
       // Solar ray: same angle as the input.
       "<line x1='"+rayStartX.toFixed(1)+"' y1='"+rayStartY.toFixed(1)+"' x2='"+(targetX-7*rayDirX).toFixed(1)+"' y2='"+(groundY-7*rayDirY).toFixed(1)+
@@ -960,23 +968,23 @@ function renderAcquisitionDiagram(){
 
       // Nadir axis adapts with altitude.
       "<line x1='"+satX+"' y1='"+sensorBottomY.toFixed(1)+"' x2='"+targetX+"' y2='"+groundY.toFixed(1)+"' stroke='#5FDCD0' stroke-width='1.4' stroke-dasharray='2 6' opacity='.82'/>"+
-      haloText(targetX+18, satY+76*scaleY, "NADIR", "#8497AA", 10.5, "start")+
+      haloText(targetX+18, satY+76*scaleY, t("sim.diag.nadir"), "#8497AA", 10.5, "start")+
 
       // Target.
       "<circle cx='"+targetX+"' cy='"+groundY.toFixed(1)+"' r='7' fill='#5FDCD0'/>"+
       "<circle cx='"+targetX+"' cy='"+groundY.toFixed(1)+"' r='17' fill='none' stroke='#5FDCD0' stroke-width='1' opacity='.22'/>"+
-      haloText(targetX, groundY+31, "CIBLE", "#8497AA", 10.5, "middle")+
+      haloText(targetX, groundY+31, t("sim.diag.target"), "#8497AA", 10.5, "middle")+
 
       // Solar elevation angle.
       "<path d='M"+arcStartX.toFixed(1)+" "+groundY.toFixed(1)+" A"+arcR+" "+arcR+" 0 0 1 "+arcEndX.toFixed(1)+" "+arcEndY.toFixed(1)+"' fill='none' stroke='#F5AC57' stroke-width='1.8'/>"+
-      haloText(targetX-arcR-2, groundY+21, "ÉLÉVATION SOLAIRE", "#F5AC57", 9.5, "middle")+
+      haloText(targetX-arcR-2, groundY+21, t("sim.diag.sun_elev"), "#F5AC57", 9.5, "middle")+
       haloText(targetX-arcR-2, groundY+39, angle+"°", "#F5AC57", 13.5, "middle")+
 
       // Altitude dimension.
       "<line x1='"+dimX+"' y1='"+dimTopY.toFixed(1)+"' x2='"+dimX+"' y2='"+groundY.toFixed(1)+"' stroke='#8497AA' stroke-width='1' stroke-dasharray='2 5' opacity='.6'/>"+
       "<line x1='"+(dimX-7)+"' y1='"+dimTopY.toFixed(1)+"' x2='"+(dimX+7)+"' y2='"+dimTopY.toFixed(1)+"' stroke='#8497AA' stroke-width='1.1'/>"+
       "<line x1='"+(dimX-7)+"' y1='"+groundY.toFixed(1)+"' x2='"+(dimX+7)+"' y2='"+groundY.toFixed(1)+"' stroke='#8497AA' stroke-width='1.1'/>"+
-      haloText(dimX+15, dimMidY-4, "ALTITUDE", "#8497AA", 10, "start")+
+      haloText(dimX+15, dimMidY-4, t("sim.diag.altitude"), "#8497AA", 10, "start")+
       haloText(dimX+15, dimMidY+17, H+" km", "#C4D6D4", 15, "start")+
 
       // Sun — its position follows the entered elevation.
@@ -989,7 +997,7 @@ function renderAcquisitionDiagram(){
         "</g>"+
         "<circle r='8' fill='#F5AC57'/>"+
       "</g>"+
-      haloText(sunX-19, sunY+4, "SOLEIL", "#F5AC57", 11.5, "end")+
+      haloText(sunX-19, sunY+4, t("sim.diag.sun"), "#F5AC57", 11.5, "end")+
 
       // Satellite.
       "<g transform='translate("+satX+" "+satY.toFixed(1)+")'>"+
@@ -1009,8 +1017,8 @@ function renderAcquisitionDiagram(){
 
       // Legend.
       "<g transform='translate("+ (VBW-182) +" 22)'>"+
-        "<line x1='0' y1='4' x2='20' y2='4' stroke='#F5AC57' stroke-width='2' stroke-dasharray='1 5'/><text x='27' y='8' fill='#8497AA' font-family='var(--mono)' font-size='9.5'>ÉCLAIREMENT</text>"+
-        "<line x1='0' y1='22' x2='20' y2='22' stroke='#5FDCD0' stroke-width='1.4' stroke-dasharray='2 5'/><text x='27' y='26' fill='#8497AA' font-family='var(--mono)' font-size='9.5'>VISÉE / NADIR</text>"+
+        "<line x1='0' y1='4' x2='20' y2='4' stroke='#F5AC57' stroke-width='2' stroke-dasharray='1 5'/><text x='27' y='8' fill='#8497AA' font-family='var(--mono)' font-size='9.5'>" + t("sim.diag.illumination") + "</text>"+
+        "<line x1='0' y1='22' x2='20' y2='22' stroke='#5FDCD0' stroke-width='1.4' stroke-dasharray='2 5'/><text x='27' y='26' fill='#8497AA' font-family='var(--mono)' font-size='9.5'>" + t("sim.diag.los") + "</text>"+
       "</g>"+
     "</svg>";
   }catch(e){
@@ -1037,21 +1045,21 @@ function updateSummary(){
   var dimStr = s.w + " × " + s.h + " m";
   document.getElementById("sumSceneSlot").innerHTML =
     "<div class='sumfilled'><span class='mini' style=\"background-image:url('" + s.thumb + "');background-size:cover;background-position:center\"></span><div class='txt'>"+
-    "<div class='t1'>" + s.name + "</div><div class='t2'>" + dimStr + " · " + s.badge + "</div>"+
+    "<div class='t1'>" + tScene(s.name) + "</div><div class='t2'>" + dimStr + " · " + s.badge + "</div>"+
     "</div></div>";
 
   if(currentStep >= 2 && selectedInstIdx >= 0){
     document.getElementById("sumInstSlot").innerHTML =
       "<div class='sumfilled'><span class='mini'></span><div class='txt'>"+
       "<div class='t1'>" + instruments[selectedInstIdx].name + "</div>"+
-      "<div class='t2'>Multispectral</div></div></div>";
+      "<div class='t2'>" + t("inst.type.multi") + "</div></div></div>";
   } else {
     document.getElementById("sumInstSlot").innerHTML = "<span class='empty'>—</span>";
   }
 
   if(currentStep >= 3){
     var wfeCase = selectedWfeCase();
-    var wfeLine = wfeCase ? "Cas WFE : " + wfeCase.name : "Cas WFE : Simplifié (RMS)";
+    var wfeLine = t("sim.sum.wfe_line", { name: wfeCase ? wfeCase.name : t("sim.wfe.simplified") });
     document.getElementById("sumCondSlot").innerHTML =
       "<div class='sumlines'>"+
       document.getElementById("fH").value + " km · " + document.getElementById("fS").value + "°<br>"+
@@ -1125,35 +1133,39 @@ function renderPaywall(atLaunch){
   var sc = SCENES[selectedSceneIdx];
   var altEl = document.getElementById("fH");
   var ready = !!(atLaunch && inst && sc);
-  document.getElementById("paywallEyebrow").textContent = ready ? "Votre simulation est prête" : "Simulateur complet";
+  document.getElementById("paywallEyebrow").textContent = ready ? t("paywall.ready_eyebrow") : t("paywall.eyebrow");
   document.getElementById("paywallTitle").textContent = pending
-    ? "Votre paiement n'a pas abouti"
-    : "Voyez l'image que produit votre instrument";
-  var generic = "Vos instruments et vos réglages sont prêts. L'abonnement lance la simulation et vous donne l'image, mesurée de bout en bout.";
+    ? t("paywall.title.pending")
+    : t("paywall.title");
+  var generic = t("paywall.generic");
   var text = document.getElementById("paywallText");
   if(pending){
-    text.textContent = "Votre abonnement est suspendu tant que le paiement n'est pas régularisé. Mettez à jour votre moyen de paiement pour relancer vos simulations.";
+    text.textContent = t("paywall.pending");
   } else if(ready){
     // Noms saisis par l'utilisateur : insérés en texte, jamais en HTML.
     text.textContent = "";
     var b1 = document.createElement("b"); b1.textContent = inst.name;
-    var b2 = document.createElement("b"); b2.textContent = sc.name;
-    text.append(b1, " sur la scène ", b2,
-      (altEl && altEl.value ? ", à " + altEl.value + " km" : "") +
-      " : tout est réglé, il ne reste qu'à lancer. L'abonnement vous donne l'image, mesurée de bout en bout.");
+    var b2 = document.createElement("b"); b2.textContent = tScene(sc.name);
+    // La phrase vient du dictionnaire ; {inst} et {scene} y marquent la place des deux noms en gras.
+    var tpl = (altEl && altEl.value) ? t("paywall.ready_alt", { alt: altEl.value }) : t("paywall.ready");
+    tpl.split(/(\{inst\}|\{scene\})/).forEach(function(part){
+      if(part === "{inst}") text.append(b1);
+      else if(part === "{scene}") text.append(b2);
+      else if(part) text.append(part);
+    });
   } else {
     text.textContent = generic;
   }
   document.getElementById("paywallList").innerHTML = pending ? "" :
-    "<li>La chaîne physique complète, sur vos propres paramètres</li>"+
-    "<li>Image simulée, MTF et SNR par bande</li>"+
-    "<li>Jusqu'à 20 instruments et 20 résultats sauvegardés</li>";
-  document.getElementById("paywallCta").textContent = pending ? "Mettre à jour le paiement" : "S'abonner";   // 05/10/2026 — plus de prix affiché (tarif décidé après la bêta)
-  document.getElementById("paywallLater").textContent = pending ? "Plus tard" : "Continuer sans lancer de simulation";
+    "<li>" + t("paywall.li1") + "</li>"+
+    "<li>" + t("paywall.li2") + "</li>"+
+    "<li>" + t("paywall.li3") + "</li>";
+  document.getElementById("paywallCta").textContent = pending ? t("sub.update_btn") : t("sub.subscribe");   // 05/10/2026 — plus de prix affiché (tarif décidé après la bêta)
+  document.getElementById("paywallLater").textContent = pending ? t("paywall.later") : t("paywall.continue");
   document.getElementById("payBannerText").textContent = pending
-    ? "Paiement en attente : vos simulations sont suspendues."
-    : "Vous pouvez préparer votre simulation ; l'abonnement permet de la lancer.";
-  document.getElementById("payBannerBtn").textContent = pending ? "Mettre à jour le paiement" : "S'abonner";
+    ? t("paywall.banner.pending")
+    : t("paywall.banner");
+  document.getElementById("payBannerBtn").textContent = pending ? t("sub.update_btn") : t("sub.subscribe");
 }
 function openPaywall(atLaunch){
   renderPaywall(atLaunch === true);
@@ -1191,7 +1203,7 @@ async function goSubscribe(){
   } catch(e){ console.error("abonnement :", e); }
   if(!url){
     cta.disabled = false; cta.textContent = previous;
-    errEl.textContent = "Impossible d'ouvrir la page de paiement. Réessayez dans un instant.";
+    errEl.textContent = t("sub.pay_fail");
     errEl.hidden = false;
     return;
   }
@@ -1209,17 +1221,17 @@ function updatePanelButton(){
   if(currentStep === 3){
     if(!hasSimAccess()){
       // Compte sans accès : le bouton ouvre la fenêtre d'abonnement.
-      btn.textContent = paymentPending() ? "🔒 Régulariser le paiement" : "🔒 S'abonner pour lancer";
+      btn.textContent = paymentPending() ? t("sim.btn.fix_payment") : t("sim.btn.subscribe_to_run");
       btn.disabled = false;
       btn.onclick = function(){ openPaywall(true); };
       updateSummary();
       return;
     }
-    btn.textContent = "▶ Lancer la simulation";
+    btn.textContent = t("sim.btn.run");
     btn.disabled = selectedInstIdx < 0;
     btn.onclick = function(){ showStep(4); };
   } else {
-    btn.textContent = "Suivant →";
+    btn.textContent = t("common.next");
     // Étape 1 (scène) : jamais bloquée par l'absence d'instrument — on
     // doit pouvoir passer à l'étape 2 même sans instrument existant, pour
     // pouvoir en créer un depuis là (cf. renderInstruments). Étape 2
@@ -1281,36 +1293,17 @@ function setStatus(kind, text){
 
 // Libellés lisibles des champs du payload — utilisés pour traduire les
 // erreurs de validation de l'API (qui ne connaît que les codes courts).
-var FIELD_LABELS = {
-  scene: "Scène",
-  D: "Diamètre de pupille",
-  I: "iFoV",
-  E: "Obscuration centrale",
-  T: "Transmission optique",
-  W: "WFE RMS",
-  PX: "Largeur pixel",
-  NSUP: "Nombre de supports",
-  ESUP: "Épaisseur des supports",
-  R: "Bruit de lecture",
-  P: "PRNU",
-  K: "Courant d'obscurité",
-  FW: "Full well",
-  QE: "Rendement quantique",
-  ADC: "Résolution ADC",
-  H: "Altitude",
-  S: "Élévation solaire",
-  TI: "Temps d'intégration",
-  TDI: "Étages TDI",
-  perfoCsv: "Cas WFE (CSV Zernike)",
-  perfoCsvAlign: "Cadrage du cas WFE",
-  perfoCsvConvention: "Convention Zernike du cas WFE",
-  qeSpectral: "Courbe QE(λ)"
-};
+var FIELD_LABELS = {};   // libellés dans i18n.js (clés field.*), dans la langue de l'interface
+["scene","D","I","E","T","W","PX","NSUP","ESUP","R","P","K","FW","QE","ADC","H","S","TI","TDI","perfoCsv","perfoCsvAlign","perfoCsvConvention","qeSpectral"].forEach(function(k){
+  FIELD_LABELS[k] = t("field." + k);
+});
 
 // Traduction des messages Pydantic les plus courants — le reste est
 // affiché tel quel plutôt que de risquer une traduction fausse.
 function translateApiMsg(msg){
   if(!msg) return "";
+  // Ces messages de validation arrivent en anglais du serveur : en anglais, ils sont affichés tels quels.
+  if(nysaLang() !== "fr") return msg;
   if(msg === "Field required") return "champ requis";
   if(msg.indexOf("none is not an allowed value") === 0) return "valeur manquante";
   if(msg.indexOf("value is not a valid float") === 0 || msg.indexOf("value is not a valid integer") === 0) return "doit être un nombre";
@@ -1326,15 +1319,16 @@ function translateApiMsg(msg){
 // Pydantic ([{loc, msg, type}, ...]) ou un objet — jamais affiché tel
 // quel (sinon un tableau d'objets devient "[object Object],[object Object]").
 function formatApiError(detail, status){
-  if(!detail) return "Erreur serveur (" + status + ")";
-  if(typeof detail === "string") return detail;
+  if(!detail) return t("api.server_error", { status: status });
+  if(typeof detail === "string") return tApi(detail);   // messages du serveur, écrits en français : traduits quand ils sont connus
   if(Array.isArray(detail)){
     return detail.map(function(d){
       if(d && typeof d === "object"){
         var fieldKey = Array.isArray(d.loc) ? d.loc.filter(function(p){ return p !== "body"; }).join(".") : "";
         var fieldLabel = FIELD_LABELS[fieldKey];
         var msg = translateApiMsg(d.msg) || JSON.stringify(d);
-        return fieldLabel ? (fieldLabel + " (" + fieldKey + ") : " + msg) : (fieldKey ? (fieldKey + " : " + msg) : msg);
+        var sep = t("common.colon");
+        return fieldLabel ? (fieldLabel + " (" + fieldKey + ")" + sep + msg) : (fieldKey ? (fieldKey + sep + msg) : msg);
       }
       return String(d);
     }).join(" ; ");
@@ -1347,7 +1341,7 @@ async function launchSimulation(){
   var inst = instruments[selectedInstIdx];
   var scene = SCENES[selectedSceneIdx];
 
-  document.getElementById("sumScene").textContent = scene.name;
+  document.getElementById("sumScene").textContent = tScene(scene.name);
   document.getElementById("sumRes").textContent = scene.res;
   document.getElementById("sumInst").textContent = inst ? inst.name : "—";
   document.getElementById("sumAlt").textContent = document.getElementById("fH").value + " km";
@@ -1368,14 +1362,14 @@ async function launchSimulation(){
   logList.innerHTML = "";
   pfill.style.transition = "none"; pfill.style.width = "0%"; // l'animation de défilement est lancée par setStatus("running")
   ppct.textContent = "";
-  etaText.textContent = "calcul en cours (peut prendre 1-2 minutes)";
-  setStatus("running", "Simulation en cours");
-  addLog("Simulation lancée — la progression détaillée n'est visible qu'à la fin (calcul synchrone).");
+  etaText.textContent = t("sim.eta.running");
+  setStatus("running", t("sim.status.running"));
+  addLog(t("sim.log.started"));
 
   // Ping périodique pendant l'attente : le calcul est synchrone côté
   // serveur (pas de flux de logs en direct), donc sans ça le panneau
   // paraît figé pendant 1-2 minutes.
-  pingInterval = setInterval(function(){ addLog("Calcul toujours en cours…"); }, 10000);
+  pingInterval = setInterval(function(){ addLog(t("sim.log.still")); }, 10000);
 
   var conditions = {
     H: Number(document.getElementById("fH").value),
@@ -1546,7 +1540,7 @@ async function launchSimulation(){
     // si besoin.
     var { data: freshSessionData, error: sessionErr } = await supabaseClient.auth.getSession();
     if(sessionErr || !freshSessionData.session){
-      throw new Error("Session expirée : reconnectez-vous puis relancez la simulation.");
+      throw new Error(t("sim.err.session"));
     }
     session = freshSessionData.session;
 
@@ -1569,16 +1563,16 @@ async function launchSimulation(){
     pfill.style.transition = "width .4s ease-out";
     pfill.style.width = "100%";
     ppct.textContent = "100 %";
-    etaText.textContent = "terminé";
+    etaText.textContent = t("sim.eta.done");
 
     // 04/10/2026 — les logs du serveur (diagnostics internes : statistiques
     // par bande, gains, étirement…) ne sont plus recopiés dans ce panneau.
     // Ils restent dans lastResult.logs et sont enregistrés avec le résultat
     // (colonne saved_results.logs). Le panneau ne montre que les étapes.
-    addLog("Simulation terminée.");
+    addLog(t("sim.log.done"));
     clearInterval(pingInterval);
     simRunning = false;
-    setStatus("ok", "Simulation terminée");
+    setStatus("ok", t("sim.status.done"));
 
     await autoSaveResult();
   }catch(err){
@@ -1586,14 +1580,13 @@ async function launchSimulation(){
     simRunning = false;
     if(err.name === "AbortError"){
       etaText.textContent = "—";
-      addLog("Simulation interrompue — le calcul continue côté serveur jusqu'à sa fin naturelle, "+
-        "mais le résultat ne sera pas récupéré.");
-      setStatus("interrupted", "Simulation interrompue");
+      addLog(t("sim.log.stopped"));
+      setStatus("interrupted", t("sim.status.stopped"));
     } else {
-      ppct.textContent = "échec";
+      ppct.textContent = t("sim.pct.failed");
       etaText.textContent = "—";
-      addLog("Erreur : " + err.message);
-      setStatus("error", "Échec de la simulation");
+      addLog(t("common.error_msg", { msg: err.message }));
+      setStatus("error", t("sim.status.failed"));
     }
   }
 }
@@ -1625,7 +1618,7 @@ function base64ToBlob(b64, mime){
 //   alter table saved_results add column if not exists source_image_path text;
 async function autoSaveResult(){
   var actions = document.getElementById("statusActions");
-  actions.innerHTML = "<p class='savingnote'>Sauvegarde du résultat…</p>";
+  actions.innerHTML = "<p class='savingnote'>" + t("sim.save.saving") + "</p>";
 
   var resultId = crypto.randomUUID();
   var basePath = accountId + "/" + resultId + "/";
@@ -1694,17 +1687,18 @@ async function autoSaveResult(){
     });
     if(insErr) throw insErr;
 
-    addLog("Résultat sauvegardé.");
+    addLog(t("sim.save.done"));
     // 04/10/2026 : bouton « Analyser en détail » retiré avec l'onglet Analyse.
-    actions.innerHTML = "<a class='viewresultsbtn' href='resultats.html?id=" + resultId + "'>📊 Voir les résultats</a>";
+    actions.innerHTML = "<a class='viewresultsbtn' href='resultats.html?id=" + resultId + "'>" + t("sim.save.view") + "</a>";
   }catch(err){
+    // « Limite de… » : message du déclencheur de la base quand les 20 résultats sont atteints.
     var msg = (err.message || "").includes("Limite de")
-      ? err.message
-      : "Échec de la sauvegarde automatique : " + (err.message || err);
-    addLog("Erreur : " + msg);
+      ? (nysaLang() === "fr" ? err.message : t("sim.save.limit"))
+      : t("sim.save.fail", { msg: (err.message || err) });
+    addLog(t("common.error_msg", { msg: msg }));
     actions.innerHTML =
       "<p class='savingnote' style='color:var(--alert)'>" + msg + "</p>"+
-      "<button class='retrybtn' type='button' id='retrySaveBtn'>Réessayer la sauvegarde</button>";
+      "<button class='retrybtn' type='button' id='retrySaveBtn'>" + t("sim.save.retry") + "</button>";
     document.getElementById("retrySaveBtn").addEventListener("click", autoSaveResult);
   }
 }

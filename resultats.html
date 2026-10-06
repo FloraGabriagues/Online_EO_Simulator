@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Résultat — Nysa</title>
+<title data-i18n="res.doc_title">Résultat — Nysa</title>
 <!-- Traduction FR / EN : textes et moteur dans i18n.js -->
 <script src="i18n.js"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.70%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2234.30%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%225.3%22%20fill%3D%22%23FFB86B%22/%3E%3C/svg%3E">
@@ -410,42 +410,43 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     <ul class="navlist">
       <li><a href="espace-personnel.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/></svg>
-        Instruments</a></li>
+        <span data-i18n="nav.instruments">Instruments</span></a></li>
       <li><a class="soon" href="#">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="9" y="9" width="6" height="6" rx="1"/><path d="M9 4V2M15 4V2M9 22v-2M15 22v-2M4 9H2M4 15H2M22 9h-2M22 15h-2"/></svg>
-        Plateforme <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto">à venir</em></a></li>
+        <span data-i18n="nav.platform">Plateforme</span> <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto" data-i18n="nav.soon">à venir</em></a></li>
       <li><a href="simulations.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 4l14 8-14 8V4z"/></svg>
-        Simulations</a></li>
+        <span data-i18n="nav.simulations">Simulations</span></a></li>
       <li><a class="active" href="resultats.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
-        Résultats</a></li>
+        <span data-i18n="nav.results">Résultats</span></a></li>
       <!-- 05/10/2026 — annoncé pour la V1, non développé pendant la bêta -->
-      <li><a class="soon" href="#" title="Comparateur d'architectures : à venir dans Nysa V1">
+      <li><a class="soon" href="#" title="Comparateur d'architectures : à venir dans Nysa V1" data-i18n-title="nav.compare.title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="7" height="14" rx="1"/><rect x="13.5" y="5" width="7" height="14" rx="1"/></svg>
-        Comparateur <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto">à venir</em></a></li>
+        <span data-i18n="nav.compare">Comparateur</span> <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto" data-i18n="nav.soon">à venir</em></a></li>
     </ul>
     <div class="sidebar-bottom">
+      <div data-lang-switch style="margin:0 0 10px 12px"></div>
       <ul class="navlist">
         <!-- 05/10/2026 — « Retour à la démo » retiré du menu connecté : la démo reste publique à l'adresse du site -->
-        <li><a href="mailto:contact@nysa-imaging.com" data-help="general">
+        <li><a href="mailto:contact@nysa-imaging.com" data-nysa-help="general">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.9.3-1.2.9-1.2 1.8"/><circle cx="12" cy="16.6" r=".4" fill="currentColor" stroke="none"/></svg>
-          Aide</a></li>
+          <span data-i18n="nav.help">Aide</span></a></li>
         <!-- 04/10/2026 : une seule fenêtre de paramètres, celle de l'espace personnel -->
         <li><a href="espace-personnel.html?settings=1" id="settingsLink">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V20a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.96 18.34a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.66 8.96a1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 7.09 4.2l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04z"/></svg>
-          Paramètres</a></li>
+          <span data-i18n="nav.settings">Paramètres</span></a></li>
       </ul>
     </div>
   </aside>
 
   <div class="main">
     <div class="topbar">
-      <button class="iconbtn" aria-label="Notifications" type="button">
+      <button class="iconbtn" aria-label="Notifications" data-i18n-aria="top.notifications" type="button">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
       </button>
       <span class="userchip" id="userChip"><span class="avatar" id="userAvatar">…</span><span id="userEmail">—</span></span>
-      <button class="iconbtn" aria-label="Se déconnecter" type="button" id="signOutBtn" title="Se déconnecter">
+      <button class="iconbtn" aria-label="Se déconnecter" data-i18n-aria="top.signout" type="button" id="signOutBtn" title="Se déconnecter" data-i18n-title="top.signout">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
       </button>
     </div>
@@ -454,22 +455,22 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
       <!-- ============ Vue liste (resultats.html sans ?id=) ============ -->
       <div id="listView">
-        <p class="eyebrow">Résultats</p>
-        <h1>Mes résultats</h1>
-        <p class="pagesub" style="margin-bottom:22px">Retrouvez vos simulations sauvegardées.</p>
+        <p class="eyebrow" data-i18n="res.eyebrow">Résultats</p>
+        <h1 data-i18n="res.h1">Mes résultats</h1>
+        <p class="pagesub" style="margin-bottom:22px" data-i18n="res.sub">Retrouvez vos simulations sauvegardées.</p>
         <!-- 04/10/2026 — en-tête de la liste : chaque intitulé trie la liste.
              Les largeurs reprennent celles des colonnes d'une ligne. -->
         <!-- 04/10/2026 — filtres sur les entrées de la simulation -->
         <div class="resultsfilters" id="resultsFilters" hidden>
-          <input type="search" id="fSearch" placeholder="Rechercher un résultat, un instrument…" autocomplete="off">
-          <select id="fScene"><option value="">Toutes les scènes</option></select>
-          <select id="fInst"><option value="">Tous les instruments</option></select>
+          <input type="search" id="fSearch" placeholder="Rechercher un résultat, un instrument…" data-i18n-ph="res.search.ph" autocomplete="off">
+          <select id="fScene"><option value="" data-i18n="res.filter.all_scenes">Toutes les scènes</option></select>
+          <select id="fInst"><option value="" data-i18n="res.filter.all_inst">Tous les instruments</option></select>
           <span class="count" id="fCount"></span>
         </div>
         <div class="resultshead" id="resultsHead" hidden>
-          <button type="button" data-sort="date">Date</button>
-          <button type="button" data-sort="mtf">MTF à Nyquist</button>
-          <button type="button" data-sort="snr">SNR</button>
+          <button type="button" data-sort="date"><span data-i18n="res.sort.date">Date</span></button>
+          <button type="button" data-sort="mtf"><span data-i18n="res.sort.mtf">MTF à Nyquist</span></button>
+          <button type="button" data-sort="snr"><span data-i18n="res.sort.snr">SNR</span></button>
           <span></span>
         </div>
         <div id="resultsGrid" class="resultslist"></div>
@@ -478,10 +479,10 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       <!-- ============ Vue détail (resultats.html?id=<uuid>) ============ -->
       <div id="detailView" style="display:none">
       <div class="pageheadrow">
-        <a class="backlink" href="resultats.html" style="margin:0">← Retour aux résultats</a>
+        <a class="backlink" href="resultats.html" style="margin:0" data-i18n="res.back">← Retour aux résultats</a>
         <div style="display:flex;align-items:center;gap:10px">
           <h1 id="resTitle">Résultat</h1>
-          <button type="button" id="btnRenameResult" class="renbtn" style="flex:none">Renommer</button>
+          <button type="button" id="btnRenameResult" class="renbtn" style="flex:none" data-i18n="inst.menu.rename">Renommer</button>
         </div>
       </div>
 
@@ -492,71 +493,71 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         <div class="resgrid">
           <div>
             <div class="viewerbox" id="viewerBox">
-              <span class="cornerlabel src">Image source</span>
-              <span class="cornerlabel sim">Image simulée</span>
+              <span class="cornerlabel src" data-i18n="res.img.source">Image source</span>
+              <span class="cornerlabel sim" data-i18n="res.img.sim">Image simulée</span>
               <div class="viewer-tools">
-                <button type="button" title="Plein écran" id="fullscreenBtn">
+                <button type="button" title="Plein écran" data-i18n-title="res.fullscreen" id="fullscreenBtn">
                   <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/></svg>
                 </button>
               </div>
               <span class="scalebar" id="scalebar" style="visibility:hidden"><span class="sbar" id="scalebarBar"></span><span class="slab" id="scalebarLab"></span></span>
 
               <div class="comparewrap" id="compareWrap">
-                <img class="compareimg left" id="imgSrc" alt="Image source">
-                <img class="compareimg right" id="imgSim" alt="Image simulée">
+                <img class="compareimg left" id="imgSrc" alt="Image source" data-i18n-alt="res.img.source">
+                <img class="compareimg right" id="imgSim" alt="Image simulée" data-i18n-alt="res.img.sim">
                 <div class="comparehandle" id="compareHandle"><span class="grip">‹›</span></div>
               </div>
             </div>
 
             <div class="viewercaption">
-              <span class="viewerhint">Glissez sur l'image pour comparer</span>
+              <span class="viewerhint" data-i18n="res.hint">Glissez sur l'image pour comparer</span>
             </div>
 
             <div class="bandsrow">
-              <h3>Bandes spectrales</h3>
+              <h3 data-i18n="res.bands">Bandes spectrales</h3>
               <div class="bandthumbs" id="bandThumbs"></div>
             </div>
           </div>
 
           <div>
             <div class="rpanel apanel">
-              <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 20h8M12 17v3"/></svg>Affichage</h3>
+              <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 20h8M12 17v3"/></svg><span data-i18n="res.display">Affichage</span></h3>
 
               <div class="aslider">
                 <div class="aslider-head">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>
-                  <span>Contraste</span><span class="aval" id="valContrast">100 %</span>
+                  <span data-i18n="res.contrast">Contraste</span><span class="aval" id="valContrast">100 %</span>
                 </div>
                 <input type="range" id="ctrlContrast" min="30" max="200" value="100">
               </div>
 
               <div class="afield">
-                <label><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 15l5-5 4 4 4-6 5 7"/></svg>Rendu de l'image</label>
+                <label><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 15l5-5 4 4 4-6 5 7"/></svg><span data-i18n="res.render">Rendu de l'image</span></label>
                 <select id="renderSel">
-                  <option value="none">Aucun (brut)</option>
-                  <option value="p2p98" selected>Étirement p2/p98 — netteté seulement</option>
+                  <option value="none" data-i18n="res.render.none">Aucun (brut)</option>
+                  <option value="p2p98" selected data-i18n="res.render.p2p98">Étirement p2/p98 — netteté seulement</option>
                 </select>
               </div>
 
-              <label class="checkrow"><input type="checkbox" id="satChk"> Afficher les pixels saturés (magenta)</label>
+              <label class="checkrow"><input type="checkbox" id="satChk"> <span data-i18n="res.sat">Afficher les pixels saturés (magenta)</span></label>
 
               <div class="apanelbtns">
                 <button class="srcbtn" type="button" id="whitePointBtn" style="margin-top:0">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>
-                  Choisir un point blanc sur l'image</button>
+                  <span data-i18n="res.whitepoint">Choisir un point blanc sur l'image</span></button>
                 <button class="srcbtn" type="button" id="resetDisplayBtn" style="margin-top:0">
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v5h5"/></svg>
-                  Réinitialiser l'affichage</button>
+                  <span data-i18n="res.reset">Réinitialiser l'affichage</span></button>
               </div>
 
               <p class="comparenote">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
-                <span>Ces réglages n'affectent que l'affichage dans ce navigateur — l'image téléchargée reste celle calculée par le serveur, sans retouche.</span>
+                <span data-i18n="res.note">Ces réglages n'affectent que l'affichage dans ce navigateur — l'image téléchargée reste celle calculée par le serveur, sans retouche.</span>
               </p>
 
               <button class="downloadbtn" type="button" id="downloadBtn" style="margin-top:6px">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v13M7 11l5 5 5-5M4 20h16"/></svg>
-                Télécharger l'image</button>
+                <span data-i18n="res.download">Télécharger l'image</span></button>
             </div>
           </div>
         </div>
@@ -575,21 +576,21 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       <!-- ============ Onglet Entrées ============ -->
       <div class="tabpanel" data-tab="entrees">
         <div class="rpanel">
-          <h3>Scène</h3>
+          <h3 data-i18n="field.scene">Scène</h3>
           <div class="srcrow">
             <span class="thumb"><img id="entSceneImg" alt=""></span>
-            <div class="info">Scène : <b id="entSceneName">—</b></div>
+            <div class="info"><span data-i18n="res.ent.scene_label">Scène :</span> <b id="entSceneName">—</b></div>
           </div>
         </div>
         <div class="rpanel">
-          <h3>Instrument</h3>
+          <h3 data-i18n="sim.sum.instrument">Instrument</h3>
           <div class="info" style="font-size:12.5px;color:var(--muted);margin-bottom:12px">
-            Nom : <b id="entInstName" style="color:var(--paper)">—</b>
+            <span data-i18n="res.ent.name_label">Nom :</span> <b id="entInstName" style="color:var(--paper)">—</b>
           </div>
           <div id="entInstConfig" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px 14px"></div>
         </div>
         <div class="rpanel">
-          <h3>Conditions d'acquisition</h3>
+          <h3 data-i18n="sim.steps.conditions">Conditions d'acquisition</h3>
           <div id="entConditions" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px"></div>
         </div>
       </div>
@@ -606,13 +607,16 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 </div>
 
 <div class="lightbox-overlay" id="lightboxOverlay">
-  <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Fermer">×</button>
+  <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Fermer" data-i18n-aria="common.close">×</button>
   <img id="lightboxImg" alt="">
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
 <script>
+// Textes par défaut des éléments que ce script met ensuite à jour lui-même :
+// ils ne portent pas d'attribut data-i18n, qui écraserait la valeur calculée.
+document.getElementById("resTitle").textContent = t("res.title_default");
 // ===================== Lightbox (zoom plein écran sur les graphes) =====================
 // Global (pas dans une fonction async plus bas) — utilisée depuis
 // buildDiagPanel (onglets Graphes MTF/SNR) pour agrandir un graphique au
@@ -641,18 +645,18 @@ document.addEventListener("keydown", function(e){
 // cas WFE), scène, instrument. Ils masquent les lignes sans rien recharger.
 // Les listes déroulantes sont remplies avec les valeurs réellement présentes.
 function fillResultFilters(){
-  function fill(selectId, values, allLabel){
+  function fill(selectId, values, allLabel, display){   // display : nom affiché d'une valeur (la valeur filtrée reste celle de la base)
     var sel = document.getElementById(selectId), previous = sel.value;
     sel.innerHTML = "";
     var first = document.createElement("option"); first.value = ""; first.textContent = allLabel; sel.appendChild(first);
     values.filter(function(v, i){ return v && values.indexOf(v) === i; }).sort().forEach(function(v){
-      var o = document.createElement("option"); o.value = v; o.textContent = v; sel.appendChild(o);
+      var o = document.createElement("option"); o.value = v; o.textContent = display ? display(v) : v; sel.appendChild(o);
     });
     sel.value = previous; // conserve le choix après un renommage ou une suppression
     if(sel.value !== previous) sel.value = "";
   }
-  fill("fScene", resultRowEls.map(function(el){ return el._filter.scene; }), "Toutes les scènes");
-  fill("fInst", resultRowEls.map(function(el){ return el._filter.inst; }), "Tous les instruments");
+  fill("fScene", resultRowEls.map(function(el){ return el._filter.scene; }), t("res.filter.all_scenes"), tScene);
+  fill("fInst", resultRowEls.map(function(el){ return el._filter.inst; }), t("res.filter.all_inst"));
   document.getElementById("resultsFilters").hidden = false;
 }
 function applyResultFilters(){
@@ -668,11 +672,11 @@ function applyResultFilters(){
   });
   var total = resultRowEls.length, count = document.getElementById("fCount");
   count.textContent = (shown === total)
-    ? total + " résultat" + (total > 1 ? "s" : "")
-    : shown + " sur " + total;
+    ? t(total > 1 ? "res.count_many" : "res.count_one", { n: total })
+    : t("res.count_of", { shown: shown, total: total });
   if(q || scene || inst){
     var reset = document.createElement("button");
-    reset.type = "button"; reset.className = "reset"; reset.textContent = "Effacer les filtres";
+    reset.type = "button"; reset.className = "reset"; reset.textContent = t("res.filter.clear");
     reset.addEventListener("click", function(){
       document.getElementById("fSearch").value = "";
       document.getElementById("fScene").value = "";
@@ -705,32 +709,32 @@ function inputsHtml(r){
   function spectral(label, modeKey, arrKey, valKey, scalarKey){
     var pts = (c[arrKey] || []).filter(function(p){ return has(p.wl) && has(p[valKey]); });
     var mode = c[modeKey] || (pts.length >= 2 ? "curve" : "constant");
-    if(mode === "curve" && pts.length >= 2) return "<dt>" + label + "</dt><dd>courbe, " + pts.length + " points</dd>";
+    if(mode === "curve" && pts.length >= 2) return "<dt>" + label + "</dt><dd>" + t("res.in.curve", { n: pts.length }) + "</dd>";
     return line(label, c[scalarKey]);
   }
   function block(title, body){ return body ? "<div><h4>" + title + "</h4><dl>" + body + "</dl></div>" : ""; }
-  var MODES = { detailed: "détaillé", datasheet: "datasheet", full_scale: "pleine échelle = full well" };
+  var MODES = { detailed: t("res.in.mode.detailed"), datasheet: t("res.in.mode.datasheet"), full_scale: t("res.in.mode.full_scale") };
 
   var gsd = (has(c.I) && has(k.H)) ? num(Number(c.I) * 1e-6 * Number(k.H) * 1000) : null;
-  var cond = line("Scène", r.scene) + line("Altitude", k.H, "km") + line("Pas au sol", gsd, "m") +
-    line("Élévation solaire", k.S, "°") + line("Temps d'intégration", k.TI, "µs") + line("Étages TDI", k.TDI) +
-    line("Cas WFE", k.wfeCaseName || "simplifié");
-  var opt = line("iFoV", c.I, "µrad") + line("Diamètre de pupille", c.D, "m") + line("Obscuration centrale", c.E, "m") +
-    (Number(c.E) > 0 && Number(c.NSUP) > 0 ? line("Supports", num(c.NSUP) + " × " + num(c.ESUP), "m") : "") +
-    spectral("Transmission", "T_mode", "tSpectral", "t", "T") + line("WFE RMS", c.W, "nm");
-  var det = line("Largeur pixel", c.PX, "µm") + spectral("Rendement quantique", "QE_mode", "qeSpectral", "qe", "QE") +
-    line("PRNU", c.P, "%") + line("Courant d'obscurité", c.K, "e⁻/s") +
-    line("DSNU", c.dsnu_1288, "e⁻") + line("Temps de réf. DSNU", c.dsnu_T_ref, "s");
-  var elec = line("Résolution ADC", c.ADC, "bits") + line("Full well", c.FW, "e⁻") + line("Bruit de lecture", c.R, "e⁻") +
-    line("Mode", MODES[c.electronics_mode]) +
+  var cond = line(t("field.scene"), tScene(r.scene)) + line(t("field.H"), k.H, "km") + line(t("res.in.gsd"), gsd, "m") +
+    line(t("field.S"), k.S, "°") + line(t("field.TI"), k.TI, "µs") + line(t("field.TDI"), k.TDI) +
+    line(t("field.wfe_case"), k.wfeCaseName || t("res.in.simplified"));
+  var opt = line(t("field.I"), c.I, "µrad") + line(t("field.D"), c.D, "m") + line(t("field.E"), c.E, "m") +
+    (Number(c.E) > 0 && Number(c.NSUP) > 0 ? line(t("res.in.supports"), num(c.NSUP) + " × " + num(c.ESUP), "m") : "") +
+    spectral(t("res.in.transmission"), "T_mode", "tSpectral", "t", "T") + line(t("field.W"), c.W, "nm");
+  var det = line(t("field.PX"), c.PX, "µm") + spectral(t("field.QE"), "QE_mode", "qeSpectral", "qe", "QE") +
+    line(t("field.P"), c.P, "%") + line(t("field.K"), c.K, "e⁻/s") +
+    line("DSNU", c.dsnu_1288, "e⁻") + line(t("res.in.dsnu_tref"), c.dsnu_T_ref, "s");
+  var elec = line(t("field.ADC"), c.ADC, "bits") + line(t("field.FW"), c.FW, "e⁻") + line(t("field.R"), c.R, "e⁻") +
+    line(t("res.in.mode"), MODES[c.electronics_mode]) +
     (c.electronics_mode === "detailed"
-      ? line("Facteur de conversion", c.CVF_uV_per_e, "µV/e⁻") + line("Gain PGA", c.G_PGA) + line("Plage ADC", c.V_range, "V") : "") +
-    (c.electronics_mode === "datasheet" ? line("Gain global", c.CWF, "DN/e⁻") : "") +
-    line("Niveau noir", c.DN0, "DN") + line("Accumulateur TDI", c.bits_TDI, "bits");
+      ? line(t("res.in.cvf"), c.CVF_uV_per_e, "µV/e⁻") + line(t("res.in.pga"), c.G_PGA) + line(t("res.in.adc_range"), c.V_range, "V") : "") +
+    (c.electronics_mode === "datasheet" ? line(t("res.in.cwf"), c.CWF, "DN/e⁻") : "") +
+    line(t("res.in.black"), c.DN0, "DN") + line(t("res.in.tdi_acc"), c.bits_TDI, "bits");
 
-  var blocks = block("Conditions", cond) + block("Optique", opt) + block("Détecteur", det) + block("Électronique", elec);
+  var blocks = block(t("sim.sum.conditions"), cond) + block(t("block.optics"), opt) + block(t("block.detector"), det) + block(t("block.electronics"), elec);
   return blocks +
-    "<div class='openfull'><a href='resultats.html?id=" + encodeURIComponent(r.id) + "'>Ouvrir le résultat complet</a></div>";
+    "<div class='openfull'><a href='resultats.html?id=" + encodeURIComponent(r.id) + "'>" + t("res.open_full") + "</a></div>";
 }
 
 // ===================== Tri de la liste des résultats (04/10/2026) =====================
@@ -793,12 +797,12 @@ async function renderResultsList(){
 
   if(error){
     console.error("Erreur chargement des résultats :", error);
-    grid.innerHTML = "<p class='resultsempty'>Erreur de chargement. Réessayez plus tard.</p>";
+    grid.innerHTML = "<p class='resultsempty'>" + t("res.load_error") + "</p>";
     return;
   }
   if(!results || results.length === 0){
-    grid.innerHTML = "<p class='resultsempty'>Aucun résultat sauvegardé pour l'instant — "+
-      "<a href='simulations.html'>lancez une simulation</a> pour en créer un.</p>";
+    grid.innerHTML = "<p class='resultsempty'>" + t("res.empty.a") +
+      "<a href='simulations.html'>" + t("res.empty.link") + "</a>" + t("res.empty.b") + "</p>";
     return;
   }
 
@@ -811,8 +815,8 @@ async function renderResultsList(){
       var { data: signed } = await supabaseClient.storage.from("results").createSignedUrl(r.image_path, 3600);
       if(signed) thumbUrl = signed.signedUrl;
     }
-    var dateLabel = new Date(r.created_at).toLocaleDateString("fr-FR", {day:"numeric", month:"short", year:"numeric"});
-    var instName = (r.instruments && r.instruments.name) || (r.instrument_snapshot && r.instrument_snapshot.name) || "Instrument";
+    var dateLabel = new Date(r.created_at).toLocaleDateString(nysaLocale(), {day:"numeric", month:"short", year:"numeric"});
+    var instName = (r.instruments && r.instruments.name) || (r.instrument_snapshot && r.instrument_snapshot.name) || t("sim.sum.instrument");
     // 04/10/2026 — un résultat survit à son instrument : on le signale sur
     // la carte. « Supprimé » = marqué deleted_at (suppression douce) ou
     // absent (purgé, lien instrument_id vidé par la base). Le nom vient
@@ -833,7 +837,7 @@ async function renderResultsList(){
     var mtfAvg = avg(mtfVals), snrAvg = avg(snrVals);
 
     var wfeCaseName = (r.conditions && r.conditions.wfeCaseName) || null;
-    var displayName = r.name || r.scene; // "name" optionnel (cf. rename) — replie sur la scène si absent
+    var displayName = r.name || tScene(r.scene); // "name" optionnel (cf. rename) — replie sur la scène si absent
 
     // 04/10/2026 — une ligne par résultat. Les noms saisis par l'utilisateur
     // (résultat, instrument, cas WFE) sont insérés en texte, pas en HTML.
@@ -845,19 +849,19 @@ async function renderResultsList(){
         "<span class='thumb' style='background-image:url(\"" + thumbUrl + "\")'></span>"+
         "<div class='txt'>"+
           "<div class='namerow'><span class='name'>" + esc(displayName) + "</span>"+
-            (instGone ? "<span class='instgone'>Instrument supprimé</span>" : "")+"</div>"+
+            (instGone ? "<span class='instgone'>" + t("res.inst_gone") + "</span>" : "")+"</div>"+
           "<div class='sub'><span>" + esc(instName) + "</span><span class='date'>" + dateLabel + "</span>"+
-            (wfeCaseName ? "<span class='wfebadge'>Cas WFE : " + esc(wfeCaseName) + "</span>" : "")+
-            "<span class='more'>Entrées ▾</span></div>"+
+            (wfeCaseName ? "<span class='wfebadge'>" + t("sim.sum.wfe_line", { name: esc(wfeCaseName) }) + "</span>" : "")+
+            "<span class='more'>" + t("res.inputs_closed") + "</span></div>"+
         "</div>"+
         "<div class='metric'><div class='v'>" + (mtfAvg != null ? mtfAvg.toFixed(2) : "—") + "</div></div>"+
         "<div class='metric'><div class='v'>" + (snrAvg != null ? snrAvg.toFixed(1) : "—") + "</div></div>"+
       "</div>"+
       "<div class='rowmenu'>"+
-        "<button type='button' class='menubtn' aria-label='Options'>⋮</button>"+
+        "<button type='button' class='menubtn' aria-label='" + t("inst.menu.options") + "'>⋮</button>"+
         "<div class='dropdown'>"+
-          "<button type='button' data-act='rename'>Renommer</button>"+
-          "<button type='button' class='danger' data-act='delete'>Supprimer</button>"+
+          "<button type='button' data-act='rename'>" + t("inst.menu.rename") + "</button>"+
+          "<button type='button' class='danger' data-act='delete'>" + t("inst.menu.delete") + "</button>"+
         "</div>"+
       "</div>"+
       "<div class='inputs' hidden></div>";
@@ -872,7 +876,7 @@ async function renderResultsList(){
         panel.hidden = !open;
         cardEl.classList.toggle("open", open);
         link.setAttribute("aria-expanded", open ? "true" : "false");
-        cardEl.querySelector(".more").textContent = open ? "Entrées ▴" : "Entrées ▾";
+        cardEl.querySelector(".more").textContent = open ? t("res.inputs_open") : t("res.inputs_closed");
       }
       link.addEventListener("click", toggleInputs);
       link.addEventListener("keydown", function(e){
@@ -906,13 +910,13 @@ async function renderResultsList(){
 }
 
 async function renameResult(r, cardEl){
-  var newName = prompt("Nom de la simulation :", r.name || r.scene);
+  var newName = prompt(t("res.prompt.name"), r.name || tScene(r.scene));
   if(newName === null || !newName.trim()) return;
   newName = newName.trim();
   var { error } = await supabaseClient.from("saved_results").update({ name: newName }).eq("id", r.id);
   if(error){
     console.error("Erreur renommage résultat :", error);
-    alert("Le renommage a échoué : " + error.message);
+    alert(t("home.err.rename", { msg: error.message }));
     return;
   }
   r.name = newName;
@@ -921,7 +925,7 @@ async function renameResult(r, cardEl){
 }
 
 async function deleteResult(r){
-  if(!confirm("Supprimer définitivement ce résultat (" + r.scene + ") ? Cette action est irréversible.")) return;
+  if(!confirm(t("res.confirm.delete", { scene: tScene(r.scene) }))) return;
 
   // Rassemble tous les chemins de fichiers liés (image principale + tous
   // les graphiques de diagnostic par bande) pour ne rien laisser d'orphelin
@@ -945,7 +949,7 @@ async function deleteResult(r){
 
   var { error: delErr } = await supabaseClient.from("saved_results").delete().eq("id", r.id);
   if(delErr){
-    alert("Échec de la suppression : " + delErr.message);
+    alert(t("home.err.delete", { msg: delErr.message }));
     return;
   }
   renderResultsList();
@@ -1030,7 +1034,7 @@ async function deleteResult(r){
   var resultLogs = (result && result.logs) || "";
 
   var createdLabel = result ? new Date(result.created_at).toISOString().slice(0,16).replace("T","_").replace(":","") : "—";
-  var displayName = (result && result.name) || sceneName; // "name" optionnel — replie sur la scène si absent
+  var displayName = (result && result.name) || tScene(sceneName); // "name" optionnel — replie sur la scène si absent
 
   document.getElementById("resTitle").textContent = displayName + " (" + createdLabel + ")";
   var btnRename = document.getElementById("btnRenameResult");
@@ -1038,13 +1042,13 @@ async function deleteResult(r){
     btnRename.style.display = "none";
   } else {
     btnRename.addEventListener("click", async function(){
-      var newName = prompt("Nom de la simulation :", result.name || sceneName);
+      var newName = prompt(t("res.prompt.name"), result.name || tScene(sceneName));
       if(newName === null || !newName.trim()) return;
       newName = newName.trim();
       var { error } = await supabaseClient.from("saved_results").update({ name: newName }).eq("id", result.id);
       if(error){
         console.error("Erreur renommage résultat :", error);
-        alert("Le renommage a échoué : " + error.message);
+        alert(t("home.err.rename", { msg: error.message }));
         return;
       }
       result.name = newName;
@@ -1055,36 +1059,38 @@ async function deleteResult(r){
   document.getElementById("imgSrc").src = sourceUrl;
 
   // ===================== Onglet Entrées (scène / instrument / conditions) =====================
-  var Z_LABELS = {none:"Aucune", defoc:"Défocalisation", astig:"Astigmatisme", coma:"Coma",
-    spher:"Aberration sphérique", trefo:"Trefoil"};
+  var Z_LABELS = {none:t("res.z.none"), defoc:t("res.z.defoc"), astig:t("res.z.astig"), coma:t("res.z.coma"),
+    spher:t("res.z.spher"), trefo:t("res.z.trefo")};
   // Libellés réels des paramètres instrument — mêmes clés/unités que dans
   // le schéma Optique/Détecteur/Électronique de creer-instrument.html.
   var INST_FIELD_LABELS = {
-    D:   {label:"Diamètre de pupille", unit:" m"},
-    I:   {label:"iFoV", unit:" µrad"},
-    E:   {label:"Obscuration centrale", unit:" m"},
-    T:   {label:"Transmission optique", unit:" τ"},
-    W:   {label:"WFE RMS", unit:" nm"},
-    PX:  {label:"Largeur pixel", unit:" µm"},
-    R:   {label:"Bruit de lecture", unit:" e⁻"},
-    P:   {label:"PRNU", unit:" %"},
-    K:   {label:"Courant d'obscurité", unit:" e⁻/s"},
-    FW:  {label:"Full well", unit:" e⁻"},
-    QE:  {label:"Rendement quantique", unit:" %"},
-    ADC: {label:"Résolution ADC", unit:" bits"},
+    D:   {label:t("field.D"), unit:" m"},
+    I:   {label:t("field.I"), unit:" µrad"},
+    E:   {label:t("field.E"), unit:" m"},
+    T:   {label:t("field.T"), unit:" τ"},
+    W:   {label:t("field.W"), unit:" nm"},
+    PX:  {label:t("field.PX"), unit:" µm"},
+    R:   {label:t("field.R"), unit:" e⁻"},
+    P:   {label:t("field.P"), unit:" %"},
+    K:   {label:t("field.K"), unit:" e⁻/s"},
+    FW:  {label:t("field.FW"), unit:" e⁻"},
+    QE:  {label:t("field.QE"), unit:" %"},
+    ADC: {label:t("field.ADC"), unit:" bits"},
+    NSUP: {label:t("field.NSUP"), unit:""},
+    ESUP: {label:t("field.ESUP"), unit:" m"},
   };
   function entTile(label, value){
     return "<div><div style='font-family:var(--mono);font-size:10px;color:var(--muted-2);text-transform:uppercase'>"+
       label + "</div><div style='font-family:var(--mono);font-size:15px;color:var(--paper)'>" + value + "</div></div>";
   }
   document.getElementById("entSceneImg").src = sourceUrl;
-  document.getElementById("entSceneName").textContent = sceneName;
+  document.getElementById("entSceneName").textContent = tScene(sceneName);
   document.getElementById("entInstName").textContent = instName;
   // Même signalement dans le détail d'un résultat.
   if(result && (!result.instruments || result.instruments.deleted_at)){
     var gone = document.createElement("span");
     gone.className = "instgone";
-    gone.textContent = "Instrument supprimé";
+    gone.textContent = t("res.inst_gone");
     gone.style.marginLeft = "8px";
     document.getElementById("entInstName").appendChild(gone);
   }
@@ -1093,34 +1099,35 @@ async function deleteResult(r){
   var instConfigHtml = "";
   for(var ck in instConfig){
     if(instConfig[ck] == null || typeof instConfig[ck] === "object") continue;
+    if(ck.charAt(0) === "_") continue;   // marqueurs internes (_draft, _pct…) : pas des paramètres d'instrument
     var meta = INST_FIELD_LABELS[ck];
     var label = meta ? meta.label : ck; // repli sur la clé brute si un champ inconnu apparaît
     var unit = meta ? meta.unit : "";
     instConfigHtml += entTile(label, instConfig[ck] + unit);
   }
   document.getElementById("entInstConfig").innerHTML = instConfigHtml ||
-    "<span style='color:var(--muted);font-size:12.5px'>Aucune configuration disponible.</span>";
+    "<span style='color:var(--muted);font-size:12.5px'>" + t("res.ent.no_config") + "</span>";
 
   var condHtml = "";
-  if(cond.H != null) condHtml += entTile("Altitude", cond.H + " km");
-  if(cond.S != null) condHtml += entTile("Élévation solaire", cond.S + "°");
-  if(cond.TI != null) condHtml += entTile("Temps d'intégration", cond.TI + " µs");
-  if(cond.TDI != null) condHtml += entTile("Étages TDI", cond.TDI);
+  if(cond.H != null) condHtml += entTile(t("field.H"), cond.H + " km");
+  if(cond.S != null) condHtml += entTile(t("field.S"), cond.S + "°");
+  if(cond.TI != null) condHtml += entTile(t("field.TI"), cond.TI + " µs");
+  if(cond.TDI != null) condHtml += entTile(t("field.TDI"), cond.TDI);
   // Cas WFE actif : remplace le mode d'aberration (sans objet dans ce cas,
   // cf. simulations.html/toggleAberrationField) — absent des résultats
   // sauvegardés avant l'ajout des cas WFE nommés (cf. échange du
   // 16/09/2026), on retombe alors sur le mode d'aberration comme avant.
   if(cond.wfeCaseName){
-    condHtml += entTile("Cas WFE", cond.wfeCaseName);
+    condHtml += entTile(t("field.wfe_case"), cond.wfeCaseName);
   } else if(cond.Z != null){
-    condHtml += entTile("Mode d'aberration", Z_LABELS[cond.Z] || cond.Z);
+    condHtml += entTile(t("res.z.label"), Z_LABELS[cond.Z] || cond.Z);
   }
   document.getElementById("entConditions").innerHTML = condHtml ||
-    "<span style='color:var(--muted);font-size:12.5px'>Aucune condition disponible.</span>";
+    "<span style='color:var(--muted);font-size:12.5px'>" + t("res.ent.no_cond") + "</span>";
 
   if(!result){
     document.querySelector(".comparewrap").innerHTML =
-      "<p style='padding:40px;color:var(--muted);text-align:center'>Résultat introuvable. Vérifiez le lien, ou revenez depuis <a href='resultats.html' style='color:var(--pixel)'>la liste des résultats</a>.</p>";
+      "<p style='padding:40px;color:var(--muted);text-align:center'>" + t("res.notfound.a") + "<a href='resultats.html' style='color:var(--pixel)'>" + t("res.notfound.link") + "</a>.</p>";
   }
 
 
@@ -1138,7 +1145,7 @@ async function deleteResult(r){
     for(var bandName in diagBands){
       var d = diagBands[bandName];
       var color = BAND_COLORS[bandName] || "var(--pixel)";
-      html += "<div class='rpanel'><h3 style='color:" + color + "'>" + title + " — " + bandName + "</h3>";
+      html += "<div class='rpanel'><h3 style='color:" + color + "'>" + title + " — " + tBand(bandName) + "</h3>";
       html += "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px'>";
       valueRows.forEach(function(r){
         var v = d[r.key];
@@ -1160,19 +1167,19 @@ async function deleteResult(r){
     }
     return html || "<div class='rpanel'><p class='comparenote' style='margin-top:0'>"+
       "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><circle cx='12' cy='12' r='9'/><path d='M12 8h.01M11 12h1v5h1'/></svg>"+
-      "<span>Aucun diagnostic disponible pour ce résultat.</span></p></div>";
+      "<span>" + t("res.no_diag") + "</span></p></div>";
   }
 
   document.getElementById("mtfContent").innerHTML = await buildDiagPanel(
     "MTF",
-    [{key:"mtf_at_nyquist", label:"MTF à Nyquist", dec:3}],
+    [{key:"mtf_at_nyquist", label:t("res.sort.mtf"), dec:3}],
     ["psf_png_b64", "mtf_png_b64", "pupil_png_b64"],
   );
   document.getElementById("snrContent").innerHTML = await buildDiagPanel(
     "SNR",
     [
-      {key:"snr_mean", label:"SNR moyen", dec:1},
-      {key:"fill_pct", label:"Remplissage", unit:"%", dec:1},
+      {key:"snr_mean", label:t("res.snr_mean"), dec:1},
+      {key:"fill_pct", label:t("res.fill"), unit:"%", dec:1},
       {key:"S_ref_e", label:"S_ref", unit:" e⁻", dec:0},
     ],
     ["snr_regimes_png_b64", "snr_noise_budget_png_b64", "snr_map_png_b64",
@@ -1181,22 +1188,22 @@ async function deleteResult(r){
 
   // ===================== Onglets Image/MTF/SNR/Entrées/Logs =====================
   var TABS = [
-    {id:"image", label:"Image"},
-    {id:"mtf", label:"Graphes MTF"},
-    {id:"snr", label:"Graphes SNR"},
-    {id:"entrees", label:"Entrées"}
+    {id:"image", label:t("res.tab.image")},
+    {id:"mtf", label:t("res.tab.mtf")},
+    {id:"snr", label:t("res.tab.snr")},
+    {id:"entrees", label:t("res.tab.inputs")}
   ];
   var tabsHost = document.getElementById("restabsHost");
-  TABS.forEach(function(t, i){
+  TABS.forEach(function(tab, i){   // « tab » et non « t » : t() est la fonction de traduction
     var b = document.createElement("button");
     b.className = "restab"; b.type = "button";
     b.setAttribute("aria-selected", i === 0 ? "true" : "false");
-    b.textContent = t.label;
+    b.textContent = tab.label;
     b.addEventListener("click", function(){
       tabsHost.querySelectorAll(".restab").forEach(function(x){ x.setAttribute("aria-selected", "false"); });
       b.setAttribute("aria-selected", "true");
       document.querySelectorAll(".tabpanel").forEach(function(p){
-        p.classList.toggle("current", p.dataset.tab === t.id);
+        p.classList.toggle("current", p.dataset.tab === tab.id);
       });
     });
     tabsHost.appendChild(b);
@@ -1401,9 +1408,9 @@ async function deleteResult(r){
   var bandThumbEls = {};
   var BANDS = [
     {key:"RGB", name:"RGB", color:BAND_COLOR.RGB},
-    {key:"R", name:"Rouge", color:BAND_COLOR.R},
-    {key:"G", name:"Vert", color:BAND_COLOR.G},
-    {key:"B", name:"Bleu", color:BAND_COLOR.B},
+    {key:"R", name:tBand("Rouge"), color:BAND_COLOR.R},
+    {key:"G", name:tBand("Vert"), color:BAND_COLOR.G},
+    {key:"B", name:tBand("Bleu"), color:BAND_COLOR.B},
   ];
   function selectBand(key){
     adj.band = key;
@@ -1477,7 +1484,7 @@ async function deleteResult(r){
       var blob = await resp.blob();
       var url = URL.createObjectURL(blob);
       var a = document.createElement("a");
-      a.href = url; a.download = "resultat_" + createdLabel + ".png";
+      a.href = url; a.download = t("res.download.prefix") + createdLabel + ".png";
       document.body.appendChild(a); a.click(); document.body.removeChild(a);
       URL.revokeObjectURL(url);
     }catch(e){

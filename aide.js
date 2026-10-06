@@ -1,9 +1,12 @@
 // ============================================================================
 // Aide — une petite fenêtre commune à toutes les pages de l'espace connecté.
 //
-// Tout élément portant l'attribut data-help ouvre cette fenêtre :
-//   data-help="general"     le lien « Aide » du menu
-//   data-help="instrument"  le lien d'accompagnement de la page de création
+// Tout élément portant l'attribut data-nysa-help ouvre cette fenêtre :
+//   data-nysa-help="general"     le lien « Aide » du menu
+//   data-nysa-help="instrument"  le lien d'accompagnement de la page de création
+// (06/10/2026 — l'attribut s'appelait data-help, déjà utilisé par les
+// boutons « ? » des champs de la page de création : un clic sur l'aide d'un
+// champ ouvrait cette fenêtre par erreur.)
 //
 // Ces éléments sont aussi de vrais liens mailto: : si ce fichier ne se charge
 // pas, cliquer dessus ouvre quand même un e-mail vers l'adresse de contact.
@@ -78,9 +81,9 @@ var HELP_KINDS = { general: true, instrument: true };
   // ajoutés après le chargement.
   document.addEventListener("click", function(e){
     if(typeof t !== "function") return;   // pas de traduction chargée : le lien mailto: s'ouvre normalement
-    var el = e.target.closest ? e.target.closest("[data-help]") : null;
+    var el = e.target.closest ? e.target.closest("[data-nysa-help]") : null;
     if(!el) return;
     e.preventDefault();
-    open(el.getAttribute("data-help"));
+    open(el.getAttribute("data-nysa-help"));
   });
 })();

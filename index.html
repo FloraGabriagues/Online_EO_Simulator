@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Simulateur de qualité image — Nysa</title>
+<title data-tx>Simulateur de qualité image — Nysa</title>
 <!-- Traduction FR / EN : textes et moteur dans i18n.js -->
 <script src="i18n.js"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.70%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2234.30%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%225.3%22%20fill%3D%22%23FFB86B%22/%3E%3C/svg%3E">
@@ -401,19 +401,22 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <span class="mark"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24.00" cy="13.70" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="32.92" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="32.92" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="24.00" cy="34.30" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="15.08" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="15.08" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="24" cy="24" r="5.3" fill="#FFB86B"/></svg></span>
       <span><span class="name">Nysa</span><span class="tag">EO Imaging Engineering</span></span>
     </a>
-    <h1>Simulateur d'imagerie <span class="cool">multispectrale</span></h1>
-    <p class="valueprop">Optique, détecteur, acquisition : visualisez leur impact sur l'image avant de construire votre système.</p>
+    <h1 data-i18n-html="demo.h1">Simulateur d'imagerie <span class="cool">multispectrale</span></h1>
+    <p class="valueprop" data-tx>Optique, détecteur, acquisition : visualisez leur impact sur l'image avant de construire votre système.</p>
     <!-- retirée temporairement pour voir le rendu sans, cf. échange du 27/08
     <p class="chain">
-      <span>Source</span><i></i><span>Atmosphère</span><i></i><span>Optique</span>
-      <i class="cool-dot"></i><span>Détecteur</span><i class="cool-dot"></i><span>Radiométrie</span>
+      <span data-tx>Source</span><i></i><span data-tx>Atmosphère</span><i></i><span data-tx>Optique</span>
+      <i class="cool-dot"></i><span data-tx>Détecteur</span><i class="cool-dot"></i><span data-tx>Radiométrie</span>
     </p>
     -->
   </div>
+  <div style="display:flex;align-items:center;gap:14px;flex:none">
+  <span data-lang-switch></span>
   <button id="adminTrigger" type="button" style="background:transparent;
     border:1px solid var(--photon);color:var(--photon);font-family:var(--mono);
     font-size:11px;letter-spacing:.06em;cursor:pointer;margin-top:-4px;
-    padding:7px 14px;border-radius:3px;flex:none;white-space:nowrap">Simulateur complet →</button>
+    padding:7px 14px;border-radius:3px;flex:none;white-space:nowrap" data-tx>Simulateur complet →</button>
+  </div>
 </header>
 
 <div class="rail">
@@ -424,17 +427,17 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
 
   <!-- scène et image -->
   <div class="col-view">
-    <p class="steptitle"><span class="stepnum">1.</span> Choisissez une image source</p>
-    <div class="tabs" role="tablist" aria-label="Vue">
-      <button class="tab" id="tab-image" type="button" role="tab" aria-selected="true" aria-controls="tp-image">Image simulée</button>
-      <button class="tab" id="tab-graphs" type="button" role="tab" aria-selected="false" aria-controls="tp-graphs">Graphes</button>
+    <p class="steptitle"><span class="stepnum">1.</span> <span data-tx>Choisissez une image source</span></p>
+    <div class="tabs" role="tablist" aria-label="Vue" data-tx-aria>
+      <button class="tab" id="tab-image" type="button" role="tab" aria-selected="true" aria-controls="tp-image" data-tx>Image simulée</button>
+      <button class="tab" id="tab-graphs" type="button" role="tab" aria-selected="false" aria-controls="tp-graphs" data-tx>Graphes</button>
     </div>
     <div class="tabpanel" id="tp-image" role="tabpanel" aria-labelledby="tab-image">
       <div class="viewer">
       <div class="headline compact">
         <div class="hl-item">
           <div class="hl-v" id="m-gsd">—</div>
-          <div class="hl-k">Résolution au sol</div>
+          <div class="hl-k" data-tx>Résolution au sol</div>
         </div>
         <div class="hl-item">
           <div class="hl-v cool" id="m-snr">—</div>
@@ -442,32 +445,32 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
         </div>
         <div class="hl-item">
           <div class="hl-v warm" id="m-mtfnyq">—</div>
-          <div class="hl-k">MTF à Nyquist</div>
+          <div class="hl-k" data-tx>MTF à Nyquist</div>
         </div>
         <div class="hl-item">
           <div class="hl-v" id="m-q">—</div>
-          <div class="hl-k">Facteur Q <span class="snr-info" title="Rapport entre la coupure optique et la fréquence de Nyquist du détecteur. Q < 1 : le pixel limite. Q > 2 : l'optique limite.">ⓘ</span></div>
+          <div class="hl-k"><span data-tx>Facteur Q</span> <span class="snr-info" data-tx-title title="Rapport entre la coupure optique et la fréquence de Nyquist du détecteur. Q < 1 : le pixel limite. Q > 2 : l'optique limite.">ⓘ</span></div>
         </div>
       </div>
       <div class="compare" id="compare">
       <canvas id="truthLayer" width="1024" height="1024"></canvas>
       <canvas id="simLayer" width="1024" height="1024"></canvas>
       <div class="divider" id="divider"><span class="handle" id="dividerHandle"></span></div>
-      <span class="chip left">Image source</span>
+      <span class="chip left" data-tx>Image source</span>
       <span class="chip right" id="chipRight">Image simulée</span>
       <div class="scalebar" id="scalebar"><span class="bar" id="scalebarBar"></span><span class="lab" id="scalebarLab">20 m</span></div>
       <span class="pad" id="panPad" hidden>
-      <button class="padbtn" type="button" data-dx="0" data-dy="-1" aria-label="Déplacer vers le haut">▲</button>
-      <button class="padbtn" type="button" data-dx="-1" data-dy="0" aria-label="Déplacer vers la gauche">◀</button>
-      <button class="padbtn" type="button" data-dx="1" data-dy="0" aria-label="Déplacer vers la droite">▶</button>
-      <button class="padbtn" type="button" data-dx="0" data-dy="1" aria-label="Déplacer vers le bas">▼</button>
+      <button class="padbtn" type="button" data-dx="0" data-dy="-1" aria-label="Déplacer vers le haut" data-tx-aria>▲</button>
+      <button class="padbtn" type="button" data-dx="-1" data-dy="0" aria-label="Déplacer vers la gauche" data-tx-aria>◀</button>
+      <button class="padbtn" type="button" data-dx="1" data-dy="0" aria-label="Déplacer vers la droite" data-tx-aria>▶</button>
+      <button class="padbtn" type="button" data-dx="0" data-dy="1" aria-label="Déplacer vers le bas" data-tx-aria>▼</button>
       </span>
       </div>
-      <input type="range" class="wipe visually-hidden" id="wipe" min="0" max="100" value="50" aria-label="Position du curseur de comparaison">
+      <input type="range" class="wipe visually-hidden" id="wipe" min="0" max="100" value="50" aria-label="Position du curseur de comparaison" data-tx-aria>
       <div class="viewfoot">
-      <span class="viewer-sub">Glissez sur l'image pour comparer</span>
+      <span class="viewer-sub" data-tx>Glissez sur l'image pour comparer</span>
       <span class="vtools">
-      <button class="mode zoom" data-z="1" type="button" aria-pressed="true">Ajusté</button>
+      <button class="mode zoom" data-z="1" type="button" aria-pressed="true" data-tx>Ajusté</button>
       <button class="mode zoom" data-z="2" type="button" aria-pressed="false">×2</button>
       <button class="mode zoom" data-z="4" type="button" aria-pressed="false">×4</button>
       </span>
@@ -478,70 +481,70 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
     <div class="tabpanel" id="tp-graphs" role="tabpanel" aria-labelledby="tab-graphs" hidden>
       <div class="analysis">
       <div class="panel wide">
-      <p class="grouphead"><span class="dot cool"></span>Fonction de transfert de modulation</p>
+      <p class="grouphead"><span class="dot cool"></span><span data-tx>Fonction de transfert de modulation</span></p>
       <canvas class="chart" id="mtfChart"></canvas>
       <p class="note" id="mtfNote"></p>
       </div>
       <div class="panel">
-      <p class="grouphead"><span class="dot warm"></span>Pupille et front d'onde</p>
+      <p class="grouphead"><span class="dot warm"></span><span data-tx>Pupille et front d'onde</span></p>
       <canvas class="sq" id="pupilCv" width="256" height="256"></canvas>
       <div class="cbar pupil"></div>
-      <div class="cbar-lab"><span>avance de phase</span><span>retard</span></div>
+      <div class="cbar-lab"><span data-tx>avance de phase</span><span data-tx>retard</span></div>
       <p class="note" id="pupilNote"></p>
       </div>
       <div class="panel">
       <p class="grouphead"><span class="dot warm"></span>PSF</p>
       <canvas class="sq" id="psfCv" width="128" height="128"></canvas>
       <div class="cbar psf"></div>
-      <div class="cbar-lab"><span>10⁻⁵</span><span>intensité relative</span><span>1</span></div>
+      <div class="cbar-lab"><span>10⁻⁵</span><span data-tx>intensité relative</span><span>1</span></div>
       <p class="note" id="psfNote"></p>
       </div>
       </div>
     </div>
     <div class="panel offer">
-    <p class="grouphead"><span class="dot warm"></span>Vous travaillez sur votre propre instrument ?</p>
-    <p class="offer-body">Passez de la démonstration à la simulation complète de votre instrument.</p>
-    <a class="offer-cta" href="espace-personnel.html">Accéder au simulateur complet →</a>
+    <p class="grouphead"><span class="dot warm"></span><span data-tx>Vous travaillez sur votre propre instrument ?</span></p>
+    <p class="offer-body" data-tx>Passez de la démonstration à la simulation complète de votre instrument.</p>
+    <a class="offer-cta" href="espace-personnel.html" data-tx>Accéder au simulateur complet →</a>
     </div>
   </div>
 
   <!-- tous les réglages -->
   <div class="col-r">
-    <p class="steptitle"><span class="stepnum">2.</span> Configurez votre instrument</p>
-    <div class="tabs chain" role="tablist" aria-label="Chaîne de détection">
-      <button class="tab" id="tab-inst" type="button" role="tab" aria-selected="true" aria-controls="tp-inst"><span class="dot cool"></span>Instrument</button>
-      <button class="tab" id="tab-src" type="button" role="tab" aria-selected="false" aria-controls="tp-src"><span class="dot source"></span>Acquisition</button>
+    <p class="steptitle"><span class="stepnum">2.</span> <span data-tx>Configurez votre instrument</span></p>
+    <div class="tabs chain" role="tablist" aria-label="Chaîne de détection" data-tx-aria>
+      <button class="tab" id="tab-inst" type="button" role="tab" aria-selected="true" aria-controls="tp-inst"><span class="dot cool"></span><span data-tx>Instrument</span></button>
+      <button class="tab" id="tab-src" type="button" role="tab" aria-selected="false" aria-controls="tp-src"><span class="dot source"></span><span data-tx>Acquisition</span></button>
     </div>
     <div class="tabpanel" id="tp-src" role="tabpanel" aria-labelledby="tab-src" hidden>
       <div class="panel params" id="p-orbit">
-        <p class="grouphead"><span class="dot source"></span>Orbite et éclairement</p>
+        <p class="grouphead"><span class="dot source"></span><span data-tx>Orbite et éclairement</span></p>
         <div id="g-orbit"></div>
       </div>
       <div class="panel params cool-ctrl" id="p-acq">
-        <p class="grouphead"><span class="dot cool"></span>Acquisition</p>
+        <p class="grouphead"><span class="dot cool"></span><span data-tx>Acquisition</span></p>
         <div id="g-acq"></div>
       </div>
     </div>
     <div class="tabpanel" id="tp-inst" role="tabpanel" aria-labelledby="tab-inst">
       <div class="panel params warm-ctrl" id="p-optics">
-      <p class="grouphead"><span class="dot warm"></span>Optique</p>
+      <p class="grouphead"><span class="dot warm"></span><span data-tx>Optique</span></p>
       <div id="g-optics"></div>
       </div>
       <div class="panel params cool-ctrl" id="p-detector">
-      <p class="grouphead"><span class="dot cool"></span>Détecteur</p>
+      <p class="grouphead"><span class="dot cool"></span><span data-tx>Détecteur</span></p>
       <div id="g-detector"></div>
       <p class="note" id="detectorDerived" style="margin-top:10px"></p>
       </div>
       <p class="note" style="margin-top:2px">
-        <a href="espace-personnel.html" style="color:var(--photon);text-decoration:none">Plus de paramètres dans le simulateur complet →</a>
+        <a href="espace-personnel.html" style="color:var(--photon);text-decoration:none" data-tx>Plus de paramètres dans le simulateur complet →</a>
       </p>
       <div class="simbar" id="simbar">
-        <p class="previewhint" id="previewHint" hidden>Aperçu affiché</p>
+        <p class="previewhint" id="previewHint" hidden data-tx>Aperçu affiché</p>
         <div class="simbar-head">
-          <button class="simbtn" id="simBtn" type="button">Lancer la simulation</button>
-          <button class="infobtn" id="engineInfoBtn" type="button" aria-label="Qu'est-ce que ça change ?">?</button>
+          <button class="simbtn" id="simBtn" type="button" data-tx>Lancer la simulation</button>
+          <button class="infobtn" id="engineInfoBtn" type="button" aria-label="Qu'est-ce que ça change ?" data-tx-aria>?</button>
         </div>
-        <div class="infopop" id="engineInfoPop" hidden>
+        <div class="infopop" id="engineInfoPop" hidden data-tx>
           L'aperçu instantané est une approximation rapide. "Lancer la simulation" déclenche le calcul physique complet — optique, atmosphère et détecteur — sur les mêmes scènes.
         </div>
         <div class="prog" id="progWrap" hidden>
@@ -830,7 +833,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
 </div>
 
 <footer>
-  <p>Scènes réelles — orthophotographies BD ORTHO IGN 2023.</p>
+  <p data-tx>Scènes réelles — orthophotographies BD ORTHO IGN 2023.</p>
   <p>Flora Gabriagues · <a href="mailto:flora.gabriagues@etik.com" style="color:var(--muted);text-decoration:underline">flora.gabriagues@etik.com</a></p>
 </footer>
 </div>
@@ -1323,11 +1326,8 @@ function drawPupil(){
   ctx.putImageData(img,0,0);
   document.getElementById("pupilNote").innerHTML =
     st.W <= 0
-      ? "Pupille annulaire, obscuration centrale ε = " + st.E.toFixed(2) +
-        ". Front d'onde plat : la PSF est une tache d'Airy."
-      : "Budget d'erreur de front d'onde de <b>" + st.W + " nm RMS</b>, soit ±" +
-        maxp.toFixed(2) + " onde en crête, modélisé par un étalement équivalent " +
-        "de la PSF. C'est cette carte de phase qui la déforme ci-contre.";
+      ? tx("Pupille annulaire, obscuration centrale ε = {e}. Front d'onde plat : la PSF est une tache d'Airy.", { e: st.E.toFixed(2) })
+      : tx("Budget d'erreur de front d'onde de <b>{w} nm RMS</b>, soit ±{p} onde en crête, modélisé par un étalement équivalent de la PSF. C'est cette carte de phase qui la déforme ci-contre.", { w: st.W, p: maxp.toFixed(2) });
 }
 function drawPsf(){
   var cv = document.getElementById("psfCv"), ctx;
@@ -1347,11 +1347,10 @@ function drawPsf(){
   ctx.putImageData(img,0,0);
   var airyGround = 1.22 * LAMBDA / st.D * altM(st);
   document.getElementById("psfNote").innerHTML =
-    "Échelle logarithmique sur 4 décades. La tache d'Airy mesure <b>" +
-    airyGround.toFixed(2) + " m</b> au sol, pour un pixel de <b>" + gsd().toFixed(2) + " m</b>. " +
+    tx("Échelle logarithmique sur 4 décades. La tache d'Airy mesure <b>{a} m</b> au sol, pour un pixel de <b>{g} m</b>.", { a: airyGround.toFixed(2), g: gsd().toFixed(2) }) + " " +
     (airyGround > gsd()*1.5
-      ? "<span class='flag'>La tache déborde largement du pixel</span> : c'est l'optique qui limite la résolution."
-      : "Tache et pixel sont du même ordre : l'échantillonnage suit l'optique.");
+      ? tx("<span class='flag'>La tache déborde largement du pixel</span> : c'est l'optique qui limite la résolution.")
+      : tx("Tache et pixel sont du même ordre : l'échantillonnage suit l'optique."));
 }
 
 // ===================== GRAPHIQUE FTM =====================
@@ -1381,9 +1380,9 @@ function drawMtfChart(){
     ctx.fillText(fv.toFixed(fv<1?2:1), X(fv), pad.t+ph+18);
   }
   ctx.fillStyle="#9BADBD"; ctx.font="12px "+MONO;
-  ctx.fillText("fréquence spatiale au sol (cycles/m)", pad.l+pw/2, pad.t+ph+42);
+  ctx.fillText(tx("fréquence spatiale au sol (cycles/m)"), pad.l+pw/2, pad.t+ph+42);
   ctx.save(); ctx.translate(15, pad.t+ph/2); ctx.rotate(-Math.PI/2);
-  ctx.fillText("contraste transmis", 0, 0); ctx.restore();
+  ctx.fillText(tx("contraste transmis"), 0, 0); ctx.restore();
 
   ctx.strokeStyle="#4A6072"; ctx.setLineDash([4,3]); ctx.lineWidth=1.2;
   ctx.beginPath(); ctx.moveTo(X(nyq),pad.t); ctx.lineTo(X(nyq),pad.t+ph); ctx.stroke();
@@ -1409,8 +1408,8 @@ function drawMtfChart(){
   curve(mtfOptAt,"#F5AC57",1.9);
   curve(mtfTot,"#5FDCD0",2.6);
 
-  var items = [["#F5AC57","optique (pupille + WFE)"],["#4E9A97","détecteur"],
-               ["#5FDCD0","chaîne complète"]];
+  var items = [["#F5AC57",tx("optique (pupille + WFE)")],["#4E9A97",tx("détecteur")],
+               ["#5FDCD0",tx("chaîne complète")]];
   var lx = pad.l+12, ly = pad.t+10, lw = 182, lh = 14+items.length*17;
   ctx.fillStyle="rgba(9,14,19,0.86)"; ctx.strokeStyle="#22323F";
   ctx.fillRect(lx,ly,lw,lh); ctx.strokeRect(lx,ly,lw,lh);
@@ -1559,11 +1558,11 @@ function buildControls(){
     var d = document.createElement("div");
     d.className = "ctrl"; d.dataset.k = p.k;
     d.innerHTML =
-      '<div class="ctrl-top"><label class="ctrl-name" for="s-'+p.k+'">'+p.name+'</label>'+
+      '<div class="ctrl-top"><label class="ctrl-name" for="s-'+p.k+'">'+tx(p.name)+'</label>'+
       '<span class="ctrl-val"><input type="number" id="n-'+p.k+'" step="'+p.step+
-      '" min="'+p.min+'" max="'+p.max+'" aria-label="'+p.name+'"><em>'+p.unit+'</em></span></div>'+
+      '" min="'+p.min+'" max="'+p.max+'" aria-label="'+txa(p.name)+'"><em>'+p.unit+'</em></span></div>'+
       '<input type="range" id="s-'+p.k+'" min="'+p.min+'" max="'+p.max+'" step="'+p.step+
-      '" aria-label="'+p.name+'">';
+      '" aria-label="'+txa(p.name)+'">';
     host.appendChild(d);
     els[p.k] = {row:d, s:d.querySelector('input[type=range]'), n:d.querySelector('input[type=number]')};
 
@@ -1632,8 +1631,7 @@ function updateMetrics(){
   var detNote = document.getElementById("detectorDerived");
   if(detNote){
     var f = focalOf(st), fn = fnumOf(st);
-    detNote.innerHTML = "Focale ≈ <b>" + (f<1 ? (f*1000).toFixed(0)+" mm" : f.toFixed(2)+" m") +
-      "</b> · F/# ≈ <b>" + fn.toFixed(1) + "</b> — dérivés du pitch et de l'iFoV.";
+    detNote.innerHTML = tx("Focale ≈ <b>{f}</b> · F/# ≈ <b>{n}</b> — dérivés du pitch et de l'iFoV.", { f: (f<1 ? (f*1000).toFixed(0)+" mm" : f.toFixed(2)+" m"), n: fn.toFixed(1) });
   }
 
   document.getElementById("m-snr").textContent = sn.toFixed(1);
@@ -1642,16 +1640,11 @@ function updateMetrics(){
 
   var mtfNote = document.getElementById("mtfNote");
   if(q < 1){
-    mtfNote.innerHTML = "<span class='flag'>Q = "+q.toFixed(2)+", inférieur à 1.</span> "+
-      "L'optique transmet encore du contraste au-delà de Nyquist : ce contenu trop fin pour "+
-      "le pixel se replie dans l'image sous forme d'artefacts. C'est un choix de conception "+
-      "assumé, pas un défaut — il privilégie le rapport signal/bruit et la largeur de fauchée.";
+    mtfNote.innerHTML = tx("<span class='flag'>Q = {q}, inférieur à 1.</span> L'optique transmet encore du contraste au-delà de Nyquist : ce contenu trop fin pour le pixel se replie dans l'image sous forme d'artefacts. C'est un choix de conception assumé, pas un défaut — il privilégie le rapport signal/bruit et la largeur de fauchée.", { q: q.toFixed(2) });
   } else if(q > 2.2){
-    mtfNote.textContent = "Q = "+q.toFixed(2)+", supérieur à 2. Le pixel n'est plus le facteur "+
-      "limitant : affiner le détecteur n'apporterait rien tant que la pupille ne grandit pas.";
+    mtfNote.textContent = tx("Q = {q}, supérieur à 2. Le pixel n'est plus le facteur limitant : affiner le détecteur n'apporterait rien tant que la pupille ne grandit pas.", { q: q.toFixed(2) });
   } else {
-    mtfNote.textContent = "Q = "+q.toFixed(2)+". L'échantillonnage est accordé à la coupure "+
-      "optique : optique et détecteur pèsent du même ordre dans le budget de contraste.";
+    mtfNote.textContent = tx("Q = {q}. L'échantillonnage est accordé à la coupure optique : optique et détecteur pèsent du même ordre dans le budget de contraste.", { q: q.toFixed(2) });
   }
 
 }
@@ -1805,7 +1798,7 @@ function refresh(){
   if(simBtn) simBtn.classList.toggle("nudge", showNudge);
   var chipRight = document.getElementById("chipRight");
   if(chipRight){
-    chipRight.textContent = showNudge ? "Aperçu, lancer simulation" : "Image simulée";
+    chipRight.textContent = showNudge ? tx("Aperçu, lancer simulation") : tx("Image simulée");
     chipRight.classList.toggle("preview", showNudge);
   }
   if(pending) cancelAnimationFrame(pending);
@@ -1844,7 +1837,7 @@ SCENES.forEach(function(sc){
   }
   var meta = document.createElement("div");
   meta.className = "scene-meta";
-  meta.innerHTML = "<div class='scene-name'>" + sc.name + "</div>" +
+  meta.innerHTML = "<div class='scene-name'>" + tScene(sc.name) + "</div>" +
                  (sc.sub ? "<div class='scene-sub'>" + sc.sub + "</div>" : "");
   b.appendChild(meta);
   b.addEventListener("click", function(){ switchScene(sc.id); });
@@ -2062,10 +2055,10 @@ function updateSimbarVisibility(){
 function startStageRotation(){
   if(!progNote) return;
   var dots = 0;
-  progNote.textContent = "Simulation en cours";
+  progNote.textContent = tx("Simulation en cours");
   stageTimer = setInterval(function(){
     dots = (dots + 1) % 4;
-    progNote.textContent = "Simulation en cours" + ".".repeat(dots);
+    progNote.textContent = tx("Simulation en cours") + ".".repeat(dots);
   }, 500);
 }
 function stopStageRotation(){
@@ -2143,11 +2136,11 @@ async function runSimulation(){
         body: JSON.stringify(body)
       });
       if(token !== simAbort) return;
-      if(r.status === 429) throw new Error("Quota atteint. Réessayez dans quelques minutes.");
+      if(r.status === 429) throw new Error(tx("Quota atteint. Réessayez dans quelques minutes."));
       if(!r.ok){
         var detail = null;
         try{ var j = await r.json(); detail = j.detail; } catch(e){}
-        throw new Error(detail || ("Le serveur a refusé la requête (" + r.status + ")."));
+        throw new Error((detail && tApi(detail)) || tx("Le serveur a refusé la requête ({status}).", { status: r.status }));
       }
       var blob = await r.blob();
       if(token !== simAbort || !blob) return;
@@ -2161,14 +2154,14 @@ async function runSimulation(){
           refresh();
           resolve();
         };
-        img.onerror = function(){ reject(new Error("Image de résultat illisible.")); };
+        img.onerror = function(){ reject(new Error(tx("Image de résultat illisible."))); };
         img.src = url;
       });
 
       if(token !== simAbort) return;
       simRunning = false;
       stopStageRotation();
-      progNote.textContent = "Simulation terminée.";
+      progNote.textContent = tx("Simulation terminée.");
       setTimeout(function(){
         if(token === simAbort) progWrap.hidden = true;
       }, 1400);
@@ -2177,7 +2170,7 @@ async function runSimulation(){
     }catch(err){
       lastErr = err;
       if(attempt < MAX_ATTEMPTS && token === simAbort){
-        progNote.textContent = "Nouvelle tentative (" + (attempt + 1) + "/" + MAX_ATTEMPTS + ")…";
+        progNote.textContent = tx("Nouvelle tentative ({a}/{m})…", { a: attempt + 1, m: MAX_ATTEMPTS });
         await new Promise(function(res){ setTimeout(res, 2500); });
       }
     }
@@ -2189,7 +2182,7 @@ async function runSimulation(){
   simBtn.disabled = false;
   progNote.className = "prog-note err";
   progNote.textContent = lastErr && lastErr.message
-    ? lastErr.message : "Serveur injoignable. L'aperçu navigateur reste disponible.";
+    ? lastErr.message : tx("Serveur injoignable. L'aperçu navigateur reste disponible.");
 }
 
 if(simBtn) simBtn.addEventListener("click", runSimulation);

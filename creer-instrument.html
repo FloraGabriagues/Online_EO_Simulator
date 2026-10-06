@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Créer un instrument — Nysa</title>
+<title data-tx>Créer un instrument — Nysa</title>
 <!-- Traduction FR / EN : textes et moteur dans i18n.js -->
 <script src="i18n.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -262,40 +262,43 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;fl
 <div class="wrap">
 
   <header>
-    <a class="back" href="espace-personnel.html">← Mes objets</a>
+    <a class="back" href="espace-personnel.html" data-tx>← Mes objets</a>
     <!-- 05/10/2026 — accompagnement proposé à la demande (fenêtre dans aide.js).
          Placé dans l'en-tête : en bas de la colonne de gauche, il fallait
          faire défiler pour le voir. -->
-    <a class="helplink" href="mailto:contact@nysa-imaging.com" data-help="instrument">
+    <div style="display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+      <a class="helplink" href="mailto:contact@nysa-imaging.com" data-nysa-help="instrument">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.9.3-1.2.9-1.2 1.8"/><circle cx="12" cy="16.6" r=".6" fill="currentColor"/></svg>
-      Besoin d'aide pour configurer votre instrument&nbsp;?</a>
+      <span data-i18n="help.instrument.title">Besoin d'aide pour configurer votre instrument&nbsp;?</span></a>
+      <span data-lang-switch></span>
+    </div>
   </header>
 
   <div class="layout">
     <div class="leftcol">
       <div class="chain instgroup" id="chain">
         <div class="progresswrap">
-          <div class="row"><span>Configuration de l'instrument</span><span id="pctLabel">0 %</span></div>
+          <div class="row"><span data-tx>Configuration de l'instrument</span><span id="pctLabel">0 %</span></div>
           <div class="track"><div class="fill" id="pctFill" style="width:0%"></div></div>
         </div>
-        <p class="subhead"><span class="dot"></span>Configuration</p>
+        <p class="subhead"><span class="dot"></span><span data-tx>Configuration</span></p>
         <div class="configrow">
           <div class="sidefield">
-            <label for="instName">Nom de l'instrument</label>
-            <input type="text" id="instName" placeholder="Mon instrument">
+            <label for="instName" data-tx>Nom de l'instrument</label>
+            <input type="text" id="instName" placeholder="Mon instrument" data-tx-ph>
           </div>
           <div class="sidefield">
-            <label for="instType">Type</label>
+            <label for="instType" data-tx>Type</label>
             <select id="instType">
-              <option value="ms">Multispectral</option>
-              <option value="hs" disabled>Hyperspectral (bientôt)</option>
+              <option value="ms" data-tx>Multispectral</option>
+              <option value="hs" disabled data-tx>Hyperspectral (bientôt)</option>
             </select>
           </div>
-          <button class="filebtn" id="btnFile" type="button">Charger une configuration
+          <button class="filebtn" id="btnFile" type="button"><span data-tx>Charger une configuration</span>
             <input type="file" id="fileInput" accept="application/json">
           </button>
           <!-- 04/10/2026 — visible dès qu'au moins un champ est saisi (cf. updateProgress) -->
-          <button class="filebtn ghost" id="btnExport" type="button" hidden>Exporter la configuration</button>
+          <button class="filebtn ghost" id="btnExport" type="button" hidden data-tx>Exporter la configuration</button>
         </div>
       </div>
       <div class="chainlistcard instgroup" id="chainList"></div>
@@ -509,29 +512,29 @@ function hardMessage(f){
   // Épaisseur des supports : obligatoire et non nulle dès qu'un nombre de
   // supports est saisi (sinon les supports n'auraient aucun effet).
   if(f.k === "ESUP" && Number(state.values.NSUP) > 0 && !(Number(state.values.ESUP) > 0)){
-    return "Obligatoire dès qu'un nombre de supports est saisi.";
+    return tx("Obligatoire dès qu'un nombre de supports est saisi.");
   }
   if(!isFilled(f.k)) return "";
   var r = fieldRule(f), v = Number(state.values[f.k]);
-  if(isNaN(v)) return "Nombre attendu.";
-  if(f.min !== undefined && (v < f.min || v > f.max)) return "Fraction attendue, entre " + f.min + " et " + f.max + " (0.62 pour 62 %).";
-  if(r.positive && !(v > 0)) return "Valeur strictement positive attendue.";
-  if(f.k === "E" && isFilled("D") && v >= Number(state.values.D)) return "L'obscuration doit rester inférieure au diamètre de pupille.";
-  if(f.k === "ADC" && v > 32) return "32 bits au plus.";
-  if(f.k === "DN0" && isFilled("ADC") && v >= Math.pow(2, Number(state.values.ADC)) - 1) return "Doit rester inférieur à 2^bits − 1.";
-  if(f.k === "bits_TDI" && isFilled("ADC") && v < Number(state.values.ADC)) return "Au moins égal à la résolution ADC.";
+  if(isNaN(v)) return tx("Nombre attendu.");
+  if(f.min !== undefined && (v < f.min || v > f.max)) return tx("Fraction attendue, entre {min} et {max} (0.62 pour 62 %).", { min: f.min, max: f.max });
+  if(r.positive && !(v > 0)) return tx("Valeur strictement positive attendue.");
+  if(f.k === "E" && isFilled("D") && v >= Number(state.values.D)) return tx("L'obscuration doit rester inférieure au diamètre de pupille.");
+  if(f.k === "ADC" && v > 32) return tx("32 bits au plus.");
+  if(f.k === "DN0" && isFilled("ADC") && v >= Math.pow(2, Number(state.values.ADC)) - 1) return tx("Doit rester inférieur à 2^bits − 1.");
+  if(f.k === "bits_TDI" && isFilled("ADC") && v < Number(state.values.ADC)) return tx("Au moins égal à la résolution ADC.");
   return "";
 }
 // Alerte NON bloquante (orange) : valeur possible mais inhabituelle.
 function softMessage(f){
   if(f.type === "select" || !isFilled(f.k) || fieldDisabled(f) || hardMessage(f)) return "";
   var r = fieldRule(f), v = Number(state.values[f.k]), u = f.unit && f.unit !== "0 à 1" ? " " + f.unit : "";
-  if(f.k === "E" && isFilled("D") && v > 0.5 * Number(state.values.D)) return "Valeur inhabituelle : obscuration supérieure à la moitié du diamètre.";
+  if(f.k === "E" && isFilled("D") && v > 0.5 * Number(state.values.D)) return tx("Valeur inhabituelle : obscuration supérieure à la moitié du diamètre.");
   if(!r.plausible) return "";
   if(r.signed) v = Math.abs(v);
   var lo = r.plausible[0], hi = r.plausible[1];
-  if(v > hi) return "Valeur inhabituelle : en général " + (lo > 0 ? "entre " + lo + " et " + hi : "jusqu'à " + hi) + u + ".";
-  if(lo > 0 && v < lo) return "Valeur inhabituelle : en général entre " + lo + " et " + hi + u + ".";
+  if(v > hi) return lo > 0 ? tx("Valeur inhabituelle : en général entre {lo} et {hi}{u}.", { lo: lo, hi: hi, u: u }) : tx("Valeur inhabituelle : en général jusqu'à {hi}{u}.", { hi: hi, u: u });
+  if(lo > 0 && v < lo) return tx("Valeur inhabituelle : en général entre {lo} et {hi}{u}.", { lo: lo, hi: hi, u: u });
   return "";
 }
 function fieldOutOfRange(f){ return !!hardMessage(f); }
@@ -554,7 +557,7 @@ function syncOpticsDerived(){
   if(gsdEl){
     var okI = isFilled("I") && I > 0;
     gsdEl.hidden = !okI;
-    if(okI) gsdEl.textContent = "À " + GSD_REF_ALTITUDE_KM + " km d'altitude : pas au sol de " + fmt3(I * 1e-6 * GSD_REF_ALTITUDE_KM * 1000) + " m.";
+    if(okI) gsdEl.textContent = tx("À {km} km d'altitude : pas au sol de {gsd} m.", { km: GSD_REF_ALTITUDE_KM, gsd: fmt3(I * 1e-6 * GSD_REF_ALTITUDE_KM * 1000) });
   }
   var dEl = document.getElementById("opticsDerived");
   if(dEl){
@@ -562,8 +565,8 @@ function syncOpticsDerived(){
       dEl.innerHTML = ""; // rien tant que l'iFoV ou la largeur pixel manque
     } else {
       var f = PX / I; // µm / µrad = m
-      dEl.innerHTML = "Focale équivalente <b>" + fmt3(f) + " m</b>" +
-        (isFilled("D") && D > 0 ? " · ouverture <b>f/" + fmt3(f / D) + "</b>" : "");
+      dEl.innerHTML = tx("Focale équivalente") + " <b>" + fmt3(f) + " m</b>" +
+        (isFilled("D") && D > 0 ? " · " + tx("ouverture") + " <b>f/" + fmt3(f / D) + "</b>" : "");
     }
   }
 }
@@ -602,13 +605,13 @@ function curveStatus(arr, valKey){
 }
 function curveHintText(st){
   var parts = [];
-  if(Object.keys(st.dup).length) parts.push("Longueur d'onde déjà saisie : la ligne en double est ignorée.");
-  if(Object.keys(st.range).length) parts.push("Valeur hors de 0 à 1 : ce point est ignoré.");
+  if(Object.keys(st.dup).length) parts.push(tx("Longueur d'onde déjà saisie : la ligne en double est ignorée."));
+  if(Object.keys(st.range).length) parts.push(tx("Valeur hors de 0 à 1 : ce point est ignoré."));
   return parts.join(" ");
 }
 function curveOddText(st){
   return Object.keys(st.odd).length
-    ? "Longueur d'onde inhabituelle : en général entre " + CURVE_WL_PLAUSIBLE[0] + " et " + CURVE_WL_PLAUSIBLE[1] + " nm (vérifier l'unité)."
+    ? tx("Longueur d'onde inhabituelle : en général entre {a} et {b} nm (vérifier l'unité).", { a: CURVE_WL_PLAUSIBLE[0], b: CURVE_WL_PLAUSIBLE[1] })
     : "";
 }
 // Libellés des saisies à corriger (champs scalaires et points de courbe).
@@ -616,12 +619,12 @@ function invalidEntries(){
   var out = [];
   instrumentNode.blocks.forEach(function(b){
     b.fields.forEach(function(f){
-      if(fieldOutOfRange(f) && !spectralActive(f.k)) out.push(f.label);
+      if(fieldOutOfRange(f) && !spectralActive(f.k)) out.push(tx(f.label));
       var lock = SPECTRAL_LOCKS[f.k];
       if(lock && spectralActive(f.k)){
         var st = curveStatus(state.values[lock.arr], lock.key);
-        if(Object.keys(st.range).length) out.push("courbe spectrale (" + f.label.toLowerCase() + ") : valeur hors de 0 à 1");
-        if(Object.keys(st.dup).length) out.push("courbe spectrale (" + f.label.toLowerCase() + ") : longueur d'onde en double");
+        if(Object.keys(st.range).length) out.push(tx("courbe spectrale ({label}) : valeur hors de 0 à 1", { label: tx(f.label).toLowerCase() }));
+        if(Object.keys(st.dup).length) out.push(tx("courbe spectrale ({label}) : longueur d'onde en double", { label: tx(f.label).toLowerCase() }));
       }
     });
   });
@@ -814,7 +817,7 @@ function renderChain(){
     var btn = document.createElement("button");
     btn.type = "button";
     btn.className = "blockbtn" + (b.id === state.active ? " active" : "");
-    btn.innerHTML = "<span class='lab'>"+(i+1)+". "+b.label+"</span>"+statusMark(blockStatus(b));
+    btn.innerHTML = "<span class='lab'>"+(i+1)+". "+tx(b.label)+"</span>"+statusMark(blockStatus(b));
     btn.addEventListener("click", function(){ selectBlock(b.id); });
     list.appendChild(btn);
   });
@@ -865,7 +868,7 @@ function renderSchema(){
     "<ellipse cx='184' cy='53' rx='17' ry='34' fill='none' stroke='var(--pixel)' stroke-opacity='.5'/>"+
     "<ellipse cx='206' cy='53' rx='17' ry='34' fill='none' stroke='var(--pixel)' stroke-opacity='.7'/>"+
     "<ellipse cx='228' cy='53' rx='17' ry='34' fill='none' stroke='var(--pixel)'/>"+
-    "<text x='206' y='101' text-anchor='middle' class='schema-blocklabel'>Optique</text>"+
+    "<text x='206' y='101' text-anchor='middle' class='schema-blocklabel'>"+tx("Optique")+"</text>"+
   "</g>"+
 
   "<path d='M297,53 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
@@ -874,7 +877,7 @@ function renderSchema(){
   "<g class='"+cls("detecteur")+"' onclick=\"selectBlock('detecteur')\">"+
     "<rect class='schema-iconframe' x='379' y='19' width='80' height='68' rx='14'/>"+
     "<rect class='schema-glow' x='395' y='33' width='48' height='40' rx='6' fill='url(#chipGrad)' filter='url(#softGlow)'/>"+
-    "<text x='419' y='101' text-anchor='middle' class='schema-blocklabel'>Détecteur</text>"+
+    "<text x='419' y='101' text-anchor='middle' class='schema-blocklabel'>"+tx("Détecteur")+"</text>"+
   "</g>"+
 
   "<path d='M510,53 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
@@ -895,7 +898,7 @@ function renderSchema(){
       "<line x1='649' y1='46' x2='657' y2='46'/><line x1='649' y1='53' x2='657' y2='53'/>"+
       "<line x1='649' y1='60' x2='657' y2='60'/>"+
     "</g>"+
-    "<text x='631' y='101' text-anchor='middle' class='schema-blocklabel'>Électronique</text>"+
+    "<text x='631' y='101' text-anchor='middle' class='schema-blocklabel'>"+tx("Électronique")+"</text>"+
   "</g>"+
 
   "<path d='M723,53 h30 m-9,-9 l9,9 -9,9' fill='none' stroke='var(--pixel)' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'/>"+
@@ -924,8 +927,8 @@ function renderPanel(){
   var block = currentBlock();
   if(!block){ panelEl.innerHTML = ""; return; }
   var mention = block.fields.filter(function(f){ return f.mention; })
-    .map(function(f){ return "<span class='typebadge' title='"+f.label+"'>"+f.options[0]+"</span>"; }).join("");
-  var head = "<h2 style='margin-bottom:16px'>"+block.label+mention+"</h2>";
+    .map(function(f){ return "<span class='typebadge' title='"+txa(f.label)+"'>"+f.options[0]+"</span>"; }).join("");
+  var head = "<h2 style='margin-bottom:16px'>"+tx(block.label)+mention+"</h2>";
   var fieldsHtml = "";
   var advancedHtml = "";
   var advancedFilled = false;
@@ -938,17 +941,17 @@ function renderPanel(){
     var placeholder = f.placeholder;
     if(f.k === "ESUP") placeholder = (Number(state.values.NSUP) > 0) ? "obligatoire" : "0 (défaut)";
     if(f.requiredIf) placeholder = (Number(state.values[f.requiredIf]) > 0) ? "obligatoire" : "0 (défaut)";
-    var placeholderAttr = placeholder ? " placeholder='"+placeholder+"'" : "";
+    var placeholderAttr = placeholder ? " placeholder='"+txa(placeholder)+"'" : "";   // affiché traduit ; la valeur de référence reste en français
     var control = f.type === "select"
       ? "<select id='f-"+f.k+"'>" + f.options.map(function(opt){
           // option = chaîne simple, ou {v, label} quand le libellé diffère de la valeur
           var ov = (typeof opt === "object") ? opt.v : opt;
-          var ol = (typeof opt === "object") ? opt.label : opt;
+          var ol = (typeof opt === "object") ? tx(opt.label) : txq(opt);
           return "<option value='"+ov+"'"+(String(v) === String(ov) ? " selected" : "")+">"+ol+"</option>"; }).join("") + "</select>"
       : "<input type='text' inputmode='"+(fieldRule(f).integer ? "numeric" : "decimal")+"' autocomplete='off' data-num"+
           (fieldRule(f).integer ? " data-int" : "")+(fieldRule(f).signed ? " data-neg" : "")+" id='f-"+f.k+"'"+valueAttr+placeholderAttr+">";
-    var helpBtn = f.help ? "<button type='button' class='helpbtn' data-help='"+f.k+"' aria-label='Aide'>?</button>" : "";
-    var helpTxt = f.help ? "<p class='fieldhelp' id='h-"+f.k+"' hidden>"+f.help+"</p>" : "";
+    var helpBtn = f.help ? "<button type='button' class='helpbtn' data-help='"+f.k+"' aria-label='"+txa("Aide")+"'>?</button>" : "";
+    var helpTxt = f.help ? "<p class='fieldhelp' id='h-"+f.k+"' hidden>"+tx(f.help)+"</p>" : "";
     // Champ obligatoire seulement si un autre est non nul (ex. temps de
     // référence DSNU) : rendu mais masqué tant que cet autre champ est vide
     // ou nul, et révélé à la frappe sans redessiner le panneau.
@@ -960,17 +963,17 @@ function renderPanel(){
     var curveMode = SPECTRAL_LOCKS[f.k] ? spectralMode(f.k) : null;
     var modeSeg = curveMode
       ? "<div><div class='modeseg' data-mode-for='"+f.k+"'>"+
-          "<button type='button' data-m='constant'"+(curveMode === "constant" ? " class='on'" : "")+">Valeur constante</button>"+
-          "<button type='button' data-m='curve'"+(curveMode === "curve" ? " class='on'" : "")+">Courbe</button></div></div>"
+          "<button type='button' data-m='constant'"+(curveMode === "constant" ? " class='on'" : "")+">"+tx("Valeur constante")+"</button>"+
+          "<button type='button' data-m='curve'"+(curveMode === "curve" ? " class='on'" : "")+">"+tx("Courbe")+"</button></div></div>"
       : "";
     var inputRow = curveMode === "curve"
-      ? "<p class='lockhint' style='margin-top:0'>Courbe à saisir dans la section sous le schéma.</p>"
-      : (f.type === "select" ? control : "<div class='row'>"+control+"<span class='unit'>"+(f.unit || "")+"</span></div>")+
+      ? "<p class='lockhint' style='margin-top:0'>"+tx("Courbe à saisir dans la section sous le schéma.")+"</p>"
+      : (f.type === "select" ? control : "<div class='row'>"+control+"<span class='unit'>"+txq(f.unit || "")+"</span></div>")+
         (f.type === "select" ? "" :
           "<p class='rangehint' id='range-"+f.k+"' hidden></p>"+
           "<p class='oddhint' id='odd-"+f.k+"' hidden></p>"+
-          (fieldRule(f).enabledIf ? "<p class='lockhint' id='en-"+f.k+"' hidden>Disponible avec une obscuration centrale.</p>" : ""));
-    var oneField = "<div class='field' id='w-"+f.k+"'"+hiddenAttr+"><div class='labrow'><label for='f-"+f.k+"'>"+f.label+"</label>"+helpBtn+"</div>"+
+          (fieldRule(f).enabledIf ? "<p class='lockhint' id='en-"+f.k+"' hidden>"+tx("Disponible avec une obscuration centrale.")+"</p>" : ""));
+    var oneField = "<div class='field' id='w-"+f.k+"'"+hiddenAttr+"><div class='labrow'><label for='f-"+f.k+"'>"+tx(f.label)+"</label>"+helpBtn+"</div>"+
       modeSeg+inputRow+
       (f.k === "I" ? "<p class='lockhint' id='gsd-I' hidden></p>" : "")+
       helpTxt+
@@ -991,7 +994,7 @@ function renderPanel(){
   // Sections repliées (04/10/2026) : ouvertes d'office si elles contiennent
   // déjà une valeur, pour ne jamais cacher une saisie existante.
   var advancedDetails = advancedHtml
-    ? "<details class='advanced'"+(advancedFilled ? " open" : "")+"><summary>Paramètres avancés</summary><div class='grid2'>"+advancedHtml+"</div></details>"
+    ? "<details class='advanced'"+(advancedFilled ? " open" : "")+"><summary>"+tx("Paramètres avancés")+"</summary><div class='grid2'>"+advancedHtml+"</div></details>"
     : "";
   var belowHtml = "";
   if(block.id === "detecteur"){
@@ -999,14 +1002,14 @@ function renderPanel(){
     // sous le schéma, en pleine largeur, repliés par défaut.
     // 04/10/2026 — les paramètres avancés passent avant la courbe QE.
     belowHtml = advancedDetails+(spectralActive("QE")
-      ? "<details class='advanced' id='qeDetails' open><summary>Courbe spectrale du rendement</summary>"+
+      ? "<details class='advanced' id='qeDetails' open><summary>"+tx("Courbe spectrale du rendement")+"</summary>"+
         renderQeSpectralHtml()+"</details>"
       : "");
   } else if(block.id === "optique"){
     // Optique : courbe de transmission spectrale, même présentation que la
     // courbe QE du bloc Détecteur.
     belowHtml = spectralActive("T")
-      ? "<details class='advanced' id='tDetails' open><summary>Courbe spectrale de la transmission</summary>"+
+      ? "<details class='advanced' id='tDetails' open><summary>"+tx("Courbe spectrale de la transmission")+"</summary>"+
         renderTSpectralHtml()+"</details>"
       : "";
     fieldsHtml += advancedDetails;
@@ -1020,7 +1023,7 @@ function renderPanel(){
   var html = head;
   if(block.id === "optique" || block.id === "detecteur" || block.id === "electronique"){
     var svgId = block.id === "optique" ? "opticsGeoSvg" : (block.id === "detecteur" ? "detectorGeoSvg" : "electronicsGeoSvg");
-    var viewLabel = block.id === "optique" ? "Vue de face" : (block.id === "detecteur" ? "Vue de côté" : "Courbe de transfert");
+    var viewLabel = tx(block.id === "optique" ? "Vue de face" : (block.id === "detecteur" ? "Vue de côté" : "Courbe de transfert"));
     html += "<div class='optique-grid'>"+
       "<div class='optique-geo-col'>"+
         "<div id='"+svgId+"'></div>"+
@@ -1073,13 +1076,13 @@ function renderPanel(){
       // cours de frappe sur NSUP.
       if(f.k === "NSUP"){
         var esupEl = document.getElementById("f-ESUP");
-        if(esupEl) esupEl.placeholder = (Number(state.values.NSUP) > 0) ? "obligatoire" : "0 (défaut)";
+        if(esupEl) esupEl.placeholder = tx((Number(state.values.NSUP) > 0) ? "obligatoire" : "0 (défaut)");
       }
       syncBlockHints(block); // grisé, rouge, orange : pour tout le bloc
       // Même principe pour le temps de référence, obligatoire dès que la DSNU est non nulle.
       if(f.k === "dsnu_1288"){
         var trefEl = document.getElementById("f-dsnu_T_ref");
-        if(trefEl) trefEl.placeholder = (Number(state.values.dsnu_1288) > 0) ? "obligatoire" : "0 (défaut)";
+        if(trefEl) trefEl.placeholder = tx((Number(state.values.dsnu_1288) > 0) ? "obligatoire" : "0 (défaut)");
         var trefWrap = document.getElementById("w-dsnu_T_ref");
         if(trefWrap) trefWrap.hidden = !(Number(state.values.dsnu_1288) > 0);
       }
@@ -1109,11 +1112,11 @@ function renderPanel(){
   var blockIdx = instrumentNode.blocks.indexOf(block);
   var nextBlock = instrumentNode.blocks[blockIdx + 1];
   var nextBtnHtml = nextBlock
-    ? "<button class='btn next' type='button' id='btnNext'>Suivant : "+nextBlock.label+"</button>"
+    ? "<button class='btn next' type='button' id='btnNext'>"+tx("Suivant : {label}", { label: tx(nextBlock.label) })+"</button>"
     : "";
-  actions.innerHTML = "<button class='btn ghost' type='button' id='btnReset'>Réinitialiser ce bloc</button>"+
+  actions.innerHTML = "<button class='btn ghost' type='button' id='btnReset'>"+tx("Réinitialiser ce bloc")+"</button>"+
     "<div class='rightbtns'>"+nextBtnHtml+
-    "<button class='btn primary' type='button' id='btnSave'>Enregistrer l'instrument</button></div>";
+    "<button class='btn primary' type='button' id='btnSave'>"+tx("Enregistrer l'instrument")+"</button></div>";
   panelEl.appendChild(actions);
   document.getElementById("btnReset").addEventListener("click", function(){
     block.fields.forEach(function(f){
@@ -1174,30 +1177,30 @@ function renderWfeCasesHtml(){
       return "<div class='caserow' data-case-id='"+c.id+"'>"+
         "<span class='cname'>"+c.name+"</span>"+
         "<span class='cfile'>RMS "+c.rms+" nm</span>"+
-        "<button type='button' class='cdel' data-del-case='"+c.id+"' aria-label='Supprimer ce cas'>×</button>"+
+        "<button type='button' class='cdel' data-del-case='"+c.id+"' aria-label='"+txa("Supprimer ce cas")+"'>×</button>"+
       "</div>";
     }
     var alignOpts = ["center", "left", "right"].map(function(a){
-      return "<option value='"+a+"'"+(c.align === a ? " selected" : "")+">"+WFE_ALIGN_LABELS[a]+"</option>";
+      return "<option value='"+a+"'"+(c.align === a ? " selected" : "")+">"+tx(WFE_ALIGN_LABELS[a])+"</option>";
     }).join("");
     var convOpts = ["osa", "noll", "fringe"].map(function(v){
       return "<option value='"+v+"'"+((c.convention||"osa") === v ? " selected" : "")+">"+WFE_CONVENTION_LABELS[v]+"</option>";
     }).join("");
     return "<div class='caserow' data-case-id='"+c.id+"'>"+
       "<span class='cname'>"+c.name+"</span>"+
-      "<span class='cfile'>"+(c.rowCount != null ? c.rowCount + " lignes · " + c.filename : "—")+"</span>"+
-      "<select class='calign' data-conv-case='"+c.id+"' title='Convention Zernike'>"+convOpts+"</select>"+
+      "<span class='cfile'>"+(c.rowCount != null ? tx("{n} lignes · {file}", { n: c.rowCount, file: c.filename }) : "—")+"</span>"+
+      "<select class='calign' data-conv-case='"+c.id+"' title='"+txa("Convention Zernike")+"'>"+convOpts+"</select>"+
       "<select class='calign' data-align-case='"+c.id+"'>"+alignOpts+"</select>"+
-      "<button type='button' class='cdel' data-del-case='"+c.id+"' aria-label='Supprimer ce cas'>×</button>"+
+      "<button type='button' class='cdel' data-del-case='"+c.id+"' aria-label='"+txa("Supprimer ce cas")+"'>×</button>"+
     "</div>";
   }).join("");
   return "<div class='wfecases'>"+
-    "<div class='wfehead'><label>Cas WFE (thermique, etc.)</label>"+
+    "<div class='wfehead'><label>"+tx("Cas WFE (thermique, etc.)")+"</label>"+
     "<div class='wfeaddbtns'>"+
-      "<button type='button' class='addcasebtn' id='btnAddWfeRms'>+ Cas RMS</button>"+
-      "<button type='button' class='addcasebtn' id='btnAddWfeFile'>+ Cas fichier</button>"+
+      "<button type='button' class='addcasebtn' id='btnAddWfeRms'>"+tx("+ Cas RMS")+"</button>"+
+      "<button type='button' class='addcasebtn' id='btnAddWfeFile'>"+tx("+ Cas fichier")+"</button>"+
     "</div></div>"+
-    (cases.length ? rows : "<p class='empty'>Aucun cas WFE défini.</p>")+
+    (cases.length ? rows : "<p class='empty'>"+tx("Aucun cas WFE défini.")+"</p>")+
     "<input type='file' id='wfeCaseFileInput' accept='.csv,text/csv' style='display:none'>"+
   "</div>"+
   renderZernikeDetailHtml(cases);
@@ -1240,15 +1243,15 @@ function parsePerfoCsvRows(text){
 function renderZernikeDetailHtml(cases){
   var fileCases = cases.filter(function(c){ return c.mode === "file"; });
   return "<div class='wfecases zdetail'>"+
-    "<div class='wfehead'><label>Détail Zernike</label></div>"+
-    "<p class='wfesub'>Front d'onde combiné (fausses couleurs) d'une colonne donnée, pour un cas WFE fichier chargé ci-dessus.</p>"+
+    "<div class='wfehead'><label>"+tx("Détail Zernike")+"</label></div>"+
+    "<p class='wfesub'>"+tx("Front d'onde combiné (fausses couleurs) d'une colonne donnée, pour un cas WFE fichier chargé ci-dessus.")+"</p>"+
     (fileCases.length
       ? "<div class='zpickrow'>"+
           "<select id='zernCaseSel'>"+fileCases.map(function(c){ return "<option value='"+c.id+"'>"+c.name+"</option>"; }).join("")+"</select>"+
           "<select id='zernColSel'></select>"+
         "</div>"+
         "<div id='zernOut'></div>"
-      : "<p class='empty'>Chargez un cas WFE « fichier » ci-dessus pour voir le détail (un cas RMS n'a pas de coefficients détaillés).</p>")+
+      : "<p class='empty'>"+tx("Chargez un cas WFE « fichier » ci-dessus pour voir le détail (un cas RMS n'a pas de coefficients détaillés).")+"</p>")+
   "</div>";
 }
 
@@ -1400,14 +1403,14 @@ function renderZernikeDetail(){
   var rows = parsePerfoCsvRows(selectedCase.csv);
   var prevCol = colSel.value;
   colSel.innerHTML = rows.map(function(r, i){
-    return "<option value='"+i+"'>"+(r.band ? "Bande "+r.band+" — " : "")+"Colonne "+r.column+"</option>";
+    return "<option value='"+i+"'>"+(r.band ? tx("Bande {b} — ", { b: tBand(r.band) }) : "")+tx("Colonne {c}", { c: r.column })+"</option>";
   }).join("") || "<option value=''>—</option>";
   if(rows.some(function(r, i){ return String(i) === prevCol; })) colSel.value = prevCol;
 
   var idx = Number(colSel.value) || 0;
   var row = rows[idx];
   if(!row){
-    out.innerHTML = "<p class='empty'>CSV illisible ou vide.</p>";
+    out.innerHTML = "<p class='empty'>"+tx("CSV illisible ou vide.")+"</p>";
     return;
   }
   var convention = selectedCase.convention || "osa";
@@ -1422,7 +1425,7 @@ function renderZernikeDetail(){
     .slice(0, 5);
   var termsHtml = ranked.map(function(e){
     var nm = zernikeName(e.k, convention);
-    var name = nm ? " ("+nm+")" : "";
+    var name = nm ? " ("+tx(nm)+")" : "";
     return "<div class='zterm'><span class='zk'>Z"+e.k+name+"</span><span class='zv'>"+e.v.toFixed(4)+"</span></div>";
   }).join("");
 
@@ -1436,7 +1439,7 @@ function renderZernikeDetail(){
   var canvas = document.getElementById("zernCanvas");
   var stats = drawWavefrontMap(canvas, row.z, convention);
   document.getElementById("zmapStats").innerHTML =
-    "P-V : <b>"+stats.pv.toFixed(3)+" nm</b><br>RMS : <b>"+stats.rms.toFixed(3)+" nm</b>";
+    tx("P-V : ")+"<b>"+stats.pv.toFixed(3)+" nm</b><br>"+tx("RMS : ")+"<b>"+stats.rms.toFixed(3)+" nm</b>";
 }
 
 // Validation légère — on ne parse pas vraiment le CSV (le serveur le fait
@@ -1459,14 +1462,14 @@ function wireWfeCasesUI(){
   if(!addRmsBtn || !addFileBtn || !fileInput) return;
 
   addRmsBtn.addEventListener("click", function(){
-    var name = prompt("Nom du cas WFE (ex. « Cas chaud », « Cas froid en orbite ») :");
+    var name = prompt(tx("Nom du cas WFE (ex. « Cas chaud », « Cas froid en orbite ») :"));
     if(name === null || !name.trim()) return;
-    var rmsStr = prompt("WFE RMS pour ce cas (nm) :");
+    var rmsStr = prompt(tx("WFE RMS pour ce cas (nm) :"));
     if(rmsStr === null) return;
     // 04/10/2026 — chiffres uniquement, avec un point ou une virgule
     // décimale et un signe moins en tête autorisé ; rien d'autre.
     var rmsClean = String(rmsStr).trim().replace(",", ".");
-    if(!/^-?\d+(\.\d+)?$/.test(rmsClean)){ alert("Valeur invalide : un nombre est attendu (chiffres, signe moins autorisé)."); return; }
+    if(!/^-?\d+(\.\d+)?$/.test(rmsClean)){ alert(tx("Valeur invalide : un nombre est attendu (chiffres, signe moins autorisé).")); return; }
     var rms = Number(rmsClean);
     if(!state.values.wfeCases) state.values.wfeCases = [];
     state.values.wfeCases.push({
@@ -1482,7 +1485,7 @@ function wireWfeCasesUI(){
   var pendingName = null;
 
   addFileBtn.addEventListener("click", function(){
-    var name = prompt("Nom du cas WFE (ex. « Cas chaud », « Cas froid en orbite ») :");
+    var name = prompt(tx("Nom du cas WFE (ex. « Cas chaud », « Cas froid en orbite ») :"));
     if(name === null || !name.trim()) return;
     pendingName = name.trim();
     fileInput.value = "";
@@ -1496,7 +1499,7 @@ function wireWfeCasesUI(){
     reader.onload = function(){
       var meta = validateWfeCsv(reader.result);
       if(!meta){
-        alert("Fichier illisible : CSV attendu au format \"Detector_ID;Band;Column;Z1;...;Z37\" (séparateur point-virgule).");
+        alert(tx("Fichier illisible : CSV attendu au format « Detector_ID;Band;Column;Z1;...;Z37 » (séparateur point-virgule)."));
         return;
       }
       if(!state.values.wfeCases) state.values.wfeCases = [];
@@ -1731,11 +1734,11 @@ function renderElectronicsGeometry(){
   if(mode === "detailed"){
     chain += box(80, 78, "CVF", true) + arrow(162) + box(178, 78, "PGA", true) + arrow(260) + box(276, 78, "ADC", true);
   } else if(mode === "datasheet"){
-    chain += box(80, 274, "gain global CWF", true);
+    chain += box(80, 274, tx("gain global CWF"), true);
   } else if(mode === "full_scale"){
-    chain += box(80, 274, "pleine échelle = full well", true);
+    chain += box(80, 274, tx("pleine échelle = full well"), true);
   } else {
-    chain += box(80, 274, "mode à choisir", false);
+    chain += box(80, 274, tx("mode à choisir"), false);
   }
   chain += arrow(358) + box(374, 52, "DN", true);
 
@@ -1752,11 +1755,11 @@ function renderElectronicsGeometry(){
   if(!(bits >= 1 && bits <= 32) || !(fw > 0) || !lsb){
     // Pas assez d'informations pour tracer : on dit ce qui manque.
     var need = [];
-    if(!(bits >= 1 && bits <= 32)) need.push("la résolution ADC");
-    if(!(fw > 0)) need.push("le full well");
-    if(!mode) need.push("le mode");
-    else if(!lsb && bits >= 1 && fw > 0) need.push("les champs du mode");
-    line1 = "Pour tracer la courbe, renseigner";
+    if(!(bits >= 1 && bits <= 32)) need.push(tx("la résolution ADC"));
+    if(!(fw > 0)) need.push(tx("le full well"));
+    if(!mode) need.push(tx("le mode"));
+    else if(!lsb && bits >= 1 && fw > 0) need.push(tx("les champs du mode"));
+    line1 = tx("Pour tracer la courbe, renseigner");
     line2 = need.join(", ") + ".";
   } else {
     var dnMax = Math.pow(2, bits) - 1;
@@ -1769,7 +1772,7 @@ function renderElectronicsGeometry(){
     // Plafond de l'ADC et limite du full well
     body +=
       "<line x1='"+x0+"' y1='"+Y(dnMax).toFixed(1)+"' x2='"+x1+"' y2='"+Y(dnMax).toFixed(1)+"' stroke='var(--photon)' stroke-width='1.2' stroke-dasharray='5 4'/>"+
-      "<text x='"+x1+"' y='"+(Y(dnMax)-6).toFixed(1)+"' text-anchor='end' font-family='var(--mono)' font-size='12' fill='var(--photon)'>pleine échelle ADC</text>"+
+      "<text x='"+x1+"' y='"+(Y(dnMax)-6).toFixed(1)+"' text-anchor='end' font-family='var(--mono)' font-size='12' fill='var(--photon)'>"+tx("pleine échelle ADC")+"</text>"+
       "<text x='"+(x0-8)+"' y='"+(Y(dnMax)+4).toFixed(1)+"' text-anchor='end' font-family='var(--mono)' font-size='12' fill='var(--muted-2)'>"+fmt(dnMax)+"</text>"+
       "<line x1='"+X(fw).toFixed(1)+"' y1='"+(yTop-14)+"' x2='"+X(fw).toFixed(1)+"' y2='"+yBot+"' stroke='var(--muted)' stroke-width='1.2' stroke-dasharray='5 4'/>"+
       "<text x='"+X(fw).toFixed(1)+"' y='"+(yBot+15)+"' text-anchor='middle' font-family='var(--mono)' font-size='12' fill='var(--muted-2)'>"+fmt(fw)+"</text>"+
@@ -1787,14 +1790,14 @@ function renderElectronicsGeometry(){
     }
     // Lecture chiffrée
     line1 = "1 DN = " + fmt(lsb) + " e⁻";
-    if(rn > 0) line1 += "  ·  bruit de lecture = " + fmt(rn / lsb) + " DN";
+    if(rn > 0) line1 += "  ·  " + tx("bruit de lecture = {x} DN", { x: fmt(rn / lsb) });
     var ratio = eAdc / fw;
     if(Math.abs(ratio - 1) < 0.02){
-      line2 = "Pleine échelle ADC au full well."; line2Color = "var(--ok)";
+      line2 = tx("Pleine échelle ADC au full well."); line2Color = "var(--ok)";
     } else if(ratio < 1){
-      line2 = "L'ADC sature à " + fmt(eAdc) + " e⁻, " + Math.round(ratio * 100) + " % du full well."; line2Color = "var(--alert)";
+      line2 = tx("L'ADC sature à {e} e⁻, {p} % du full well.", { e: fmt(eAdc), p: Math.round(ratio * 100) }); line2Color = "var(--alert)";
     } else {
-      line2 = "Full well atteint à " + fmt(dnAtFw) + " DN, " + Math.round(dnAtFw / dnMax * 100) + " % des codes."; line2Color = "var(--photon)";
+      line2 = tx("Full well atteint à {dn} DN, {p} % des codes.", { dn: fmt(dnAtFw), p: Math.round(dnAtFw / dnMax * 100) }); line2Color = "var(--photon)";
     }
   }
   var foot =
@@ -1843,7 +1846,7 @@ function renderDetectorGeometry(){
       "<path d='M"+lx+","+(pixTop-6)+" l-4,-7 h8 z' fill='var(--photon)' stroke='none'/>";
   }
   light += "</g>"+
-    "<text x='"+cx+"' y='98' text-anchor='middle' class='geo-dim'>Lumière incidente</text>";
+    "<text x='"+cx+"' y='98' text-anchor='middle' class='geo-dim'>"+tx("Lumière incidente")+"</text>";
 
   // ---- Cotation de la largeur d'un pixel (le 4e, à peu près centré) ----
   var dimIdx = Math.floor(nPix / 2);
@@ -1897,16 +1900,16 @@ function renderTSpectralHtml(){
     return "<div class='qerow'>"+
       "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qewl tswl"+(st.dup[i] ? " invalid" : (st.odd[i] ? " odd" : ""))+"' data-t-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
       "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qeval tsval"+(p.t !== "" && !inUnitRange(p.t) ? " invalid" : "")+"' data-t-idx='"+i+"' value='"+p.t+"' min='0' max='1' placeholder='Transmission (0-1)'>"+
-      "<button type='button' class='qedel' data-t-del='"+i+"' aria-label='Supprimer ce point'>×</button>"+
+      "<button type='button' class='qedel' data-t-del='"+i+"' aria-label='"+txa("Supprimer ce point")+"'>×</button>"+
     "</div>";
   }).join("");
   return "<div class='wfecases qespectral'>"+
-    "<div class='wfehead'><label>Points de la courbe</label>"+
-    "<button type='button' class='addcasebtn' id='btnAddTPoint'>+ Ajouter un point</button></div>"+
-    "<p class='wfesub'>Un point par longueur d'onde, transmission en fraction (0-1, pas en %). La courbe doit couvrir les bandes : en dehors, la valeur du point le plus proche est gardée.</p>"+
+    "<div class='wfehead'><label>"+tx("Points de la courbe")+"</label>"+
+    "<button type='button' class='addcasebtn' id='btnAddTPoint'>"+tx("+ Ajouter un point")+"</button></div>"+
+    "<p class='wfesub'>"+tx("Un point par longueur d'onde, transmission en fraction (0-1, pas en %). La courbe doit couvrir les bandes : en dehors, la valeur du point le plus proche est gardée.")+"</p>"+
     "<div class='spec-cols'>"+
       "<div class='spec-rows'><div class='spec-head'><span>λ (nm)</span><span>Transmission (0-1)</span><span class='gap'></span></div>"+
-        "<div id='tRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div>"+
+        "<div id='tRows'>"+(pts.length ? rows : "<p class='empty'>"+tx("Aucun point défini.")+"</p>")+"</div>"+
         "<p class='rangehint' id='tRangeHint'"+(curveHintText(st) ? "" : " hidden")+">"+curveHintText(st)+"</p>"+
         "<p class='oddhint' id='tOddHint'"+(curveOddText(st) ? "" : " hidden")+">"+curveOddText(st)+"</p></div>"+
       "<div class='spec-chart' id='tChart'></div>"+
@@ -1952,16 +1955,16 @@ function renderQeSpectralHtml(){
     return "<div class='qerow' data-qe-idx='"+i+"'>"+
       "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qewl"+(st.dup[i] ? " invalid" : (st.odd[i] ? " odd" : ""))+"' data-qe-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
       "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qeval"+(p.qe !== "" && !inUnitRange(p.qe) ? " invalid" : "")+"' data-qe-idx='"+i+"' value='"+p.qe+"' min='0' max='1' placeholder='QE (0-1)'>"+
-      "<button type='button' class='qedel' data-qe-del='"+i+"' aria-label='Supprimer ce point'>×</button>"+
+      "<button type='button' class='qedel' data-qe-del='"+i+"' aria-label='"+txa("Supprimer ce point")+"'>×</button>"+
     "</div>";
   }).join("");
   return "<div class='wfecases qespectral'>"+
-    "<div class='wfehead'><label>Points de la courbe</label>"+
-    "<button type='button' class='addcasebtn' id='btnAddQePoint'>+ Ajouter un point</button></div>"+
-    "<p class='wfesub'>Un point par longueur d'onde, QE en fraction (0-1, pas en %).</p>"+
+    "<div class='wfehead'><label>"+tx("Points de la courbe")+"</label>"+
+    "<button type='button' class='addcasebtn' id='btnAddQePoint'>"+tx("+ Ajouter un point")+"</button></div>"+
+    "<p class='wfesub'>"+tx("Un point par longueur d'onde, QE en fraction (0-1, pas en %).")+"</p>"+
     "<div class='spec-cols'>"+
       "<div class='spec-rows'><div class='spec-head'><span>λ (nm)</span><span>QE (0-1)</span><span class='gap'></span></div>"+
-        "<div id='qeRows'>"+(pts.length ? rows : "<p class='empty'>Aucun point défini.</p>")+"</div>"+
+        "<div id='qeRows'>"+(pts.length ? rows : "<p class='empty'>"+tx("Aucun point défini.")+"</p>")+"</div>"+
         "<p class='rangehint' id='qeRangeHint'"+(curveHintText(st) ? "" : " hidden")+">"+curveHintText(st)+"</p>"+
         "<p class='oddhint' id='qeOddHint'"+(curveOddText(st) ? "" : " hidden")+">"+curveOddText(st)+"</p></div>"+
       "<div class='spec-chart' id='qeChart'></div>"+
@@ -1992,7 +1995,7 @@ function renderSpectralChart(hostId, rawPts, valKey, gradId){
   var pts = curveStatus(rawPts, valKey).valid
     .sort(function(a,b){ return a.wl - b.wl; });
   if(pts.length < 2){
-    host.innerHTML = "<p class='empty'>Au moins 2 points valides pour afficher la courbe.</p>";
+    host.innerHTML = "<p class='empty'>"+tx("Au moins 2 points valides pour afficher la courbe.")+"</p>";
     return;
   }
   // 04/10/2026 — tracé dans la troisième colonne, plus étroite : cadre
@@ -2109,7 +2112,7 @@ async function saveToSupabase(){
     var errHint = document.createElement("p");
     errHint.className = "savehint";
     errHint.style.color = "var(--alert)";
-    errHint.textContent = "Donnez un nom à l'instrument avant de l'enregistrer.";
+    errHint.textContent = tx("Donnez un nom à l'instrument avant de l'enregistrer.");
     panelEl.appendChild(errHint);
     document.getElementById("instName").focus();
     return;
@@ -2120,7 +2123,7 @@ async function saveToSupabase(){
     var invHint = document.createElement("p");
     invHint.className = "savehint";
     invHint.style.color = "var(--alert)";
-    invHint.textContent = "À corriger avant d'enregistrer : " + invalid.join(" ; ") + ".";
+    invHint.textContent = tx("À corriger avant d'enregistrer : {list}.", { list: invalid.join(" ; ") });
     panelEl.appendChild(invHint);
     return;
   }
@@ -2134,7 +2137,7 @@ async function saveToSupabase(){
   btn.disabled = true;
   var hint = document.createElement("p");
   hint.className = "savehint";
-  hint.textContent = "Enregistrement…";
+  hint.textContent = tx("Enregistrement…");
   panelEl.appendChild(hint);
 
   var session = await requireAuth();
@@ -2168,8 +2171,8 @@ async function saveToSupabase(){
     // limite de 20 résultats sauvegardés côté simulations.html) — affiché
     // tel quel, sans le préfixe générique, pour rester une info actionnable.
     hint.textContent = result.error.message.indexOf("Limite de") === 0
-      ? result.error.message
-      : "Échec de l'enregistrement : " + result.error.message;
+      ? txq(result.error.message)   // message du déclencheur de la base, traduit s'il est connu
+      : tx("Échec de l'enregistrement : {msg}", { msg: result.error.message });
     return;
   }
 
@@ -2191,12 +2194,12 @@ async function saveToSupabase(){
   // avant le retour, sinon il ne serait jamais lu.
   if(missing.length){
     hint.style.color = "var(--photon)";
-    hint.textContent = "Enregistré comme brouillon. Il manque : " + missing.join(", ") + ".";
+    hint.textContent = tx("Enregistré comme brouillon. Il manque : {list}.", { list: missing.map(tField).join(", ") });   // « missing » reste en français dans la base
     setTimeout(function(){ window.location.href = "espace-personnel.html"; }, 3000);
     return;
   }
   hint.style.color = "var(--ok)";
-  hint.textContent = "Enregistré.";
+  hint.textContent = tx("Enregistré.");
   if(returnTarget === "simulations" && result.data){
     window.location.href = "simulations.html?newInstrument=" + result.data.id;
     return;
@@ -2348,7 +2351,7 @@ document.getElementById("fileInput").addEventListener("change", function(e){
       // ajouter (avant, charger un second fichier mélangeait deux
       // instruments). Confirmation si le formulaire contient déjà quelque
       // chose. L'instrument ouvert reste le même : seul son contenu change.
-      if(hasAnyEntry() && !confirm("Charger ce fichier remplace toute la saisie en cours. Continuer ?")) return;
+      if(hasAnyEntry() && !confirm(tx("Charger ce fichier remplace toute la saisie en cours. Continuer ?"))) return;
       state.values = {};
 
       // Format réel du paramFile EO_Toolbox (imbriqué, Telescope/Detector/...)
@@ -2410,7 +2413,7 @@ document.getElementById("fileInput").addEventListener("change", function(e){
       persist();
       updateProgress(); renderChain(); renderPanel();
     }catch(err){
-      alert("Fichier illisible : JSON attendu.");
+      alert(tx("Fichier illisible : JSON attendu."));
     }
   };
   reader.readAsText(file);
