@@ -391,6 +391,12 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   .step-line{margin:0 6px;min-width:8px}
   .scenegrid{grid-template-columns:1fr 1fr}
 }
+/* vignette d'instrument : pupille vue de face */
+.instoption .thumb svg, .sumfilled .mini.pupil svg{display:block;width:100%;height:100%}
+.instoption .thumb.example{border-color:rgba(245,172,87,.55)}
+.sumfilled .mini.pupil{background:linear-gradient(135deg,#182734 0%,#0E161E 100%);border:1px solid var(--line-soft);width:44px;height:44px;border-radius:4px}
+.exbadge{margin-left:8px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--photon);
+  border:1px solid rgba(245,172,87,.5);border-radius:3px;padding:0 6px}
 </style>
 </head>
 <body>
@@ -791,6 +797,42 @@ async function loadInstruments(){
   updateSummary();
 }
 
+// 06/10/2026 — vignette d'un instrument : sa pupille vue de face, dessinée à
+// partir de ses paramètres (diamètre, obscuration centrale, supports du
+// miroir secondaire). Deux instruments différents ont donc deux vignettes
+// différentes. L'instrument d'exemple fourni aux nouveaux comptes est dessiné
+// en orange pour se distinguer.
+function isExample(inst){
+  var c = (inst && inst.config) || {};
+  return c._example === true ||
+    /^(Exemple : instrument de référence|Example: reference instrument)$/.test((inst && inst.name) || "");
+}
+function pupilThumb(inst){
+  var c = (inst && inst.config) || {};
+  var D = Number(c.D), E = Number(c.E) || 0, n = Math.round(Number(c.NSUP)) || 0, w = Number(c.ESUP) || 0;
+  var col = isExample(inst) ? "#F5AC57" : "#5FDCD0";
+  var R = 17, cx = 22, cy = 22;
+  var svg = "<svg viewBox='0 0 44 44' aria-hidden='true'>";
+  if(!(D > 0)){
+    // diamètre non renseigné (brouillon) : simple contour en pointillés
+    return svg + "<circle cx='22' cy='22' r='" + R + "' fill='none' stroke='" + col + "' stroke-opacity='.45' stroke-width='1.2' stroke-dasharray='3 3'/></svg>";
+  }
+  var r = Math.max(0, Math.min(0.92, E / D)) * R;
+  svg += "<circle cx='" + cx + "' cy='" + cy + "' r='" + R + "' fill='" + col + "' fill-opacity='.30' stroke='" + col + "' stroke-width='1.2'/>";
+  if(n > 0 && r > 0){
+    // supports : traits de l'obscuration au bord de la pupille, à l'échelle (au moins 1 px pour rester visibles)
+    var sw = Math.max(1, (w / D) * 2 * R);
+    for(var k = 0; k < Math.min(n, 12); k++){
+      var a = -Math.PI / 2 + k * 2 * Math.PI / n;
+      svg += "<line x1='" + (cx + r * Math.cos(a)).toFixed(2) + "' y1='" + (cy + r * Math.sin(a)).toFixed(2) +
+             "' x2='" + (cx + R * Math.cos(a)).toFixed(2) + "' y2='" + (cy + R * Math.sin(a)).toFixed(2) +
+             "' stroke='#0B1218' stroke-width='" + sw.toFixed(2) + "'/>";
+    }
+  }
+  if(r > 0) svg += "<circle cx='" + cx + "' cy='" + cy + "' r='" + r.toFixed(2) + "' fill='#0B1218' stroke='" + col + "' stroke-opacity='.6' stroke-width='.8'/>";
+  return svg + "</svg>";
+}
+
 function renderInstruments(){
   if(instruments.length === 0){
     instListEl.innerHTML = "<div class='empty-inst'>"+
@@ -801,6 +843,7 @@ function renderInstruments(){
   }
   instListEl.innerHTML = "";
   instruments.forEach(function(inst, i){
+    var exBadge = isExample(inst) ? "<span class='exbadge'>" + t("sim.inst.example") + "</span>" : "";
     var b = document.createElement("button");
     b.type = "button";
     if(isDraft(inst)){
@@ -808,7 +851,7 @@ function renderInstruments(){
       b.className = "instoption draft";
       b.title = miss.length ? t("inst.missing", { list: miss.map(tField).join(", ") }) : t("sim.inst.to_complete");
       b.innerHTML =
-        "<span class='thumb'></span>"+
+        "<span class='thumb'>" + pupilThumb(inst) + "</span>"+
         "<span><div class='name'>" + inst.name + "</div>"+
         "<div class='meta'><span class='draftbadge'>" + t("inst.badge.draft") + "</span>" +
           (miss.length ? t(miss.length > 1 ? "sim.inst.fields_many" : "sim.inst.fields_one", { n: miss.length }) : t("sim.inst.to_complete_short")) + "</div></span>"+
@@ -821,9 +864,9 @@ function renderInstruments(){
     }
     b.className = "instoption" + (i === selectedInstIdx ? " selected" : "");
     b.innerHTML =
-      "<span class='thumb'></span>"+
+      "<span class='thumb" + (isExample(inst) ? " example" : "") + "'>" + pupilThumb(inst) + "</span>"+
       "<span><div class='name'>" + inst.name + "</div>"+
-      "<div class='meta'>" + t("inst.type.multi") + "</div></span>"+
+      "<div class='meta'>" + t("inst.type.multi") + exBadge + "</div></span>"+
       "<span class='check'>✓</span>";
     b.addEventListener("click", function(){
       selectedInstIdx = i;
@@ -1059,7 +1102,7 @@ function updateSummary(){
 
   if(currentStep >= 2 && selectedInstIdx >= 0){
     document.getElementById("sumInstSlot").innerHTML =
-      "<div class='sumfilled'><span class='mini'></span><div class='txt'>"+
+      "<div class='sumfilled'><span class='mini pupil'>" + pupilThumb(instruments[selectedInstIdx]) + "</span><div class='txt'>"+
       "<div class='t1'>" + instruments[selectedInstIdx].name + "</div>"+
       "<div class='t2'>" + t("inst.type.multi") + "</div></div></div>";
   } else {

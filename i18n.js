@@ -497,6 +497,15 @@ var I18N = {
   "nav.menu":            { fr: "Menu", en: "Menu" },
   "nav.menu.close":      { fr: "Fermer le menu", en: "Close menu" },
 
+  // encadré Confidentialité et souveraineté (espace personnel)
+  "home.privacy":        { fr: "Confidentialité et souveraineté", en: "Privacy and sovereignty" },
+  "home.trust.h2a":      { fr: "Vos instruments restent", en: "Your instruments remain" },
+  "home.trust.h2b":      { fr: "les vôtres", en: "yours" },
+  "home.trust.li1":      { fr: "Visibles de vous seul, jamais partagés ni réutilisés.", en: "Visible only to you, never shared or reused." },
+  "home.trust.li2":      { fr: "Simulations calculées en France, chez un hébergeur européen.", en: "Simulations computed in France, on a European host." },
+  "home.trust.li3":      { fr: "Aucun traceur, aucune publicité, aucune mesure d'audience.", en: "No tracker, no advertising, no audience measurement." },
+  "sim.inst.example":    { fr: "Exemple", en: "Example" },
+
   // ---------------- page de connexion (login.html) ----------------
   "login.doc_title":     { fr: "Connexion — Nysa", en: "Sign in — Nysa" },
   "login.h1":            { fr: "Accès au simulateur complet", en: "Access the full simulator" },
