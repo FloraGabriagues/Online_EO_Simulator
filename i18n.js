@@ -789,7 +789,8 @@ var I18N_TEXT = {
   "Qu'est-ce que ça change ?": "What does it change?",
   "L'aperçu instantané est une approximation rapide. \"Lancer la simulation\" déclenche le calcul physique complet — optique, atmosphère et détecteur — sur les mêmes scènes.":
     "The instant preview is a fast approximation. “Run simulation” triggers the full physical computation — optics, atmosphere and detector — on the same scenes.",
-  "Scènes réelles — orthophotographies BD ORTHO IGN 2023.": "Real scenes — BD ORTHO IGN 2023 orthophotos.",
+  "Scènes : IGN, BD ORTHO® 2023, Licence Ouverte Etalab 2.0.": "Scenes: IGN, BD ORTHO® 2023, Etalab Open Licence 2.0.",
+  "Hypothèses et sources": "Assumptions and sources",
   "Pitch pixel": "Pixel pitch",
   "Temps d'intégration": "Integration time",
   "Étages TDI": "TDI stages",
