@@ -507,6 +507,21 @@ var I18N = {
   "home.trust.li3":      { fr: "Aucun traceur, aucune publicité, aucune mesure d'audience.", en: "No tracker, no advertising, no audience measurement." },
   "sim.inst.example":    { fr: "Exemple", en: "Example" },
 
+  // fenêtre « quitter la page pendant un calcul » (simulations.html)
+  "sim.leave.title":        { fr: "Simulation en cours", en: "Simulation in progress" },
+  "sim.leave.text":         { fr: "Si vous quittez cette page, la simulation sera perdue. Vous pouvez aussi ouvrir « {page} » dans un nouvel onglet : la simulation continuera ici.",
+                              en: "If you leave this page, the simulation will be lost. You can also open “{page}” in a new tab: the simulation will keep running here." },
+  "sim.leave.title_saving": { fr: "Sauvegarde en cours", en: "Saving in progress" },
+  "sim.leave.text_saving":  { fr: "Le résultat est en cours de sauvegarde. Si vous quittez cette page maintenant, il sera perdu. Vous pouvez aussi ouvrir « {page} » dans un nouvel onglet : la sauvegarde se terminera ici.",
+                              en: "The result is being saved. If you leave this page now, it will be lost. You can also open “{page}” in a new tab: the saving will finish here." },
+  "sim.leave.newtab":       { fr: "Ouvrir dans un nouvel onglet", en: "Open in a new tab" },
+  "sim.leave.go":           { fr: "Quitter et perdre la simulation", en: "Leave and lose the simulation" },
+  "sim.leave.go_saving":    { fr: "Quitter et perdre le résultat", en: "Leave and lose the result" },
+  "sim.leave.stay":         { fr: "Rester ici", en: "Stay here" },
+  "sim.leave.this_page":    { fr: "cette page", en: "this page" },
+  "sim.leave.signout":      { fr: "Une simulation est en cours : vous déconnecter la fera perdre. Continuer ?",
+                              en: "A simulation is in progress: signing out will lose it. Continue?" },
+
   // ---------------- page de connexion (login.html) ----------------
   "login.doc_title":     { fr: "Connexion — Nysa", en: "Sign in — Nysa" },
   "login.h1":            { fr: "Accès au simulateur complet", en: "Access the full simulator" },

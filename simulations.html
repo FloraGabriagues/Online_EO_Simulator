@@ -397,6 +397,18 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .sumfilled .mini.pupil{background:linear-gradient(135deg,#182734 0%,#0E161E 100%);border:1px solid var(--line-soft);width:44px;height:44px;border-radius:4px}
 .exbadge{margin-left:8px;font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--photon);
   border:1px solid rgba(245,172,87,.5);border-radius:3px;padding:0 6px}
+/* fenêtre « une simulation est en cours » (07/10/2026) */
+.leaveov{position:fixed;inset:0;z-index:90;background:rgba(5,8,11,.72);display:flex;align-items:center;justify-content:center;padding:20px}
+.leavebox{width:100%;max-width:440px;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:24px 24px 18px;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+.leavebox h3{margin:0 0 10px;font-family:var(--display);font-weight:500;font-size:18px;color:var(--paper)}
+.leavebox p{margin:0 0 20px;font-size:14px;line-height:1.55;color:var(--muted)}
+.leaveactions{display:flex;flex-direction:column;gap:10px}
+.leavebtn{font-family:var(--body);font-size:14px;border-radius:6px;padding:11px 14px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--paper)}
+.leavebtn.main{background:var(--pixel);border-color:var(--pixel);color:#06231F;font-weight:500}
+.leavebtn.danger{border-color:rgba(240,119,109,.55);color:var(--alert)}
+.leavebtn.danger:hover{background:rgba(240,119,109,.1)}
+.leavebtn.link{border:none;color:var(--muted);text-decoration:underline;padding:6px}
+.leavebtn:focus-visible{outline:2px solid var(--pixel);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -1650,6 +1662,97 @@ document.getElementById("step4Back").addEventListener("click", function(){
   if(abortController && simRunning) abortController.abort();
 });
 
+// ===================== Quitter la page pendant un calcul (07/10/2026) =====================
+// Le calcul vit dans cette page : la quitter coupe l'attente de la réponse, et
+// le résultat est perdu (le serveur finit son calcul, mais personne ne récupère
+// l'image). Tant qu'un calcul ou la sauvegarde qui le suit est en cours :
+//   - un clic sur un lien de la page (menu de gauche, etc.) ouvre une fenêtre
+//     qui propose d'ouvrir la destination dans un nouvel onglet (la simulation
+//     continue ici), de quitter quand même, ou de rester ;
+//   - le bouton de déconnexion demande une confirmation ;
+//   - fermer ou recharger l'onglet déclenche l'avertissement du navigateur.
+// Ctrl/Cmd-clic et clic du milieu (nouvel onglet) ne sont pas interceptés.
+var leavingOnPurpose = false;
+function simBusy(){ return simRunning || simSaving; }
+
+window.addEventListener("beforeunload", function(e){
+  if(!simBusy() || leavingOnPurpose) return;
+  e.preventDefault();
+  e.returnValue = "";
+});
+
+var leaveModal = null, leaveReturnFocus = null;
+function closeLeaveModal(){
+  if(!leaveModal) return;
+  leaveModal.remove(); leaveModal = null;
+  if(leaveReturnFocus && leaveReturnFocus.focus) leaveReturnFocus.focus();
+}
+function askLeave(href, label){
+  if(leaveModal) return;
+  var saving = !simRunning && simSaving;
+  leaveReturnFocus = document.activeElement;
+  var ov = document.createElement("div");
+  ov.className = "leaveov";
+  ov.innerHTML =
+    "<div class='leavebox' role='dialog' aria-modal='true' aria-labelledby='leaveTitle'>"+
+      "<h3 id='leaveTitle'></h3><p id='leaveText'></p>"+
+      "<div class='leaveactions'>"+
+        "<button type='button' class='leavebtn main' id='leaveNewTab'></button>"+
+        "<button type='button' class='leavebtn danger' id='leaveGo'></button>"+
+        "<button type='button' class='leavebtn link' id='leaveStay'></button>"+
+      "</div></div>";
+  document.body.appendChild(ov);
+  leaveModal = ov;
+  // textContent : le nom du lien ne peut pas injecter de balise
+  ov.querySelector("#leaveTitle").textContent = t(saving ? "sim.leave.title_saving" : "sim.leave.title");
+  ov.querySelector("#leaveText").textContent = t(saving ? "sim.leave.text_saving" : "sim.leave.text", { page: label });
+  ov.querySelector("#leaveNewTab").textContent = t("sim.leave.newtab");
+  ov.querySelector("#leaveGo").textContent = t(saving ? "sim.leave.go_saving" : "sim.leave.go");
+  ov.querySelector("#leaveStay").textContent = t("sim.leave.stay");
+
+  ov.querySelector("#leaveNewTab").addEventListener("click", function(){
+    window.open(href, "_blank", "noopener");
+    document.body.classList.remove("menu-open");   // referme le menu sur petit écran
+    closeLeaveModal();
+  });
+  ov.querySelector("#leaveGo").addEventListener("click", function(){
+    leavingOnPurpose = true;
+    window.location.href = href;
+  });
+  ov.querySelector("#leaveStay").addEventListener("click", closeLeaveModal);
+  ov.addEventListener("click", function(e){ if(e.target === ov) closeLeaveModal(); });
+  ov.addEventListener("keydown", function(e){
+    if(e.key === "Escape"){ e.stopPropagation(); closeLeaveModal(); return; }
+    if(e.key === "Tab"){
+      var btns = ov.querySelectorAll("button"), first = btns[0], last = btns[btns.length - 1];
+      if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+      else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+    }
+  });
+  ov.querySelector("#leaveNewTab").focus();
+}
+function leaveLabel(a){
+  var txt = (a.getAttribute("data-leave-label") || a.textContent || "").replace(/\s+/g, " ").trim();
+  txt = txt.replace(/\s*(à venir|coming soon|soon)\s*$/i, "");
+  return (txt && txt.length <= 32) ? txt : t("sim.leave.this_page");
+}
+document.addEventListener("click", function(e){
+  if(!simBusy()) return;
+  if(e.defaultPrevented || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+  var a = e.target.closest && e.target.closest("a[href]");
+  if(!a || a.target === "_blank" || a.hasAttribute("download") || a.hasAttribute("data-nysa-help")) return;
+  var href = a.getAttribute("href");
+  if(!href || href.charAt(0) === "#" || /^(mailto:|tel:|javascript:)/i.test(href)) return;
+  e.preventDefault(); e.stopPropagation();
+  askLeave(a.href, leaveLabel(a));
+}, true);
+// déconnexion : pas de « nouvel onglet » possible, donc une simple confirmation
+document.addEventListener("click", function(e){
+  if(!simBusy() || !(e.target.closest && e.target.closest("#signOutBtn"))) return;
+  if(!confirm(t("sim.leave.signout"))){ e.preventDefault(); e.stopImmediatePropagation(); }
+  else leavingOnPurpose = true;
+}, true);
+
 // ===================== Utilitaire : base64 -> Blob (pour l'upload) =====================
 function base64ToBlob(b64, mime){
   var byteChars = atob(b64);
@@ -1668,7 +1771,14 @@ function base64ToBlob(b64, mime){
 // "saved_results" (ajoutée pour la comparaison source/simulé plein
 // résolution, cf. resultats.html) :
 //   alter table saved_results add column if not exists source_image_path text;
+// 07/10/2026 — la sauvegarde qui suit le calcul est suivie elle aussi (simSaving) :
+// quitter la page à ce moment-là perdrait le résultat, comme pendant le calcul.
+var simSaving = false;
 async function autoSaveResult(){
+  simSaving = true;
+  try { await autoSaveResultInner(); } finally { simSaving = false; }
+}
+async function autoSaveResultInner(){
   var actions = document.getElementById("statusActions");
   actions.innerHTML = "<p class='savingnote'>" + t("sim.save.saving") + "</p>";
 
