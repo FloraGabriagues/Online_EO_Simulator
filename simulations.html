@@ -550,9 +550,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                     <p class="fielderr" id="errS" hidden></p>
                   </div>
                   <div class="field">
-                    <label data-i18n="field.TI">Temps d'intégration</label>
+                    <div class="lblrow"><label data-i18n="field.TI">Temps d'intégration</label><button type="button" class="bubblebtn" data-bubble="ti" aria-expanded="false" data-i18n-aria="nav.help">?</button></div>
                     <div class="row"><input type="number" id="fTI" value="100" min="5" max="3000" step="1"><span class="unit">µs</span></div>
-                    <p class="fieldhint" id="hintTI"></p>
                     <p class="fielderr" id="errTI" hidden></p>
                   </div>
                   <div class="field">
@@ -1189,7 +1188,6 @@ function syncTimeField(){
   var m = tiMinInfo(), minInt = Math.min(Math.ceil(m.min - 1e-9), rule.max);
   el.min = String(minInt); el.max = String(rule.max); el.step = "1";
   if(!tiTouched && m.fmc && el.value !== String(minInt)) el.value = String(minInt);
-  document.getElementById("hintTI").textContent = m.fmc ? t("sim.ti.hint", { min: Math.ceil(m.min - 1e-9) }) : "";
   if(!tiTouched || document.activeElement !== el) paintRule(rule, ruleMessage(rule));
 }
 function updateFmc(){
@@ -1207,9 +1205,19 @@ function updateFmc(){
 // ===================== Bulles d'aide (07/10/2026) =====================
 // Un bouton « ? » (classe bubblebtn, attribut data-bubble) ouvre une bulle placée près du bouton.
 // Elle se ferme avec Échap, un clic ailleurs ou un nouveau clic sur le bouton ; elle suit son bouton quand on défile.
+// text peut être une fonction (clé choisie à l'ouverture) et vars une fonction (valeurs insérées dans le texte).
 var BUBBLES = {
   tdi: { title: "sim.help.tdi.title", text: "sim.help.tdi.text" },
-  fmc: { title: "sim.help.fmc.title", text: "sim.help.fmc.text" }
+  fmc: { title: "sim.help.fmc.title", text: "sim.help.fmc.text" },
+  ti:  { title: "sim.help.ti.title",
+         text: function(){ return tiMinInfo().fmc ? "sim.help.ti.text" : "sim.help.ti.text_nofmc"; },
+         vars: function(){
+           var m = tiMinInfo(), inst = selectedInstIdx >= 0 ? instruments[selectedInstIdx] : null;
+           var rule = CONDITION_RULES.filter(function(r){ return r.id === "fTI"; })[0];
+           return { min: Math.ceil(m.min - 1e-9), max: rule.max,
+                    ifov: inst && inst.config ? Number(inst.config.I).toLocaleString(nysaLocale(), { maximumFractionDigits: 3 }) : "-",
+                    alt: Number(document.getElementById("fH").value).toLocaleString(nysaLocale(), { maximumFractionDigits: 0 }) };
+         } }
 };
 var bubbleEl = null, bubbleBtn = null;
 function closeBubble(){
@@ -1224,7 +1232,8 @@ function openBubble(btn){
   var el = document.createElement("div");
   el.className = "bubble"; el.id = "bubbleNote"; el.setAttribute("role", "note");
   var h = document.createElement("strong"); h.textContent = t(def.title); el.appendChild(h);
-  t(def.text).split("\n").forEach(function(line){
+  var textKey = typeof def.text === "function" ? def.text() : def.text;
+  t(textKey, def.vars ? def.vars() : undefined).split("\n").forEach(function(line){
     var para = document.createElement("p"); para.textContent = line; el.appendChild(para);
   });
   document.body.appendChild(el);
