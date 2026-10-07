@@ -391,7 +391,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   .step-line{margin:0 6px;min-width:8px}
   .scenegrid{grid-template-columns:1fr 1fr}
 }
-/* vignette d'instrument : pupille vue de face */
+/* vignette d'instrument : petit satellite */
 .instoption .thumb svg, .sumfilled .mini.pupil svg{display:block;width:100%;height:100%}
 .instoption .thumb.example{border-color:rgba(245,172,87,.55)}
 .sumfilled .mini.pupil{background:linear-gradient(135deg,#182734 0%,#0E161E 100%);border:1px solid var(--line-soft);width:44px;height:44px;border-radius:4px}
@@ -797,40 +797,38 @@ async function loadInstruments(){
   updateSummary();
 }
 
-// 06/10/2026 — vignette d'un instrument : sa pupille vue de face, dessinée à
-// partir de ses paramètres (diamètre, obscuration centrale, supports du
-// miroir secondaire). Deux instruments différents ont donc deux vignettes
-// différentes. L'instrument d'exemple fourni aux nouveaux comptes est dessiné
-// en orange pour se distinguer.
+// 07/10/2026 — vignette d'un instrument : un petit satellite d'observation
+// (corps, deux panneaux solaires, télescope pointé vers le bas), dessiné ici
+// en SVG. Même dessin pour tous les instruments ; l'instrument d'exemple
+// fourni aux nouveaux comptes est en orange pour se distinguer, un brouillon
+// est estompé. (Une première version dessinait la pupille de l'instrument ;
+// elle a été jugée peu parlante et remplacée.)
 function isExample(inst){
   var c = (inst && inst.config) || {};
   return c._example === true ||
     /^(Exemple : instrument de référence|Example: reference instrument)$/.test((inst && inst.name) || "");
 }
-function pupilThumb(inst){
+function satThumb(inst){
   var c = (inst && inst.config) || {};
-  var D = Number(c.D), E = Number(c.E) || 0, n = Math.round(Number(c.NSUP)) || 0, w = Number(c.ESUP) || 0;
   var col = isExample(inst) ? "#F5AC57" : "#5FDCD0";
-  var R = 17, cx = 22, cy = 22;
-  var svg = "<svg viewBox='0 0 44 44' aria-hidden='true'>";
-  if(!(D > 0)){
-    // diamètre non renseigné (brouillon) : simple contour en pointillés
-    return svg + "<circle cx='22' cy='22' r='" + R + "' fill='none' stroke='" + col + "' stroke-opacity='.45' stroke-width='1.2' stroke-dasharray='3 3'/></svg>";
-  }
-  var r = Math.max(0, Math.min(0.92, E / D)) * R;
-  svg += "<circle cx='" + cx + "' cy='" + cy + "' r='" + R + "' fill='" + col + "' fill-opacity='.30' stroke='" + col + "' stroke-width='1.2'/>";
-  if(n > 0 && r > 0){
-    // supports : traits de l'obscuration au bord de la pupille, à l'échelle (au moins 1 px pour rester visibles)
-    var sw = Math.max(1, (w / D) * 2 * R);
-    for(var k = 0; k < Math.min(n, 12); k++){
-      var a = -Math.PI / 2 + k * 2 * Math.PI / n;
-      svg += "<line x1='" + (cx + r * Math.cos(a)).toFixed(2) + "' y1='" + (cy + r * Math.sin(a)).toFixed(2) +
-             "' x2='" + (cx + R * Math.cos(a)).toFixed(2) + "' y2='" + (cy + R * Math.sin(a)).toFixed(2) +
-             "' stroke='#0B1218' stroke-width='" + sw.toFixed(2) + "'/>";
-    }
-  }
-  if(r > 0) svg += "<circle cx='" + cx + "' cy='" + cy + "' r='" + r.toFixed(2) + "' fill='#0B1218' stroke='" + col + "' stroke-opacity='.6' stroke-width='.8'/>";
-  return svg + "</svg>";
+  var dim = c._draft ? " opacity='.5'" : "";
+  var panel = function(x){
+    // panneau solaire : cadre, trois cellules
+    return "<rect x='" + x + "' y='14' width='11' height='15' rx='1' fill='" + col + "' fill-opacity='.22' stroke='" + col + "' stroke-width='1.1'/>"+
+           "<path d='M" + (x + 3.67) + " 14v15M" + (x + 7.33) + " 14v15M" + x + " 21.5h11' stroke='" + col + "' stroke-opacity='.55' stroke-width='.7'/>";
+  };
+  return "<svg viewBox='0 0 44 44' aria-hidden='true'" + dim + ">"+
+    "<path d='M13 21.5h3M28 21.5h3' stroke='" + col + "' stroke-width='1.3'/>"+
+    panel(2) + panel(31)+
+    // antenne
+    "<path d='M22 13V9' stroke='" + col + "' stroke-width='1.2'/><circle cx='22' cy='8' r='1.7' fill='" + col + "'/>"+
+    // corps
+    "<rect x='16' y='13' width='12' height='18' rx='2' fill='" + col + "' fill-opacity='.35' stroke='" + col + "' stroke-width='1.2'/>"+
+    "<rect x='18.5' y='16' width='7' height='3' rx='.8' fill='#0B1218' fill-opacity='.55'/>"+
+    // télescope : tube et ouverture
+    "<rect x='18.5' y='31' width='7' height='6.5' fill='" + col + "' fill-opacity='.5' stroke='" + col + "' stroke-width='1'/>"+
+    "<ellipse cx='22' cy='37.8' rx='3.7' ry='1.7' fill='#0B1218' stroke='" + col + "' stroke-width='1'/>"+
+  "</svg>";
 }
 
 function renderInstruments(){
@@ -851,7 +849,7 @@ function renderInstruments(){
       b.className = "instoption draft";
       b.title = miss.length ? t("inst.missing", { list: miss.map(tField).join(", ") }) : t("sim.inst.to_complete");
       b.innerHTML =
-        "<span class='thumb'>" + pupilThumb(inst) + "</span>"+
+        "<span class='thumb'>" + satThumb(inst) + "</span>"+
         "<span><div class='name'>" + inst.name + "</div>"+
         "<div class='meta'><span class='draftbadge'>" + t("inst.badge.draft") + "</span>" +
           (miss.length ? t(miss.length > 1 ? "sim.inst.fields_many" : "sim.inst.fields_one", { n: miss.length }) : t("sim.inst.to_complete_short")) + "</div></span>"+
@@ -864,7 +862,7 @@ function renderInstruments(){
     }
     b.className = "instoption" + (i === selectedInstIdx ? " selected" : "");
     b.innerHTML =
-      "<span class='thumb" + (isExample(inst) ? " example" : "") + "'>" + pupilThumb(inst) + "</span>"+
+      "<span class='thumb" + (isExample(inst) ? " example" : "") + "'>" + satThumb(inst) + "</span>"+
       "<span><div class='name'>" + inst.name + "</div>"+
       "<div class='meta'>" + t("inst.type.multi") + exBadge + "</div></span>"+
       "<span class='check'>✓</span>";
@@ -1102,7 +1100,7 @@ function updateSummary(){
 
   if(currentStep >= 2 && selectedInstIdx >= 0){
     document.getElementById("sumInstSlot").innerHTML =
-      "<div class='sumfilled'><span class='mini pupil'>" + pupilThumb(instruments[selectedInstIdx]) + "</span><div class='txt'>"+
+      "<div class='sumfilled'><span class='mini pupil'>" + satThumb(instruments[selectedInstIdx]) + "</span><div class='txt'>"+
       "<div class='t1'>" + instruments[selectedInstIdx].name + "</div>"+
       "<div class='t2'>" + t("inst.type.multi") + "</div></div></div>";
   } else {
@@ -1132,7 +1130,9 @@ function updateSummary(){
 // Ce n'est qu'un affichage : le vrai contrôle reste celui du serveur
 // (main.py, _require_active_plan), dont la règle est reprise ici à
 // l'identique — plan payant, statut « active », échéance absente ou future.
-var FUNCTIONS_URL = "https://hmnlxbpcfqxdezucxsep.supabase.co/functions/v1";
+// L'adresse des fonctions se déduit de celle du projet (supabase-client.js) :
+// un seul endroit à changer si le projet déménage.
+var FUNCTIONS_URL = SUPABASE_URL + "/functions/v1";
 var PAID_PLANS = ["individuel", "equipe"];
 // Marge après l'échéance (04/10/2026), identique à celle du serveur
 // (main.py, _PERIOD_GRACE_DAYS) : à chaque renouvellement, le webhook Stripe
