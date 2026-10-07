@@ -155,6 +155,13 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
   color:var(--muted);border-radius:50%;width:18px;height:18px;font-size:11px;line-height:1;padding:0}
 .field .helpbtn:hover{border-color:var(--pixel);color:var(--pixel)}
 .field .fieldhelp{font-size:12px;color:var(--muted);margin:6px 0 0;line-height:1.45}
+.field .helpbtn[aria-expanded="true"]{border-color:var(--pixel);color:var(--pixel)}
+/* bulle d'aide (07/10/2026), même rendu que dans la page Simulations. Elle laisse passer les clics. */
+.bubble{position:fixed;z-index:80;pointer-events:none;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;
+  box-shadow:0 12px 36px rgba(0,0,0,.5);font-size:12.5px;line-height:1.5;color:var(--muted)}
+.bubble strong{display:block;color:var(--paper);font-weight:500;font-size:13px;margin-bottom:6px}
+.bubble p{margin:0 0 7px}
+.bubble p:last-child{margin-bottom:0}
 .field select{width:100%;background:var(--panel-2);color:var(--paper);border:1px solid var(--line);
   border-radius:4px;padding:8px 10px;font-size:14px}
 details.advanced{border-top:1px solid var(--line-soft);margin-top:6px;padding-top:12px}
@@ -923,6 +930,60 @@ function currentBlock(){
   return found;
 }
 
+// ===================== Bulles d'aide (07/10/2026) =====================
+// Un clic sur un bouton « ? » (classe helpbtn) ouvre une bulle placée près du bouton, avec le nom du champ en
+// titre. Elle se ferme avec Échap, un clic ailleurs ou un nouveau clic sur le bouton ; elle suit son bouton quand
+// on défile ; elle se ferme si le bouton disparaît (le panneau est redessiné quand on change de bloc ou de mode).
+var bubbleEl = null, bubbleBtn = null;
+function closeBubble(){
+  if(!bubbleEl) return;
+  bubbleEl.remove(); bubbleEl = null;
+  if(bubbleBtn){ bubbleBtn.setAttribute("aria-expanded", "false"); bubbleBtn.removeAttribute("aria-describedby"); bubbleBtn = null; }
+}
+function placeBubble(){
+  if(!bubbleEl || !bubbleBtn) return;
+  if(!document.body.contains(bubbleBtn)){ closeBubble(); return; }
+  var r = bubbleBtn.getBoundingClientRect();
+  if(r.bottom < 0 || r.top > window.innerHeight){ closeBubble(); return; }
+  var w = Math.min(320, window.innerWidth - 24);
+  bubbleEl.style.width = w + "px";
+  var hh = bubbleEl.getBoundingClientRect().height, left, top;
+  var ar = (bubbleBtn.closest(".field, .fmcbox") || bubbleBtn).getBoundingClientRect();     // le champ que la bulle décrit
+  if(ar.left - w - 12 >= 12){
+    // assez de place à gauche du champ : la bulle s'y place, à hauteur du bouton, sans cacher le champ
+    left = ar.left - w - 12;
+    top = Math.max(12, Math.min(r.top + r.height / 2 - hh / 2, window.innerHeight - hh - 12));
+  } else {
+    // sinon sous le bouton, ou au-dessus s'il n'y a pas la place dessous
+    left = Math.max(12, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - 12));
+    top = r.bottom + 8;
+    if(top + hh > window.innerHeight - 12 && r.top - 8 - hh > 12) top = r.top - 8 - hh;
+  }
+  bubbleEl.style.left = left + "px"; bubbleEl.style.top = top + "px";
+}
+function openBubble(btn){
+  closeBubble();
+  var el = document.createElement("div");
+  el.className = "bubble"; el.id = "bubbleNote"; el.setAttribute("role", "note");
+  var title = btn.getAttribute("data-bubble-title");
+  if(title){ var h = document.createElement("strong"); h.textContent = title; el.appendChild(h); }
+  (btn.getAttribute("data-bubble-text") || "").split("\n").forEach(function(line){
+    var para = document.createElement("p"); para.textContent = line; el.appendChild(para);   // textContent : pas d'injection de balise
+  });
+  document.body.appendChild(el);
+  bubbleEl = el; bubbleBtn = btn;
+  placeBubble();
+  btn.setAttribute("aria-expanded", "true"); btn.setAttribute("aria-describedby", "bubbleNote");
+}
+document.addEventListener("click", function(e){
+  var btn = e.target.closest && e.target.closest(".helpbtn");
+  if(btn){ e.preventDefault(); if(bubbleBtn === btn) closeBubble(); else openBubble(btn); return; }
+  if(bubbleEl) closeBubble();
+});
+document.addEventListener("keydown", function(e){ if(e.key === "Escape") closeBubble(); });
+window.addEventListener("resize", placeBubble);
+window.addEventListener("scroll", placeBubble, true);
+
 function renderPanel(){
   var block = currentBlock();
   if(!block){ panelEl.innerHTML = ""; return; }
@@ -950,8 +1011,10 @@ function renderPanel(){
           return "<option value='"+ov+"'"+(String(v) === String(ov) ? " selected" : "")+">"+ol+"</option>"; }).join("") + "</select>"
       : "<input type='text' inputmode='"+(fieldRule(f).integer ? "numeric" : "decimal")+"' autocomplete='off' data-num"+
           (fieldRule(f).integer ? " data-int" : "")+(fieldRule(f).signed ? " data-neg" : "")+" id='f-"+f.k+"'"+valueAttr+placeholderAttr+">";
-    var helpBtn = f.help ? "<button type='button' class='helpbtn' data-help='"+f.k+"' aria-label='"+txa("Aide")+"'>?</button>" : "";
-    var helpTxt = f.help ? "<p class='fieldhelp' id='h-"+f.k+"' hidden>"+tx(f.help)+"</p>" : "";
+    // 07/10/2026 : l'aide s'ouvre dans une bulle (comme dans la page Simulations) au lieu de déplier un
+    // paragraphe sous le champ. Titre et texte sont portés par le bouton ; txa() les protège pour l'attribut.
+    var helpBtn = f.help ? "<button type='button' class='helpbtn' data-help='"+f.k+"' data-bubble-title='"+txa(f.label)+"' data-bubble-text='"+txa(f.help)+"' aria-expanded='false' aria-label='"+txa("Aide")+"'>?</button>" : "";
+    var helpTxt = "";
     // Champ obligatoire seulement si un autre est non nul (ex. temps de
     // référence DSNU) : rendu mais masqué tant que cet autre champ est vide
     // ou nul, et révélé à la frappe sans redessiner le panneau.
@@ -1052,12 +1115,6 @@ function renderPanel(){
       persist(); updateProgress(); renderChain(); renderPanel();
       var firstWl = panelEl.querySelector(".qewl");
       if(state.values[lock.mode] === "curve" && firstWl) firstWl.focus();
-    });
-  });
-  panelEl.querySelectorAll(".helpbtn").forEach(function(b){
-    b.addEventListener("click", function(){
-      var h = document.getElementById("h-"+b.getAttribute("data-help"));
-      if(h) h.hidden = !h.hidden;
     });
   });
   block.fields.forEach(function(f){

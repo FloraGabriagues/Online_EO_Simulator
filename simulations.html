@@ -438,7 +438,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .fmchead{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .fmclabel{font-size:12px;color:var(--muted)}
 .fmcval{font-family:var(--mono);font-size:15px;color:var(--paper);white-space:nowrap}
-.fmcdetail{margin:5px 0 0;font-size:11.5px;color:var(--muted-2);font-family:var(--mono)}
+.fmcswept{margin:7px 0 0;font-size:12px;line-height:1.45;color:var(--muted)}
+.fmcdetail{margin:4px 0 0;font-size:11.5px;color:var(--muted-2);font-family:var(--mono)}
 </style>
 </head>
 <body>
@@ -550,7 +551,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                   </div>
                   <div class="field">
                     <label data-i18n="field.TI">Temps d'intégration</label>
-                    <div class="row"><input type="number" id="fTI" value="100" min="5" max="995" step="5"><span class="unit">µs</span></div>
+                    <div class="row"><input type="number" id="fTI" value="100" min="5" max="3000" step="1"><span class="unit">µs</span></div>
+                    <p class="fieldhint" id="hintTI"></p>
                     <p class="fielderr" id="errTI" hidden></p>
                   </div>
                   <div class="field">
@@ -576,6 +578,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                       <div class="lblrow" style="margin:0"><span class="fmclabel" data-i18n="sim.fmc.label">FMC (défilement de l'image)</span><button type="button" class="bubblebtn" data-bubble="fmc" aria-expanded="false" data-i18n-aria="nav.help">?</button></div>
                       <span class="fmcval" id="fmcVal">-</span>
                     </div>
+                    <p class="fmcswept" id="fmcSwept"></p>
                     <p class="fmcdetail" id="fmcDetail"></p>
                   </div>
                   <!-- Réglages atmosphériques (03/10/2026) : paramètres avancés, repliés par
@@ -1145,29 +1148,59 @@ function renderAcquisitionDiagram(){
 
 // ===================== Résumé permanent (étapes 1-3) =====================
 // ===================== FMC : défilement de l'image pendant l'intégration (07/10/2026) =====================
-// FMC = vitesse au sol × temps d'intégration ÷ pas au sol, en pixels.
+// FMC (facteur) = distance balayée pendant l'intégration, en pixels = vitesse au sol × temps d'intégration ÷ pas au sol.
+// Un facteur de FMC est appliqué pour ramener ce défilement à 1 pixel ; FMC = 1 : aucune compensation nécessaire.
 //   vitesse au sol : orbite circulaire, vitesse orbitale √(μ/(R+H)) ramenée à la surface (× R/(R+H)),
 //                    rotation de la Terre négligée ;
 //   pas au sol     : iFoV × altitude (visée au nadir) ;
 //   iFoV           : celui de l'instrument choisi à l'étape 2.
 // Valeur indicative : le calcul de simulation ne modélise pas le filé (voir la page Hypothèses).
 var EARTH_RADIUS_KM = 6371, EARTH_MU_KM3_S2 = 398600.4418;
-function fmcCompute(){
-  var H = Number(document.getElementById("fH").value), TI = Number(document.getElementById("fTI").value);
+function fmcGeometry(){
+  var H = Number(document.getElementById("fH").value);
   var inst = selectedInstIdx >= 0 ? instruments[selectedInstIdx] : null;
   var iFoV = (inst && inst.config) ? Number(inst.config.I) : NaN;          // µrad
-  if(!(H > 0) || !(TI > 0) || !(iFoV > 0)) return null;
+  if(!(H > 0) || !(iFoV > 0)) return null;
   var r = EARTH_RADIUS_KM + H;
   var vg = Math.sqrt(EARTH_MU_KM3_S2 / r) * EARTH_RADIUS_KM / r;           // km/s
   var gsd = iFoV * 1e-6 * H * 1000;                                         // m
-  return { px: (vg * 1000) * (TI * 1e-6) / gsd, vg: vg, gsd: gsd };
+  // tLineUs : temps que met l'image à parcourir un pixel, c'est-à-dire le temps d'intégration pour FMC = 1
+  return { vg: vg, gsd: gsd, tLineUs: gsd / (vg * 1000) * 1e6 };
+}
+function fmcCompute(){
+  var g = fmcGeometry(), TI = Number(document.getElementById("fTI").value);
+  if(!g || !(TI > 0)) return null;
+  return { px: TI / g.tLineUs, vg: g.vg, gsd: g.gsd };
+}
+// Temps d'intégration minimal : celui qui donne FMC = 1 (une FMC inférieure à 1 voudrait dire que la
+// scène défile moins vite que le pixel ne l'attend, ce que la compensation ne peut pas produire).
+// Plancher de 5 µs ; sans iFoV connu, on retombe sur ce plancher.
+function tiMinInfo(){
+  var g = fmcGeometry();
+  if(g && g.tLineUs >= 5) return { min: g.tLineUs, fmc: true };
+  return { min: 5, fmc: false };
+}
+// Valeur par défaut du champ : le minimum (FMC = 1), tant que l'utilisateur n'y a pas touché ; et rappel
+// du minimum sous le champ. Une erreur déjà affichée est mise à jour quand l'altitude ou l'instrument changent.
+var tiTouched = false;
+function syncTimeField(){
+  var el = document.getElementById("fTI");
+  var rule = CONDITION_RULES.filter(function(r){ return r.id === "fTI"; })[0];
+  var m = tiMinInfo(), minInt = Math.min(Math.ceil(m.min - 1e-9), rule.max);
+  el.min = String(minInt); el.max = String(rule.max); el.step = "1";
+  if(!tiTouched && m.fmc && el.value !== String(minInt)) el.value = String(minInt);
+  document.getElementById("hintTI").textContent = m.fmc ? t("sim.ti.hint", { min: Math.ceil(m.min - 1e-9) }) : "";
+  if(!tiTouched || document.activeElement !== el) paintRule(rule, ruleMessage(rule));
 }
 function updateFmc(){
-  var val = document.getElementById("fmcVal"), det = document.getElementById("fmcDetail");
-  if(!val || !det) return;
+  var val = document.getElementById("fmcVal"), swept = document.getElementById("fmcSwept"), det = document.getElementById("fmcDetail");
+  if(!val || !swept || !det) return;
   var info = fmcCompute();
   var fmt = function(x){ return x.toLocaleString(nysaLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
-  val.textContent = info ? fmt(info.px) + " px" : "-";
+  // La FMC est un FACTEUR (valeur affichée en grand). La distance balayée en pixels, qui est le même nombre
+  // avant compensation, est expliquée dessous : « X px balayés, ramenés à 1 px par la FMC ».
+  val.textContent = info ? "\u00D7\u00A0" + fmt(info.px) : "-";
+  swept.textContent = info ? t("sim.fmc.swept", { px: fmt(info.px) }) : "";
   det.textContent = info ? t("sim.fmc.detail", { vg: fmt(info.vg), gsd: fmt(info.gsd) }) : t("sim.fmc.unavailable");
 }
 
@@ -1208,10 +1241,19 @@ function placeBubble(){
   if(r.bottom < 0 || r.top > window.innerHeight){ closeBubble(); return; }   // bouton sorti de l'écran
   var w = Math.min(320, window.innerWidth - 24);
   bubbleEl.style.width = w + "px";
-  bubbleEl.style.left = Math.max(12, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - 12)) + "px";
-  var top = r.bottom + 8, hh = bubbleEl.getBoundingClientRect().height;
-  if(top + hh > window.innerHeight - 12 && r.top - 8 - hh > 12) top = r.top - 8 - hh;   // pas la place dessous : au-dessus du bouton
-  bubbleEl.style.top = top + "px";
+  var hh = bubbleEl.getBoundingClientRect().height, left, top;
+  var ar = (bubbleBtn.closest(".field, .fmcbox") || bubbleBtn).getBoundingClientRect();     // le champ que la bulle décrit
+  if(ar.left - w - 12 >= 12){
+    // assez de place à gauche du champ : la bulle s'y place, à hauteur du bouton, sans cacher le champ
+    left = ar.left - w - 12;
+    top = Math.max(12, Math.min(r.top + r.height / 2 - hh / 2, window.innerHeight - hh - 12));
+  } else {
+    // sinon sous le bouton, ou au-dessus s'il n'y a pas la place dessous
+    left = Math.max(12, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - 12));
+    top = r.bottom + 8;
+    if(top + hh > window.innerHeight - 12 && r.top - 8 - hh > 12) top = r.top - 8 - hh;
+  }
+  bubbleEl.style.left = left + "px"; bubbleEl.style.top = top + "px";
 }
 document.addEventListener("click", function(e){
   var btn = e.target.closest && e.target.closest(".bubblebtn");
@@ -1418,13 +1460,15 @@ document.getElementById("paywallOverlay").addEventListener("click", function(e){
 // taper -1 µs ou 5000 km et lancer quand même. Désormais le bouton « Lancer » reste
 // grisé tant qu'une valeur est hors bornes, avec le message sous le champ.
 //   Altitude : 380 à 900 km          Élévation solaire : 8 à 80°
-//   Temps d'intégration : 5 à 999 µs (moins de 1000)
+//   Temps d'intégration : de « FMC = 1 » (le temps que met l'image à parcourir un pixel, voir fmcGeometry)
+//                          à 3000 µs. Le minimum dépend de l'altitude et de l'iFoV de l'instrument choisi.
+//                          Par défaut, le champ prend ce minimum tant que l'utilisateur n'y a pas touché.
 //   Étages TDI : entier de 1 à 64 (1 = pas de TDI : un seul étage, l'intégration
 //   sur le pixel a toujours lieu ; zéro étage n'aurait aucun signal à sommer)
 var CONDITION_RULES = [
   { id: "fH",   err: "errH",   min: 380, max: 900, unit: " km" },
   { id: "fS",   err: "errS",   min: 8,   max: 80,  unit: "°" },
-  { id: "fTI",  err: "errTI",  min: 5,   max: 999, unit: " µs" },
+  { id: "fTI",  err: "errTI",  min: 5,   max: 3000, unit: " µs" },
   { id: "fTDI", err: "errTDI", min: 1,   max: 64,  unit: "", integer: true }
 ];
 function ruleMessage(rule){
@@ -1432,6 +1476,13 @@ function ruleMessage(rule){
   if(raw === "" || isNaN(Number(raw))) return t("sim.val.required");
   var v = Number(raw);
   if(rule.integer && !Number.isInteger(v)) return t("sim.val.int_between", { min: rule.min, max: rule.max });
+  if(rule.id === "fTI"){
+    var m = tiMinInfo(), minInt = Math.ceil(m.min - 1e-9);
+    if(minInt > rule.max) return t("sim.val.ti_unreachable", { min: minInt, max: rule.max });
+    if(v < m.min - 1e-9) return t(m.fmc ? "sim.val.min_fmc" : "sim.val.min", { min: minInt });
+    if(v > rule.max) return t("sim.val.max", { max: rule.max });
+    return "";
+  }
   if(v < rule.min || v > rule.max){
     return rule.integer ? t("sim.val.int_between", { min: rule.min, max: rule.max })
                         : t("sim.val.between", { min: rule.min, max: rule.max, unit: rule.unit });
@@ -1471,6 +1522,7 @@ function updatePanelButton(){
       return;
     }
     btn.textContent = t("sim.btn.run");
+    syncTimeField();
     var badRule = CONDITION_RULES.filter(function(r){ return ruleMessage(r) !== ""; })[0];
     btn.disabled = selectedInstIdx < 0 || !!badRule;
     btn.title = badRule ? ruleMessage(badRule) : "";
@@ -1516,6 +1568,11 @@ function restrictNumericTyping(el, allowDecimal){
   var rule = CONDITION_RULES.filter(function(r){ return r.id === id; })[0];
   var el = document.getElementById(id);
   restrictNumericTyping(el, !rule.integer);
+  if(id === "fTI"){
+    // dès que l'utilisateur écrit dans le champ, il n'est plus recalé sur le minimum
+    el.addEventListener("beforeinput", function(){ tiTouched = true; });
+    el.addEventListener("input", function(e){ if(e.isTrusted) tiTouched = true; });
+  }
   el.addEventListener("input", function(){
     if(id === "fH" || id === "fS") renderAcquisitionDiagram();
     // Une erreur déjà affichée disparaît dès que la valeur redevient correcte ; une nouvelle
