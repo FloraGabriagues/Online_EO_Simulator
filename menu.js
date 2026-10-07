@@ -25,9 +25,13 @@
         "margin-right:auto;background:transparent;border:1px solid var(--line);border-radius:6px;color:var(--paper);cursor:pointer}"+
       ".menutoggle:hover{border-color:var(--pixel);color:var(--pixel)}"+
       ".sidebar{position:fixed;left:0;top:var(--menu-top,0px);bottom:0;z-index:70;width:248px;max-width:84vw;"+
-        "transform:translateX(-102%);visibility:hidden;transition:transform .2s ease, visibility 0s linear .2s;"+
+        "transform:translateX(-102%);visibility:hidden;"+
         "box-shadow:8px 0 30px rgba(0,0,0,.45);overflow-y:auto}"+
-      "body.menu-open .sidebar{transform:none;visibility:visible;transition:transform .2s ease, visibility 0s}"+
+      "body.menu-open .sidebar{transform:none;visibility:visible}"+
+      // L'animation ne sert qu'à l'ouverture et à la fermeture du menu : classe ajoutée au premier clic sur le bouton.
+      // Sans cela, le menu glissait hors de l'écran à chaque chargement de page (le style qui le range arrive après l'affichage).
+      "body.menu-anim .sidebar{transition:transform .2s ease, visibility 0s linear .2s}"+
+      "body.menu-anim.menu-open .sidebar{transition:transform .2s ease, visibility 0s}"+
       ".menuscrim{position:fixed;inset:0;z-index:65;background:rgba(5,8,11,.62)}"+
       "body.menu-open .menuscrim{display:block}"+
       ".topbar .userchip #userEmail{max-width:38vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:inline-block;vertical-align:bottom}"+
@@ -71,6 +75,7 @@
     if(giveFocusBack) btn.focus();
   }
   btn.addEventListener("click", function(){
+    document.body.classList.add("menu-anim");
     if(document.body.classList.contains("menu-open")) close(true); else open();
   });
   scrim.addEventListener("click", function(){ close(false); });

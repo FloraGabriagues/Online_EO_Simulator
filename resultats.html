@@ -962,6 +962,9 @@ async function deleteResult(r){
   // dans le bucket une fois la ligne supprimée.
   var paths = [];
   if(r.image_path) paths.push(r.image_path);
+  // 07/10/2026 : l'image source du crop (source_image_path) était oubliée ici : elle restait stockée après
+  // la suppression du résultat. Trouvé par le test automatique, qui voyait le stockage grossir.
+  if(r.source_image_path) paths.push(r.source_image_path);
   var bands = (r.diagnostics && r.diagnostics.bands) || {};
   for(var bandName in bands){
     for(var key in bands[bandName]){
