@@ -481,6 +481,11 @@ var I18N = {
   "res.fill":            { fr: "Remplissage", en: "Well fill" },
 
   // mot de passe oublié (login.html)
+  "login.legal.a":       { fr: "En créant un compte, vous acceptez les ", en: "By creating an account, you accept the " },
+  "login.legal.terms":   { fr: "conditions d'essai", en: "beta terms" },
+  "login.legal.b":       { fr: " et la ", en: " and the " },
+  "login.legal.privacy": { fr: "politique de confidentialité", en: "privacy policy" },
+  "home.trust.link":     { fr: "Politique de confidentialité →", en: "Privacy policy →" },
   "login.forgot":        { fr: "Mot de passe oublié ?", en: "Forgot your password?" },
   "login.forgot.intro":  { fr: "Saisissez l'adresse e-mail de votre compte : nous vous envoyons un lien pour choisir un nouveau mot de passe.",
                            en: "Enter the email address of your account: we will send you a link to choose a new password." },
@@ -805,6 +810,8 @@ var I18N_TEXT = {
 
   // ---- démo publique (index.html) ----
   "Simulateur de qualité image | Nysa": "Image quality simulator | Nysa",
+  "Mentions légales et conditions d'essai": "Legal notice and beta terms",
+  "Politique de confidentialité": "Privacy policy",
   "Optique, détecteur, acquisition : visualisez leur impact sur l'image avant de construire votre système.":
     "Optics, detector, acquisition: see their impact on the image before you build your system.",
   "Source": "Source",

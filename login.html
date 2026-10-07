@@ -81,6 +81,9 @@ h1{font-family:var(--display);font-weight:500;font-size:21px;
 .linkbtn:hover{color:var(--pixel);text-decoration-color:var(--pixel)}
 .viewintro{margin:0 0 18px;font-size:13px;line-height:1.5;color:var(--muted)}
 .submitbtn:disabled{opacity:.5;cursor:default}
+.legalnote{margin:12px 0 0;font-size:12px;line-height:1.5;color:var(--muted);text-align:center}
+.legalnote a{color:var(--muted);text-decoration:underline;text-underline-offset:2px}
+.legalnote a:hover{color:var(--pixel)}
 </style>
 </head>
 <body>
@@ -147,6 +150,7 @@ h1{font-family:var(--display);font-weight:500;font-size:21px;
         </select>
       </div>
       <button class="submitbtn" type="submit" data-i18n="login.btn.signup">Créer mon compte</button>
+      <p class="legalnote"><span data-i18n="login.legal.a">En créant un compte, vous acceptez les </span><a href="conditions.html" target="_blank" rel="noopener" data-i18n="login.legal.terms">conditions d'essai</a><span data-i18n="login.legal.b"> et la </span><a href="confidentialite.html" target="_blank" rel="noopener" data-i18n="login.legal.privacy">politique de confidentialité</a>.</p>
       <div class="msg" id="signupMsg"></div>
     </form>
 

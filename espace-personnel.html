@@ -315,6 +315,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .hero.trust li::before{content:"";position:absolute;left:0;top:.62em;width:6px;height:6px;border-radius:50%;background:var(--pixel);opacity:.75}
 .hero.trust .shield{position:absolute;right:16px;bottom:-14px;width:118px;height:138px;color:var(--pixel);opacity:.16}
 @media(max-width:640px){.hero.trust .content{max-width:100%}.hero.trust .shield{opacity:.08}}
+.hero.trust .trustlink{display:inline-block;margin-top:6px;font-family:var(--mono);font-size:12px;color:var(--photon);text-decoration:none}
+.hero.trust .trustlink:hover{text-decoration:underline}
 </style>
 </head>
 <body>
@@ -410,6 +412,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                 <li data-i18n="home.trust.li2">Simulations calculées et données stockées en France.</li>
                 <li data-i18n="home.trust.li3">Aucun traceur, aucune publicité, aucune mesure d'audience.</li>
               </ul>
+              <a class="trustlink" href="confidentialite.html" data-i18n="home.trust.link">Politique de confidentialité →</a>
             </div>
           </div>
         </div>
