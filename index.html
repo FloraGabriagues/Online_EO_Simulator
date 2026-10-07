@@ -8,14 +8,14 @@
 <meta name="description" content="Nysa simulates the image an Earth observation optical instrument would produce, from its optics, detector and acquisition parameters.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Nysa">
-<meta property="og:title" content="Nysa — Multispectral imaging simulator">
+<meta property="og:title" content="Nysa | Multispectral imaging simulator">
 <meta property="og:description" content="Optics, detector, acquisition: see their impact on the image before you build your system.">
 <meta property="og:url" content="https://nysa-imaging.com/">
 <meta property="og:image" content="https://nysa-imaging.com/apercu-nysa.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
-<title data-tx>Simulateur de qualité image — Nysa</title>
+<title data-tx>Simulateur de qualité image | Nysa</title>
 <!-- Traduction FR / EN : textes et moteur dans i18n.js -->
 <script src="i18n.js"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.70%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2234.30%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%225.3%22%20fill%3D%22%23FFB86B%22/%3E%3C/svg%3E">
@@ -447,19 +447,19 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <div class="viewer">
       <div class="headline compact">
         <div class="hl-item">
-          <div class="hl-v" id="m-gsd">—</div>
+          <div class="hl-v" id="m-gsd">-</div>
           <div class="hl-k" data-tx>Résolution au sol</div>
         </div>
         <div class="hl-item">
-          <div class="hl-v cool" id="m-snr">—</div>
+          <div class="hl-v cool" id="m-snr">-</div>
           <div class="hl-k">SNR</div>
         </div>
         <div class="hl-item">
-          <div class="hl-v warm" id="m-mtfnyq">—</div>
+          <div class="hl-v warm" id="m-mtfnyq">-</div>
           <div class="hl-k" data-tx>MTF à Nyquist</div>
         </div>
         <div class="hl-item">
-          <div class="hl-v" id="m-q">—</div>
+          <div class="hl-v" id="m-q">-</div>
           <div class="hl-k"><span data-tx>Facteur Q</span> <span class="snr-info" data-tx-title title="Rapport entre la coupure optique et la fréquence de Nyquist du détecteur. Q < 1 : le pixel limite. Q > 2 : l'optique limite.">ⓘ</span></div>
         </div>
       </div>
@@ -556,7 +556,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
           <button class="infobtn" id="engineInfoBtn" type="button" aria-label="Qu'est-ce que ça change ?" data-tx-aria>?</button>
         </div>
         <div class="infopop" id="engineInfoPop" hidden data-tx>
-          L'aperçu instantané est une approximation rapide. "Lancer la simulation" déclenche le calcul physique complet — optique, atmosphère et détecteur — sur les mêmes scènes.
+          L'aperçu instantané est une approximation rapide. "Lancer la simulation" déclenche le calcul physique complet (optique, atmosphère et détecteur) sur les mêmes scènes.
         </div>
         <div class="prog" id="progWrap" hidden>
           <div class="prog-track"><span class="prog-fill" id="progFill"></span></div>
@@ -578,7 +578,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
   <div id="adminAuthBox" class="panel" style="max-width:340px;width:100%">
     <p class="grouphead"><span class="dot warm"></span>Accès complet</p>
     <p class="note" style="margin-top:0">
-      Rappel : cet écran n'est qu'un confort d'usage — la vraie protection
+      Rappel : cet écran n'est qu'un confort d'usage. La vraie protection
       est côté serveur (clé vérifiée à chaque appel), pas ce mot de passe.
     </p>
     <input type="password" id="adminPassInput" placeholder="Clé admin"
@@ -596,7 +596,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
   <div id="adminPanelBox" class="panel" style="max-width:720px;width:100%;
     max-height:88vh;overflow:auto;display:none">
     <div style="display:flex;justify-content:space-between;align-items:center">
-      <p class="grouphead" style="margin:0"><span class="dot warm"></span>Accès complet — configuration avancée</p>
+      <p class="grouphead" style="margin:0"><span class="dot warm"></span>Accès complet : configuration avancée</p>
       <button id="adminClose" type="button" style="background:transparent;border:none;
         color:var(--muted);cursor:pointer;font-size:20px;line-height:1;padding:4px">×</button>
     </div>
@@ -604,7 +604,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
     <p class="ctrl-name" style="margin-top:16px">Scène</p>
     <div id="adminScenes" class="scenebar" style="margin-top:8px"></div>
 
-    <p class="ctrl-name" style="margin-top:16px">paramFile (JSON — fusionné sur le template pour les champs omis)</p>
+    <p class="ctrl-name" style="margin-top:16px">paramFile (JSON, fusionné sur le template pour les champs omis)</p>
     <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
       <label class="reset" style="padding:7px 14px;cursor:pointer;display:inline-block">
         Choisir un fichier .json
@@ -619,7 +619,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       color:var(--paper);border-radius:3px;padding:10px 12px;font-family:var(--mono);
       font-size:12.5px;margin-top:8px;resize:vertical">{}</textarea>
 
-    <p class="ctrl-name" style="margin-top:16px">CSV Zernike (Detector_ID;Band;Column;Z1..Z37 — vide = front d'onde nul)</p>
+    <p class="ctrl-name" style="margin-top:16px">CSV Zernike (Detector_ID;Band;Column;Z1..Z37, vide = front d'onde nul)</p>
     <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
       <label class="reset" style="padding:7px 14px;cursor:pointer;display:inline-block">
         Choisir un fichier .csv
@@ -647,7 +647,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
   background:var(--void);overflow:auto">
   <div style="max-width:1100px;margin:0 auto;padding:28px 26px 60px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
-      <p class="grouphead" style="margin:0"><span class="dot warm"></span>Résultat — simulation avancée</p>
+      <p class="grouphead" style="margin:0"><span class="dot warm"></span>Résultat : simulation avancée</p>
       <div style="display:flex;gap:8px">
         <button id="adminBackToConfig" class="reset" type="button" style="width:auto;padding:8px 14px">← Configuration</button>
         <button id="adminResultClose" type="button" style="background:transparent;border:none;
@@ -675,15 +675,15 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
           <div id="adminHeadline" style="display:flex;gap:1px;background:var(--line-soft);
             border:1px solid var(--line-soft);border-radius:4px;overflow:hidden;margin-bottom:14px">
             <div style="flex:1;background:var(--panel);padding:14px 16px">
-              <div class="hl-v" id="adm-m-gsd">—</div>
+              <div class="hl-v" id="adm-m-gsd">-</div>
               <div class="hl-k">Résolution au sol</div>
             </div>
             <div style="flex:1;background:var(--panel);padding:14px 16px">
-              <div class="hl-v cool" id="adm-m-snr">—</div>
+              <div class="hl-v cool" id="adm-m-snr">-</div>
               <div class="hl-k" id="adm-m-snr-label">SNR moyen (3 bandes)</div>
             </div>
             <div style="flex:1;background:var(--panel);padding:14px 16px">
-              <div class="hl-v cool" id="adm-m-mtf">—</div>
+              <div class="hl-v cool" id="adm-m-mtf">-</div>
               <div class="hl-k" id="adm-m-mtf-label">MTF à Nyquist (moy. 3 bandes)</div>
             </div>
           </div>
@@ -708,7 +708,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
 
         <div style="width:280px;flex:none">
           <div class="panel">
-            <p class="grouphead" style="margin-bottom:14px"><span class="dot cool"></span>Affichage — zoom &amp; rendu</p>
+            <p class="grouphead" style="margin-bottom:14px"><span class="dot cool"></span>Affichage : zoom &amp; rendu</p>
             <div class="ctrl">
               <div class="ctrl-top"><span class="ctrl-name">Zoom</span>
                 <span class="ctrl-val"><input type="number" id="admImgZoomN" step="10" min="25" max="800"><em>%</em></span></div>
@@ -770,10 +770,10 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
               <select id="admRenderMode" style="width:100%;padding:7px 8px;
                 background:var(--panel);color:var(--fg);border:1px solid var(--line-soft);
                 border-radius:3px;font-family:var(--body);font-size:12.5px">
-                <option value="physique" selected>Physique — 0 → pleine échelle ADC</option>
-                <option value="blanc_ref">Blanc de référence — comparable entre runs</option>
-                <option value="percentile">Étirement p2/p98 — netteté seulement</option>
-                <option value="manuel">Manuel — bornes ajustables</option>
+                <option value="physique" selected>Physique : 0 → pleine échelle ADC</option>
+                <option value="blanc_ref">Blanc de référence : comparable entre runs</option>
+                <option value="percentile">Étirement p2/p98 (netteté seulement)</option>
+                <option value="manuel">Manuel : bornes ajustables</option>
               </select>
               <p class="note" id="admRenderModeNote" style="margin:6px 0 0"></p>
 
@@ -783,11 +783,11 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
                    arbitraire, ce sont les valeurs réelles présentes dans l'image. -->
               <div id="admManualStretch" style="display:none;margin-top:8px">
                 <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)">
-                  <span>Borne basse</span><span id="admMinDNVal">—</span>
+                  <span>Borne basse</span><span id="admMinDNVal">-</span>
                 </div>
                 <input id="admMinDN" type="range" style="width:100%" min="0" max="1" value="0" step="1">
                 <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:6px">
-                  <span>Borne haute</span><span id="admMaxDNVal">—</span>
+                  <span>Borne haute</span><span id="admMaxDNVal">-</span>
                 </div>
                 <input id="admMaxDN" type="range" style="width:100%" min="0" max="1" value="1" step="1">
                 <p class="note" id="admManualBoundsNote" style="margin:6px 0 0"></p>
@@ -810,7 +810,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
             <button id="admWbPickBtn" class="reset" type="button" style="width:100%;padding:8px 14px;margin-bottom:8px">Choisir un point blanc sur l'image</button>
             <p class="note" id="admWbPickStatus" style="margin:0 0 10px"></p>
             <button id="admImgReset" class="reset" type="button" style="width:100%;padding:8px 14px">Réinitialiser l'affichage</button>
-            <p class="note" style="margin-top:10px">Ces réglages n'affectent que l'affichage dans ce navigateur — l'image téléchargée reste celle calculée par le serveur, sans retouche.</p>
+            <p class="note" style="margin-top:10px">Ces réglages n'affectent que l'affichage dans ce navigateur : l'image téléchargée reste celle calculée par le serveur, sans retouche.</p>
           </div>
         </div>
       </div>
@@ -1642,7 +1642,7 @@ function updateMetrics(){
   var detNote = document.getElementById("detectorDerived");
   if(detNote){
     var f = focalOf(st), fn = fnumOf(st);
-    detNote.innerHTML = tx("Focale ≈ <b>{f}</b> · F/# ≈ <b>{n}</b> — dérivés du pitch et de l'iFoV.", { f: (f<1 ? (f*1000).toFixed(0)+" mm" : f.toFixed(2)+" m"), n: fn.toFixed(1) });
+    detNote.innerHTML = tx("Focale ≈ <b>{f}</b> · F/# ≈ <b>{n}</b>, dérivés du pitch et de l'iFoV.", { f: (f<1 ? (f*1000).toFixed(0)+" mm" : f.toFixed(2)+" m"), n: fn.toFixed(1) });
   }
 
   document.getElementById("m-snr").textContent = sn.toFixed(1);
@@ -1651,7 +1651,7 @@ function updateMetrics(){
 
   var mtfNote = document.getElementById("mtfNote");
   if(q < 1){
-    mtfNote.innerHTML = tx("<span class='flag'>Q = {q}, inférieur à 1.</span> L'optique transmet encore du contraste au-delà de Nyquist : ce contenu trop fin pour le pixel se replie dans l'image sous forme d'artefacts. C'est un choix de conception assumé, pas un défaut — il privilégie le rapport signal/bruit et la largeur de fauchée.", { q: q.toFixed(2) });
+    mtfNote.innerHTML = tx("<span class='flag'>Q = {q}, inférieur à 1.</span> L'optique transmet encore du contraste au-delà de Nyquist : ce contenu trop fin pour le pixel se replie dans l'image sous forme d'artefacts. C'est un choix de conception assumé, pas un défaut. Il privilégie le rapport signal/bruit et la largeur de fauchée.", { q: q.toFixed(2) });
   } else if(q > 2.2){
     mtfNote.textContent = tx("Q = {q}, supérieur à 2. Le pixel n'est plus le facteur limitant : affiner le détecteur n'apporterait rien tant que la pupille ne grandit pas.", { q: q.toFixed(2) });
   } else {
@@ -2211,7 +2211,7 @@ window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); 
 window.RENDER_HELP_G = {
   physique:   "Échelle absolue : un blanc à l'écran est un pixel réellement saturé. Seul mode où le niveau est interprétable.",
   blanc_ref:  "Normalisé sur un blanc commun : deux simulations restent comparables entre elles.",
-  percentile: "Étirement dépendant du contenu — écrête 4 % des pixels. À réserver au jugement de netteté, jamais du niveau."
+  percentile: "Étirement dépendant du contenu : écrête 4 % des pixels. À réserver au jugement de netteté, jamais du niveau."
 };
 
 // ===================== IMAGE ADMIN — zoom / contraste / saturation / luminosité =====================
@@ -2490,7 +2490,7 @@ window.RENDER_HELP_G = {
 })();
 
 // ===================== MODE ADMIN =====================
-// Le mot de passe ici n'est qu'un confort d'usage — la vraie protection
+// Le mot de passe ici n'est qu'un confort d'usage. La vraie protection
 // est côté serveur (clé vérifiée à chaque appel /simulate_admin, quoi que
 // fasse ce code JS, entièrement lisible par n'importe qui).
 (function(){
@@ -2533,12 +2533,12 @@ window.RENDER_HELP_G = {
     jsonInput.value = text;
     var v = validateJsonLight(text);
     if(!v.ok){
-      jsonFileStatus.textContent = filename + " — " + v.error;
+      jsonFileStatus.textContent = filename + " : " + v.error;
       jsonFileStatus.style.color = "var(--err, #e05555)";
     } else {
-      var msg = filename + " — " + v.nKeys + " clé(s) racine";
+      var msg = filename + " : " + v.nKeys + " clé(s) racine";
       if(v.present.length) msg += " (" + v.present.join(", ") + ")";
-      else msg += " — aucune section connue (Telescope/Detector/...), fusion complète sur le template";
+      else msg += " : aucune section connue (Telescope/Detector/...), fusion complète sur le template";
       jsonFileStatus.textContent = msg;
       jsonFileStatus.style.color = "var(--muted)";
     }
@@ -2605,7 +2605,7 @@ window.RENDER_HELP_G = {
 
     var firstLine = text.split(/\r?\n/, 1)[0] || "";
     if(firstLine.indexOf(";") === -1){
-      return { ok: false, error: "Séparateur ';' introuvable sur la première ligne — CSV mal formé ?" };
+      return { ok: false, error: "Séparateur ';' introuvable sur la première ligne. CSV mal formé ?" };
     }
     var headerCols = firstLine.split(";").map(function(c){ return c.trim(); });
     var missing = CSV_REQUIRED.filter(function(c){ return headerCols.indexOf(c) === -1; });
@@ -2614,7 +2614,7 @@ window.RENDER_HELP_G = {
     }
     var nZ = headerCols.filter(function(c){ return /^Z\d+$/.test(c); }).length;
     if(nZ === 0){
-      warnings.push("Aucune colonne Z1..Z37 trouvée — vérifier le fichier.");
+      warnings.push("Aucune colonne Z1..Z37 trouvée. Vérifier le fichier.");
     }
     var nLines = text.split(/\r?\n/).filter(function(l){ return l.trim(); }).length - 1;
     return { ok: true, warnings: warnings, nLines: Math.max(0, nLines), nZ: nZ };
@@ -2624,10 +2624,10 @@ window.RENDER_HELP_G = {
     csvInput.value = text;
     var v = validateCsvLight(text);
     if(!v.ok){
-      csvFileStatus.textContent = filename + " — " + v.error;
+      csvFileStatus.textContent = filename + " : " + v.error;
       csvFileStatus.style.color = "var(--err, #e05555)";
     } else {
-      var msg = filename + " — " + v.nLines + " ligne(s), " + v.nZ + " colonnes Zernike";
+      var msg = filename + " : " + v.nLines + " ligne(s), " + v.nZ + " colonnes Zernike";
       if(v.warnings.length) msg += " (⚠ " + v.warnings.join(" ") + ")";
       csvFileStatus.textContent = msg;
       csvFileStatus.style.color = v.warnings.length ? "var(--warn, #c98a2b)" : "var(--muted)";
@@ -2835,7 +2835,7 @@ window.RENDER_HELP_G = {
     if(footprint && footprint > FOOTPRINT_WARN_M){
       var km = (footprint / 1000).toFixed(1);
       var proceed = confirm(
-        "Empreinte estimée ≈ " + km + " km — ce calcul risque d'être long "
+        "Empreinte estimée ≈ " + km + " km, ce calcul risque d'être long "
         + "(voire de dépasser le timeout serveur). Continuer quand même ?"
       );
       if(!proceed) return;
@@ -2869,8 +2869,8 @@ window.RENDER_HELP_G = {
           if(sel){
             sel.disabled = true;
             if(note) note.textContent =
-              "Le serveur ne renvoie pas encore les DN bruts (champs dn_b64 / dn_shape) — "
-              + "affichage du PNG tel quel.";
+              "Le serveur ne renvoie pas encore les DN bruts (champs dn_b64 / dn_shape). "
+              + "Affichage du PNG tel quel.";
           }
           // Le sélecteur de bande dépend des MÊMES DN bruts — oublié ici la
           // première fois : il restait cliquable sans rien faire (silencieux,
@@ -3018,11 +3018,11 @@ window.RENDER_HELP_G = {
             if(fracSat > 0.001)
               verdict = "Saturation CAPTEUR réelle : " + (fracSat * 100).toFixed(2) + " % des pixels au plafond ADC.";
             else if(util < 0.5)
-              verdict = "Aucune saturation capteur — dynamique utilisée à " + (util * 100).toFixed(0)
+              verdict = "Aucune saturation capteur : dynamique utilisée à " + (util * 100).toFixed(0)
                       + " % (DN max " + dnPeak + "/" + dnMax + "). Scène sous-exposée.";
             else
-              verdict = "Pas de saturation capteur — dynamique utilisée à " + (util * 100).toFixed(0) + " %.";
-            note.textContent = (RENDER_HELP_G[sel ? sel.value : "physique"] || "") + " — " + verdict;
+              verdict = "Pas de saturation capteur : dynamique utilisée à " + (util * 100).toFixed(0) + " %.";
+            note.textContent = (RENDER_HELP_G[sel ? sel.value : "physique"] || "") + " " + verdict;
           }
         }
 
@@ -3045,7 +3045,7 @@ window.RENDER_HELP_G = {
           var gsdVal = iFoV_ * alt_;
           gsdEl.innerHTML = (gsdVal < 1 ? gsdVal.toFixed(2) : gsdVal.toFixed(1)) + "<u style='font-size:15px;color:var(--muted);margin-left:3px'>m</u>";
         } else {
-          gsdEl.textContent = "—";
+          gsdEl.textContent = "-";
         }
       }
 
@@ -3070,7 +3070,7 @@ window.RENDER_HELP_G = {
 
         function fmt(el, val, digits){
           if(!el) return;
-          el.textContent = (val === null || val === undefined || isNaN(val)) ? "—" : val.toFixed(digits);
+          el.textContent = (val === null || val === undefined || isNaN(val)) ? "-" : val.toFixed(digits);
         }
 
         if(selected === "rgb" || !selected){
@@ -3102,10 +3102,10 @@ window.RENDER_HELP_G = {
           ["pupil_png_b64", "Masque pupillaire"],
           ["psf_png_b64", "PSF (oversampled vs rebinnée)"],
           ["mtf_png_b64", "Budget MTF"],
-          ["snr_regimes_png_b64", "SNR — régimes de bruit dominants"],
+          ["snr_regimes_png_b64", "SNR : régimes de bruit dominants"],
           ["snr_noise_budget_png_b64", "Budget de bruit (barres)"],
           ["snr_map_png_b64", "Carte SNR"],
-          ["snr_noise_maps_sim_png_b64", "Cartes de bruit — simulé"],
+          ["snr_noise_maps_sim_png_b64", "Cartes de bruit : simulé"],
           ["snr_image_compare_png_b64", "Image source / bruitée / résidu"],
           ["snr_histogram_png_b64", "Histogramme signal"],
         ];
@@ -3132,7 +3132,7 @@ window.RENDER_HELP_G = {
           graphsEl.appendChild(sec);
         });
         if(!anyGraph){
-          graphsEl.innerHTML = "<p class='note'>Aucun graphe disponible pour ce calcul (échec de génération — voir l'onglet Logs pour le détail).</p>";
+          graphsEl.innerHTML = "<p class='note'>Aucun graphe disponible pour ce calcul (échec de génération, voir l'onglet Logs pour le détail).</p>";
         }
       }
 
@@ -3153,11 +3153,11 @@ window.RENDER_HELP_G = {
             + "réflectance (min/moy/max) : " + d.reflectance_min.toFixed(3) + " / "
             + d.reflectance_mean.toFixed(3) + " / " + d.reflectance_max.toFixed(3) + "<br>"
             + "signal : " + Math.round(d.signal_mean_e) + " e⁻ (médiane "
-            + Math.round(d.signal_median_e) + " e⁻) — puits plein : "
+            + Math.round(d.signal_median_e) + " e⁻), puits plein : "
             + Math.round(d.full_well_e) + " e⁻<br>"
-            + "<b>remplissage : " + d.fill_pct.toFixed(2) + "%</b> — SNR moyen : "
+            + "<b>remplissage : " + d.fill_pct.toFixed(2) + "%</b>, SNR moyen : "
             + d.snr_mean.toFixed(1) + "<br>"
-            + (d.S_ref_e != null ? "S_ref (théorique) : " + Math.round(d.S_ref_e) + " e⁻ — gain RGB appliqué : ×"
+            + (d.S_ref_e != null ? "S_ref (théorique) : " + Math.round(d.S_ref_e) + " e⁻, gain RGB appliqué : ×"
               + d.rgb_gain_applied.toFixed(3) : "");
           tableEl.appendChild(row);
         });
@@ -3181,7 +3181,7 @@ window.RENDER_HELP_G = {
         var logsEl2 = document.getElementById("adminLogs");
         if(logsEl2) logsEl2.textContent = err.logs;
         var tableEl2 = document.getElementById("adminBandsTable");
-        if(tableEl2) tableEl2.innerHTML = "<p class='note'>Échec — pas d'image ni de diagnostics disponibles pour ce calcul.</p>";
+        if(tableEl2) tableEl2.innerHTML = "<p class='note'>Échec : pas d'image ni de diagnostics disponibles pour ce calcul.</p>";
         resultImg.removeAttribute("src");
         downloadLink.removeAttribute("href");
         overlay.style.display = "none";

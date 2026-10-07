@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title data-tx>Créer un instrument — Nysa</title>
+<title data-tx>Créer un instrument | Nysa</title>
 <!-- Traduction FR / EN : textes et moteur dans i18n.js -->
 <script src="i18n.js"></script>
 <!-- Polices hébergées avec le site (dossier fonts/) : aucun appel à Google. -->
@@ -371,7 +371,7 @@ var SCHEMA = [
       // être choisi, plus de repli silencieux. Clés explicites, identiques
       // à celles lues par module_SNR.resolve_electronics.
       {k:"electronics_mode", label:"Mode de saisie de l'électronique", type:"select", options:[
-        {v:"", label:"— choisir —"},
+        {v:"", label:"Choisir…"},
         {v:"detailed", label:"Détaillé (facteur de conversion + plage ADC)"},
         {v:"datasheet", label:"Datasheet (gain global en DN/e⁻)"},
         {v:"full_scale", label:"Pleine échelle ADC = full well"}],
@@ -773,7 +773,7 @@ function overallPct(){
 function statusMark(s){
   if(s === "ok") return "<span class='status ok'>✓</span>";
   if(s === "warn") return "<span class='status warn'>•</span>";
-  return "<span class='status'>—</span>";
+  return "<span class='status'>-</span>";
 }
 
 var chainEl = document.getElementById("chainList");
@@ -1188,7 +1188,7 @@ function renderWfeCasesHtml(){
     }).join("");
     return "<div class='caserow' data-case-id='"+c.id+"'>"+
       "<span class='cname'>"+c.name+"</span>"+
-      "<span class='cfile'>"+(c.rowCount != null ? tx("{n} lignes · {file}", { n: c.rowCount, file: c.filename }) : "—")+"</span>"+
+      "<span class='cfile'>"+(c.rowCount != null ? tx("{n} lignes · {file}", { n: c.rowCount, file: c.filename }) : "-")+"</span>"+
       "<select class='calign' data-conv-case='"+c.id+"' title='"+txa("Convention Zernike")+"'>"+convOpts+"</select>"+
       "<select class='calign' data-align-case='"+c.id+"'>"+alignOpts+"</select>"+
       "<button type='button' class='cdel' data-del-case='"+c.id+"' aria-label='"+txa("Supprimer ce cas")+"'>×</button>"+
@@ -1403,8 +1403,8 @@ function renderZernikeDetail(){
   var rows = parsePerfoCsvRows(selectedCase.csv);
   var prevCol = colSel.value;
   colSel.innerHTML = rows.map(function(r, i){
-    return "<option value='"+i+"'>"+(r.band ? tx("Bande {b} — ", { b: tBand(r.band) }) : "")+tx("Colonne {c}", { c: r.column })+"</option>";
-  }).join("") || "<option value=''>—</option>";
+    return "<option value='"+i+"'>"+(r.band ? tx("Bande {b} · ", { b: tBand(r.band) }) : "")+tx("Colonne {c}", { c: r.column })+"</option>";
+  }).join("") || "<option value=''>-</option>";
   if(rows.some(function(r, i){ return String(i) === prevCol; })) colSel.value = prevCol;
 
   var idx = Number(colSel.value) || 0;
@@ -1612,7 +1612,7 @@ function renderOpticsGeometry(){
     "</g>"+
     "<path d='M"+xL+","+dimY+" l8,-3.5 v7 z' fill='var(--muted-2)'/>"+
     "<path d='M"+xR+","+dimY+" l-8,-3.5 v7 z' fill='var(--muted-2)'/>"+
-    "<text x='"+cx+"' y='"+(dimY-7)+"' text-anchor='middle' class='geo-dim'>D = "+(D || "—")+" m</text>";
+    "<text x='"+cx+"' y='"+(dimY-7)+"' text-anchor='middle' class='geo-dim'>D = "+(D || "-")+" m</text>";
 
   // ---- Appel de cote pour l'obscuration centrale, en diagonale ----
   var obscLabel = "";
@@ -1706,7 +1706,7 @@ function renderElectronicsGeometry(){
   var v = state.values;
   function num(k){ return (v[k] === undefined || v[k] === null || v[k] === "") ? NaN : Number(v[k]); }
   function fmt(x){
-    if(!isFinite(x)) return "—";
+    if(!isFinite(x)) return "-";
     var a = Math.abs(x);
     if(a >= 1000) return String(Math.round(x)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
     if(a >= 100) return String(Math.round(x));
@@ -1860,7 +1860,7 @@ function renderDetectorGeometry(){
     "</g>"+
     "<path d='M"+dxL+","+dimY+" l8,-3.5 v7 z' fill='var(--muted-2)'/>"+
     "<path d='M"+dxR+","+dimY+" l-8,-3.5 v7 z' fill='var(--muted-2)'/>"+
-    "<text x='"+((dxL+dxR)/2)+"' y='"+(dimY+22)+"' text-anchor='middle' class='geo-dim'>PX = "+(PX || "—")+" µm</text>";
+    "<text x='"+((dxL+dxR)/2)+"' y='"+(dimY+22)+"' text-anchor='middle' class='geo-dim'>PX = "+(PX || "-")+" µm</text>";
 
   host.innerHTML =
     "<svg viewBox='0 0 440 310' preserveAspectRatio='xMidYMid meet' style='width:100%;height:100%;display:block'>"+

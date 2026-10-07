@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title data-i18n="res.doc_title">Résultat — Nysa</title>
+<title data-i18n="res.doc_title">Résultat | Nysa</title>
 <!-- Traduction FR / EN : textes et moteur dans i18n.js -->
 <script src="i18n.js"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.70%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2234.30%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%225.3%22%20fill%3D%22%23FFB86B%22/%3E%3C/svg%3E">
@@ -469,7 +469,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       <button class="iconbtn" aria-label="Notifications" data-i18n-aria="top.notifications" type="button">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
       </button>
-      <span class="userchip" id="userChip"><span class="avatar" id="userAvatar">…</span><span id="userEmail">—</span></span>
+      <span class="userchip" id="userChip"><span class="avatar" id="userAvatar">…</span><span id="userEmail">-</span></span>
       <button class="iconbtn" aria-label="Se déconnecter" data-i18n-aria="top.signout" type="button" id="signOutBtn" title="Se déconnecter" data-i18n-title="top.signout">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
       </button>
@@ -562,7 +562,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                 <label><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 15l5-5 4 4 4-6 5 7"/></svg><span data-i18n="res.render">Rendu de l'image</span></label>
                 <select id="renderSel">
                   <option value="none" data-i18n="res.render.none">Aucun (brut)</option>
-                  <option value="p2p98" selected data-i18n="res.render.p2p98">Étirement p2/p98 — netteté seulement</option>
+                  <option value="p2p98" selected data-i18n="res.render.p2p98">Étirement p2/p98 (netteté seulement)</option>
                 </select>
               </div>
 
@@ -579,7 +579,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
               <p class="comparenote">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
-                <span data-i18n="res.note">Ces réglages n'affectent que l'affichage dans ce navigateur — l'image téléchargée reste celle calculée par le serveur, sans retouche.</span>
+                <span data-i18n="res.note">Ces réglages n'affectent que l'affichage dans ce navigateur : l'image téléchargée reste celle calculée par le serveur, sans retouche.</span>
               </p>
 
               <button class="downloadbtn" type="button" id="downloadBtn" style="margin-top:6px">
@@ -606,13 +606,13 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           <h3 data-i18n="field.scene">Scène</h3>
           <div class="srcrow">
             <span class="thumb"><img id="entSceneImg" alt=""></span>
-            <div class="info"><span data-i18n="res.ent.scene_label">Scène :</span> <b id="entSceneName">—</b></div>
+            <div class="info"><span data-i18n="res.ent.scene_label">Scène :</span> <b id="entSceneName">-</b></div>
           </div>
         </div>
         <div class="rpanel">
           <h3 data-i18n="sim.sum.instrument">Instrument</h3>
           <div class="info" style="font-size:12.5px;color:var(--muted);margin-bottom:12px">
-            <span data-i18n="res.ent.name_label">Nom :</span> <b id="entInstName" style="color:var(--paper)">—</b>
+            <span data-i18n="res.ent.name_label">Nom :</span> <b id="entInstName" style="color:var(--paper)">-</b>
           </div>
           <div id="entInstConfig" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px 14px"></div>
         </div>
@@ -884,8 +884,8 @@ async function renderResultsList(){
             (wfeCaseName ? "<span class='wfebadge'>" + t("sim.sum.wfe_line", { name: esc(wfeCaseName) }) + "</span>" : "")+
             "<span class='more'>" + t("res.inputs_closed") + "</span></div>"+
         "</div>"+
-        "<div class='metric'><div class='v'>" + (mtfAvg != null ? mtfAvg.toFixed(2) : "—") + "</div></div>"+
-        "<div class='metric'><div class='v'>" + (snrAvg != null ? snrAvg.toFixed(1) : "—") + "</div></div>"+
+        "<div class='metric'><div class='v'>" + (mtfAvg != null ? mtfAvg.toFixed(2) : "-") + "</div></div>"+
+        "<div class='metric'><div class='v'>" + (snrAvg != null ? snrAvg.toFixed(1) : "-") + "</div></div>"+
       "</div>"+
       "<div class='rowmenu'>"+
         "<button type='button' class='menubtn' aria-label='" + t("inst.menu.options") + "'>⋮</button>"+
@@ -1024,9 +1024,9 @@ async function deleteResult(r){
     else result = data;
   }
 
-  var sceneName = (result && result.scene) || "—";
+  var sceneName = (result && result.scene) || "-";
   var instName = (result && ((result.instruments && result.instruments.name) ||
-    (result.instrument_snapshot && result.instrument_snapshot.name))) || "—";
+    (result.instrument_snapshot && result.instrument_snapshot.name))) || "-";
   var cond = (result && result.conditions) || {};
 
   // Le bucket "results" est privé — image_path est un CHEMIN, pas une URL
@@ -1071,7 +1071,7 @@ async function deleteResult(r){
   // horodatage pour le nom du fichier téléchargé : 2026-10-07_1120, à l'heure locale
   var createdLabel = createdDate
     ? createdDate.getFullYear() + "-" + p2(createdDate.getMonth() + 1) + "-" + p2(createdDate.getDate()) + "_" + p2(createdDate.getHours()) + p2(createdDate.getMinutes())
-    : "—";
+    : "-";
   var createdNice = createdDate ? createdDate.toLocaleString(nysaLocale(), { dateStyle: "long", timeStyle: "short" }) : "";
   var displayName = (result && result.name) || tScene(sceneName); // "name" optionnel — replie sur la scène si absent
 
@@ -1215,7 +1215,7 @@ async function deleteResult(r){
     for(var bandName in diagBands){
       var d = diagBands[bandName];
       var color = BAND_COLORS[bandName] || "var(--pixel)";
-      html += "<div class='rpanel'><h3 style='color:" + color + "'>" + title + " — " + tBand(bandName) + "</h3>";
+      html += "<div class='rpanel'><h3 style='color:" + color + "'>" + title + " · " + tBand(bandName) + "</h3>";
       html += "<div style='display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px;margin-bottom:14px'>";
       valueRows.forEach(function(r){
         var v = d[r.key];

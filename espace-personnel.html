@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title data-i18n="home.doc_title">Espace personnel — Nysa</title>
+<title data-i18n="home.doc_title">Espace personnel | Nysa</title>
 <!-- Traduction FR / EN : textes et moteur dans i18n.js -->
 <script src="i18n.js"></script>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.70%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2234.30%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%225.3%22%20fill%3D%22%23FFB86B%22/%3E%3C/svg%3E">
@@ -368,7 +368,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       <button class="iconbtn" aria-label="Notifications" data-i18n-aria="top.notifications" type="button">
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
       </button>
-      <span class="userchip" id="userChip"><span class="avatar" id="userAvatar">…</span><span id="userEmail">—</span></span>
+      <span class="userchip" id="userChip"><span class="avatar" id="userAvatar">…</span><span id="userEmail">-</span></span>
       <button class="iconbtn" aria-label="Se déconnecter" data-i18n-aria="top.signout" type="button" id="signOutBtn" title="Se déconnecter" data-i18n-title="top.signout">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
       </button>
@@ -472,14 +472,14 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
             </div>
           </div>
           <div class="msection-body">
-            <div class="minfo-row"><span class="label" data-i18n="settings.account.email">E-mail</span><span class="value" id="settingsEmail">—</span></div>
+            <div class="minfo-row"><span class="label" data-i18n="settings.account.email">E-mail</span><span class="value" id="settingsEmail">-</span></div>
             <!-- 06/10/2026 — langue de préférence du compte : interface et e-mails -->
             <div class="minfo-row"><span class="label" data-i18n="settings.lang.label">Langue</span><span class="value">
               <select id="settingsLang" class="langselect" data-i18n-aria="settings.lang.label">
                 <option value="en">English</option>
                 <option value="fr">Français</option>
               </select></span></div>
-            <div class="minfo-row"><span class="label" data-i18n="settings.account.since">Membre depuis</span><span class="value" id="settingsCreated">—</span></div>
+            <div class="minfo-row"><span class="label" data-i18n="settings.account.since">Membre depuis</span><span class="value" id="settingsCreated">-</span></div>
           </div>
           <p class="mnote" data-i18n="settings.lang.note" style="margin-top:10px">Langue de l'interface et des e-mails que vous recevez.</p>
         </div>
@@ -513,16 +513,16 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
             </div>
           </div>
           <div class="planrow">
-            <span class="planbadge" id="settingsPlanBadge">—</span>
+            <span class="planbadge" id="settingsPlanBadge">-</span>
             <div class="ptxt">
-              <div class="t1" id="settingsPlanName">—</div>
-              <div class="t2" id="settingsPlanDesc">—</div>
+              <div class="t1" id="settingsPlanName">-</div>
+              <div class="t2" id="settingsPlanDesc">-</div>
             </div>
-            <span class="pstatus" id="settingsSubStatusDot"><span class="sdot"></span><span id="settingsSubStatusText">—</span></span>
+            <span class="pstatus" id="settingsSubStatusDot"><span class="sdot"></span><span id="settingsSubStatusText">-</span></span>
           </div>
           <p class="mnote" id="settingsSubNote" style="margin:0 0 12px"></p>
           <div class="msection-actions">
-            <button class="mbtn primary" id="settingsSubBtn" type="button">—</button>
+            <button class="mbtn primary" id="settingsSubBtn" type="button">-</button>
           </div>
         </div>
 
@@ -929,7 +929,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     setNysaLang(langSel.value);
   });
   document.getElementById("settingsCreated").textContent = session.user.created_at
-    ? formatDate(session.user.created_at) : "—";
+    ? formatDate(session.user.created_at) : "-";
 
   // Même règle que le serveur (main.py, _require_active_plan) : plan payant,
   // statut « active », et échéance absente ou future. Avant le 04/10/2026,
@@ -1207,7 +1207,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       }
       await new Promise(function(r){ setTimeout(r, 1000); });
     }
-    console.warn("Abonnement pas encore visible — webhook en retard ?");
+    console.warn("Abonnement pas encore visible : webhook en retard ?");
     subNote.className = "mnote";
     subNote.textContent = t("sub.paid_wait");
     renderSubscription();

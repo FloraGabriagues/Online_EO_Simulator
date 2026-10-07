@@ -36,8 +36,8 @@ v:{D:0.345,E:0.1035,W:35,T:0.55,I:2.084,R:18,P:1.50,K:350,H:470,S:45,TI:140,TDI:
 src:"Données constructeur : iFoV, altitude (Satellogic, eoPortal).\n\nEstimation réalisée sur les paramètres non publiés par le constructeur : diamètre de pupille, erreur de front d'onde, modèle de bruit, configuration détecteur."},
   {id:"s2", label:"Sentinel-2",
 v:{D:0.15,E:0.0,W:20,T:0.65,I:12.72,R:8,P:0.60,K:80,H:786,S:45,TI:1505,TDI:1,Z:"none"},
-src:"Confirmé (ESA, Airbus) — diamètre 0.15m (télescope TMA), altitude 786km. GSD 10m correspond aux bandes B2/B3/B4/B8 publiées.\n\nSimplification — bandes spectrales simulées identiques à celles de Pléiades Neo, pas les vraies bandes Sentinel-2.\n\nEstimé (non publié) — bruit détecteur."},
+src:"Confirmé (ESA, Airbus) : diamètre 0.15m (télescope TMA), altitude 786km. GSD 10m correspond aux bandes B2/B3/B4/B8 publiées.\n\nSimplification : bandes spectrales simulées identiques à celles de Pléiades Neo, pas les vraies bandes Sentinel-2.\n\nEstimé (non publié) : bruit détecteur."},
   {id:"skysat", label:"Planet SkySat",
 v:{D:0.35,E:0.1155,W:30,T:0.60,I:1.806,R:15,P:1.40,K:200,H:475,S:45,TI:3800,TDI:1,Z:"none",FW:30000},
-src:"Confirmé (Planet, eoPortal) — diamètre 0.35m, focale 3.6m, pixel 6.5µm, altitude 475km (télescope Ritchey-Chretien Cassegrain). GSD dérivé ≈0.86m, cohérent avec les ~0.8m publiés.\n\nSimplification — SkySat capture par trames courtes empilées, pas un vrai capteur push-broom TDI. Modélisé ici avec TDI=1 et un temps d'intégration équivalent allongé pour compenser.\n\nEstimé (non publié) — obscuration centrale, front d'onde, bruit détecteur."}
+src:"Confirmé (Planet, eoPortal) : diamètre 0.35m, focale 3.6m, pixel 6.5µm, altitude 475km (télescope Ritchey-Chretien Cassegrain). GSD dérivé ≈0.86m, cohérent avec les ~0.8m publiés.\n\nSimplification : SkySat capture par trames courtes empilées, pas un vrai capteur push-broom TDI. Modélisé ici avec TDI=1 et un temps d'intégration équivalent allongé pour compenser.\n\nEstimé (non publié) : obscuration centrale, front d'onde, bruit détecteur."}
 ];

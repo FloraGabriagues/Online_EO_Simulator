@@ -107,7 +107,7 @@ var I18N = {
   "inst.type.hyper":     { fr: "Hyperspectral", en: "Hyperspectral" },
 
   // ---------------- espace personnel (espace-personnel.html) ----------------
-  "home.doc_title":      { fr: "Espace personnel — Nysa", en: "My workspace — Nysa" },
+  "home.doc_title":      { fr: "Espace personnel | Nysa", en: "My workspace | Nysa" },
   "home.eyebrow":        { fr: "Instruments", en: "Instruments" },
   "home.h1":             { fr: "Mes instruments", en: "My instruments" },
   "home.sub":            { fr: "Créez, configurez et gérez vos instruments d'imagerie.",
@@ -274,7 +274,7 @@ var I18N = {
   "common.previous":     { fr: "← Précédent", en: "← Previous" },
   "common.next":         { fr: "Suivant →", en: "Next →" },
   "common.colon":        { fr: " : ", en: ": " },
-  "sim.doc_title":       { fr: "Nouvelle simulation — Nysa", en: "New simulation — Nysa" },
+  "sim.doc_title":       { fr: "Nouvelle simulation | Nysa", en: "New simulation | Nysa" },
   "sim.eyebrow":         { fr: "Simulations", en: "Simulations" },
   "sim.h1":              { fr: "Nouvelle simulation", en: "New simulation" },
   "sim.sub":             { fr: "Configurez votre scène, votre instrument et vos conditions d'acquisition, puis lancez la simulation.",
@@ -350,12 +350,12 @@ var I18N = {
   "sim.status.done":     { fr: "Simulation terminée", en: "Simulation complete" },
   "sim.status.stopped":  { fr: "Simulation interrompue", en: "Simulation stopped" },
   "sim.status.failed":   { fr: "Échec de la simulation", en: "Simulation failed" },
-  "sim.log.started":     { fr: "Simulation lancée — la progression détaillée n'est visible qu'à la fin (calcul synchrone).",
-                           en: "Simulation started — detailed progress is only available at the end (synchronous computation)." },
+  "sim.log.started":     { fr: "Simulation lancée. La progression détaillée n'est visible qu'à la fin (calcul synchrone).",
+                           en: "Simulation started. Detailed progress is only available at the end (synchronous computation)." },
   "sim.log.still":       { fr: "Calcul toujours en cours…", en: "Still computing…" },
   "sim.log.done":        { fr: "Simulation terminée.", en: "Simulation complete." },
-  "sim.log.stopped":     { fr: "Simulation interrompue — le calcul continue côté serveur jusqu'à sa fin naturelle, mais le résultat ne sera pas récupéré.",
-                           en: "Simulation stopped — the computation continues on the server until it ends, but the result will not be retrieved." },
+  "sim.log.stopped":     { fr: "Simulation interrompue par l'utilisateur.",
+                           en: "Simulation stopped by the user." },
   "sim.err.session":     { fr: "Session expirée : reconnectez-vous puis relancez la simulation.", en: "Session expired: sign in again, then rerun the simulation." },
   "sim.save.saving":     { fr: "Sauvegarde du résultat…", en: "Saving the result…" },
   "sim.save.done":       { fr: "Résultat sauvegardé.", en: "Result saved." },
@@ -395,7 +395,7 @@ var I18N = {
   "band.Bleu":           { fr: "Bleu", en: "Blue" },
 
   // ---------------- page Résultats (resultats.html) ----------------
-  "res.doc_title":       { fr: "Résultats — Nysa", en: "Results — Nysa" },
+  "res.doc_title":       { fr: "Résultats | Nysa", en: "Results | Nysa" },
   "res.eyebrow":         { fr: "Résultats", en: "Results" },
   "res.h1":              { fr: "Mes résultats", en: "My results" },
   "res.sub":             { fr: "Retrouvez vos simulations sauvegardées.", en: "Find your saved simulations." },
@@ -410,8 +410,8 @@ var I18N = {
   "res.count_many":      { fr: "{n} résultats", en: "{n} results" },
   "res.count_of":        { fr: "{shown} sur {total}", en: "{shown} of {total}" },
   "res.load_error":      { fr: "Erreur de chargement. Réessayez plus tard.", en: "Loading error. Please try again later." },
-  "res.empty.a":         { fr: "Aucun résultat sauvegardé pour l'instant — ", en: "No saved result yet — " },
-  "res.empty.link":      { fr: "lancez une simulation", en: "run a simulation" },
+  "res.empty.a":         { fr: "Aucun résultat sauvegardé pour l'instant. ", en: "No saved result yet. " },
+  "res.empty.link":      { fr: "Lancez une simulation", en: "Run a simulation" },
   "res.empty.b":         { fr: " pour en créer un.", en: " to create one." },
   "res.inst_gone":       { fr: "Instrument supprimé", en: "Instrument deleted" },
   "res.inputs_closed":   { fr: "Entrées ▾", en: "Inputs ▾" },
@@ -453,12 +453,12 @@ var I18N = {
   "res.contrast":        { fr: "Contraste", en: "Contrast" },
   "res.render":          { fr: "Rendu de l'image", en: "Image rendering" },
   "res.render.none":     { fr: "Aucun (brut)", en: "None (raw)" },
-  "res.render.p2p98":    { fr: "Étirement p2/p98 — netteté seulement", en: "p2/p98 stretch — sharpness only" },
+  "res.render.p2p98":    { fr: "Étirement p2/p98 (netteté seulement)", en: "p2/p98 stretch (sharpness only)" },
   "res.sat":             { fr: "Afficher les pixels saturés (magenta)", en: "Show saturated pixels (magenta)" },
   "res.whitepoint":      { fr: "Choisir un point blanc sur l'image", en: "Pick a white point on the image" },
   "res.reset":           { fr: "Réinitialiser l'affichage", en: "Reset display" },
-  "res.note":            { fr: "Ces réglages n'affectent que l'affichage dans ce navigateur — l'image téléchargée reste celle calculée par le serveur, sans retouche.",
-                           en: "These settings only affect the display in this browser — the downloaded image remains the one computed by the server, unaltered." },
+  "res.note":            { fr: "Ces réglages n'affectent que l'affichage dans ce navigateur : l'image téléchargée reste celle calculée par le serveur, sans retouche.",
+                           en: "These settings only affect the display in this browser: the downloaded image remains the one computed by the server, unaltered." },
   "res.download":        { fr: "Télécharger l'image", en: "Download image" },
   "res.download.prefix": { fr: "resultat_", en: "result_" },
   "res.ent.scene_label": { fr: "Scène :", en: "Scene:" },
@@ -522,8 +522,14 @@ var I18N = {
   "sim.leave.signout":      { fr: "Une simulation est en cours : vous déconnecter la fera perdre. Continuer ?",
                               en: "A simulation is in progress: signing out will lose it. Continue?" },
 
+  // bornes des conditions d'acquisition (simulations.html)
+  "sim.val.required":    { fr: "Valeur requise.", en: "Value required." },
+  "sim.val.between":     { fr: "Entre {min} et {max}{unit}.", en: "Between {min} and {max}{unit}." },
+  "sim.val.int_between": { fr: "Nombre entier entre {min} et {max}.", en: "Whole number between {min} and {max}." },
+  "sim.tdi.hint":        { fr: "1 = sans TDI", en: "1 = no TDI" },
+
   // ---------------- page de connexion (login.html) ----------------
-  "login.doc_title":     { fr: "Connexion — Nysa", en: "Sign in — Nysa" },
+  "login.doc_title":     { fr: "Connexion | Nysa", en: "Sign in | Nysa" },
   "login.h1":            { fr: "Accès au simulateur complet", en: "Access the full simulator" },
   "login.sub":           { fr: "Connectez-vous ou créez un compte pour accéder à vos instruments et résultats.",
                            en: "Sign in or create an account to access your instruments and results." },
@@ -556,7 +562,7 @@ var I18N = {
 // ============================================================================
 var I18N_TEXT = {
   // ---- création d'instrument : cadre de la page ----
-  "Créer un instrument — Nysa": "Create an instrument — Nysa",
+  "Créer un instrument | Nysa": "Create an instrument | Nysa",
   "← Mes objets": "← My instruments",
   "Configuration de l'instrument": "Instrument configuration",
   "Configuration": "Configuration",
@@ -601,7 +607,7 @@ var I18N_TEXT = {
   "Full well": "Full well",
   "Bruit de lecture": "Read noise",
   "Mode de saisie de l'électronique": "Electronics input mode",
-  "— choisir —": "— choose —",
+  "Choisir…": "Choose…",
   "Détaillé (facteur de conversion + plage ADC)": "Detailed (conversion factor + ADC range)",
   "Datasheet (gain global en DN/e⁻)": "Datasheet (overall gain in DN/e⁻)",
   "Pleine échelle ADC = full well": "ADC full scale = full well",
@@ -721,7 +727,7 @@ var I18N_TEXT = {
     "Combined wavefront (false color) for a given column, for a file-based WFE case loaded above.",
   "Chargez un cas WFE « fichier » ci-dessus pour voir le détail (un cas RMS n'a pas de coefficients détaillés).":
     "Load a file-based WFE case above to see the detail (an RMS case has no detailed coefficients).",
-  "Bande {b} — ": "Band {b} — ",
+  "Bande {b} · ": "Band {b} · ",
   "Colonne {c}": "Column {c}",
   "CSV illisible ou vide.": "Unreadable or empty CSV.",
   "P-V : ": "P-V: ",
@@ -775,7 +781,7 @@ var I18N_TEXT = {
   "Fichier illisible : JSON attendu.": "Unreadable file: JSON expected.",
 
   // ---- démo publique (index.html) ----
-  "Simulateur de qualité image — Nysa": "Image quality simulator — Nysa",
+  "Simulateur de qualité image | Nysa": "Image quality simulator | Nysa",
   "Optique, détecteur, acquisition : visualisez leur impact sur l'image avant de construire votre système.":
     "Optics, detector, acquisition: see their impact on the image before you build your system.",
   "Source": "Source",
@@ -815,8 +821,8 @@ var I18N_TEXT = {
   "Aperçu affiché": "Preview shown",
   "Lancer la simulation": "Run simulation",
   "Qu'est-ce que ça change ?": "What does it change?",
-  "L'aperçu instantané est une approximation rapide. \"Lancer la simulation\" déclenche le calcul physique complet — optique, atmosphère et détecteur — sur les mêmes scènes.":
-    "The instant preview is a fast approximation. “Run simulation” triggers the full physical computation — optics, atmosphere and detector — on the same scenes.",
+  "L'aperçu instantané est une approximation rapide. \"Lancer la simulation\" déclenche le calcul physique complet (optique, atmosphère et détecteur) sur les mêmes scènes.":
+    "The instant preview is a fast approximation. “Run simulation” triggers the full physical computation (optics, atmosphere and detector) on the same scenes.",
   "Scènes : IGN, BD ORTHO® 2023, Licence Ouverte Etalab 2.0.": "Scenes: IGN, BD ORTHO® 2023, Etalab Open Licence 2.0.",
   "Hypothèses et sources": "Assumptions and sources",
   "Pitch pixel": "Pixel pitch",
@@ -833,9 +839,9 @@ var I18N_TEXT = {
   "<span class='flag'>La tache déborde largement du pixel</span> : c'est l'optique qui limite la résolution.":
     "<span class='flag'>The spot extends well beyond the pixel</span>: the optics limit the resolution.",
   "Tache et pixel sont du même ordre : l'échantillonnage suit l'optique.": "Spot and pixel are of the same order: the sampling matches the optics.",
-  "Focale ≈ <b>{f}</b> · F/# ≈ <b>{n}</b> — dérivés du pitch et de l'iFoV.": "Focal length ≈ <b>{f}</b> · F/# ≈ <b>{n}</b> — derived from the pitch and the iFoV.",
-  "<span class='flag'>Q = {q}, inférieur à 1.</span> L'optique transmet encore du contraste au-delà de Nyquist : ce contenu trop fin pour le pixel se replie dans l'image sous forme d'artefacts. C'est un choix de conception assumé, pas un défaut — il privilégie le rapport signal/bruit et la largeur de fauchée.":
-    "<span class='flag'>Q = {q}, below 1.</span> The optics still transmit contrast beyond Nyquist: this content, too fine for the pixel, folds back into the image as artifacts. This is a deliberate design choice, not a flaw — it favors signal-to-noise ratio and swath width.",
+  "Focale ≈ <b>{f}</b> · F/# ≈ <b>{n}</b>, dérivés du pitch et de l'iFoV.": "Focal length ≈ <b>{f}</b> · F/# ≈ <b>{n}</b>, derived from the pitch and the iFoV.",
+  "<span class='flag'>Q = {q}, inférieur à 1.</span> L'optique transmet encore du contraste au-delà de Nyquist : ce contenu trop fin pour le pixel se replie dans l'image sous forme d'artefacts. C'est un choix de conception assumé, pas un défaut. Il privilégie le rapport signal/bruit et la largeur de fauchée.":
+    "<span class='flag'>Q = {q}, below 1.</span> The optics still transmit contrast beyond Nyquist: this content, too fine for the pixel, folds back into the image as artifacts. This is a deliberate design choice, not a flaw. It favors signal-to-noise ratio and swath width.",
   "Q = {q}, supérieur à 2. Le pixel n'est plus le facteur limitant : affiner le détecteur n'apporterait rien tant que la pupille ne grandit pas.":
     "Q = {q}, above 2. The pixel is no longer the limiting factor: a finer detector would bring nothing as long as the pupil does not grow.",
   "Q = {q}. L'échantillonnage est accordé à la coupure optique : optique et détecteur pèsent du même ordre dans le budget de contraste.":
@@ -866,17 +872,20 @@ var I18N_FIELD_FR = {
 };
 
 // Messages d'erreur du serveur de simulation (main.py), écrits en français :
-// message exact → clé. Un message absent de cette table est affiché tel quel.
+// DÉBUT du message → clé. On compare le début seulement, pour que le texte reste
+// reconnu si le serveur change une ponctuation ou un mot de fin (c'est ce qui
+// s'était produit : « … cette adresse — réessaie plus tard. » ne correspondait
+// pas à la phrase attendue). Un message absent de cette table est affiché tel quel.
 var I18N_API_FR = {
-  "Authentification requise.": "api.auth",
-  "Impossible de vérifier l'abonnement. Réessayez dans un instant.": "api.sub_check",
-  "Aucun abonnement actif sur ce compte.": "api.sub_none",
-  "Abonnement inactif : le simulateur complet nécessite un abonnement actif.": "api.sub_inactive",
-  "Abonnement ou période d'essai expiré.": "api.sub_expired",
-  "Trop de simulations depuis cette adresse. Réessayez plus tard.": "api.rate_ip",
-  "Trop de simulations depuis ce compte. Réessayez plus tard.": "api.rate_account",
-  "Trop de requêtes depuis ce compte. Réessayez plus tard.": "api.rate_requests",
-  "Électronique non renseignée : ouvrez l'instrument et complétez le bloc Électronique.": "api.electronics"
+  "Authentification requise": "api.auth",
+  "Impossible de vérifier l'abonnement": "api.sub_check",
+  "Aucun abonnement actif sur ce compte": "api.sub_none",
+  "Abonnement inactif": "api.sub_inactive",
+  "Abonnement ou période d'essai expiré": "api.sub_expired",
+  "Trop de simulations depuis cette adresse": "api.rate_ip",
+  "Trop de simulations depuis ce compte": "api.rate_account",
+  "Trop de requêtes depuis ce compte": "api.rate_requests",
+  "Électronique non renseignée : ouvrez l'instrument": "api.electronics"
 };
 
 // ============================================================================
@@ -976,7 +985,9 @@ var I18N_API_FR = {
   // Message d'erreur du serveur : traduit s'il est connu, sinon affiché tel quel.
   window.tApi = function(msg){
     if(typeof msg !== "string") return msg;
-    if(I18N_API_FR[msg]) return t(I18N_API_FR[msg]);
+    for(var prefix in I18N_API_FR){
+      if(msg.indexOf(prefix) === 0) return t(I18N_API_FR[prefix]);
+    }
     if(msg.indexOf("Jeton invalide ou expiré") === 0 || msg.indexOf("Impossible de vérifier le jeton") === 0) return t("api.token");
     return msg;
   };
