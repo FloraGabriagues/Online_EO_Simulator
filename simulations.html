@@ -653,7 +653,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           </div>
 
           <div class="panelbtn">
-            <button class="nextbtn" type="button" id="panelActionBtn">Suivant →</button>
+            <!-- 07/10/2026 : grisé jusqu'à la fin du chargement (updatePanelButton le réactive). Avant, il était cliquable
+                 dès l'affichage alors que son action n'était branchée qu'une seconde plus tard : un clic rapide ne faisait rien. -->
+            <button class="nextbtn" type="button" id="panelActionBtn" disabled>Suivant →</button>
           </div>
         </div>
       </div>

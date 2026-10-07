@@ -29,11 +29,17 @@ const EMAIL = process.env.NYSA_TEST_EMAIL;
 const PASSWORD = process.env.NYSA_TEST_PASSWORD;
 const BASE_URL = process.env.NYSA_URL || "https://nysa-imaging.com";
 
+// Erreurs JavaScript de la page, et textes de traduction manquants (le site écrit alors « Texte manquant »
+// dans la console : c'est le signe qu'une page est plus récente que son fichier i18n.js, ou l'inverse).
 function watchErrors(page) {
   const errors = [];
   page.on("pageerror", (e) => errors.push(String(e)));
+  page.on("console", (m) => { if (/Texte manquant/.test(m.text())) errors.push("traduction manquante : " + m.text()); });
   return errors;
 }
+
+// Nom interne d'un texte non traduit, tel qu'il s'afficherait à l'écran (par exemple « res.download.rgb »).
+const RAW_KEY = /\b(?:home|res|sim|login|nav|field|settings|sub|inst|common|time|help|beta|menu|paywall|api|demo|band|block|lang|pwd|activity|top|pwd|auth|block)\.[a-z0-9_]+(?:\.[a-z0-9_]+)*\b/;
 
 // ---------------------------------------------------------------------------
 // Pages publiques
@@ -97,6 +103,22 @@ test.describe("Pages publiques @public", () => {
     await expect(page.locator("#signupLang")).toHaveValue("en");
     await expect(page.locator("#signupPassword2")).toBeVisible();
     await expect(page.locator(".legalnote a")).toHaveCount(2);
+  });
+
+  test("aucun texte de traduction manquant, dans aucune langue", async ({ page }) => {
+    const pages = ["/index.html", "/login.html", "/hypotheses.html", "/conditions.html", "/confidentialite.html", "/404.html"];
+    for (const lang of ["fr", "en"]) {
+      for (const p of pages) {
+        const errors = watchErrors(page);
+        await page.goto(`${p}?lang=${lang}`);
+        await page.waitForLoadState("networkidle");
+        const text = await page.evaluate(() => document.body.innerText);
+        expect(text.match(RAW_KEY), `nom interne de texte affiché sur ${p} (${lang})`).toBeNull();
+        expect(errors.filter((e) => e.startsWith("traduction")), `traduction manquante sur ${p} (${lang})`).toEqual([]);
+        page.removeAllListeners("console");
+        page.removeAllListeners("pageerror");
+      }
+    }
   });
 
   test("aucun tiret long n'est affiché, dans aucune langue", async ({ page }) => {
@@ -177,6 +199,10 @@ test.describe.serial("Parcours connecté", () => {
     await expect(page.locator("h1")).toHaveText("New simulation");
 
     await expect(page.locator(".scenecard").first()).toBeVisible();     // étape 1 : la première scène est sélectionnée
+    // La page charge ses instruments et l'abonnement en arrière-plan : on attend la fin du chargement
+    // (instruments présents, bouton « Suivant » actif) avant de cliquer, comme le ferait un utilisateur patient.
+    await expect(page.locator("#instList .instoption").first()).toBeAttached({ timeout: 30 * 1000 });
+    await expect(page.locator("#panelActionBtn")).toBeEnabled({ timeout: 30 * 1000 });
     await page.locator("#panelActionBtn").click();
 
     const instrument = page.locator("#instList .instoption:not(.draft)").first();   // étape 2
@@ -246,6 +272,15 @@ test.describe.serial("Parcours connecté", () => {
     await row.locator("[data-act='delete']").click();
     await expect(row).toHaveCount(0);
     resultId = null;
+  });
+
+  test("aucun texte non traduit sur les pages de l'espace connecté", async () => {
+    for (const p of ["/espace-personnel.html", "/simulations.html", "/resultats.html", "/creer-instrument.html"]) {
+      await page.goto(p);
+      await page.waitForLoadState("networkidle");
+      const text = await page.evaluate(() => document.body.innerText);
+      expect(text.match(RAW_KEY), `nom interne de texte affiché sur ${p}`).toBeNull();
+    }
   });
 
   test("aucune erreur JavaScript pendant le parcours", async () => {
