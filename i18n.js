@@ -528,6 +528,17 @@ var I18N = {
   "sim.val.int_between": { fr: "Nombre entier entre {min} et {max}.", en: "Whole number between {min} and {max}." },
   "sim.tdi.hint":        { fr: "1 = sans TDI", en: "1 = no TDI" },
 
+  // FMC et bulles d'aide de la page Simulations
+  "sim.fmc.label":       { fr: "FMC (défilement de l'image)", en: "FMC (image motion)" },
+  "sim.fmc.detail":      { fr: "Vitesse au sol {vg} km/s · Pas au sol {gsd} m", en: "Ground speed {vg} km/s · GSD {gsd} m" },
+  "sim.fmc.unavailable": { fr: "Choisissez un instrument et des conditions valides pour afficher la FMC.", en: "Choose an instrument and valid conditions to display the FMC." },
+  "sim.help.tdi.title":  { fr: "TDI, intégration à retard temporel", en: "TDI, time delay integration" },
+  "sim.help.tdi.text":   { fr: "Le détecteur lit la même ligne de la scène plusieurs fois, au fil du défilement de l'image, et additionne ces lectures : le signal augmente. Ce champ est le nombre d'étages lus et additionnés.\n1 = pas de TDI (un seul étage).",
+                           en: "The detector reads the same line of the scene several times as the image moves across it, and sums these readouts: the signal increases. This field is the number of stages read and summed.\n1 = no TDI (a single stage)." },
+  "sim.help.fmc.title":  { fr: "FMC, compensation du défilement", en: "FMC, forward motion compensation" },
+  "sim.help.fmc.text":   { fr: "Le satellite avance : pendant le temps d'intégration, l'image de la scène défile sur le détecteur. La FMC (Forward Motion Compensation) est ce défilement, exprimé en pixels : vitesse au sol × temps d'intégration ÷ pas au sol.\nProche de 1 pixel, l'intégration suit exactement le défilement : c'est la condition d'un TDI synchronisé. Un écart important donne un filé de l'image dans le sens de la trace, qui s'accumule sur les étages TDI.\nCalcul pour une orbite circulaire, visée au nadir, rotation de la Terre négligée. Valeur indicative : le simulateur ne modélise pas encore le filé.",
+                           en: "The satellite moves forward: during the integration time, the image of the scene moves across the detector. The FMC (Forward Motion Compensation) is this motion, expressed in pixels: ground speed × integration time ÷ ground sampling distance.\nClose to 1 pixel, the integration follows the motion exactly: this is the condition for a synchronized TDI. A large mismatch smears the image along track, and the smear accumulates over the TDI stages.\nComputed for a circular orbit, nadir viewing, Earth rotation neglected. Indicative value: the simulator does not model smear yet." },
+
   // ---------------- page de connexion (login.html) ----------------
   "login.doc_title":     { fr: "Connexion | Nysa", en: "Sign in | Nysa" },
   "login.h1":            { fr: "Accès au simulateur complet", en: "Access the full simulator" },

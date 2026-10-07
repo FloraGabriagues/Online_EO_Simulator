@@ -421,6 +421,24 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .sumkv .kv:last-child{border-bottom:none}
 .sumkv .k{color:var(--muted-2)}
 .sumkv .v{font-family:var(--mono);color:var(--paper);text-align:right;overflow-wrap:anywhere}
+/* bulles d'aide et FMC (07/10/2026). Les bulles laissent passer les clics (pointer-events:none) :
+   une bulle ouverte ne bloque jamais le bouton « ? » d'une autre bulle placé dessous. */
+.lblrow{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.lblrow label{margin-bottom:0}
+.bubblebtn{width:16px;height:16px;flex:none;border-radius:50%;border:1px solid var(--line);background:transparent;color:var(--muted);
+  font-family:var(--mono);font-size:10px;line-height:1;cursor:pointer;padding:0;display:inline-flex;align-items:center;justify-content:center}
+.bubblebtn:hover,.bubblebtn[aria-expanded="true"]{color:var(--pixel);border-color:var(--pixel)}
+.bubblebtn:focus-visible{outline:2px solid var(--pixel);outline-offset:2px}
+.bubble{position:fixed;z-index:80;pointer-events:none;background:var(--panel-2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;
+  box-shadow:0 12px 36px rgba(0,0,0,.5);font-size:12.5px;line-height:1.5;color:var(--muted)}
+.bubble strong{display:block;color:var(--paper);font-weight:500;font-size:13px;margin-bottom:6px}
+.bubble p{margin:0 0 7px}
+.bubble p:last-child{margin-bottom:0}
+.fmcbox{grid-column:1/-1;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;padding:11px 14px}
+.fmchead{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.fmclabel{font-size:12px;color:var(--muted)}
+.fmcval{font-family:var(--mono);font-size:15px;color:var(--paper);white-space:nowrap}
+.fmcdetail{margin:5px 0 0;font-size:11.5px;color:var(--muted-2);font-family:var(--mono)}
 </style>
 </head>
 <body>
@@ -536,9 +554,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                     <p class="fielderr" id="errTI" hidden></p>
                   </div>
                   <div class="field">
-                    <label data-i18n="field.TDI">Étages TDI</label>
+                    <div class="lblrow"><label data-i18n="field.TDI">Étages TDI</label><button type="button" class="bubblebtn" data-bubble="tdi" aria-expanded="false" data-i18n-aria="nav.help">?</button></div>
                     <div class="row"><input type="number" id="fTDI" value="1" min="1" max="64" step="1"><span class="unit">×</span></div>
-                    <p class="fieldhint" data-i18n="sim.tdi.hint">1 = sans TDI</p>
                     <p class="fielderr" id="errTDI" hidden></p>
                   </div>
                   <div class="field">
@@ -551,6 +568,15 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                   <div class="field">
                     <label><span data-i18n="sim.view_angle">Angle de visée</span> <span class="soon" data-i18n="nav.soon">à venir</span></label>
                     <div class="row"><input type="number" id="fView" value="0" disabled><span class="unit">°</span></div>
+                  </div>
+                  <!-- 07/10/2026 : FMC déduite de l'altitude, de l'iFoV de l'instrument et du temps d'intégration.
+                       Valeur indicative : le calcul ne modélise pas le filé (voir updateFmc). -->
+                  <div class="fmcbox" id="fmcBox">
+                    <div class="fmchead">
+                      <div class="lblrow" style="margin:0"><span class="fmclabel" data-i18n="sim.fmc.label">FMC (défilement de l'image)</span><button type="button" class="bubblebtn" data-bubble="fmc" aria-expanded="false" data-i18n-aria="nav.help">?</button></div>
+                      <span class="fmcval" id="fmcVal">-</span>
+                    </div>
+                    <p class="fmcdetail" id="fmcDetail"></p>
                   </div>
                   <!-- Réglages atmosphériques (03/10/2026) : paramètres avancés, repliés par
                        défaut. Mêmes clés et mêmes valeurs par défaut que
@@ -1118,7 +1144,86 @@ function renderAcquisitionDiagram(){
 });
 
 // ===================== Résumé permanent (étapes 1-3) =====================
+// ===================== FMC : défilement de l'image pendant l'intégration (07/10/2026) =====================
+// FMC = vitesse au sol × temps d'intégration ÷ pas au sol, en pixels.
+//   vitesse au sol : orbite circulaire, vitesse orbitale √(μ/(R+H)) ramenée à la surface (× R/(R+H)),
+//                    rotation de la Terre négligée ;
+//   pas au sol     : iFoV × altitude (visée au nadir) ;
+//   iFoV           : celui de l'instrument choisi à l'étape 2.
+// Valeur indicative : le calcul de simulation ne modélise pas le filé (voir la page Hypothèses).
+var EARTH_RADIUS_KM = 6371, EARTH_MU_KM3_S2 = 398600.4418;
+function fmcCompute(){
+  var H = Number(document.getElementById("fH").value), TI = Number(document.getElementById("fTI").value);
+  var inst = selectedInstIdx >= 0 ? instruments[selectedInstIdx] : null;
+  var iFoV = (inst && inst.config) ? Number(inst.config.I) : NaN;          // µrad
+  if(!(H > 0) || !(TI > 0) || !(iFoV > 0)) return null;
+  var r = EARTH_RADIUS_KM + H;
+  var vg = Math.sqrt(EARTH_MU_KM3_S2 / r) * EARTH_RADIUS_KM / r;           // km/s
+  var gsd = iFoV * 1e-6 * H * 1000;                                         // m
+  return { px: (vg * 1000) * (TI * 1e-6) / gsd, vg: vg, gsd: gsd };
+}
+function updateFmc(){
+  var val = document.getElementById("fmcVal"), det = document.getElementById("fmcDetail");
+  if(!val || !det) return;
+  var info = fmcCompute();
+  var fmt = function(x){ return x.toLocaleString(nysaLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
+  val.textContent = info ? fmt(info.px) + " px" : "-";
+  det.textContent = info ? t("sim.fmc.detail", { vg: fmt(info.vg), gsd: fmt(info.gsd) }) : t("sim.fmc.unavailable");
+}
+
+// ===================== Bulles d'aide (07/10/2026) =====================
+// Un bouton « ? » (classe bubblebtn, attribut data-bubble) ouvre une bulle placée près du bouton.
+// Elle se ferme avec Échap, un clic ailleurs ou un nouveau clic sur le bouton ; elle suit son bouton quand on défile.
+var BUBBLES = {
+  tdi: { title: "sim.help.tdi.title", text: "sim.help.tdi.text" },
+  fmc: { title: "sim.help.fmc.title", text: "sim.help.fmc.text" }
+};
+var bubbleEl = null, bubbleBtn = null;
+function closeBubble(){
+  if(!bubbleEl) return;
+  bubbleEl.remove(); bubbleEl = null;
+  if(bubbleBtn){ bubbleBtn.setAttribute("aria-expanded", "false"); bubbleBtn.removeAttribute("aria-describedby"); bubbleBtn = null; }
+}
+function openBubble(btn){
+  var def = BUBBLES[btn.getAttribute("data-bubble")];
+  if(!def) return;
+  closeBubble();
+  var el = document.createElement("div");
+  el.className = "bubble"; el.id = "bubbleNote"; el.setAttribute("role", "note");
+  var h = document.createElement("strong"); h.textContent = t(def.title); el.appendChild(h);
+  t(def.text).split("\n").forEach(function(line){
+    var para = document.createElement("p"); para.textContent = line; el.appendChild(para);
+  });
+  document.body.appendChild(el);
+  bubbleEl = el; bubbleBtn = btn;
+  placeBubble();
+  btn.setAttribute("aria-expanded", "true"); btn.setAttribute("aria-describedby", "bubbleNote");
+}
+// Place la bulle près de son bouton. Rappelée au défilement et au redimensionnement : sur
+// téléphone, la barre d'adresse qui se rétracte déclenche ces événements, et fermer la bulle
+// à ce moment-là la ferait disparaître toute seule.
+function placeBubble(){
+  if(!bubbleEl || !bubbleBtn) return;
+  var r = bubbleBtn.getBoundingClientRect();
+  if(r.bottom < 0 || r.top > window.innerHeight){ closeBubble(); return; }   // bouton sorti de l'écran
+  var w = Math.min(320, window.innerWidth - 24);
+  bubbleEl.style.width = w + "px";
+  bubbleEl.style.left = Math.max(12, Math.min(r.left + r.width / 2 - w / 2, window.innerWidth - w - 12)) + "px";
+  var top = r.bottom + 8, hh = bubbleEl.getBoundingClientRect().height;
+  if(top + hh > window.innerHeight - 12 && r.top - 8 - hh > 12) top = r.top - 8 - hh;   // pas la place dessous : au-dessus du bouton
+  bubbleEl.style.top = top + "px";
+}
+document.addEventListener("click", function(e){
+  var btn = e.target.closest && e.target.closest(".bubblebtn");
+  if(btn){ e.preventDefault(); if(bubbleBtn === btn) closeBubble(); else openBubble(btn); return; }
+  if(bubbleEl && !(e.target.closest && e.target.closest(".bubble"))) closeBubble();
+});
+document.addEventListener("keydown", function(e){ if(e.key === "Escape") closeBubble(); });
+window.addEventListener("resize", placeBubble);
+window.addEventListener("scroll", placeBubble, true);
+
 function updateSummary(){
+  updateFmc();
   var s = SCENES[selectedSceneIdx];
   var dimStr = s.w + " × " + s.h + " m";
   document.getElementById("sumSceneSlot").innerHTML =
