@@ -3,13 +3,20 @@
 // Chargé par toutes les pages nécessitant un compte (espace-personnel.html,
 // creer-instrument.html, simulations.html, login.html).
 //
-// Clé "anon" : publique par design (c'est ainsi que fonctionne Supabase —
-// la vraie protection vient des règles RLS en base, pas du secret de cette
-// clé). Rien de sensible à cacher ici.
+// Clé publique : elle est faite pour être visible dans les pages d'un site
+// (c'est ainsi que fonctionne Supabase — la vraie protection vient des règles
+// d'accès en base, pas du secret de cette clé). Rien de sensible ici.
+//
+// 06/10/2026 — déménagement de la base de Londres vers Paris.
+//   Ancien projet (Londres, eu-west-2) : hmnlxbpcfqxdezucxsep
+//   Nouveau projet (Paris,  eu-west-3) : szosbxkhnsjmbrzivlsb
+// Le nouveau projet utilise une clé « publishable » (sb_publishable_…), qui
+// remplace l'ancienne clé « anon ». Le nom de la constante est conservé parce
+// que les pages l'utilisent.
 // ============================================================================
 
-const SUPABASE_URL = "https://hmnlxbpcfqxdezucxsep.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhtbmx4YnBjZnF4ZGV6dWN4c2VwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzNzAwNDIsImV4cCI6MjEwNDk0NjA0Mn0.6ZMkqiDdCcfXAJ9RphxHgd5UeAEyfjWic2Ch68J1rXs";
+const SUPABASE_URL = "https://szosbxkhnsjmbrzivlsb.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_KvMrQXbFT-UtAgIFtG2GNQ_Ab5YlFvB";
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 

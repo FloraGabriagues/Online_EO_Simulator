@@ -397,7 +397,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       <div class="bottomrow">
         <!-- 06/10/2026 — remplace l'encadré « Activité récente ». Chaque phrase
              doit rester vraie : la modifier si l'hébergement change.
-             Calcul : Scaleway, Paris. Base et fichiers : Supabase, région eu-west-2 (Londres). -->
+             Calcul : Scaleway, Paris. Base et fichiers : Supabase, région eu-west-3 (Paris). -->
         <div class="doccol">
           <p class="grouphead"><span class="dot"></span><span data-i18n="home.privacy">Confidentialité</span></p>
           <div class="hero trust">
@@ -407,7 +407,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
               <ul>
                 <li data-i18n="home.trust.li1">Visibles de vous seul, jamais partagés ni réutilisés.</li>
                 <li data-i18n="home.trust.li4">Nysa ne les consulte pas sans votre autorisation préalable.</li>
-                <li data-i18n="home.trust.li2">Simulations calculées en France, données stockées à Londres.</li>
+                <li data-i18n="home.trust.li2">Simulations calculées et données stockées en France.</li>
                 <li data-i18n="home.trust.li3">Aucun traceur, aucune publicité, aucune mesure d'audience.</li>
               </ul>
             </div>
@@ -567,7 +567,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   if(!session) return; // requireAuth redirige déjà vers login.html si besoin
 
   // URL des Edge Functions Supabase (Stripe Checkout / portail client).
-  var FUNCTIONS_URL = "https://hmnlxbpcfqxdezucxsep.supabase.co/functions/v1";
+  // L'adresse des fonctions se déduit de celle du projet (supabase-client.js) :
+  // un seul endroit à changer si le projet déménage.
+  var FUNCTIONS_URL = SUPABASE_URL + "/functions/v1";
 
   // ===================== Topbar : utilisateur réel =====================
   var email = session.user.email || "";
