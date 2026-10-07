@@ -1,0 +1,66 @@
+# Test automatique du parcours utilisateur de Nysa.
+#
+# Il se lance :
+#   - après chaque envoi sur la branche principale (le temps que le site se mette à jour) ;
+#   - chaque matin ;
+#   - à la demande, depuis l'onglet « Actions » de GitHub.
+#
+# Il a besoin de deux secrets du dépôt (Settings, Secrets and variables, Actions) :
+#   NYSA_TEST_EMAIL      adresse du compte réservé aux tests
+#   NYSA_TEST_PASSWORD   son mot de passe
+# Sans eux, seules les pages publiques sont testées.
+name: Test du parcours
+
+on:
+  push:
+    branches: [main, master]
+  schedule:
+    - cron: "30 5 * * *"      # tous les jours à 5 h 30 UTC
+  workflow_dispatch:
+
+# Un seul test à la fois : le compte de test n'accepte qu'une session.
+concurrency:
+  group: test-parcours
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  parcours:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    defaults:
+      run:
+        working-directory: tests-e2e
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer les outils de test
+        run: |
+          npm install
+          npx playwright install --with-deps chromium
+
+      - name: Attendre la mise en ligne du site
+        if: github.event_name == 'push'
+        run: sleep 180
+
+      - name: Lancer le test du parcours
+        env:
+          NYSA_TEST_EMAIL: ${{ secrets.NYSA_TEST_EMAIL }}
+          NYSA_TEST_PASSWORD: ${{ secrets.NYSA_TEST_PASSWORD }}
+        run: npx playwright test
+
+      - name: Conserver le rapport en cas d'échec
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rapport-test-parcours
+          path: |
+            tests-e2e/playwright-report/
+            tests-e2e/test-results/
+          retention-days: 7

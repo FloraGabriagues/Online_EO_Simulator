@@ -1,0 +1,7 @@
+{
+  "name": "nysa-tests",
+  "private": true,
+  "description": "Tests automatiques du parcours utilisateur de Nysa",
+  "scripts": { "test": "playwright test", "test:public": "playwright test --grep @public" },
+  "devDependencies": { "@playwright/test": "^1.48.0" }
+}
