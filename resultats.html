@@ -260,6 +260,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   font-family:var(--mono);font-size:11px;padding:5px 10px;cursor:pointer}
 .delbtn:hover{border-color:var(--alert);color:var(--alert)}
 .renbtn:hover{border-color:var(--pixel);color:var(--pixel)}
+/* 07/10/2026 — date du résultat sous son titre, en toutes lettres et à l'heure locale */
+.ressub{margin:0;font-family:var(--mono);font-size:12px;letter-spacing:.02em;color:var(--muted)}
 .resultsempty{color:var(--muted);font-size:13.5px;grid-column:1/-1;padding:30px 0}
 .resultsempty a{color:var(--pixel);text-decoration:none}
 
@@ -502,9 +504,12 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       <div id="detailView" style="display:none">
       <div class="pageheadrow">
         <a class="backlink" href="resultats.html" style="margin:0" data-i18n="res.back">← Retour aux résultats</a>
-        <div style="display:flex;align-items:center;gap:10px">
-          <h1 id="resTitle">Résultat</h1>
-          <button type="button" id="btnRenameResult" class="renbtn" style="flex:none" data-i18n="inst.menu.rename">Renommer</button>
+        <div style="display:flex;flex-direction:column;align-items:flex-start;gap:3px">
+          <div style="display:flex;align-items:center;gap:10px">
+            <h1 id="resTitle">Résultat</h1>
+            <button type="button" id="btnRenameResult" class="renbtn" style="flex:none" data-i18n="inst.menu.rename">Renommer</button>
+          </div>
+          <p class="ressub" id="resSub"></p>
         </div>
       </div>
 
@@ -838,7 +843,8 @@ async function renderResultsList(){
       var { data: signed } = await supabaseClient.storage.from("results").createSignedUrl(r.image_path, 3600);
       if(signed) thumbUrl = signed.signedUrl;
     }
-    var dateLabel = new Date(r.created_at).toLocaleDateString(nysaLocale(), {day:"numeric", month:"short", year:"numeric"});
+    // 07/10/2026 — date et heure, à l'heure locale du navigateur (« 7 oct. 2026, 11:20 »)
+    var dateLabel = new Date(r.created_at).toLocaleString(nysaLocale(), {day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit"});
     var instName = (r.instruments && r.instruments.name) || (r.instrument_snapshot && r.instrument_snapshot.name) || t("sim.sum.instrument");
     // 04/10/2026 — un résultat survit à son instrument : on le signale sur
     // la carte. « Supprimé » = marqué deleted_at (suppression douce) ou
@@ -1057,10 +1063,27 @@ async function deleteResult(r){
   var diagBands = (result && result.diagnostics && result.diagnostics.bands) || {};
   var resultLogs = (result && result.logs) || "";
 
-  var createdLabel = result ? new Date(result.created_at).toISOString().slice(0,16).replace("T","_").replace(":","") : "—";
+  // 07/10/2026 — le titre ne porte plus la date entre parenthèses (« essai 1 (2026-10-07_0920) ») :
+  // le nom est affiché seul, et la date est écrite en clair dessous, à l'heure locale du navigateur.
+  // (L'ancien format était en heure UTC : il affichait deux heures de moins en France l'été.)
+  var createdDate = result ? new Date(result.created_at) : null;
+  function p2(n){ return String(n).padStart(2, "0"); }
+  // horodatage pour le nom du fichier téléchargé : 2026-10-07_1120, à l'heure locale
+  var createdLabel = createdDate
+    ? createdDate.getFullYear() + "-" + p2(createdDate.getMonth() + 1) + "-" + p2(createdDate.getDate()) + "_" + p2(createdDate.getHours()) + p2(createdDate.getMinutes())
+    : "—";
+  var createdNice = createdDate ? createdDate.toLocaleString(nysaLocale(), { dateStyle: "long", timeStyle: "short" }) : "";
   var displayName = (result && result.name) || tScene(sceneName); // "name" optionnel — replie sur la scène si absent
 
-  document.getElementById("resTitle").textContent = displayName + " (" + createdLabel + ")";
+  function renderResultHead(){
+    document.getElementById("resTitle").textContent = (result && result.name) || tScene(sceneName);
+    // la scène est rappelée sous le titre dès que le titre est un nom choisi (sinon il la montre déjà)
+    var parts = [];
+    if(createdNice) parts.push(createdNice);
+    if(result && result.name) parts.push(tScene(sceneName));
+    document.getElementById("resSub").textContent = parts.join(" · ");
+  }
+  renderResultHead();
   var btnRename = document.getElementById("btnRenameResult");
   if(!result){
     btnRename.style.display = "none";
@@ -1076,7 +1099,7 @@ async function deleteResult(r){
         return;
       }
       result.name = newName;
-      document.getElementById("resTitle").textContent = newName + " (" + createdLabel + ")";
+      renderResultHead();
     });
   }
   document.getElementById("imgSim").src = imgUrl;
