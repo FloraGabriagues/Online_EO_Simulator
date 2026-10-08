@@ -1984,6 +1984,12 @@ async function launchSimulation(){
 document.getElementById("interruptBtn").addEventListener("click", function(){
   if(abortController) abortController.abort();
 });
+// « Précédent » pendant un calcul : demande confirmation avant d'interrompre (08/10/2026).
+// Écouteur en phase de capture : il passe avant celui de data-goto qui change d'étape.
+document.getElementById("step4Back").addEventListener("click", function(e){
+  if(!simBusy()) return;
+  if(!confirm(t("sim.leave.prev"))){ e.preventDefault(); e.stopImmediatePropagation(); }
+}, true);
 document.getElementById("step4Back").addEventListener("click", function(){
   if(abortController && simRunning) abortController.abort();
 });

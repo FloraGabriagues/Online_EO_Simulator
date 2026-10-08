@@ -60,3 +60,20 @@ var BETA_CONTACT = "contact@nysa-imaging.com";
   window.addEventListener("resize", place);
   window.addEventListener("load", place); // après chargement des polices, la hauteur peut changer
 })();
+
+// Lien « Retour » des pages légales et de la documentation (08/10/2026) :
+// revient à la page d'où l'on vient ; à défaut, à l'espace personnel si l'on est connecté, sinon à l'accueil.
+(function(){
+  function loggedIn(){
+    try{ for(var i = 0; i < localStorage.length; i++){ var k = localStorage.key(i); if(/^sb-.*-auth-token$/.test(k)) return true; } }catch(e){}
+    return false;
+  }
+  document.addEventListener("click", function(e){
+    var a = e.target.closest && e.target.closest("a.back");
+    if(!a || e.button !== 0 || e.ctrlKey || e.metaKey || e.shiftKey || e.altKey) return;
+    var from = ""; try{ from = new URL(document.referrer).origin === location.origin ? document.referrer : ""; }catch(err){}
+    e.preventDefault();
+    if(from && history.length > 1) history.back();
+    else location.href = loggedIn() ? "espace-personnel.html" : "index.html";
+  });
+})();

@@ -432,8 +432,15 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .rptbox .rptconsent input{margin-top:3px;flex:none;width:16px;height:16px;accent-color:var(--pixel)}
 .rpterr{margin:10px 0 0;font-size:12.5px;color:var(--alert)}
 .rptactions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
-.rptbtn{font-family:var(--body);font-size:14px;border-radius:6px;padding:10px 16px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--paper)}
-.rptbtn.main{background:var(--pixel);border-color:var(--pixel);color:#06231F;font-weight:500}
+.impbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px}
+.importmsg{font-size:12.5px;color:var(--muted)}
+.importmsg.err{color:var(--alert)}
+.reportbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;padding:11px 16px;background:transparent;border:1px solid var(--line);border-radius:6px;color:var(--muted);font-family:var(--body);font-size:14px;cursor:pointer;transition:border-color .15s,color .15s}
+.reportbtn:hover:not(:disabled){border-color:var(--photon);color:var(--photon)}
+.reportbtn:disabled{opacity:.5;cursor:not-allowed}
+.rptbtn{font-family:var(--body);font-size:14px;line-height:1.2;min-height:42px;border-radius:6px;padding:10px 18px;cursor:pointer;border:1px solid var(--line);background:var(--panel-2);color:var(--paper)}
+.rptbtn:hover:not(:disabled){border-color:var(--pixel)}
+.rptbtn.main{background:var(--pixel);border-color:var(--pixel);color:#06231F;font-weight:500;flex:1 1 200px}
 .rptbtn:disabled{opacity:.4;cursor:not-allowed}
 .rptbtn[hidden]{display:none}
 </style>
@@ -506,7 +513,12 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       <div id="listView">
         <p class="eyebrow" data-i18n="res.eyebrow">Résultats</p>
         <h1 data-i18n="res.h1">Mes résultats</h1>
-        <p class="pagesub" style="margin-bottom:22px" data-i18n="res.sub">Retrouvez vos simulations sauvegardées.</p>
+        <p class="pagesub" style="margin-bottom:14px" data-i18n="res.sub">Retrouvez vos simulations sauvegardées.</p>
+        <div class="impbar">
+          <button type="button" class="renbtn" id="btnImport" data-i18n="res.import.btn">Importer un résultat</button>
+          <input type="file" id="importFile" accept=".json,application/json" hidden>
+          <span class="importmsg" id="importMsg" role="status" aria-live="polite"></span>
+        </div>
         <!-- 04/10/2026 — en-tête de la liste : chaque intitulé trie la liste.
              Les largeurs reprennent celles des colonnes d'une ligne. -->
         <!-- 04/10/2026 — filtres sur les entrées de la simulation -->
@@ -533,6 +545,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           <div style="display:flex;align-items:center;gap:10px">
             <h1 id="resTitle">Résultat</h1>
             <button type="button" id="btnRenameResult" class="renbtn" style="flex:none" data-i18n="inst.menu.rename">Renommer</button>
+            <button type="button" id="btnExportResult" class="renbtn" style="flex:none" data-i18n="res.export.btn">Exporter</button>
           </div>
           <p class="ressub" id="resSub"></p>
         </div>
@@ -610,7 +623,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
               <button class="downloadbtn" type="button" id="downloadBtn" style="margin-top:6px">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v13M7 11l5 5 5-5M4 20h16"/></svg>
                 <span id="downloadLabel">Télécharger l'image RGB</span></button>
-          <button type="button" class="renbtn" id="btnReport" disabled data-i18n="res.report.btn">Signaler un problème</button>
+              <button type="button" class="reportbtn" id="btnReport" disabled>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>
+                <span data-i18n="res.report.btn">Signaler un problème</span></button>
             </div>
           </div>
         </div>
@@ -1062,6 +1077,110 @@ async function deleteResult(r){
   var session = await requireAuth();
   if(!session) return;
 
+  // ===== Export / import d'un résultat entre comptes (08/10/2026) =====
+  // Un seul fichier JSON : paramètres, diagnostics et images (en base64). Les journaux de calcul
+  // n'y figurent que si le compte exportateur est administrateur.
+  var FILE_RE = /^[A-Za-z0-9_.-]{1,120}\.png$/;
+  var MAX_IMPORT = 80 * 1024 * 1024;
+  function blobToB64(blob){
+    return new Promise(function(res, rej){
+      var fr = new FileReader();
+      fr.onload = function(){ res(String(fr.result).split(",")[1] || ""); };
+      fr.onerror = function(){ rej(fr.error); };
+      fr.readAsDataURL(blob);
+    });
+  }
+  function b64ToBlob(b64){
+    var bin = atob(b64), arr = new Uint8Array(bin.length);
+    for(var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
+    return new Blob([arr], { type: "image/png" });
+  }
+  async function exportResult(r){
+    var files = {}, diag = JSON.parse(JSON.stringify(r.diagnostics || {}));
+    async function grab(path){
+      if(!path) return null;
+      var base = path.split("/").pop();
+      if(files[base]) return base;
+      var { data, error } = await supabaseClient.storage.from("results").download(path);
+      if(error || !data) return null;
+      files[base] = await blobToB64(data);
+      return base;
+    }
+    var mainKey = await grab(r.image_path), srcKey = await grab(r.source_image_path);
+    var bands = diag.bands || {};
+    for(var bn in bands) for(var k in bands[bn]){
+      if(k.endsWith("_path") && bands[bn][k]) bands[bn][k] = await grab(bands[bn][k]);
+    }
+    var admin = (typeof isAdminAccount === "function") ? await isAdminAccount() : false;
+    var out = { format: "nysa-result", version: 1, exported_at: new Date().toISOString(),
+      result: { name: r.name || null, scene: r.scene, conditions: r.conditions, instrument_snapshot: r.instrument_snapshot,
+        diagnostics: diag, logs: admin ? (r.logs || "") : "", created_at: r.created_at, image: mainKey, source_image: srcKey },
+      files: files };
+    var blob = new Blob([JSON.stringify(out)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "nysa-" + String(r.id).slice(0, 8) + ".nysa-result.json";
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 5000);
+  }
+  async function importResult(file, uid){
+    if(file.size > MAX_IMPORT) throw new Error("big");
+    var data;
+    try{ data = JSON.parse(await file.text()); }catch(e){ throw new Error("format"); }
+    if(!data || data.format !== "nysa-result" || data.version !== 1 || !data.result || !data.result.scene || !data.files) throw new Error("format");
+    var R = data.result, id = crypto.randomUUID(), base = uid + "/" + id + "/", sent = [];
+    try{
+      async function put(key){
+        if(!key) return null;
+        if(!FILE_RE.test(key) || typeof data.files[key] !== "string") throw new Error("format");
+        var { error } = await supabaseClient.storage.from("results").upload(base + key, b64ToBlob(data.files[key]), { contentType: "image/png" });
+        if(error) throw error;
+        sent.push(base + key);
+        return base + key;
+      }
+      var imagePath = await put(R.image);
+      if(!imagePath) throw new Error("format");
+      var srcPath = await put(R.source_image);
+      var diag = JSON.parse(JSON.stringify(R.diagnostics || {})), bands = diag.bands || {};
+      for(var bn in bands) for(var k in bands[bn]){
+        if(k.endsWith("_path")) bands[bn][k] = await put(bands[bn][k]);
+      }
+      var cond = Object.assign({}, R.conditions || {}, { imported: true });
+      var { error: insErr } = await supabaseClient.from("saved_results").insert({
+        id: id, account_id: uid, instrument_id: null, name: R.name || null,
+        instrument_snapshot: R.instrument_snapshot || {}, scene: String(R.scene), conditions: cond,
+        image_path: imagePath, source_image_path: srcPath, diagnostics: diag, logs: String(R.logs || "") });
+      if(insErr) throw insErr;
+      return id;
+    }catch(e){
+      if(sent.length) await supabaseClient.storage.from("results").remove(sent);
+      throw e;
+    }
+  }
+  (function(){
+    var btn = document.getElementById("btnImport"), inp = document.getElementById("importFile"), msg = document.getElementById("importMsg");
+    if(!btn || !inp) return;
+    btn.addEventListener("click", function(){ inp.click(); });
+    inp.addEventListener("change", async function(){
+      var f = inp.files && inp.files[0]; inp.value = "";
+      if(!f) return;
+      msg.className = "importmsg"; msg.textContent = t("res.import.busy"); btn.disabled = true;
+      try{
+        var newId = await importResult(f, session.user.id);
+        msg.textContent = t("res.import.done");
+        await renderResultsList();
+        window.location.href = "resultats.html?id=" + newId;
+      }catch(e){
+        var m = (e && e.message) || String(e);
+        msg.className = "importmsg err";
+        if(m === "format") msg.textContent = t("res.import.err_format");
+        else if(m === "big") msg.textContent = t("res.import.err_big");
+        else if(m.indexOf("Limite de") >= 0) msg.textContent = (nysaLang() === "fr" ? m : t("sim.save.limit"));
+        else msg.textContent = t("res.import.fail", { msg: m });
+      }finally{ btn.disabled = false; }
+    });
+  })();
+
   document.getElementById("userEmail").textContent = session.user.email || "";
   document.getElementById("userAvatar").textContent = (session.user.email || "").slice(0, 2).toUpperCase();
   document.getElementById("signOutBtn").addEventListener("click", signOut);
@@ -1153,6 +1272,17 @@ async function deleteResult(r){
   }
   renderResultHead();
   var btnRename = document.getElementById("btnRenameResult");
+  var btnExport = document.getElementById("btnExportResult");
+  if(!result){
+    btnExport.style.display = "none";
+  } else {
+    btnExport.addEventListener("click", async function(){
+      var old = btnExport.textContent; btnExport.disabled = true; btnExport.textContent = t("res.export.busy");
+      try{ await exportResult(result); }
+      catch(e){ alert(t("res.export.fail", { msg: (e && e.message) || String(e) })); }
+      finally{ btnExport.disabled = false; btnExport.textContent = old; }
+    });
+  }
   if(!result){
     btnRename.style.display = "none";
   } else {
@@ -1399,7 +1529,7 @@ async function deleteResult(r){
           diagnostics: result.diagnostics, logs: result.logs || "", created_at: result.created_at,
           lang: nysaLang(), filesFailed: failed, userAgent: navigator.userAgent.slice(0, 200) };
         var { error } = await supabaseClient.from("result_reports").insert({
-          id: reportId, result_id: result.id, contact_email: sess.user.email, message: msg, consent: true,
+          id: reportId, account_id: uid, result_id: result.id, contact_email: sess.user.email, message: msg, consent: true,
           consent_text: t("res.report.consent"), snapshot: snapshot, files: copied });
         if(error) throw error;
         lastReport = { id: reportId, files: copied };

@@ -526,6 +526,8 @@ var I18N = {
   "sim.leave.go_saving":    { fr: "Quitter et perdre le résultat", en: "Leave and lose the result" },
   "sim.leave.stay":         { fr: "Rester ici", en: "Stay here" },
   "sim.leave.this_page":    { fr: "cette page", en: "this page" },
+  "sim.leave.prev":         { fr: "Une simulation est en cours : revenir en arrière l'interrompra et la fera perdre. Continuer ?",
+                              en: "A simulation is in progress: going back will interrupt it and you will lose it. Continue?" },
   "sim.leave.signout":      { fr: "Une simulation est en cours : vous déconnecter la fera perdre. Continuer ?",
                               en: "A simulation is in progress: signing out will lose it. Continue?" },
 
@@ -550,6 +552,16 @@ var I18N = {
   "sim.admin.clear":     { fr: "Retirer", en: "Remove" },
   "sim.admin.srv_logs":  { fr: "Journaux du serveur", en: "Server logs" },
   // signalement d'un résultat (resultats.html)
+  // export / import d'un résultat
+  "res.export.btn":       { fr: "Exporter", en: "Export" },
+  "res.export.busy":      { fr: "Export…", en: "Exporting…" },
+  "res.export.fail":      { fr: "L'export a échoué : {msg}", en: "Export failed: {msg}" },
+  "res.import.btn":       { fr: "Importer un résultat", en: "Import a result" },
+  "res.import.busy":      { fr: "Import en cours…", en: "Importing…" },
+  "res.import.done":      { fr: "Résultat importé.", en: "Result imported." },
+  "res.import.err_format":{ fr: "Ce fichier n'est pas un résultat Nysa exporté.", en: "This file is not an exported Nysa result." },
+  "res.import.err_big":   { fr: "Ce fichier est trop volumineux (80 Mo maximum).", en: "This file is too large (80 MB maximum)." },
+  "res.import.fail":      { fr: "L'import a échoué : {msg}", en: "Import failed: {msg}" },
   "res.report.btn":       { fr: "Signaler un problème", en: "Report a problem" },
   "res.report.title":     { fr: "Signaler un problème avec ce résultat", en: "Report a problem with this result" },
   "res.report.intro":     { fr: "Décrivez ce que vous attendiez et ce que vous observez. Une copie de ce résultat sera transmise à Nysa, et vous pourrez la retirer à tout moment.",
