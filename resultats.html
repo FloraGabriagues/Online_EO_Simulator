@@ -440,7 +440,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .reportbtn:disabled{opacity:.5;cursor:not-allowed}
 .rptbtn{font-family:var(--body);font-size:14px;line-height:1.2;min-height:42px;border-radius:6px;padding:10px 18px;cursor:pointer;border:1px solid var(--line);background:var(--panel-2);color:var(--paper)}
 .rptbtn:hover:not(:disabled){border-color:var(--pixel)}
-.rptbtn.main{background:var(--pixel);border-color:var(--pixel);color:#06231F;font-weight:500;flex:1 1 200px}
+.rptbtn.primary{background:var(--pixel);border-color:var(--pixel);color:#06231F;font-weight:500;flex:1 1 200px}
 .rptbtn:disabled{opacity:.4;cursor:not-allowed}
 .rptbtn[hidden]{display:none}
 </style>
@@ -704,7 +704,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       <p class="rpterr" id="rptErr" hidden></p>
       <div class="rptactions">
         <button type="button" class="rptbtn" id="rptCancel" data-i18n="res.report.cancel">Annuler</button>
-        <button type="button" class="rptbtn main" id="rptSend" disabled data-i18n="res.report.send">Envoyer le signalement</button>
+        <button type="button" class="rptbtn primary" id="rptSend" disabled data-i18n="res.report.send">Envoyer le signalement</button>
       </div>
     </div>
     <div id="rptDone" hidden>
@@ -712,7 +712,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       <p class="rptintro" id="rptDoneText" data-i18n="res.report.done_text"></p>
       <div class="rptactions">
         <button type="button" class="rptbtn" id="rptWithdraw" data-i18n="res.report.withdraw">Retirer ce signalement</button>
-        <button type="button" class="rptbtn main" id="rptClose" data-i18n="res.report.close">Fermer</button>
+        <button type="button" class="rptbtn primary" id="rptClose" data-i18n="res.report.close">Fermer</button>
       </div>
     </div>
   </div>
