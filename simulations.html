@@ -440,6 +440,20 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .fmcval{font-family:var(--mono);font-size:15px;color:var(--paper);white-space:nowrap}
 .fmcswept{margin:7px 0 0;font-size:12px;line-height:1.45;color:var(--muted)}
 .fmcdetail{margin:4px 0 0;font-size:11.5px;color:var(--muted-2);font-family:var(--mono)}
+/* administration (07/10/2026) */
+.adminbox{grid-column:1/-1;border:1px dashed var(--line);border-radius:6px;padding:10px 14px;background:rgba(245,172,87,.05)}
+.adminbox.on{border-color:var(--photon);background:rgba(245,172,87,.09)}
+.adminbox summary{cursor:pointer;font-size:12px;color:var(--photon);font-family:var(--mono);letter-spacing:.04em}
+.adminbox .admnote{margin:8px 0;font-size:12px;line-height:1.5;color:var(--muted)}
+.adminbox .admrow{display:flex;align-items:center;gap:10px;margin:8px 0;flex-wrap:wrap}
+.adminbox .admrow label{font-size:12px;color:var(--muted);min-width:128px}
+.adminbox input[type=file]{font-size:12px;color:var(--paper);max-width:100%}
+.adminbox .admclear{background:transparent;border:1px solid var(--line);color:var(--muted);border-radius:4px;font-size:11px;padding:3px 9px;cursor:pointer}
+.adminbox .admclear:hover{color:var(--pixel);border-color:var(--pixel)}
+.adminbox .admstate{margin:6px 0 0;font-family:var(--mono);font-size:12px;color:var(--photon)}
+.srvlogs{margin-top:12px;border:1px solid var(--line);border-radius:6px;padding:8px 12px;background:var(--panel-2)}
+.srvlogs summary{cursor:pointer;font-size:12px;color:var(--photon)}
+.srvlogs pre{margin:8px 0 0;max-height:300px;overflow:auto;white-space:pre-wrap;font-family:var(--mono);font-size:11px;line-height:1.45;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -473,6 +487,10 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       <li><a class="soon" href="#" title="Comparateur d'architectures : à venir dans Nysa V1" data-i18n-title="nav.compare.title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="7" height="14" rx="1"/><rect x="13.5" y="5" width="7" height="14" rx="1"/></svg>
         <span data-i18n="nav.compare">Comparateur</span> <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto" data-i18n="nav.soon">à venir</em></a></li>
+      <!-- 07/10/2026 : visible du seul compte administrateur (révélé par menu.js) ; la page elle-même est protégée par la base -->
+      <li id="navAdminItem" hidden><a href="admin.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6z"/><path d="M9.5 12l2 2 3.5-4"/></svg>
+        <span>Administration</span></a></li>
     </ul>
     <div class="sidebar-bottom">
       <div data-lang-switch style="margin:0 0 10px 12px"></div>
@@ -580,6 +598,20 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                     <p class="fmcswept" id="fmcSwept"></p>
                     <p class="fmcdetail" id="fmcDetail"></p>
                   </div>
+                  <!-- 07/10/2026 : outils d'administration, visibles du seul compte au plan « admin » (hidden sinon).
+                       Le vrai contrôle est côté serveur (_require_admin) : masquer ce bloc n'est qu'un confort. -->
+                  <details class="adminbox" id="adminBox" hidden>
+                    <summary data-i18n="sim.admin.title">Administration</summary>
+                    <p class="admnote" data-i18n="sim.admin.note">Réservé à l'administrateur.</p>
+                    <div class="admrow"><label for="admJson" data-i18n="sim.admin.json">Paramètres (JSON)</label>
+                      <input type="file" id="admJson" accept=".json,application/json">
+                      <button type="button" class="admclear" id="admJsonClear" hidden data-i18n="sim.admin.clear">Retirer</button></div>
+                    <div class="admrow"><label for="admCsv" data-i18n="sim.admin.csv">WFE Zernike (CSV)</label>
+                      <input type="file" id="admCsv" accept=".csv,text/csv,text/plain">
+                      <button type="button" class="admclear" id="admCsvClear" hidden data-i18n="sim.admin.clear">Retirer</button></div>
+                    <p class="fielderr" id="admErr" hidden></p>
+                    <p class="admstate" id="admState"></p>
+                  </details>
                   <!-- Réglages atmosphériques (03/10/2026) : paramètres avancés, repliés par
                        défaut. Mêmes clés et mêmes valeurs par défaut que
                        radiometry.resolve_atmosphere (SIXS_DEFAULTS). -->
@@ -1331,7 +1363,7 @@ function updateSummary(){
 // L'adresse des fonctions se déduit de celle du projet (supabase-client.js) :
 // un seul endroit à changer si le projet déménage.
 var FUNCTIONS_URL = SUPABASE_URL + "/functions/v1";
-var PAID_PLANS = ["individuel", "equipe"];
+var PAID_PLANS = ["individuel", "equipe", "admin"];   // "admin" : plan de l'administratrice (voir 3-role-administrateur.sql)
 // Marge après l'échéance (04/10/2026), identique à celle du serveur
 // (main.py, _PERIOD_GRACE_DAYS) : à chaque renouvellement, le webhook Stripe
 // repousse la date d'échéance ; s'il a du retard ou échoue ce jour-là, un
@@ -1534,7 +1566,7 @@ function updatePanelButton(){
     }
     btn.textContent = t("sim.btn.run");
     syncTimeField();
-    var badRule = CONDITION_RULES.filter(function(r){ return ruleMessage(r) !== ""; })[0];
+    var badRule = adminMode() ? null : CONDITION_RULES.filter(function(r){ return ruleMessage(r) !== ""; })[0];
     btn.disabled = selectedInstIdx < 0 || !!badRule;
     btn.title = badRule ? ruleMessage(badRule) : "";
     btn.onclick = function(){ showStep(4); };
@@ -1688,7 +1720,7 @@ function formatApiError(detail, status){
 
 async function launchSimulation(){
   // garde : jamais de calcul avec des conditions hors bornes (le bouton est déjà grisé dans ce cas)
-  if(!validateConditions(true)){ showStep(3); return; }
+  if(!adminMode() && !validateConditions(true)){ showStep(3); return; }
   var inst = instruments[selectedInstIdx];
   var scene = SCENES[selectedSceneIdx];
 
@@ -1877,6 +1909,10 @@ async function launchSimulation(){
   }
 
   lastPayload = { payload: payload, scene: scene, inst: inst, conditions: conditions, wfeCase: wfeCase };
+  // simulation admin : on garde dans le résultat les entrées réellement utilisées (JSON complet, nom du CSV)
+  if(adminMode()){
+    lastPayload.conditions = Object.assign({}, conditions, { admin: { paramFileName: adminJsonName, paramFile: adminJson || {}, perfoCsvName: adminCsvName } });
+  }
 
   abortController = new AbortController();
 
@@ -1895,21 +1931,24 @@ async function launchSimulation(){
     }
     session = freshSessionData.session;
 
-    var resp = await fetch(API_URL + "/simulate_account", {
+    var viaAdmin = adminMode();
+    var resp = await fetch(API_URL + (viaAdmin ? "/simulate_admin" : "/simulate_account"), {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Authorization": "Bearer " + session.access_token,
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(viaAdmin ? { scene: scene.id, paramFile: adminJson || {}, perfoCsv: adminCsv } : payload),
       signal: abortController.signal,
     });
     var data = await resp.json();
 
     if(!resp.ok){
+      if(viaAdmin && data && data.logs) admShowServerLogs(data.logs);
       throw new Error(formatApiError(data.detail, resp.status));
     }
 
+    if(viaAdmin) delete data.dn_b64;       // DN bruts : lourds, inutiles ici (la page Résultats n'en a pas l'usage)
     lastResult = data;
     pfill.style.transition = "width .4s ease-out";
     pfill.style.width = "100%";
@@ -2158,6 +2197,54 @@ async function autoSaveResultInner(){
 
 
 // ===================== Démarrage =====================
+// ===================== Administration (07/10/2026) =====================
+// Un fichier JSON et/ou un CSV Zernike chargés ici font passer la simulation par /simulate_admin (route
+// réservée au plan « admin », sans contrôle de plausibilité) au lieu de /simulate_account. Le JSON est
+// fusionné par le serveur sur son modèle : il remplace l'instrument et les conditions du formulaire.
+var isAdminUser = false, adminJson = null, adminJsonName = "", adminCsv = null, adminCsvName = "";
+var ADM_MAX_JSON = 1024 * 1024, ADM_MAX_CSV = 5 * 1024 * 1024;
+function adminMode(){ return isAdminUser && (adminJson !== null || adminCsv !== null); }
+function admSize(n){ return n >= 1048576 ? (n / 1048576) + " Mo" : (n / 1024) + " Ko"; }
+function admShowErr(msg){ var e = document.getElementById("admErr"); e.textContent = msg || ""; e.hidden = !msg; }
+function admRefresh(){
+  var names = [adminJsonName, adminCsvName].filter(Boolean).join(" + ");
+  document.getElementById("admState").textContent = adminMode() ? t("sim.admin.state", { name: names }) : "";
+  document.getElementById("admJsonClear").hidden = adminJson === null;
+  document.getElementById("admCsvClear").hidden = adminCsv === null;
+  document.getElementById("adminBox").classList.toggle("on", adminMode());
+  updatePanelButton();
+}
+async function admLoad(input, kind){
+  admShowErr("");
+  var f = input.files && input.files[0];
+  if(!f) return;
+  var max = kind === "json" ? ADM_MAX_JSON : ADM_MAX_CSV;
+  if(f.size > max){ admShowErr(t("sim.admin.err_size", { max: admSize(max) })); input.value = ""; return; }
+  var text = await f.text();
+  if(kind === "json"){
+    var obj;
+    try{ obj = JSON.parse(text); }catch(e){ admShowErr(t("sim.admin.err_json", { msg: e.message })); input.value = ""; return; }
+    if(obj === null || typeof obj !== "object" || Array.isArray(obj)){ admShowErr(t("sim.admin.err_obj")); input.value = ""; return; }
+    adminJson = obj; adminJsonName = f.name;
+  } else {
+    adminCsv = text; adminCsvName = f.name;
+  }
+  admRefresh();
+}
+document.getElementById("admJson").addEventListener("change", function(){ admLoad(this, "json"); });
+document.getElementById("admCsv").addEventListener("change", function(){ admLoad(this, "csv"); });
+document.getElementById("admJsonClear").addEventListener("click", function(){ adminJson = null; adminJsonName = ""; document.getElementById("admJson").value = ""; admShowErr(""); admRefresh(); });
+document.getElementById("admCsvClear").addEventListener("click", function(){ adminCsv = null; adminCsvName = ""; document.getElementById("admCsv").value = ""; admShowErr(""); admRefresh(); });
+// En cas d'échec d'une simulation admin, le serveur renvoie ses journaux : on les affiche sous le statut.
+function admShowServerLogs(logs){
+  var host = document.getElementById("statusActions");
+  var old = document.getElementById("admSrvLogs"); if(old) old.remove();
+  var d = document.createElement("details"); d.id = "admSrvLogs"; d.className = "srvlogs"; d.open = true;
+  var s = document.createElement("summary"); s.textContent = t("sim.admin.srv_logs");
+  var pre = document.createElement("pre"); pre.textContent = logs;
+  d.appendChild(s); d.appendChild(pre); host.appendChild(d);
+}
+
 (async function(){
   try {
     session = (typeof requireAuth === "function") ? await requireAuth() : null;
@@ -2186,6 +2273,10 @@ async function autoSaveResultInner(){
   // conditions choisis : c'est là que l'envie de voir le résultat est la
   // plus forte (choix du 04/10/2026, à la place de l'ouverture à l'arrivée).
   await loadEntitlement();
+  if(typeof isAdminAccount === "function" && await isAdminAccount()){
+    isAdminUser = true;
+    document.getElementById("adminBox").hidden = false;
+  }
   if(!hasSimAccess()){
     renderPaywall();
     document.getElementById("payBanner").classList.add("show");

@@ -1,0 +1,574 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Administration | Nysa</title>
+<!-- Traduction FR / EN : textes et moteur dans i18n.js -->
+<script src="i18n.js"></script>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.70%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2234.30%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%225.3%22%20fill%3D%22%23FFB86B%22/%3E%3C/svg%3E">
+<!-- Polices hébergées avec le site (dossier fonts/) : aucun appel à Google. -->
+<link rel="stylesheet" href="fonts/fonts.css">
+<style>
+:root{
+  --void:#090E13; --panel:#131E27; --panel-2:#1A2833;
+  --line:#2E4152; --line-soft:#22323F;
+  --paper:#C4D6D4; --muted:#9BADBD; --muted-2:#8497AA;
+  --photon:#F5AC57; --pixel:#5FDCD0; --alert:#F0776D; --ok:#7FD88F;
+  --display:"Montserrat","IBM Plex Sans",system-ui,sans-serif;
+  --body:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;height:100%}
+body{background:var(--void);color:var(--paper);font-family:var(--body);
+  font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+
+.app{display:flex;height:100vh;overflow:hidden}
+
+.sidebar{flex:none;width:220px;background:var(--panel);border-right:1px solid var(--line-soft);
+  display:flex;flex-direction:column;padding:16px 14px;overflow-y:auto}
+/* 05/10/2026 — logo en disposition centrée (variante 1 de la charte) : la
+   signature y est lisible, ce qu'elle n'était pas à côté du nom. */
+.brand{display:flex;flex-direction:column;align-items:center;text-align:center;gap:9px;padding:10px 8px 18px;border-bottom:1px solid var(--line-soft);
+  margin-bottom:12px}
+.brand .mark{flex:none;width:46px;height:46px;display:block}
+.brand .mark svg{width:100%;height:100%;display:block}
+.brand .name{font-family:var(--display);font-weight:500;font-size:22px;letter-spacing:.06em;line-height:1.05}
+.brand .tag{font-family:var(--display);font-weight:400;font-size:9.6px;letter-spacing:.13em;color:var(--muted);margin-top:5px;white-space:nowrap}
+
+.navlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.navlist a{display:flex;align-items:center;gap:11px;padding:8px 12px;border-radius:4px;
+  text-decoration:none;color:var(--muted);font-size:14.5px;transition:background .14s,color .14s}
+.navlist a svg{flex:none;width:18px;height:18px;opacity:.85}
+.navlist a:hover{background:var(--panel-2);color:var(--paper)}
+.navlist a.active{background:rgba(95,220,208,.10);color:var(--pixel);
+  box-shadow:inset 2px 0 0 var(--pixel)}
+.navlist a.active svg{opacity:1}
+
+.sidebar-bottom{margin-top:auto;padding-top:14px;border-top:1px solid var(--line-soft)}
+
+.main{flex:1;min-width:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+.topbar{display:flex;justify-content:flex-end;align-items:center;gap:16px;flex:none;
+  padding:11px 26px;border-bottom:1px solid var(--line-soft)}
+.iconbtn{width:34px;height:34px;border-radius:50%;border:1px solid var(--line-soft);
+  background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;
+  cursor:pointer}
+.iconbtn:hover{border-color:var(--line);color:var(--paper)}
+.userchip{display:flex;align-items:center;gap:10px;font-family:var(--mono);
+  font-size:13px;color:var(--muted)}
+.userchip .avatar{width:30px;height:30px;border-radius:50%;background:var(--panel-2);
+  border:1px solid var(--pixel);color:var(--pixel);display:flex;align-items:center;
+  justify-content:center;font-family:var(--display);font-size:11px;font-weight:600;letter-spacing:0}
+
+.wrap{max-width:1180px;margin:0 auto;padding:20px 26px 20px;width:100%}
+
+.pageheader{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;
+  flex-wrap:wrap;margin-bottom:16px}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--muted);margin:0 0 6px}
+h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px);
+  line-height:1.18;margin:0 0 4px;letter-spacing:-.012em}
+.pagesub{margin:0;color:var(--muted);font-size:13.5px}
+.simbtn{border:1px solid var(--photon);background:var(--photon);color:#0B1116;
+  font-family:var(--mono);font-size:13px;font-weight:600;letter-spacing:.04em;
+  padding:11px 20px;border-radius:5px;cursor:pointer;text-decoration:none;
+  display:inline-flex;align-items:center;gap:8px;flex:none;
+  box-shadow:0 2px 10px rgba(245,172,87,.28);transition:background .14s,border-color .14s}
+.simbtn:hover{background:#FFBE72;border-color:#FFBE72}
+
+.tabsrow{display:flex;justify-content:space-between;align-items:center;gap:20px;
+  flex-wrap:wrap;border-bottom:1px solid var(--line-soft);margin-bottom:16px;padding-bottom:0}
+.tabs{display:flex;gap:4px}
+.tab{appearance:none;cursor:pointer;background:transparent;border:none;
+  color:var(--muted-2);font-family:var(--mono);font-size:12px;letter-spacing:.04em;
+  padding:8px 13px;border-bottom:2px solid transparent;transition:color .14s,border-color .14s}
+.tab:hover{color:var(--paper)}
+.tab[aria-selected="true"]{color:var(--pixel);border-color:var(--pixel)}
+.tab.soon,.navlist a.soon{cursor:default;opacity:.45;pointer-events:none}
+.navlist a.demolink{color:var(--photon)}
+.navlist a.demolink svg{color:var(--photon);opacity:1}
+.navlist a.demolink:hover{background:rgba(245,172,87,.1);color:#FFBE72}
+.tab.soon:hover,.navlist a.soon:hover{color:inherit;background:transparent}
+
+.instgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
+  gap:14px;margin-bottom:20px}
+.instcard{display:flex;flex-direction:column;text-decoration:none;color:var(--paper);
+  background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;overflow:hidden;
+  transition:border-color .14s,transform .14s}
+.instcard:hover{border-color:var(--pixel);transform:translateY(-2px)}
+.instcard .body{padding:12px 16px 14px;display:flex;flex-direction:column;gap:9px;flex:1}
+.instcard .titlerow{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.instcard .name{font-family:var(--display);font-weight:600;font-size:14.5px;
+  line-height:1.15;letter-spacing:0}
+.instcard .type{display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--muted);margin-top:2px}
+.instcard .type i{width:6px;height:6px;border-radius:50%;background:var(--pixel);flex:none}
+.instcard .menuwrap{position:relative;flex:none}
+.instcard .menubtn{flex:none;background:transparent;border:none;color:var(--muted-2);
+  cursor:pointer;font-size:16px;padding:2px 6px;line-height:1}
+.instcard .menubtn:hover{color:var(--paper)}
+.instcard .dropdown{display:none;position:absolute;top:26px;right:0;z-index:20;
+  background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;
+  min-width:150px;padding:4px;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.instcard .dropdown.open{display:block}
+.instcard .dropdown button{display:block;width:100%;text-align:left;background:none;border:none;
+  color:var(--paper);font-family:var(--body);font-size:13px;padding:8px 10px;border-radius:4px;
+  cursor:pointer}
+.instcard .dropdown button:hover{background:var(--panel)}
+.instcard .dropdown button.danger{color:var(--alert)}
+.instcard .dropdown button.danger:hover{background:rgba(240,119,109,.1)}
+.instcard .desc{font-size:12px;color:var(--muted);margin:0;line-height:1.4}
+.instcard .pctrow{display:flex;justify-content:space-between;font-family:var(--mono);
+  font-size:11px;color:var(--muted);margin-bottom:6px}
+.instcard .track{height:5px;background:var(--line-soft);border-radius:2px;overflow:hidden}
+.instcard .fill{height:100%;background:var(--pixel)}
+/* 04/10/2026 — brouillon : instrument enregistré sans tous ses champs obligatoires */
+.instcard.draft{border-style:dashed}
+.instcard.draft .fill{background:var(--photon)}
+.instcard .draftbadge{font-family:var(--mono);font-size:10.5px;color:var(--photon);
+  border:1px solid var(--photon);border-radius:3px;padding:1px 6px;margin-left:8px}
+.instcard .datesrow{display:flex;flex-direction:column;gap:2px;font-family:var(--mono);
+  font-size:10.5px;color:var(--muted-2)}
+.instcard .datesrow span{display:flex;align-items:center;gap:6px}
+.instcard .datesrow svg{width:12px;height:12px;flex:none;opacity:.75}
+.instcard .openrow{display:flex;justify-content:flex-end;margin-top:2px}
+.instcard .openbtn{display:inline-flex;align-items:center;gap:7px;background:transparent;
+  border:1px solid var(--line);color:var(--paper);border-radius:4px;font-family:var(--mono);
+  font-size:11.5px;padding:5px 12px;transition:border-color .14s,color .14s}
+.instcard:hover .openbtn{border-color:var(--pixel);color:var(--pixel)}
+
+.instcard.empty{align-items:center;justify-content:center;text-align:center;color:var(--muted);
+  border-style:dashed;cursor:pointer;padding:16px 20px;gap:6px}
+.instcard.empty:hover{border-color:var(--photon)}
+.instcard.empty .plus{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--muted);
+  margin:2px auto 2px;transition:border-color .14s,color .14s}
+.instcard.empty:hover .plus{border-color:var(--photon);color:var(--photon)}
+.instcard.empty .elab{font-family:var(--display);font-weight:600;font-size:12.5px;
+  color:var(--paper);letter-spacing:0}
+.instcard.empty .esub{font-size:12.5px;color:var(--muted);max-width:190px}
+
+.grouphead{font-family:var(--mono);font-size:11px;letter-spacing:.13em;text-transform:uppercase;
+  margin:0 0 10px;display:flex;align-items:center;gap:10px;color:var(--muted)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none;background:var(--pixel)}
+
+.bottomrow{display:grid;grid-template-columns:1.1fr 1fr;gap:20px;align-items:stretch}
+.activity{height:230px;display:flex;flex-direction:column}
+/* 04/10/2026 — la liste défile dans son cadre (avant, les lignes en trop
+   étaient coupées). Chaque ligne garde sa hauteur ; les séparateurs sont
+   des bordures, pour que le fond reste uni quand la liste est courte. */
+.activity ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;flex:1;min-height:0;
+  background:var(--panel);border:1px solid var(--line-soft);border-radius:4px;
+  overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+.activity li{font-size:12.5px;color:var(--muted);display:flex;align-items:center;gap:10px;
+  padding:9px 14px;flex:none;border-bottom:1px solid var(--line-soft)}
+.activity li:last-child{border-bottom:none}
+.activity li .adot{width:6px;height:6px;border-radius:50%;background:var(--line);flex:none}
+.activity li .alabel{color:var(--paper)}
+.activity li .asub{color:var(--muted-2);font-size:12px}
+.activity li span:last-child{margin-left:auto;font-family:var(--mono);font-size:11.5px;
+  color:var(--muted-2);white-space:nowrap;flex:none}
+
+.doccol{min-height:230px;display:flex;flex-direction:column}
+.hero{position:relative;background:var(--panel);border:1px solid var(--line-soft);
+  border-radius:6px;padding:18px 22px;overflow:hidden;flex:1;box-sizing:border-box;display:flex;
+  flex-direction:column;justify-content:center;gap:14px}
+.hero .earth{position:absolute;right:-60px;bottom:-70px;width:190px;height:190px;
+  border-radius:50%;
+  background:
+    radial-gradient(circle at 32% 30%, #2c5f7a 0%, #163449 38%, #081522 68%, #050d16 100%);
+  box-shadow:0 0 46px rgba(95,220,208,.10),inset -14px -10px 30px rgba(0,0,0,.55)}
+.hero .earth::before{content:"";position:absolute;inset:-6px;border-radius:50%;
+  border:1px solid rgba(95,220,208,.35);filter:blur(1px)}
+.hero .earth::after{content:"";position:absolute;top:14%;left:8%;width:36%;height:20%;
+  background:rgba(230,238,244,.10);border-radius:50%;filter:blur(6px);transform:rotate(-18deg)}
+.hero .content{position:relative;max-width:60%}
+.hero .eyebrow{margin-bottom:10px}
+.hero h2{font-family:var(--display);font-weight:600;font-size:16px;line-height:1.12;
+  margin:0 0 6px;letter-spacing:0}
+.hero h2 .cool{color:var(--pixel)}
+.hero p{margin:0 0 8px;font-size:12.5px;color:var(--muted);line-height:1.45}
+.hero a{font-family:var(--mono);font-size:12.5px;color:var(--photon);text-decoration:none;
+  display:inline-flex;align-items:center;gap:6px}
+.hero a:hover{color:#FFBE72}
+
+@media(max-width:900px){
+  .bottomrow{grid-template-columns:1fr}
+  .hero .content{max-width:100%}
+}
+/* 06/10/2026 — le menu de gauche sur petit écran est géré par menu.js
+   (bouton en haut à gauche). L'ancienne règle le faisait sortir de l'écran
+   sans aucun moyen de le rouvrir. */
+@media(max-width:640px){
+  .wrap{padding:16px 16px 20px}
+  .pageheader{flex-wrap:wrap;align-items:flex-start;gap:14px}
+  .bottomrow > *{min-width:0}
+  .activity,.doccol{height:auto;min-height:200px}
+}
+
+/* ===================== Modal Paramètres ===================== */
+.modal-overlay{position:fixed;inset:0;background:rgba(5,8,11,.72);backdrop-filter:blur(2px);
+  display:none;align-items:center;justify-content:center;z-index:100;padding:24px}
+.modal-overlay.open{display:flex}
+.modal{width:100%;max-width:820px;height:min(640px,88vh);background:var(--panel);
+  border:1px solid var(--line-soft);border-radius:10px;display:flex;flex-direction:column;overflow:hidden}
+.modal-head{display:flex;justify-content:space-between;align-items:center;padding:18px 22px;
+  border-bottom:1px solid var(--line-soft);flex:none}
+.modal-head .htitle{display:flex;align-items:center;gap:11px}
+.modal-head .hicon{width:30px;height:30px;border-radius:7px;background:var(--panel-2);
+  border:1px solid var(--line-soft);color:var(--pixel);display:flex;align-items:center;justify-content:center;flex:none}
+.modal-head .hicon svg{width:16px;height:16px}
+.modal-head h2{font-family:var(--display);font-weight:600;font-size:16.5px;
+  margin:0;letter-spacing:0}
+.modal-close{background:transparent;border:none;color:var(--muted);font-size:19px;cursor:pointer;
+  line-height:1;padding:4px 6px;border-radius:4px}
+.modal-close:hover{color:var(--paper);background:var(--panel-2)}
+
+.modal-shell{flex:1;min-height:0;display:flex}
+.modal-rail{flex:none;width:190px;border-right:1px solid var(--line-soft);padding:14px 10px;
+  display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+.railbtn{display:flex;align-items:center;gap:10px;padding:9px 11px;border-radius:6px;
+  background:transparent;border:none;color:var(--muted);font-family:var(--body);font-size:13.5px;
+  cursor:pointer;text-align:left;transition:background .14s,color .14s}
+.railbtn svg{flex:none;width:16px;height:16px;opacity:.85}
+.railbtn:hover{background:var(--panel-2);color:var(--paper)}
+.railbtn.active{background:rgba(95,220,208,.10);color:var(--pixel);box-shadow:inset 2px 0 0 var(--pixel)}
+.railbtn.active svg{opacity:1}
+
+.modal-content{flex:1;min-width:0;overflow-y:auto;padding:20px 22px 26px;
+  display:flex;flex-direction:column;gap:18px}
+
+.msection{background:var(--panel-2);border:1px solid var(--line-soft);border-radius:8px;
+  padding:16px 18px;scroll-margin-top:8px}
+.msection-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:14px}
+.msection-head .htxt{display:flex;gap:11px;align-items:flex-start}
+.msection-head .sicon{width:32px;height:32px;border-radius:7px;background:var(--panel);
+  border:1px solid var(--line-soft);color:var(--pixel);display:flex;align-items:center;justify-content:center;flex:none}
+.msection-head .sicon svg{width:16px;height:16px}
+.msection-head h3{font-family:var(--display);font-weight:600;font-size:13.5px;
+  margin:0 0 2px;letter-spacing:0}
+.msection-head p{margin:0;font-size:12px;color:var(--muted);line-height:1.4}
+
+.msection-body{display:flex;flex-direction:column;gap:0;border-top:1px solid var(--line-soft)}
+.minfo-row{display:flex;justify-content:space-between;align-items:center;font-size:13px;gap:12px;
+  padding:11px 0;border-bottom:1px solid var(--line-soft)}
+.minfo-row:last-child{border-bottom:none}
+.minfo-row .label{color:var(--muted)}
+.minfo-row .value{font-family:var(--mono);color:var(--paper);text-align:right}
+
+.planbadge{font-family:var(--mono);font-size:10px;letter-spacing:.05em;text-transform:uppercase;
+  padding:3px 9px;border-radius:5px;background:var(--pixel);color:#0A1F1C;flex:none;font-weight:600}
+.planbadge.free{background:var(--line);color:var(--muted)}
+
+.planrow{display:flex;align-items:center;gap:12px;padding:13px 0;flex-wrap:wrap}
+.planrow .ptxt{flex:1;min-width:160px}
+.planrow .ptxt .t1{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:0}
+.planrow .ptxt .t2{font-size:11.5px;color:var(--muted);margin-top:2px}
+.planrow .pstatus{display:flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11.5px;
+  color:var(--ok);flex:none}
+.planrow .pstatus .sdot{width:6px;height:6px;border-radius:50%;background:var(--ok);flex:none}
+.planrow .pstatus.pending{color:var(--muted-2)}
+.planrow .pstatus.pending .sdot{background:var(--muted-2)}
+.planrow .pstatus.warn{color:var(--alert)}
+.planrow .pstatus.warn .sdot{background:var(--alert)}
+
+.msection-actions{display:flex;flex-direction:column;gap:8px;padding-top:14px;border-top:1px solid var(--line-soft);margin-top:2px}
+.mform-group{display:flex;flex-direction:column;gap:5px;padding:9px 0}
+.mform-group label{font-size:12.5px;color:var(--muted)}
+.mform-group input{background:var(--panel);border:1px solid var(--line-soft);border-radius:5px;
+  color:var(--paper);padding:9px 11px;font-family:var(--body);font-size:13.5px;width:100%}
+.mform-group input:focus{outline:none;border-color:var(--pixel)}
+.mbtn{border-radius:5px;padding:9px 15px;font-family:var(--mono);font-size:12px;font-weight:600;
+  letter-spacing:.03em;cursor:pointer;border:1px solid var(--line);background:transparent;
+  color:var(--paper);transition:border-color .14s,color .14s,background .14s;flex:none}
+.mbtn:hover{border-color:var(--pixel);color:var(--pixel)}
+.mbtn.primary{background:var(--photon);border-color:var(--photon);color:#0B1116}
+.mbtn.primary:hover{background:#FFBE72;border-color:#FFBE72;color:#0B1116}
+.mbtn.danger{border-color:var(--alert);color:var(--alert)}
+.mbtn.danger:hover{background:rgba(240,119,109,.12)}
+.mbtn:disabled{opacity:.5;cursor:default;border-color:var(--line);color:var(--muted)}
+.mbtn:disabled:hover{background:transparent}
+.mnote{font-size:12px;color:var(--muted-2);line-height:1.5;margin:0}
+.mnote.ok{color:var(--ok)}
+.mnote.err{color:var(--alert)}
+.mnote.warn{color:var(--photon)}
+.mdelete-list{margin:0 0 6px;padding-left:18px;font-size:12.5px;color:var(--muted);line-height:1.55}
+.mdelete-list li{margin-bottom:5px}
+@media(max-width:640px){
+  .modal{max-width:100%;height:92vh}
+  .modal-shell{flex-direction:column}
+  .modal-rail{width:100%;flex-direction:row;border-right:none;border-bottom:1px solid var(--line-soft);
+    padding:8px 10px;overflow-x:auto}
+  .railbtn{white-space:nowrap}
+}
+.langselect{background:var(--panel-2);border:1px solid var(--line);color:var(--paper);border-radius:5px;
+  padding:6px 10px;font-family:var(--body);font-size:13px;cursor:pointer}
+.langselect:focus{outline:none;border-color:var(--pixel)}
+/* « à venir » ne se coupe pas en deux lignes dans le menu */
+.sidebar .navlist a em{white-space:nowrap}
+/* encadré Confidentialité et souveraineté (même gabarit que la documentation) */
+.hero.trust .content{max-width:78%}
+.hero.trust h2{margin-bottom:8px}
+.hero.trust ul{margin:0;padding:0;list-style:none}
+.hero.trust li{position:relative;padding-left:16px;margin:0 0 5px;font-size:12.5px;line-height:1.45;color:var(--muted)}
+.hero.trust li::before{content:"";position:absolute;left:0;top:.62em;width:6px;height:6px;border-radius:50%;background:var(--pixel);opacity:.75}
+.hero.trust .shield{position:absolute;right:16px;bottom:-14px;width:118px;height:138px;color:var(--pixel);opacity:.16}
+@media(max-width:640px){.hero.trust .content{max-width:100%}.hero.trust .shield{opacity:.08}}
+.hero.trust .trustlink{display:inline-block;margin-top:6px;font-family:var(--mono);font-size:12px;color:var(--photon);text-decoration:none}
+.hero.trust .trustlink:hover{text-decoration:underline}
+</style>
+
+<style>
+/* page d'administration (07/10/2026) */
+.admwrap{display:grid;grid-template-columns:minmax(300px,420px) 1fr;gap:20px;align-items:start}
+@media(max-width:1000px){.admwrap{grid-template-columns:1fr}}
+.admlist{border:1px solid var(--line-soft);border-radius:8px;background:var(--panel);overflow:hidden}
+.admfilters{display:flex;gap:10px;align-items:center;padding:12px 14px;border-bottom:1px solid var(--line-soft)}
+.admfilters select{background:var(--panel-2);border:1px solid var(--line);color:var(--paper);border-radius:5px;padding:6px 8px;font-size:13px}
+.admfilters .cnt{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.rptrow{display:block;width:100%;text-align:left;background:transparent;border:0;border-bottom:1px solid var(--line-soft);color:var(--paper);padding:12px 14px;cursor:pointer;font-family:var(--body)}
+.rptrow:hover,.rptrow.sel{background:var(--panel-2)}
+.rptrow .l1{display:flex;gap:8px;align-items:center;font-size:13px}
+.rptrow .l2{margin-top:4px;font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{font-family:var(--mono);font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;border-radius:3px;padding:1px 7px;border:1px solid var(--line)}
+.badge.new{color:var(--photon);border-color:rgba(245,172,87,.55)}
+.badge.in_progress{color:var(--pixel);border-color:rgba(95,220,208,.5)}
+.badge.closed{color:var(--muted)}
+.admdetail{border:1px solid var(--line-soft);border-radius:8px;background:var(--panel);padding:18px 20px;min-height:200px}
+.admdetail h2{margin:0 0 4px;font-size:18px;font-weight:500}
+.admdetail h3{margin:20px 0 8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);color:var(--muted-2);font-weight:500}
+.admdetail .meta{font-size:12.5px;color:var(--muted)}
+.admdetail .msg{white-space:pre-wrap;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;padding:10px 12px;font-size:13.5px}
+.admdetail .consent{font-size:12px;color:var(--muted);border-left:2px solid var(--pixel);padding-left:10px;margin-top:10px}
+.kv{display:grid;grid-template-columns:max-content 1fr;gap:3px 16px;font-family:var(--mono);font-size:12px}
+.kv .k{color:var(--muted-2)} .kv .v{color:var(--paper);word-break:break-word}
+.bandtbl{border-collapse:collapse;font-family:var(--mono);font-size:12px}
+.bandtbl th,.bandtbl td{padding:3px 12px 3px 0;text-align:left;border-bottom:1px solid var(--line-soft)}
+.bandtbl th{color:var(--muted-2);font-weight:500}
+.rptpre{margin:0;max-height:300px;overflow:auto;white-space:pre-wrap;word-break:break-word;font-family:var(--mono);font-size:11.5px;line-height:1.5;color:var(--muted);background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;padding:10px 12px}
+.imgs{display:flex;gap:12px;flex-wrap:wrap}
+.imgs figure{margin:0;max-width:320px}.imgs img{max-width:100%;border:1px solid var(--line-soft);border-radius:4px;display:block}
+.imgs figcaption{font-size:11px;color:var(--muted);margin-top:4px;font-family:var(--mono)}
+.graphs a{display:inline-block;margin:0 10px 4px 0;font-size:12px;color:var(--pixel);font-family:var(--mono)}
+.actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px}
+.actions button{background:transparent;border:1px solid var(--line);color:var(--paper);border-radius:5px;padding:8px 14px;font-size:13px;cursor:pointer}
+.actions button:hover{border-color:var(--pixel);color:var(--pixel)}
+.actions button.danger{color:var(--alert);border-color:rgba(240,119,109,.5)}
+.followup{display:grid;gap:8px;margin-top:6px}
+.followup select,.followup textarea{background:var(--panel-2);border:1px solid var(--line);color:var(--paper);border-radius:5px;padding:7px 9px;font-family:var(--body);font-size:13px}
+.empty{color:var(--muted);padding:26px 18px;font-size:13.5px}
+.toast{font-size:12.5px;color:var(--pixel);margin-top:10px;min-height:18px}
+</style>
+
+<body>
+<!-- Bandeau « version bêta » : se désactive dans beta.js (BETA_ACTIVE = false) -->
+<script src="beta.js"></script>
+<div class="app">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <!-- 05/10/2026 — logo Nysa : la fleur à six pétales -->
+      <span class="mark"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24.00" cy="13.70" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="32.92" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="32.92" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="24.00" cy="34.30" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="15.08" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="15.08" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="24" cy="24" r="5.3" fill="#FFB86B"/></svg></span>
+      <span>
+        <div class="name">Nysa</div>
+        <div class="tag">EO Imaging Engineering</div>
+      </span>
+    </div>
+    <ul class="navlist">
+      <li><a href="espace-personnel.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><g transform="rotate(-30 12 10)"><rect x="3.5" y="7" width="13" height="6" rx="1.2"/><path d="M16.5 8h3v4h-3M7.5 7v6"/></g><path d="M11.8 13.6 8 21M11.8 13.6V21M11.8 13.6 15.8 21"/></svg>
+        <span data-i18n="nav.instruments">Instruments</span></a></li>
+      <li><a class="soon" href="#">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="8" width="6" height="9" rx="1.2"/><rect x="1.5" y="9.5" width="6" height="6" rx=".6"/><rect x="16.5" y="9.5" width="6" height="6" rx=".6"/><path d="M4.5 9.5v6M19.5 9.5v6M7.5 12.5H9M15 12.5h1.5M12 8V5"/><circle cx="12" cy="3.9" r="1"/></svg>
+        <span data-i18n="nav.platform">Plateforme</span> <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto" data-i18n="nav.soon">à venir</em></a></li>
+      <li><a href="simulations.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 4l14 8-14 8V4z"/></svg>
+        <span data-i18n="nav.simulations">Simulations</span></a></li>
+      <li><a href="resultats.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
+        <span data-i18n="nav.results">Résultats</span></a></li>
+      <!-- 05/10/2026 — annoncé pour la V1, non développé pendant la bêta -->
+      <li><a class="soon" href="#" title="Comparateur d'architectures : à venir dans Nysa V1" data-i18n-title="nav.compare.title">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="7" height="14" rx="1"/><rect x="13.5" y="5" width="7" height="14" rx="1"/></svg>
+        <span data-i18n="nav.compare">Comparateur</span> <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto" data-i18n="nav.soon">à venir</em></a></li>
+      <li><a class="active" href="admin.html" id="navAdmin">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6z"/><path d="M9.5 12l2 2 3.5-4"/></svg>
+        <span>Administration</span></a></li>
+    </ul>
+    <div class="sidebar-bottom">
+      <div data-lang-switch style="margin:0 0 10px 12px"></div>
+      <ul class="navlist">
+        <!-- 05/10/2026 — « Retour à la démo » retiré du menu connecté : la démo reste publique à l'adresse du site -->
+        <li><a href="mailto:contact@nysa-imaging.com" data-nysa-help="general">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.2 2.4c-.9.3-1.2.9-1.2 1.8"/><circle cx="12" cy="16.6" r=".4" fill="currentColor" stroke="none"/></svg>
+          <span data-i18n="nav.help">Aide</span></a></li>
+        <li><a href="espace-personnel.html?settings=1" id="settingsLink">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="3"/><path d="M19.4 13.5a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.04 1.56V20a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.96 18.34a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.04H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.66 8.96a1.7 1.7 0 0 0-.34-1.87l-.06-.06A2 2 0 1 1 7.09 4.2l.06.06a1.7 1.7 0 0 0 1.87.34H9a1.7 1.7 0 0 0 1.04-1.56V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.04 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87V9a1.7 1.7 0 0 0 1.56 1.04H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.56 1.04z"/></svg>
+          <span data-i18n="nav.settings">Paramètres</span></a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <div class="main">
+    <div class="topbar">
+      <button class="iconbtn" aria-label="Notifications" data-i18n-aria="top.notifications" type="button">
+        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 8a6 6 0 1 1 12 0c0 5 2 6 2 6H4s2-1 2-6"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>
+      </button>
+      <span class="userchip" id="userChip"><span class="avatar" id="userAvatar">…</span><span id="userEmail">-</span></span>
+      <button class="iconbtn" aria-label="Se déconnecter" data-i18n-aria="top.signout" type="button" id="signOutBtn" title="Se déconnecter" data-i18n-title="top.signout">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
+    </div>
+
+    <div class="wrap">
+      <div class="pageheader">
+        <div>
+          <p class="eyebrow">ADMINISTRATION</p>
+          <h1>Signalements</h1>
+          <p class="sub">Résultats signalés par les utilisateurs, avec leur consentement. Cette page n'est visible que du compte administrateur.</p>
+        </div>
+      </div>
+      <div class="admwrap">
+        <div class="admlist">
+          <div class="admfilters">
+            <select id="fStatus" aria-label="Filtrer par statut">
+              <option value="">Tous les statuts</option><option value="new">Nouveaux</option>
+              <option value="in_progress">En cours</option><option value="closed">Clos</option>
+            </select>
+            <span class="cnt" id="rptCount"></span>
+          </div>
+          <div id="rptList"></div>
+        </div>
+        <div class="admdetail" id="rptDetail"><p class="empty">Choisissez un signalement dans la liste.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="vendor/supabase.js"></script>
+<script src="supabase-client.js"></script>
+<script>
+(async function(){
+  var session = await requireAuth();
+  if(!session) return;
+  document.getElementById("userEmail").textContent = session.user.email || "";
+  document.getElementById("userAvatar").textContent = (session.user.email || "").slice(0, 2).toUpperCase();
+  document.getElementById("signOutBtn").addEventListener("click", signOut);
+  // Cette page n'est qu'un confort : les règles d'accès de la base (is_admin) font foi. Un compte ordinaire
+  // est renvoyé à son espace, et ne verrait de toute façon aucune ligne.
+  if(!(await isAdminAccount())){ window.location.replace("espace-personnel.html"); return; }
+
+  var reports = [], current = null;
+  var STATUS = { "new": "Nouveau", "in_progress": "En cours", "closed": "Clos" };
+  function el(tag, text, cls){ var e = document.createElement(tag); if(text !== undefined && text !== null) e.textContent = text; if(cls) e.className = cls; return e; }
+  function fmt(d){ return new Date(d).toLocaleString("fr-FR", { dateStyle: "medium", timeStyle: "short" }); }
+  function short(s, n){ s = String(s || "").replace(/\s+/g, " "); return s.length > n ? s.slice(0, n - 1) + "…" : s; }
+
+  async function load(){
+    var { data, error } = await supabaseClient.from("result_reports").select("*").order("created_at", { ascending: false });
+    if(error){ document.getElementById("rptList").replaceChildren(el("p", "Chargement impossible : " + error.message, "empty")); return; }
+    reports = data || [];
+    renderList();
+  }
+  function renderList(){
+    var f = document.getElementById("fStatus").value, host = document.getElementById("rptList");
+    var rows = reports.filter(function(r){ return !f || r.status === f; });
+    document.getElementById("rptCount").textContent = rows.length + " / " + reports.length;
+    host.replaceChildren();
+    if(!rows.length){ host.appendChild(el("p", "Aucun signalement.", "empty")); return; }
+    rows.forEach(function(r){
+      var b = el("button", null, "rptrow" + (current && current.id === r.id ? " sel" : "")); b.type = "button"; b.dataset.id = r.id;
+      var l1 = el("div", null, "l1"); l1.appendChild(el("span", STATUS[r.status] || r.status, "badge " + r.status));
+      l1.appendChild(el("span", fmt(r.created_at))); l1.appendChild(el("span", (r.snapshot && r.snapshot.scene) || ""));
+      b.appendChild(l1); b.appendChild(el("div", short(r.message, 90), "l2"));
+      b.addEventListener("click", function(){ open(r); });
+      host.appendChild(b);
+    });
+  }
+  function kv(obj){
+    var g = el("div", null, "kv");
+    Object.keys(obj || {}).forEach(function(k){
+      var v = obj[k]; if(v === null || v === undefined || v === "") return;
+      g.appendChild(el("span", k, "k")); g.appendChild(el("span", typeof v === "object" ? JSON.stringify(v) : String(v), "v"));
+    });
+    return g;
+  }
+  async function signed(path){
+    var r = await supabaseClient.storage.from("reports").createSignedUrl(path, 3600);
+    return r && r.data ? r.data.signedUrl : null;
+  }
+  async function open(r){
+    current = r; renderList();
+    var d = document.getElementById("rptDetail"); d.replaceChildren();
+    var snap = r.snapshot || {};
+    d.appendChild(el("h2", "Signalement du " + fmt(r.created_at)));
+    d.appendChild(el("p", (r.contact_email || "adresse inconnue") + " · scène " + (snap.scene || "?") + " · résultat " + String(r.result_id || "").slice(0, 8), "meta"));
+    d.appendChild(el("h3", "Message")); d.appendChild(el("div", r.message, "msg"));
+    d.appendChild(el("p", "Consentement donné le " + fmt(r.consent_at) + " : « " + r.consent_text + " »", "consent"));
+    d.appendChild(el("h3", "Conditions")); d.appendChild(kv(snap.conditions && Object.assign({}, snap.conditions, { admin: undefined })));
+    if(snap.conditions && snap.conditions.admin){ d.appendChild(el("h3", "Entrées admin")); d.appendChild(el("pre", JSON.stringify(snap.conditions.admin, null, 2), "rptpre")); }
+    var inst = snap.instrument_snapshot || {};
+    d.appendChild(el("h3", "Instrument : " + (inst.name || "?"))); d.appendChild(kv(inst.config));
+    var bands = (snap.diagnostics && snap.diagnostics.bands) || {}, names = Object.keys(bands);
+    if(names.length){
+      d.appendChild(el("h3", "Diagnostics par bande"));
+      var cols = ["mtf_at_nyquist", "snr_mean", "signal_mean_e", "full_well_e", "fill_pct", "S_ref_e", "rgb_gain_applied"];
+      var tbl = el("table", null, "bandtbl"), hr = el("tr"); hr.appendChild(el("th", "bande"));
+      cols.forEach(function(c){ hr.appendChild(el("th", c)); }); tbl.appendChild(hr);
+      names.forEach(function(n){ var tr = el("tr"); tr.appendChild(el("td", n)); cols.forEach(function(c){ var v = bands[n][c]; tr.appendChild(el("td", typeof v === "number" ? String(Math.round(v * 1000) / 1000) : (v == null ? "-" : String(v)))); }); tbl.appendChild(tr); });
+      d.appendChild(tbl);
+    }
+    d.appendChild(el("h3", "Journaux du calcul")); d.appendChild(el("pre", snap.logs || "(aucun journal enregistré)", "rptpre"));
+    var files = r.files || [];
+    d.appendChild(el("h3", "Images" + (snap.filesFailed ? " (" + snap.filesFailed + " fichier(s) non copié(s))" : "")));
+    var imgs = el("div", null, "imgs"), graphs = el("div", null, "graphs"); d.appendChild(imgs); d.appendChild(graphs);
+    for(var i = 0; i < files.length; i++){
+      var f = files[i], url = await signed(f.to); if(!url) continue;
+      var base = f.to.split("/").pop();
+      if(base === "main.png" || base === "source.png"){
+        var fig = el("figure"), im = document.createElement("img"); im.src = url; im.alt = base; fig.appendChild(im); fig.appendChild(el("figcaption", base === "main.png" ? "image simulée" : "image source")); imgs.appendChild(fig);
+      } else { var a = el("a", base); a.href = url; a.target = "_blank"; a.rel = "noopener"; graphs.appendChild(a); }
+    }
+    d.appendChild(el("h3", "Suivi"));
+    var fu = el("div", null, "followup"), sel = el("select"); sel.id = "rptStatus";
+    Object.keys(STATUS).forEach(function(k){ var o = el("option", STATUS[k]); o.value = k; if(k === r.status) o.selected = true; sel.appendChild(o); });
+    var note = el("textarea"); note.id = "rptNote"; note.rows = 3; note.placeholder = "Note interne (non visible de l'utilisateur)"; note.value = r.admin_note || "";
+    fu.appendChild(sel); fu.appendChild(note); d.appendChild(fu);
+    var acts = el("div", null, "actions"); d.appendChild(acts);
+    var toast = el("p", "", "toast"); toast.id = "rptToast"; d.appendChild(toast);
+    function say(m){ toast.textContent = m; }
+    function btn(label, fn, cls){ var b = el("button", label, cls); b.type = "button"; b.addEventListener("click", fn); acts.appendChild(b); return b; }
+    btn("Enregistrer le suivi", async function(){
+      var status = sel.value, patch = { status: status, admin_note: note.value, closed_at: status === "closed" ? new Date().toISOString() : null };
+      var { error } = await supabaseClient.from("result_reports").update(patch).eq("id", r.id);
+      if(error){ say("Échec : " + error.message); return; }
+      Object.assign(r, patch); say("Suivi enregistré."); renderList();
+    });
+    btn("Copier les entrées (JSON)", function(){
+      navigator.clipboard.writeText(JSON.stringify({ conditions: snap.conditions, instrument: inst }, null, 2)).then(function(){ say("Entrées copiées."); });
+    });
+    btn("Créer cet instrument dans mon compte", async function(){
+      if(!inst.config){ say("Pas d'instrument dans ce signalement."); return; }
+      var name = "Signalement " + new Date(r.created_at).toISOString().slice(0, 10) + " " + (inst.name || "");
+      var { error } = await supabaseClient.from("instruments").insert({ account_id: session.user.id, name: name.trim(), config: inst.config });
+      say(error ? "Échec : " + error.message : "Instrument créé : « " + name.trim() + " » (voir Instruments).");
+    });
+    btn("Supprimer ce signalement", async function(){
+      if(!confirm("Supprimer définitivement ce signalement et ses images ?")) return;
+      var paths = (r.files || []).map(function(f){ return f.to; });
+      if(paths.length) await supabaseClient.storage.from("reports").remove(paths);
+      var { error } = await supabaseClient.from("result_reports").delete().eq("id", r.id);
+      if(error){ say("Échec : " + error.message); return; }
+      reports = reports.filter(function(x){ return x.id !== r.id; }); current = null;
+      document.getElementById("rptDetail").replaceChildren(el("p", "Signalement supprimé.", "empty")); renderList();
+    }, "danger");
+  }
+  document.getElementById("fStatus").addEventListener("change", renderList);
+  await load();
+})();
+</script>
+<script src="aide.js"></script>
+<script src="menu.js"></script>
+</body>
+</html>

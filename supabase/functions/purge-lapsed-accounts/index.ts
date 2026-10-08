@@ -31,7 +31,8 @@
 
 import { createClient, SupabaseClient } from "npm:@supabase/supabase-js@2";
 
-const BUCKET = "results";
+// 07/10/2026 : deux buckets à vider (« reports » : copies de résultats signalés par l'utilisateur).
+const BUCKETS = ["results", "reports"];
 const KEEP_DAYS = 365;   // durée de conservation après la fin de l'abonnement
 const WARN_DAYS = 30;    // délai entre l'e-mail d'alerte et la suppression
 const MAX_PER_RUN = 50;  // plafond d'actions par exécution, par prudence
@@ -55,14 +56,14 @@ function formatDate(d: Date, lang: Lang): string {
 
 // Liste tous les fichiers sous un dossier du bucket, sous-dossiers compris
 // (même fonction que dans delete-account).
-async function listAllFiles(admin: SupabaseClient, root: string): Promise<string[]> {
+async function listAllFiles(admin: SupabaseClient, bucket: string, root: string): Promise<string[]> {
   const files: string[] = [];
   const folders: string[] = [root];
   while (folders.length) {
     const dir = folders.pop()!;
     let offset = 0;
     while (true) {
-      const { data, error } = await admin.storage.from(BUCKET).list(dir, { limit: 1000, offset });
+      const { data, error } = await admin.storage.from(bucket).list(dir, { limit: 1000, offset });
       if (error) throw new Error(`liste de ${dir} : ${error.message}`);
       if (!data || data.length === 0) break;
       for (const item of data) {
@@ -80,13 +81,15 @@ async function listAllFiles(admin: SupabaseClient, root: string): Promise<string
 // Supprime les images du compte, puis l'utilisateur (la base efface alors en
 // cascade accounts, instruments, saved_results et account_entitlements).
 async function deleteAccount(admin: SupabaseClient, accountId: string): Promise<void> {
-  const files = await listAllFiles(admin, accountId);
-  for (let i = 0; i < files.length; i += 100) {
-    const { error } = await admin.storage.from(BUCKET).remove(files.slice(i, i + 100));
-    if (error) throw new Error(`suppression d'images : ${error.message}`);
+  for (const bucket of BUCKETS) {
+    const files = await listAllFiles(admin, bucket, accountId);
+    for (let i = 0; i < files.length; i += 100) {
+      const { error } = await admin.storage.from(bucket).remove(files.slice(i, i + 100));
+      if (error) throw new Error(`suppression d'images (${bucket}) : ${error.message}`);
+    }
+    const left = await listAllFiles(admin, bucket, accountId);
+    if (left.length) throw new Error(`${left.length} fichier(s) encore présent(s) dans ${bucket}`);
   }
-  const left = await listAllFiles(admin, accountId);
-  if (left.length) throw new Error(`${left.length} fichier(s) encore présent(s)`);
   const { error } = await admin.auth.admin.deleteUser(accountId);
   if (error) throw new Error(`suppression de l'utilisateur : ${error.message}`);
 }

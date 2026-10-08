@@ -33,7 +33,9 @@ const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY")!, {
   httpClient: Stripe.createFetchHttpClient(),
 });
 
-const BUCKET = "results";
+// 07/10/2026 : deux buckets à vider. « reports » contient les copies de résultats que l'utilisateur a choisi de
+// signaler (voir 4-signalements.sql) : elles doivent disparaître avec le compte.
+const BUCKETS = ["results", "reports"];
 // Mot que l'utilisateur doit taper ; revérifié ici, pas seulement dans la page.
 const CONFIRM_WORD = "SUPPRIMER";
 
@@ -52,7 +54,7 @@ function json(body: unknown, status = 200): Response {
 
 // Liste tous les fichiers sous un dossier du bucket, sous-dossiers compris.
 // Dans la réponse de l'API, un dossier se reconnaît à son id nul.
-async function listAllFiles(admin: SupabaseClient, root: string): Promise<string[]> {
+async function listAllFiles(admin: SupabaseClient, bucket: string, root: string): Promise<string[]> {
   const files: string[] = [];
   const folders: string[] = [root];
   while (folders.length) {
@@ -60,7 +62,7 @@ async function listAllFiles(admin: SupabaseClient, root: string): Promise<string
     let offset = 0;
     while (true) {
       const { data, error } = await admin.storage
-        .from(BUCKET)
+        .from(bucket)
         .list(dir, { limit: 1000, offset });
       if (error) throw new Error(`liste de ${dir} : ${error.message}`);
       if (!data || data.length === 0) break;
@@ -137,13 +139,15 @@ Deno.serve(async (req) => {
 
     // ---- 2. Images : tout le dossier du compte ----
     step = "images";
-    const files = await listAllFiles(admin, user.id);
-    for (let i = 0; i < files.length; i += 100) {
-      const { error } = await admin.storage.from(BUCKET).remove(files.slice(i, i + 100));
-      if (error) throw new Error(`suppression d'images : ${error.message}`);
+    for (const bucket of BUCKETS) {
+      const files = await listAllFiles(admin, bucket, user.id);
+      for (let i = 0; i < files.length; i += 100) {
+        const { error } = await admin.storage.from(bucket).remove(files.slice(i, i + 100));
+        if (error) throw new Error(`suppression d'images (${bucket}) : ${error.message}`);
+      }
+      const left = await listAllFiles(admin, bucket, user.id);
+      if (left.length) throw new Error(`${left.length} fichier(s) encore présent(s) dans ${bucket}`);
     }
-    const left = await listAllFiles(admin, user.id);
-    if (left.length) throw new Error(`${left.length} fichier(s) encore présent(s)`);
 
     // ---- 3. Compte : l'utilisateur, et tout le reste en cascade ----
     step = "compte";

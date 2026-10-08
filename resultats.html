@@ -415,6 +415,27 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   .resultrow .metric{padding:0 6px}
   .resultrow .metric .v{font-size:16px}
 }
+/* onglet Logs (administrateur) */
+.logspre{margin:10px 0 0;max-height:62vh;overflow:auto;white-space:pre-wrap;word-break:break-word;font-family:var(--mono);font-size:11.5px;line-height:1.5;
+  color:var(--muted);background:var(--panel-2);border:1px solid var(--line-soft);border-radius:6px;padding:12px 14px}
+.logsub{margin:14px 0 0;font-size:12px;font-weight:500;color:var(--photon);font-family:var(--mono);letter-spacing:.04em}
+/* fenêtre de signalement (07/10/2026) */
+.rptov{position:fixed;inset:0;z-index:90;background:rgba(5,8,11,.72);display:flex;align-items:center;justify-content:center;padding:20px}
+.rptov[hidden]{display:none}
+.rptbox{width:100%;max-width:520px;max-height:92vh;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:22px 24px;box-shadow:0 20px 60px rgba(0,0,0,.55)}
+.rptbox h3{margin:0 0 8px;font-family:var(--display);font-weight:500;font-size:18px;color:var(--paper)}
+.rptintro{margin:0 0 14px;font-size:13.5px;line-height:1.55;color:var(--muted)}
+.rptbox label{display:block;font-size:12.5px;color:var(--muted);margin:10px 0 6px}
+.rptbox textarea{width:100%;box-sizing:border-box;background:var(--panel-2);border:1px solid var(--line);color:var(--paper);border-radius:6px;padding:10px 12px;font-family:var(--body);font-size:14px;resize:vertical}
+.rptbox textarea:focus{outline:2px solid var(--pixel);outline-offset:1px}
+.rptbox .rptconsent{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:12.5px;line-height:1.55;color:var(--paper);cursor:pointer}
+.rptbox .rptconsent input{margin-top:3px;flex:none;width:16px;height:16px;accent-color:var(--pixel)}
+.rpterr{margin:10px 0 0;font-size:12.5px;color:var(--alert)}
+.rptactions{display:flex;gap:10px;justify-content:flex-end;margin-top:18px;flex-wrap:wrap}
+.rptbtn{font-family:var(--body);font-size:14px;border-radius:6px;padding:10px 16px;cursor:pointer;border:1px solid var(--line);background:transparent;color:var(--paper)}
+.rptbtn.main{background:var(--pixel);border-color:var(--pixel);color:#06231F;font-weight:500}
+.rptbtn:disabled{opacity:.4;cursor:not-allowed}
+.rptbtn[hidden]{display:none}
 </style>
 </head>
 <body>
@@ -448,6 +469,10 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       <li><a class="soon" href="#" title="Comparateur d'architectures : à venir dans Nysa V1" data-i18n-title="nav.compare.title">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="3.5" y="5" width="7" height="14" rx="1"/><rect x="13.5" y="5" width="7" height="14" rx="1"/></svg>
         <span data-i18n="nav.compare">Comparateur</span> <em style="font-style:normal;color:var(--muted-2);font-size:11px;margin-left:auto" data-i18n="nav.soon">à venir</em></a></li>
+      <!-- 07/10/2026 : visible du seul compte administrateur (révélé par menu.js) ; la page elle-même est protégée par la base -->
+      <li id="navAdminItem" hidden><a href="admin.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6z"/><path d="M9.5 12l2 2 3.5-4"/></svg>
+        <span>Administration</span></a></li>
     </ul>
     <div class="sidebar-bottom">
       <div data-lang-switch style="margin:0 0 10px 12px"></div>
@@ -585,6 +610,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
               <button class="downloadbtn" type="button" id="downloadBtn" style="margin-top:6px">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v13M7 11l5 5 5-5M4 20h16"/></svg>
                 <span id="downloadLabel">Télécharger l'image RGB</span></button>
+          <button type="button" class="renbtn" id="btnReport" disabled data-i18n="res.report.btn">Signaler un problème</button>
             </div>
           </div>
         </div>
@@ -601,6 +627,19 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       </div>
 
       <!-- ============ Onglet Entrées ============ -->
+      <!-- 07/10/2026 : onglet réservé à l'administrateur (le bouton de l'onglet n'est créé que pour lui) -->
+      <div class="tabpanel" data-tab="logs">
+        <div class="rpanel">
+          <h3 data-i18n="res.logs.title">Journaux du calcul</h3>
+          <div id="admInputs" hidden>
+            <h4 class="logsub" data-i18n="res.logs.inputs">Entrées admin de ce calcul</h4>
+            <pre class="logspre" id="admInputsPre"></pre>
+          </div>
+          <button type="button" class="renbtn" id="copyLogsBtn" data-i18n="res.logs.copy">Copier les journaux</button>
+          <pre class="logspre" id="logsPre"></pre>
+        </div>
+      </div>
+
       <div class="tabpanel" data-tab="entrees">
         <div class="rpanel">
           <h3 data-i18n="field.scene">Scène</h3>
@@ -636,6 +675,32 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 <div class="lightbox-overlay" id="lightboxOverlay">
   <button type="button" class="lightbox-close" id="lightboxClose" aria-label="Fermer" data-i18n-aria="common.close">×</button>
   <img id="lightboxImg" alt="">
+</div>
+
+<!-- 07/10/2026 : fenêtre de signalement d'un résultat. L'envoi n'est possible qu'avec la case de consentement cochée. -->
+<div class="rptov" id="reportOverlay" hidden>
+  <div class="rptbox" role="dialog" aria-modal="true" aria-labelledby="rptTitle">
+    <div id="rptForm">
+      <h3 id="rptTitle" data-i18n="res.report.title">Signaler un problème avec ce résultat</h3>
+      <p class="rptintro" data-i18n="res.report.intro"></p>
+      <label for="rptMsg" data-i18n="res.report.msg_label">Que s'est-il passé ?</label>
+      <textarea id="rptMsg" rows="5" maxlength="2000" data-i18n-ph="res.report.msg_ph"></textarea>
+      <label class="rptconsent"><input type="checkbox" id="rptConsent"><span id="rptConsentText" data-i18n="res.report.consent"></span></label>
+      <p class="rpterr" id="rptErr" hidden></p>
+      <div class="rptactions">
+        <button type="button" class="rptbtn" id="rptCancel" data-i18n="res.report.cancel">Annuler</button>
+        <button type="button" class="rptbtn main" id="rptSend" disabled data-i18n="res.report.send">Envoyer le signalement</button>
+      </div>
+    </div>
+    <div id="rptDone" hidden>
+      <h3 data-i18n="res.report.done_title">Merci, c'est envoyé</h3>
+      <p class="rptintro" id="rptDoneText" data-i18n="res.report.done_text"></p>
+      <div class="rptactions">
+        <button type="button" class="rptbtn" id="rptWithdraw" data-i18n="res.report.withdraw">Retirer ce signalement</button>
+        <button type="button" class="rptbtn main" id="rptClose" data-i18n="res.report.close">Fermer</button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Bibliothèque Supabase hébergée avec le site (dossier vendor/), version figée. -->
@@ -1266,6 +1331,95 @@ async function deleteResult(r){
     {id:"snr", label:t("res.tab.snr")},
     {id:"entrees", label:t("res.tab.inputs")}
   ];
+  // 07/10/2026 : onglet « Logs » pour l'administrateur seul. Les journaux sont enregistrés avec chaque
+  // résultat (colonne logs) ; ils contiennent les paramètres de l'instrument, d'où cette restriction.
+  var isAdmin = (typeof isAdminAccount === "function") ? await isAdminAccount() : false;
+  if(isAdmin){
+    TABS.push({id:"logs", label:t("res.tab.logs")});
+    document.getElementById("logsPre").textContent = (result && result.logs) ? String(result.logs) : t("res.logs.empty");
+    var admIn = result && result.conditions && result.conditions.admin;
+    if(admIn){
+      document.getElementById("admInputsPre").textContent = JSON.stringify({ paramFileName: admIn.paramFileName, perfoCsvName: admIn.perfoCsvName, paramFile: admIn.paramFile }, null, 2);
+      document.getElementById("admInputs").hidden = false;
+    }
+    document.getElementById("copyLogsBtn").addEventListener("click", function(){
+      var btn = this, txt = document.getElementById("logsPre").textContent;
+      navigator.clipboard.writeText(txt).then(function(){
+        var old = btn.textContent; btn.textContent = t("res.logs.copied");
+        setTimeout(function(){ btn.textContent = old; }, 1500);
+      });
+    });
+  }
+  // ===================== Signalement d'un problème (07/10/2026) =====================
+  // L'utilisateur décrit le problème et DOIT cocher la case de consentement : une copie du résultat (conditions,
+  // instrument, diagnostics, journaux, images) est alors placée dans result_reports et dans le bucket « reports »,
+  // lisibles de lui et de l'administrateur seulement. Tant que ce n'est pas fait, personne d'autre ne voit ce résultat.
+  (function(){
+    var ov = document.getElementById("reportOverlay"), msgEl = document.getElementById("rptMsg"),
+        consentEl = document.getElementById("rptConsent"), sendBtn = document.getElementById("rptSend"),
+        errEl = document.getElementById("rptErr"), form = document.getElementById("rptForm"), done = document.getElementById("rptDone");
+    var lastReport = null;      // { id, files } du signalement tout juste envoyé, pour pouvoir le retirer
+    function refresh(){ sendBtn.disabled = !(consentEl.checked && msgEl.value.trim().length >= 10); }
+    function openReport(){
+      msgEl.value = ""; consentEl.checked = false; errEl.hidden = true; form.hidden = false; done.hidden = true;
+      sendBtn.textContent = t("res.report.send"); refresh(); ov.hidden = false; msgEl.focus();
+    }
+    function closeReport(){ ov.hidden = true; }
+    document.getElementById("btnReport").addEventListener("click", openReport);
+    document.getElementById("btnReport").disabled = false;      // grisé jusqu'ici : un clic plus tôt ne ferait rien (la page charge encore)
+    document.getElementById("rptCancel").addEventListener("click", closeReport);
+    document.getElementById("rptClose").addEventListener("click", closeReport);
+    ov.addEventListener("click", function(e){ if(e.target === ov) closeReport(); });
+    document.addEventListener("keydown", function(e){ if(e.key === "Escape" && !ov.hidden) closeReport(); });
+    msgEl.addEventListener("input", refresh); consentEl.addEventListener("change", refresh);
+
+    sendBtn.addEventListener("click", async function(){
+      errEl.hidden = true;
+      var msg = msgEl.value.trim();
+      if(msg.length < 10){ errEl.textContent = t("res.report.err_short"); errEl.hidden = false; return; }
+      sendBtn.disabled = true; sendBtn.textContent = t("res.report.sending");
+      var reportId = crypto.randomUUID(), copied = [], uid = null;
+      try{
+        var { data: sd } = await supabaseClient.auth.getSession();
+        var sess = sd.session; if(!sess) throw new Error("session");
+        uid = sess.user.id;
+        // fichiers du résultat : image, image source, graphiques par bande
+        var paths = [];
+        if(result.image_path) paths.push(result.image_path);
+        if(result.source_image_path) paths.push(result.source_image_path);
+        var bands = (result.diagnostics && result.diagnostics.bands) || {};
+        for(var bn in bands) for(var k in bands[bn]) if(k.endsWith("_path") && bands[bn][k]) paths.push(bands[bn][k]);
+        var failed = 0;
+        await Promise.all(paths.map(async function(src){
+          var dst = uid + "/" + reportId + "/" + src.split("/").pop();
+          var r = await supabaseClient.storage.from("results").copy(src, dst, { destinationBucket: "reports" });
+          if(r.error) failed++; else copied.push({ from: src, to: dst });
+        }));
+        var snapshot = { scene: result.scene, conditions: result.conditions, instrument_snapshot: result.instrument_snapshot,
+          diagnostics: result.diagnostics, logs: result.logs || "", created_at: result.created_at,
+          lang: nysaLang(), filesFailed: failed, userAgent: navigator.userAgent.slice(0, 200) };
+        var { error } = await supabaseClient.from("result_reports").insert({
+          id: reportId, result_id: result.id, contact_email: sess.user.email, message: msg, consent: true,
+          consent_text: t("res.report.consent"), snapshot: snapshot, files: copied });
+        if(error) throw error;
+        lastReport = { id: reportId, files: copied };
+        form.hidden = true; done.hidden = false;
+      }catch(e){
+        if(copied.length) await supabaseClient.storage.from("reports").remove(copied.map(function(f){ return f.to; }));   // rien ne reste si l'envoi échoue
+        errEl.textContent = t("res.report.err_send", { msg: (e && e.message) || String(e) }); errEl.hidden = false;
+        sendBtn.textContent = t("res.report.send"); refresh();
+      }
+    });
+    document.getElementById("rptWithdraw").addEventListener("click", async function(){
+      if(!lastReport) return;
+      if(lastReport.files.length) await supabaseClient.storage.from("reports").remove(lastReport.files.map(function(f){ return f.to; }));
+      await supabaseClient.from("result_reports").delete().eq("id", lastReport.id);
+      lastReport = null;
+      document.getElementById("rptDoneText").textContent = t("res.report.withdrawn");
+      document.getElementById("rptWithdraw").hidden = true;
+    });
+  })();
+
   var tabsHost = document.getElementById("restabsHost");
   TABS.forEach(function(tab, i){   // « tab » et non « t » : t() est la fonction de traduction
     var b = document.createElement("button");

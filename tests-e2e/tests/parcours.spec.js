@@ -44,7 +44,7 @@ const STR = {
     active: "Active", draft: "Draft", wrongPwd: "Incorrect email or password.", mismatch: "The two passwords do not match.",
     forgotSent: "If an account exists", otherDevice: "You were signed out because this account was used on another device",
     dlRgb: "Download RGB image", dlRed: "Download Red band", fileRed: "Red", fmcOne: "1.00", minFmc: "At least",
-    tdiHelp: "1 = no TDI", between: "Between 380 and 900 km.", noResult: "No saved result yet",
+    tdiHelp: "1 = no TDI", between: "Between 380 and 900 km.", noResult: "No saved result yet", reportDone: "Thank you, it was sent",
   },
   fr: {
     myInstruments: "Mes instruments", newSim: "Nouvelle simulation", myResults: "Mes résultats", resultDefault: "Résultat",
@@ -53,7 +53,7 @@ const STR = {
     active: "Actif", draft: "Brouillon", wrongPwd: "E-mail ou mot de passe incorrect.", mismatch: "Les deux mots de passe ne sont pas identiques.",
     forgotSent: "Si un compte existe", otherDevice: "Vous avez été déconnecté car ce compte a été utilisé sur un autre appareil",
     dlRgb: "Télécharger l'image RGB", dlRed: "Télécharger la bande Rouge", fileRed: "Rouge", fmcOne: "1,00", minFmc: "Au moins",
-    tdiHelp: "1 = pas de TDI", between: "Entre 380 et 900 km.", noResult: "Aucun résultat sauvegardé",
+    tdiHelp: "1 = pas de TDI", between: "Entre 380 et 900 km.", noResult: "Aucun résultat sauvegardé", reportDone: "Merci, c'est envoyé",
   },
 };
 
@@ -99,6 +99,12 @@ async function wipeTestData(page) {
       const files = paths.filter(Boolean);
       if (files.length) await supabaseClient.storage.from("results").remove(files);
       await supabaseClient.from("saved_results").delete().eq("id", r.id);
+    }
+    const { data: rep } = await supabaseClient.from("result_reports").select("id,files");
+    for (const r of rep || []) {
+      const files = (r.files || []).map((f) => f.to).filter(Boolean);
+      if (files.length) await supabaseClient.storage.from("reports").remove(files);
+      await supabaseClient.from("result_reports").delete().eq("id", r.id);
     }
     const { data: ins } = await supabaseClient.from("instruments").select("id,name");
     for (const i of ins || []) if (!/^(Exemple|Example)/.test(i.name)) await supabaseClient.from("instruments").delete().eq("id", i.id);
@@ -153,6 +159,21 @@ test.describe("Pages publiques @public", () => {
     await expect(page.locator("h1")).toContainText("Simulateur d'imagerie");
     await expect(page.locator("#simBtn")).toHaveText("Lancer la simulation");
     expect(errors, "erreurs JavaScript sur la démo").toEqual([]);
+  });
+
+  test("la démo n'a plus d'administration et mène au simulateur complet", async ({ page }) => {
+    const errors = watchErrors(page);
+    await page.goto("/index.html?lang=en");
+    await expect(page.locator("#adminTrigger, #adminOverlay, #adminResultPage"), "reste d'administration dans la démo").toHaveCount(0);
+    const link = page.locator("#fullSimLink");
+    await expect(link).toBeVisible();
+    await expect(link).toHaveText("Full simulator →");
+    await expect(link).toHaveAttribute("href", "espace-personnel.html");
+    await link.click();
+    await page.waitForURL(/login\.html|espace-personnel\.html/);          // connexion d'abord pour un visiteur
+    await page.goto("/index.html?lang=fr");
+    await expect(page.locator("#fullSimLink")).toHaveText("Simulateur complet →");
+    expect(errors).toEqual([]);
   });
 
   for (const lang of ["en", "fr"]) {
@@ -436,6 +457,23 @@ for (const lang of ["en", "fr"]) {
       await page.keyboard.press("Escape");
     });
 
+    test("administration : invisible et inutilisable pour un compte ordinaire", async () => {
+      await page.goto("/simulations.html");
+      await expect(page.locator("#instList .instoption").first()).toBeAttached({ timeout: 30 * 1000 });
+      await expect(page.locator("#adminBox"), "les outils d'administration ne doivent pas apparaître").toBeHidden();
+      // le contrôle qui compte est côté serveur : un jeton ordinaire est refusé sur la route d'administration
+      const status = await page.evaluate(async () => {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        const r = await fetch(API_URL + "/simulate_admin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + session.access_token },
+          body: JSON.stringify({ scene: "x", paramFile: {}, perfoCsv: null }),
+        });
+        return r.status;
+      });
+      expect(status, "/simulate_admin doit refuser un compte ordinaire").toBe(403);
+    });
+
     test("simulation complète, avec l'avertissement quand on quitte la page", async () => {
       await page.goto("/simulations.html");
       await expect(page.locator(".scenecard").first()).toBeVisible();
@@ -511,6 +549,33 @@ for (const lang of ["en", "fr"]) {
       h = await pngInfo(download);
       expect(h.signature).toEqual([137, 80, 78, 71]);
       expect(h.size).toBeGreaterThan(500);
+    });
+
+    test("signaler un problème : consentement obligatoire, envoi, retrait", async () => {
+      await page.goto(`/resultats.html?id=${resultId}`);
+      await page.locator("#btnReport").click();
+      await expect(page.locator("#reportOverlay")).toBeVisible();
+      await expect(page.locator("#rptSend"), "l'envoi doit être impossible sans message ni consentement").toBeDisabled();
+      await page.locator("#rptMsg").fill("e2e : la MTF me paraît trop haute");
+      await expect(page.locator("#rptSend"), "un message ne suffit pas : la case de consentement est obligatoire").toBeDisabled();
+      await page.locator("#rptConsent").check();
+      await expect(page.locator("#rptSend")).toBeEnabled();
+      await page.locator("#rptSend").click();
+      await expect(page.locator("#rptDone")).toBeVisible({ timeout: 60 * 1000 });
+      await expect(page.locator("#rptDone h3")).toHaveText(S.reportDone);
+      const mine = await page.evaluate(async () => (await supabaseClient.from("result_reports").select("id")).data.length);
+      expect(mine, "le signalement doit être enregistré").toBe(1);
+      await page.locator("#rptWithdraw").click();
+      await expect(page.locator("#rptWithdraw")).toBeHidden();
+      await expect.poll(async () => page.evaluate(async () => (await supabaseClient.from("result_reports").select("id")).data.length)).toBe(0);
+      await page.locator("#rptClose").click();
+      await expect(page.locator("#reportOverlay")).toBeHidden();
+    });
+
+    test("la page d'administration est refusée à un compte ordinaire", async () => {
+      await page.goto("/admin.html");
+      await expect(page).toHaveURL(/espace-personnel\.html/);
+      await expect(page.locator("#navAdminItem"), "le lien Administration ne doit pas apparaître").toBeHidden();
     });
 
     test("liste des résultats : recherche, puis suppression", async () => {

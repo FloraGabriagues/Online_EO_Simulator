@@ -124,6 +124,7 @@ h3{font-family:var(--display);font-weight:500;font-size:16px;margin:22px 0 8px;c
 <tr><td>Langue de préférence</td><td>Afficher l'interface et rédiger les e-mails dans votre langue</td><td>Exécution du contrat</td></tr>
 <tr><td>Instruments et paramètres saisis</td><td>Réaliser vos simulations et les retrouver</td><td>Exécution du contrat</td></tr>
 <tr><td>Résultats et images simulées</td><td>Vous les présenter et les conserver dans votre espace</td><td>Exécution du contrat</td></tr>
+<tr><td>Signalement d'un résultat (facultatif)</td><td>Analyser le problème que vous décrivez : votre message, une copie du résultat (paramètres, conditions, images, journaux de calcul) et l'adresse de votre compte</td><td>Consentement (case à cocher)</td></tr>
 <tr><td>Adresse IP et journaux techniques</td><td>Protéger le service contre les abus, diagnostiquer les pannes</td><td>Intérêt légitime</td></tr>
 <tr><td>Données de facturation</td><td>Gérer un abonnement payant. Elles sont saisies chez notre prestataire de paiement : nous n'avons jamais accès à votre numéro de carte</td><td>Contrat et obligation légale</td></tr>
 </table></div>
@@ -137,6 +138,7 @@ h3{font-family:var(--display);font-weight:500;font-size:16px;margin:22px 0 8px;c
 <tr><td>Preferred language</td><td>Displaying the interface and writing emails in your language</td><td>Performance of the contract</td></tr>
 <tr><td>Instruments and parameters entered</td><td>Running your simulations and letting you find them again</td><td>Performance of the contract</td></tr>
 <tr><td>Results and simulated images</td><td>Showing them to you and keeping them in your workspace</td><td>Performance of the contract</td></tr>
+<tr><td>Report of a result (optional)</td><td>Analyze the problem you describe: your message, a copy of the result (parameters, conditions, images, computation logs) and your account address</td><td>Consent (checkbox)</td></tr>
 <tr><td>IP address and technical logs</td><td>Protecting the service against abuse, diagnosing failures</td><td>Legitimate interest</td></tr>
 <tr><td>Billing data</td><td>Managing a paid subscription. It is entered with our payment provider: we never have access to your card number</td><td>Contract and legal obligation</td></tr>
 </table></div>
@@ -151,6 +153,7 @@ h3{font-family:var(--display);font-weight:500;font-size:16px;margin:22px 0 8px;c
   <li>Nous ne les utilisons que pour faire fonctionner le service : exécuter vos simulations et vous en présenter le résultat.</li>
   <li>Nous ne les vendons pas, ne les partageons pas et ne les utilisons pas pour un autre client ou un autre projet.</li>
   <li>L'accès technique à la base est limité à l'éditrice du service. Elle ne consulte pas vos instruments ni vos résultats sans votre autorisation préalable, donnée par exemple pour un dépannage ou une analyse personnalisée.</li>
+<li>Cette autorisation se donne en cochant la case du bouton « Signaler un problème » d'un résultat. Une copie de ce résultat est alors transmise à l'éditrice du service, conservée à part et supprimée une fois le problème traité. Vous pouvez la retirer à tout moment depuis la page du résultat, ou en écrivant à contact@nysa-imaging.com.</li>
   <li>Une précision : pour diagnostiquer une panne, les journaux techniques du serveur de calcul peuvent être consultés. Ils décrivent le déroulement d'une simulation et peuvent contenir des paramètres de l'instrument simulé. Ils ne servent qu'à ce diagnostic.</li>
 </ul>
 <p>Si vos paramètres relèvent d'un secret industriel ou d'une réglementation particulière, contactez-nous avant de les saisir.</p></div>
@@ -160,6 +163,7 @@ h3{font-family:var(--display);font-weight:500;font-size:16px;margin:22px 0 8px;c
   <li>We use them only to operate the service: running your simulations and showing you the result.</li>
   <li>We do not sell them, share them or use them for another client or another project.</li>
   <li>Technical access to the database is limited to the publisher of the service. She does not look at your instruments or your results without your prior authorization, given for example for troubleshooting or a custom analysis.</li>
+<li>This authorization is given by ticking the box of the “Report a problem” button on a result. A copy of that result is then sent to the publisher of the service, kept separately and deleted once the problem is handled. You can withdraw it at any time from the result page, or by writing to contact@nysa-imaging.com.</li>
   <li>One clarification: to diagnose a failure, the technical logs of the computation server may be consulted. They describe how a simulation ran and may contain parameters of the simulated instrument. They are used only for that diagnosis.</li>
 </ul>
 <p>If your parameters are covered by trade secrecy or by a specific regulation, contact us before entering them.</p></div>
@@ -172,7 +176,8 @@ h3{font-family:var(--display);font-weight:500;font-size:16px;margin:22px 0 8px;c
   <li><b>Compte supprimé par vous</b> : toutes vos données sont effacées immédiatement et définitivement de la base. Les copies de sauvegarde expirent au bout de 7 jours.</li>
   <li><b>Abonnement terminé</b> : votre compte et vos données sont conservés 12 mois, puis supprimés. Un e-mail vous prévient 30 jours avant.</li>
   <li><b>Factures</b> : conservées 10 ans par notre prestataire de paiement, comme l'exige la loi.</li>
-  <li><b>Sauvegardes</b> : des copies quotidiennes de la base sont conservées 7 jours chez notre prestataire.</li>
+  <li><b>Signalement d'un résultat</b> : la copie est supprimée une fois le problème traité, ou dès que vous la retirez. Un compte supprimé emporte ses signalements.</li>
+<li><b>Sauvegardes</b> : des copies quotidiennes de la base sont conservées 7 jours chez notre prestataire.</li>
   <li><b>Journaux techniques</b> : 7 jours.</li>
 </ul></div>
     <div lang="en"><ul>
@@ -181,7 +186,8 @@ h3{font-family:var(--display);font-weight:500;font-size:16px;margin:22px 0 8px;c
   <li><b>Account deleted by you</b>: all your data is erased immediately and permanently from the database. Backup copies expire after 7 days.</li>
   <li><b>Subscription ended</b>: your account and data are kept for 12 months, then deleted. An email warns you 30 days beforehand.</li>
   <li><b>Invoices</b>: kept for 10 years by our payment provider, as required by law.</li>
-  <li><b>Backups</b>: daily copies of the database are kept for 7 days by our provider.</li>
+  <li><b>Report of a result</b>: the copy is deleted once the problem is handled, or as soon as you withdraw it. A deleted account takes its reports with it.</li>
+<li><b>Backups</b>: daily copies of the database are kept for 7 days by our provider.</li>
   <li><b>Technical logs</b>: 7 days.</li>
 </ul></div>
   </section>
