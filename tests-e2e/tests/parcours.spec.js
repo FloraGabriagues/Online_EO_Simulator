@@ -361,6 +361,11 @@ for (const lang of ["en", "fr"]) {
         await expect(page.locator("#settingsLang")).toHaveValue("fr");
         await page.locator("#settingsLang").selectOption("en");
         await expect(page.locator("h1")).toHaveText(STR.en.myInstruments);
+        // attendre que la langue soit bien enregistrée sur le compte
+        await expect(async () => {
+          await page.goto("/espace-personnel.html?settings=1");
+          await expect(page.locator("#settingsLang")).toHaveValue("en");
+        }).toPass({ timeout: 20000 });
       });
     }
 
@@ -408,6 +413,7 @@ for (const lang of ["en", "fr"]) {
           const first = page.locator(".instcard", { hasText: NAME.renamed }).first();
           await first.locator("[data-menu-toggle]").click();
           await first.locator("[data-action='delete']").click();
+          await expect(page.locator(".instcard", { hasText: NAME.renamed })).toHaveCount(1 - i);
         }
         await expect(page.locator(".instcard", { hasText: NAME.renamed })).toHaveCount(0);
         promptValue = undefined;
