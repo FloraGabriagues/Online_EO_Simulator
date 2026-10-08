@@ -13,6 +13,10 @@
   var sidebar = document.querySelector(".sidebar");
   var topbar = document.querySelector(".topbar");
   if(!sidebar || !topbar) return;
+  // 07/10/2026 : le lien « Administration » du menu n'est révélé qu'au compte administrateur.
+  if(typeof isAdminAccount === "function"){
+    isAdminAccount().then(function(ok){ var li = document.getElementById("navAdminItem"); if(li && ok) li.hidden = false; });
+  }
   var tr = (typeof t === "function") ? t : function(k){ return k === "nav.menu" ? "Menu" : "Fermer le menu"; };
   var NARROW = "(max-width: 900px)";
 

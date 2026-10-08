@@ -554,6 +554,34 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       var { error } = await supabaseClient.from("instruments").insert({ account_id: session.user.id, name: name.trim(), config: inst.config });
       say(error ? "Échec : " + error.message : "Instrument créé : « " + name.trim() + " » (voir Instruments).");
     });
+    btn("Importer ce résultat dans mon compte", async function(){
+      // copie les images du signalement dans mes résultats, avec les journaux : je le consulte comme un résultat à moi
+      var files = r.files || [], uid = session.user.id, id = crypto.randomUUID(), base = uid + "/" + id + "/", sent = [], map = {};
+      try{
+        say("Import en cours…");
+        for(var i = 0; i < files.length; i++){
+          var name = files[i].to.split("/").pop(), dst = base + name;
+          var c = await supabaseClient.storage.from("reports").copy(files[i].to, dst, { destinationBucket: "results" });
+          if(c.error) throw c.error;
+          sent.push(dst); map[name] = dst;
+        }
+        if(!map["main.png"]) throw new Error("image principale absente de ce signalement");
+        var diag = JSON.parse(JSON.stringify(snap.diagnostics || {})), bands = diag.bands || {};
+        for(var bn in bands) for(var k in bands[bn]){
+          if(k.endsWith("_path")) bands[bn][k] = map[String(bands[bn][k] || "").split("/").pop()] || null;
+        }
+        var cond = Object.assign({}, snap.conditions || {}, { imported: true, from_report: r.id });
+        var { error } = await supabaseClient.from("saved_results").insert({
+          id: id, account_id: uid, instrument_id: null, name: "Signalement " + new Date(r.created_at).toISOString().slice(0, 10) + " " + (r.contact_email || ""),
+          instrument_snapshot: snap.instrument_snapshot || {}, scene: String(snap.scene || ""), conditions: cond,
+          image_path: map["main.png"], source_image_path: map["source.png"] || null, diagnostics: diag, logs: String(snap.logs || "") });
+        if(error) throw error;
+        say("Résultat importé dans « Mes résultats » (avec les journaux).");
+      }catch(e){
+        if(sent.length) await supabaseClient.storage.from("results").remove(sent);
+        say("Échec : " + ((e && e.message) || e));
+      }
+    });
     btn("Supprimer ce signalement", async function(){
       if(!confirm("Supprimer définitivement ce signalement et ses images ?")) return;
       var paths = (r.files || []).map(function(f){ return f.to; });

@@ -114,6 +114,27 @@ async function signOut() {
 }
 
 /**
+ * Le compte connecté a-t-il le rôle administrateur (plan « admin » actif) ?
+ * Lu avec son propre jeton (la RLS ne lui rend que sa ligne), gardé le temps de la page.
+ * ATTENTION : sert seulement à AFFICHER les outils d'administration. Le vrai contrôle est fait par le
+ * serveur de calcul (_require_admin dans main.py) et par la base (is_admin() dans les règles d'accès).
+ */
+let _isAdminCache = null;
+async function isAdminAccount() {
+  if (_isAdminCache !== null) return _isAdminCache;
+  try {
+    const { data: { session } } = await supabaseClient.auth.getSession();
+    if (!session) return (_isAdminCache = false);
+    const { data } = await supabaseClient
+      .from("account_entitlements").select("plan, subscription_status").eq("account_id", session.user.id).maybeSingle();
+    _isAdminCache = !!(data && data.plan === "admin" && data.subscription_status === "active");
+  } catch (e) {
+    _isAdminCache = false;
+  }
+  return _isAdminCache;
+}
+
+/**
  * Message d'erreur lisible pour les erreurs Supabase Auth les plus courantes,
  * dans la langue de l'interface (textes dans i18n.js, clés auth.err.*).
  * Le nom historique frenchAuthError est conservé : les pages l'appellent.
