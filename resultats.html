@@ -162,7 +162,14 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .afield label svg{width:14px;height:14px;color:var(--muted-2);flex:none}
 .afield select{width:100%;background:var(--panel-2);border:1px solid var(--line-soft);color:var(--paper);
   border-radius:5px;padding:8px 11px;font-family:var(--body);font-size:12.5px}
-.sathint{margin:-8px 0 14px;font-size:12px;line-height:1.45;color:var(--muted-2)}
+.satwrap{position:relative;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.satwrap .checkrow{margin-bottom:0}
+.sathelp{appearance:none;cursor:pointer;background:transparent;border:1px solid var(--line);color:var(--muted);
+  border-radius:50%;width:18px;height:18px;font-size:12px;line-height:1;padding:0;flex:none}
+.sathelp:hover,.sathelp[aria-expanded="true"]{border-color:var(--pixel);color:var(--pixel)}
+.sathint{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:20;margin:0;padding:10px 12px;font-size:12px;line-height:1.45;
+  color:var(--paper);background:var(--panel-2);border:1px solid var(--pixel);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.sathint.up{top:auto;bottom:calc(100% + 6px)}
 .sathint[hidden]{display:none}
 .checkrow.disabled{opacity:.5}
 .checkrow{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-bottom:14px}
@@ -600,8 +607,11 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                 </select>
               </div>
 
-              <label class="checkrow" id="satRow"><input type="checkbox" id="satChk"> <span data-i18n="res.sat">Afficher les pixels saturés (magenta)</span></label>
-              <p class="sathint" id="satHint">Disponible sur une bande séparée (Rouge, Vert ou Bleu) : sur le RGB, la saturation n'a pas de sens.</p>
+              <div class="satwrap">
+                <label class="checkrow" id="satRow"><input type="checkbox" id="satChk"> <span data-i18n="res.sat">Afficher les pixels saturés (magenta)</span></label>
+                <button type="button" class="sathelp" id="satHelp" aria-expanded="false" aria-controls="satHint" aria-label="?">?</button>
+                <p class="sathint" id="satHint" role="note" hidden></p>
+              </div>
 
               <div class="apanelbtns">
                 <button class="srcbtn" type="button" id="whitePointBtn" style="margin-top:0">
@@ -612,14 +622,13 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                   <span data-i18n="res.reset">Réinitialiser l'affichage</span></button>
               </div>
 
-              <p class="comparenote">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></svg>
-                <span data-i18n="res.note">Ces réglages n'affectent que l'affichage dans ce navigateur : le téléchargement fournit l'image calculée par le serveur, en pleine résolution et sans retouche.</span>
-              </p>
-
-              <button class="downloadbtn" type="button" id="downloadBtn" style="margin-top:6px">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v13M7 11l5 5 5-5M4 20h16"/></svg>
-                <span id="downloadLabel">Télécharger l'image RGB</span></button>
+              <div class="satwrap dlwrap">
+                <button class="downloadbtn" type="button" id="downloadBtn" style="margin-top:0;flex:1">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v13M7 11l5 5 5-5M4 20h16"/></svg>
+                  <span id="downloadLabel">Télécharger l'image RGB</span></button>
+                <button type="button" class="sathelp" id="noteHelp" aria-expanded="false" aria-controls="noteHint" aria-label="?">?</button>
+                <p class="sathint up" id="noteHint" role="note" hidden data-i18n="res.note">Ces réglages n'affectent que l'affichage dans ce navigateur : le téléchargement fournit les valeurs brutes de l'instrument (DN), au nombre de bits de son électronique, en pleine résolution et sans retouche.</p>
+              </div>
               <button type="button" class="reportbtn" id="btnReport" disabled>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>
                 <span data-i18n="res.report.btn">Signaler un problème</span></button>
@@ -1827,9 +1836,18 @@ async function deleteResult(r){
     if(off){ chk.checked = false; adj.showSat = false; }
     chk.disabled = off;
     row.classList.toggle("disabled", off);
-    hint.hidden = !off;
-    hint.textContent = t(rgb ? "res.sat.hint" : "res.sat.nomask");
+    hint.textContent = t(rgb ? "res.sat.hint" : (noMask ? "res.sat.nomask" : "res.sat.hint"));
   }
+  // Bulle « ? » : s'ouvre au clic, se ferme au clic ailleurs ou sur Échap
+  function bubble(btnId, hintId){
+    var b = document.getElementById(btnId), h = document.getElementById(hintId);
+    function setOpen(o){ h.hidden = !o; b.setAttribute("aria-expanded", o ? "true" : "false"); }
+    b.addEventListener("click", function(e){ e.stopPropagation(); setOpen(h.hidden); });
+    document.addEventListener("click", function(e){ if(!h.hidden && !h.contains(e.target)) setOpen(false); });
+    document.addEventListener("keydown", function(e){ if(e.key === "Escape") setOpen(false); });
+  }
+  bubble("satHelp", "satHint");
+  bubble("noteHelp", "noteHint");
   function selectBand(key){
     adj.band = key;
     syncSatControl();
