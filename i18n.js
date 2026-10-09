@@ -667,6 +667,7 @@ var I18N = {
   "sim.tdi.hint":        { fr: "1 = sans TDI", en: "1 = no TDI" },
 
   // FMC et bulles d'aide de la page Simulations
+  "sim.fmc.toggle": { fr: "Afficher ou masquer le détail", en: "Show or hide details" },
   "sim.fmc.label":       { fr: "FMC (facteur de compensation)", en: "FMC (compensation factor)" },
   "sim.fmc.swept":       { fr: "Distance balayée pendant l'intégration : {px} px, ramenée à 1 px par la FMC.", en: "Distance scanned during integration: {px} px, brought back to 1 px by the FMC." },
   "sim.fmc.detail":      { fr: "Vitesse au sol {vg} km/s · Pas au sol {gsd} m", en: "Ground speed {vg} km/s · GSD {gsd} m" },

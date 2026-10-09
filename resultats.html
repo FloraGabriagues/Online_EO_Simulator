@@ -1709,9 +1709,11 @@ async function deleteResult(r){
 
       for(var i = 0; i < d.length; i += 4){
         var r = d[i], g = d[i+1], b = d[i+2];
+        // Saturation mesurée sur l'image brute, AVANT point blanc et étirement : l'étirement p2/p98 ramène
+        // par construction les 2 % de pixels les plus clairs à 255, ce qui les aurait tous affichés en magenta.
+        var saturated = opts.showSaturated && (r >= 253 || g >= 253 || b >= 253);
         if(gains){ r = Math.min(255, r * gains.r); g = Math.min(255, g * gains.g); b = Math.min(255, b * gains.b); }
         if(stretch){ r = stretchVal(r, stretch.r); g = stretchVal(g, stretch.g); b = stretchVal(b, stretch.b); }
-        var saturated = opts.showSaturated && (r >= 253 || g >= 253 || b >= 253);
         if(opts.channel != null){ var v = [r,g,b][opts.channel]; r = g = b = v; }
         if(saturated){ r = 255; g = 0; b = 255; }
         d[i] = r; d[i+1] = g; d[i+2] = b;
