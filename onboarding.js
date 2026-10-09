@@ -66,6 +66,7 @@
   // ------------------------------------------------------------------ style
   var css = document.createElement("style");
   css.textContent =
+    ".onb-dim{position:fixed;left:0;top:0;width:100%;height:100%;z-index:9970;pointer-events:none}"+
     ".onb-ring{box-sizing:border-box;position:fixed;z-index:9980;pointer-events:none;border-radius:8px;border:2px solid var(--photon,#F5AC57);"+
       "box-shadow:0 0 0 4px rgba(245,172,87,.22),0 0 26px rgba(245,172,87,.35);transition:left .15s,top .15s,width .15s,height .15s}"+
     ".onb-bubble{box-sizing:border-box;position:fixed;z-index:9990;width:min(340px,calc(100vw - 24px));padding:14px 16px 12px;border-radius:10px;"+
@@ -213,10 +214,11 @@
   // ----------------------------------------------------------- les étapes
   // targets : éléments à surligner (le premier sert de repère à la bulle) ;
   // text : clé du texte ; next : bouton « Suivant » pour les étapes d'explication.
-  var ORDER = ["inst0", "nav", "scene", "inst", "cond", "launch", "run", "viewres", "overview", "slider"];
+  var ORDER = ["inst0", "nav", "scene", "inst", "cond", "launch", "run", "viewres", "image", "mtf", "snr", "graphs"];
   var SIM_STEPS = { scene: 1, inst: 2, cond: 3, launch: 3, run: 4, viewres: 4 };
 
-  var sliderMoved = false, sliderWired = false;
+  var sliderMoved = false, sliderMovedAt = 0, sliderWired = false;
+  function markMoved(){ if(!sliderMoved){ sliderMoved = true; sliderMovedAt = Date.now(); } }
   function wireSlider(){
     if(sliderWired) return;
     var wrap = $("#compareWrap");
@@ -225,14 +227,17 @@
     var downX = null;
     wrap.addEventListener("pointerdown", function(e){ downX = e.clientX; });
     wrap.addEventListener("pointermove", function(e){
-      if(downX !== null && Math.abs(e.clientX - downX) >= 12) sliderMoved = true;
+      if(downX !== null && Math.abs(e.clientX - downX) >= 12) markMoved();
     });
     wrap.addEventListener("pointerup", function(){ downX = null; });
     wrap.addEventListener("pointercancel", function(){ downX = null; });
     wrap.addEventListener("keydown", function(e){
-      if(e.key === "ArrowLeft" || e.key === "ArrowRight") sliderMoved = true;
+      if(e.key === "ArrowLeft" || e.key === "ArrowRight") markMoved();
     });
   }
+
+  function tabBtn(id){ return $("#restabsHost .restab[data-tab='" + id + "']"); }
+  function tabSelected(id){ var b = tabBtn(id); return !!b && b.getAttribute("aria-selected") === "true"; }
 
   function navTargets(){
     var link = $(".sidebar a[href='simulations.html']");
@@ -275,15 +280,53 @@
     run:     { targets: function(){ return [$(".statuspanel")]; }, text: runTextKey,
                extra: function(key){ return key === "onb.s6" ? ["onb.s6.c1", "onb.s6.c2", "onb.s6.c3", "onb.s6.c4"] : null; } },
     viewres: { targets: function(){ return [$(".viewresultsbtn")]; }, text: function(){ return "onb.s7"; } },
-    overview:{ targets: function(){ return [$("#viewerBox"), $("#restabsHost")]; }, text: function(){ return "onb.s8"; }, next: "slider" },
-    slider:  { targets: function(){ return [$("#compareWrap")]; }, text: function(){ return "onb.s9"; } }
+    // Page du résultat : d'abord l'image (avec le curseur), puis les graphes, onglet par onglet.
+    // protect : zones que la bulle ne doit pas recouvrir (les onglets restent cliquables, le graphe lisible).
+    image:   { targets: function(){ return [$("#compareWrap")]; }, text: function(){ return "onb.s8"; },
+               protect: function(){ return [$("#restabsHost")]; } },
+    mtf:     { targets: function(){ return [tabBtn("mtf")]; }, text: function(){ return "onb.s9"; },
+               protect: function(){ return [$("#restabsHost")]; } },
+    snr:     { targets: function(){ return [tabBtn("snr")]; }, text: function(){ return "onb.s10"; },
+               protect: function(){ return [$("#restabsHost"), $(".tabpanel.current")]; } },
+    graphs:  { targets: function(){ return [$("#restabsHost")]; }, text: function(){ return "onb.s11"; },
+               protect: function(){ return [$(".tabpanel.current")]; }, next: "finish", nextLabel: "onb.done" }
   };
 
   // ------------------------------------------------------------- l'affichage
-  var rings = [], bubble = null, shownKey = "", scrolledFor = "";
+  var rings = [], bubble = null, shownKey = "", scrolledFor = "", dim = null, holes = [];
+  var SVGNS = "http://www.w3.org/2000/svg";
+  // Voile sombre sur toute la page, percé d'une ouverture par élément visé : ce qui est à faire
+  // ressort, le reste s'efface. Il ne reçoit aucun clic (tout reste utilisable).
+  function updateDim(targets){
+    if(!dim){
+      dim = document.createElementNS(SVGNS, "svg");
+      dim.setAttribute("class", "onb-dim");
+      dim.setAttribute("aria-hidden", "true");
+      dim.innerHTML = '<defs><mask id="onbMask"><rect width="100%" height="100%" fill="#fff"/></mask></defs>' +
+        '<rect width="100%" height="100%" fill="rgba(5,8,11,0.62)" mask="url(#onbMask)"/>';
+      document.body.appendChild(dim);
+      holes = [];
+    }
+    var mask = dim.querySelector("mask");
+    while(holes.length > targets.length){ holes.pop().remove(); }
+    while(holes.length < targets.length){
+      var h = document.createElementNS(SVGNS, "rect");
+      h.setAttribute("fill", "#000"); h.setAttribute("rx", "8");
+      mask.appendChild(h); holes.push(h);
+    }
+    targets.forEach(function(tg, i){
+      var r = tg.getBoundingClientRect();
+      holes[i].setAttribute("x", Math.round(r.left - 4));
+      holes[i].setAttribute("y", Math.round(r.top - 4));
+      holes[i].setAttribute("width", Math.round(r.width + 8));
+      holes[i].setAttribute("height", Math.round(r.height + 8));
+    });
+  }
+
   function clearUi(){
     rings.forEach(function(r){ r.remove(); });
     rings = [];
+    if(dim){ dim.remove(); dim = null; holes = []; }
     if(bubble){ bubble.remove(); bubble = null; }
     shownKey = ""; scrolledFor = "";
   }
@@ -298,23 +341,48 @@
 
   function goStep(id){ saveStep(id); tick(); }
 
-  function placeBubble(target){
-    var r = target.getBoundingClientRect();
+  // La bulle ne recouvre jamais ce qu'il faut lire ou cliquer : les éléments visés, la chronologie
+  // des étapes de l'assistant (#stepsHost) et, selon l'étape, d'autres zones (def.protect).
+  // Parmi les emplacements possibles (autour de l'élément visé, puis tout l'écran), elle prend le
+  // plus proche qui ne recouvre rien ; à défaut, celui qui recouvre le moins.
+  function overlap(a, b){
+    var w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+    var h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+    return (w > 0 && h > 0) ? w * h : 0;
+  }
+  function pad(r, n){ return { left: r.left - n, top: r.top - n, right: r.right + n, bottom: r.bottom + n }; }
+  function placeBubble(primary, targets, def){
+    var prot = targets.map(function(tg){ return pad(tg.getBoundingClientRect(), 8); });
+    var extra = (def.protect ? def.protect() : []).concat([$("#stepsHost")]);
+    extra.forEach(function(e){ if(e && visible(e)) prot.push(pad(e.getBoundingClientRect(), 4)); });
+
     var bw = bubble.offsetWidth, bh = bubble.offsetHeight;
-    var vw = window.innerWidth, vh = window.innerHeight;
-    var x, y;
-    if(vw < 640){   // petit écran : bulle en bas, centrée
-      x = (vw - bw) / 2;
-      y = (r.bottom + bh + 20 < vh) ? r.bottom + 14 : vh - bh - 12;
-      if(y < r.top && r.top - bh - 14 > 8 && r.bottom + bh + 20 >= vh) y = Math.max(8, r.top - bh - 14);
-    } else {
-      x = Math.max(12, Math.min(vw - bw - 12, r.left));
-      if(r.bottom + bh + 18 <= vh) y = r.bottom + 14;
-      else if(r.top - bh - 18 >= 0) y = r.top - bh - 14;
-      else { y = Math.max(12, vh - bh - 12); x = Math.max(12, Math.min(vw - bw - 12, r.right + 14)); if(x + bw > vw - 12) x = Math.max(12, r.left - bw - 14); }
+    var vw = window.innerWidth, vh = window.innerHeight, M = 12;
+    var r = primary.getBoundingClientRect();
+    var cx = r.left + r.width / 2, cy = r.top + r.height / 2;
+    var cands = [];
+    function add(x, y){
+      x = Math.max(M, Math.min(vw - bw - M, x));
+      y = Math.max(M, Math.min(vh - bh - M, y));
+      cands.push({ x: x, y: y });
     }
-    bubble.style.left = Math.round(x) + "px";
-    bubble.style.top = Math.round(y) + "px";
+    add(r.left, r.bottom + 14); add(r.right - bw, r.bottom + 14);
+    add(r.left, r.top - bh - 14); add(r.right - bw, r.top - bh - 14);
+    add(r.right + 14, r.top); add(r.left - bw - 14, r.top);
+    for(var yy = M; yy <= vh - bh - M; yy += 24)
+      for(var xx = M; xx <= vw - bw - M; xx += 24) cands.push({ x: xx, y: yy });
+    if(!cands.length) add(M, M);
+
+    var best = null;
+    cands.forEach(function(c){
+      var box = { left: c.x, top: c.y, right: c.x + bw, bottom: c.y + bh };
+      var ov = 0;
+      prot.forEach(function(p){ ov += overlap(box, p); });
+      var d = Math.abs(c.x + bw / 2 - cx) + Math.abs(c.y + bh / 2 - cy);
+      if(!best || ov < best.ov || (ov === best.ov && d < best.d)) best = { x: c.x, y: c.y, ov: ov, d: d };
+    });
+    bubble.style.left = Math.round(best.x) + "px";
+    bubble.style.top = Math.round(best.y) + "px";
   }
 
   function show(id, targets){
@@ -352,7 +420,7 @@
       quitBtn.addEventListener("click", quit);
       row.appendChild(quitBtn);
       if(def.next){
-        var nb = el("button", "onb-btn primary", tr("onb.next"));
+        var nb = el("button", "onb-btn primary", tr(def.nextLabel || "onb.next"));
         nb.type = "button";
         nb.addEventListener("click", function(){ goStep(def.next); });
         row.appendChild(nb);
@@ -369,7 +437,8 @@
         try { primary.scrollIntoView({ block: "center", behavior: "smooth" }); } catch(e){ primary.scrollIntoView(); }
       }
     }
-    placeBubble(primary);
+    updateDim(targets);
+    placeBubble(primary, targets, def);
   }
 
   function finish(){
@@ -409,7 +478,7 @@
     } else if(SIM_STEPS[step]){
       if(PAGE !== "simulations.html"){
         // Le résultat vient d'être ouvert : on poursuit sur la page résultat.
-        if(step === "viewres" && isDetail()){ saveStep("overview"); step = "overview"; }
+        if(step === "viewres" && isDetail()){ saveStep("image"); step = "image"; }
         else { saveStep("nav"); step = "nav"; }
       } else {
         var cs = simStep();
@@ -420,15 +489,19 @@
         else if(cs === 1 && step !== "scene"){ saveStep("scene"); step = "scene"; }
         if(step === "run" && $("#statusActions .viewresultsbtn")){ saveStep("viewres"); step = "viewres"; }
       }
-    } else if(step === "overview" || step === "slider"){
+    } else if(step === "image" || step === "mtf" || step === "snr" || step === "graphs"){
       if(!isDetail()){ clearUi(); return; }   // le tutoriel reprend quand le résultat est rouvert
     }
 
     if(step === "scene") wireScene();
-    if(step === "slider"){
+    if(step === "image"){
       wireSlider();
-      if(sliderMoved){ saveStep("finish"); finish(); return; }
+      // on laisse 5 s pour jouer avec le curseur avant de passer à la suite
+      if(sliderMoved && Date.now() - sliderMovedAt >= 5000){ saveStep("mtf"); step = "mtf"; }
     }
+    // Les onglets : l'étape avance quand l'utilisateur a vraiment cliqué dessus.
+    if(step === "mtf" && tabSelected("mtf")){ saveStep("snr"); step = "snr"; }
+    if(step === "snr" && tabSelected("snr")){ saveStep("graphs"); step = "graphs"; }
 
     // ---- affichage (rien tant que les éléments visés ne sont pas là)
     var targets = STEPS[step].targets().filter(Boolean);
