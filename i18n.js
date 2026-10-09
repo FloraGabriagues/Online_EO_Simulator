@@ -826,8 +826,8 @@ var I18N_TEXT = {
     "Number of DN per electron. If the datasheet gives e⁻/DN, enter the inverse.",
   "Offset électronique ajouté à chaque étage, distinct du courant d'obscurité. Doit rester inférieur à 2^bits − 1.":
     "Electronic offset added at each stage, distinct from dark current. Must remain below 2^bits − 1.",
-  "Profondeur du registre qui somme les étages. Vide : dimensionné pour ne jamais saturer. Sinon au moins égal à la résolution ADC.":
-    "Depth of the register that sums the stages. Empty: sized so that it never saturates. Otherwise at least equal to the ADC resolution.",
+  "Profondeur du registre qui somme les étages, 16 bits au plus. Vide : dimensionné pour ne jamais saturer, dans la limite de 16 bits. Sinon au moins égal à la résolution ADC.":
+    "Depth of the register that sums the stages, 16 bits at most. Empty: sized so that it never saturates, within the 16-bit limit. Otherwise at least equal to the ADC resolution.",
   "Écart RMS entre le front d'onde réel et le front d'onde parfait, en nanomètres. Repère : λ/14, soit environ 39 nm à 550 nm, pour une optique limitée par la diffraction.":
     "RMS deviation between the actual wavefront and the perfect one, in nanometers. Rule of thumb: λ/14, about 39 nm at 550 nm, for diffraction-limited optics.",
 
@@ -837,7 +837,7 @@ var I18N_TEXT = {
   "Fraction attendue, entre {min} et {max} (0.62 pour 62 %).": "A fraction is expected, between {min} and {max} (0.62 for 62%).",
   "Valeur strictement positive attendue.": "A strictly positive value is expected.",
   "L'obscuration doit rester inférieure au diamètre de pupille.": "The obscuration must remain smaller than the pupil diameter.",
-  "32 bits au plus.": "32 bits at most.",
+  "16 bits au plus.": "16 bits at most.",
   "Doit rester inférieur à 2^bits − 1.": "Must remain below 2^bits − 1.",
   "Au moins égal à la résolution ADC.": "At least equal to the ADC resolution.",
   "Valeur inhabituelle : obscuration supérieure à la moitié du diamètre.": "Unusual value: obscuration larger than half the diameter.",

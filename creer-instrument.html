@@ -387,7 +387,7 @@ var SCHEMA = [
       {k:"DN0", label:"Niveau noir", unit:"DN", placeholder:"0 (défaut)", optional:true, advanced:true,
        help:"Offset électronique ajouté à chaque étage, distinct du courant d'obscurité. Doit rester inférieur à 2^bits − 1."},
       {k:"bits_TDI", label:"Accumulateur TDI", unit:"bits", placeholder:"sans perte (défaut)", optional:true, advanced:true,
-       help:"Profondeur du registre qui somme les étages. Vide : dimensionné pour ne jamais saturer. Sinon au moins égal à la résolution ADC."}
+       help:"Profondeur du registre qui somme les étages, 16 bits au plus. Vide : dimensionné pour ne jamais saturer, dans la limite de 16 bits. Sinon au moins égal à la résolution ADC."}
     ]},
     {id:"wfe", label:"Performance WFE", fields:[
       {k:"W", label:"WFE RMS", unit:"nm", placeholder:"0 (défaut)",
@@ -493,7 +493,7 @@ var FIELD_RULES = {
   V_range:      {positive:true, plausible:[0.1, 5]},        // V
   CWF:          {positive:true, plausible:[0.001, 10]},     // DN/e⁻
   DN0:          {integer:true},                             // DN
-  bits_TDI:     {integer:true, plausible:[0, 32]},          // bits
+  bits_TDI:     {integer:true, plausible:[0, 16]},          // bits
   W:            {signed:true, plausible:[0, 200]}           // nm — signe moins autorisé
 };
 // Plage habituelle des longueurs d'onde d'une courbe spectrale (nm) : en
@@ -520,7 +520,8 @@ function hardMessage(f){
   if(f.min !== undefined && (v < f.min || v > f.max)) return tx("Fraction attendue, entre {min} et {max} (0.62 pour 62 %).", { min: f.min, max: f.max });
   if(r.positive && !(v > 0)) return tx("Valeur strictement positive attendue.");
   if(f.k === "E" && isFilled("D") && v >= Number(state.values.D)) return tx("L'obscuration doit rester inférieure au diamètre de pupille.");
-  if(f.k === "ADC" && v > 32) return tx("32 bits au plus.");
+  if(f.k === "ADC" && v > 16) return tx("16 bits au plus.");
+  if(f.k === "bits_TDI" && v > 16) return tx("16 bits au plus.");
   if(f.k === "DN0" && isFilled("ADC") && v >= Math.pow(2, Number(state.values.ADC)) - 1) return tx("Doit rester inférieur à 2^bits − 1.");
   if(f.k === "bits_TDI" && isFilled("ADC") && v < Number(state.values.ADC)) return tx("Au moins égal à la résolution ADC.");
   return "";
