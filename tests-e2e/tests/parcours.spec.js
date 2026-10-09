@@ -649,9 +649,11 @@ test.describe("Session unique", () => {
     try {
       const a = await ctxA.newPage();
       await loginAs(a, "en");
+      await useLang(a, "en");
       await expect(a.locator("h1")).toHaveText(STR.en.myInstruments);
       const b = await ctxB.newPage();
       await loginAs(b, "en");                                   // seconde connexion, ailleurs
+      await useLang(b, "en");
       await expect(b.locator("h1")).toHaveText(STR.en.myInstruments);
       await a.goto("/espace-personnel.html");                    // la première session est refusée
       await expect(a).toHaveURL(/login\.html\?reason=other_device/);
