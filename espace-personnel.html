@@ -106,15 +106,14 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .instgrid .instcard.empty{flex:1 1 100%}
 @media(max-width:1000px){.instgrid{--per:2}}
 @media(max-width:640px){.instgrid{--per:1}}
-.carbtn{position:absolute;top:50%;transform:translateY(-50%);z-index:5;width:34px;height:34px;
-  border-radius:50%;border:1px solid var(--line);background:var(--panel-2);color:var(--paper);
-  font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
-  box-shadow:0 4px 14px rgba(0,0,0,.45);transition:border-color .14s,color .14s,opacity .14s}
-.carbtn:hover{border-color:var(--pixel);color:var(--pixel)}
-.carbtn.prev{left:-12px}.carbtn.next{right:-12px}
-.carbtn[hidden]{display:none}
-.cardots{display:flex;justify-content:center;gap:8px;margin-top:12px}
-.cardots:empty{display:none}
+.cardnav{display:flex;align-items:center;justify-content:center;gap:14px;margin-top:12px}
+.cardnav:has(.cardots:empty){display:none}
+.carbtn{width:32px;height:32px;border-radius:50%;border:1px solid var(--line);background:var(--panel-2);
+  color:var(--paper);font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;
+  justify-content:center;transition:border-color .14s,color .14s,opacity .14s}
+.carbtn:hover:not(:disabled){border-color:var(--pixel);color:var(--pixel)}
+.carbtn:disabled{opacity:.35;cursor:default}
+.cardots{display:flex;justify-content:center;gap:8px}
 .cardots button{width:8px;height:8px;border-radius:50%;border:none;padding:0;cursor:pointer;
   background:var(--line);transition:background .14s,transform .14s}
 .cardots button.on{background:var(--pixel);transform:scale(1.25)}
@@ -423,10 +422,12 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       </div>
 
       <div class="instcar">
-        <button class="carbtn prev" id="carPrev" type="button" data-i18n-aria="home.car.prev" aria-label="Précédent" hidden>‹</button>
         <div class="instgrid" id="instList"></div>
-        <button class="carbtn next" id="carNext" type="button" data-i18n-aria="home.car.next" aria-label="Suivant" hidden>›</button>
-        <div class="cardots" id="carDots"></div>
+        <div class="cardnav">
+          <button class="carbtn prev" id="carPrev" type="button" data-i18n-aria="home.car.prev" aria-label="Précédent">‹</button>
+          <div class="cardots" id="carDots"></div>
+          <button class="carbtn next" id="carNext" type="button" data-i18n-aria="home.car.next" aria-label="Suivant">›</button>
+        </div>
       </div>
 
       <div class="bottomrow">
@@ -801,8 +802,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     var pages = carPages();
     var page = Math.min(pages - 1, Math.round(list.scrollLeft / (list.clientWidth + 14)));
     var multi = pages > 1;
-    carPrev.hidden = !multi || list.scrollLeft < 4;
-    carNext.hidden = !multi || list.scrollLeft + list.clientWidth >= list.scrollWidth - 4;
+    carPrev.disabled = list.scrollLeft < 4;
+    carNext.disabled = list.scrollLeft + list.clientWidth >= list.scrollWidth - 4;
     carDots.innerHTML = "";
     if(multi){
       for(var i = 0; i < pages; i++){
