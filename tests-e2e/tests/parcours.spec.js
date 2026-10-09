@@ -687,7 +687,7 @@ test.describe.serial("Tutoriel d'accueil", () => {
   let page;
   let errors;
   const bubble = () => page.locator(".onb-bubble");
-  const step = (n) => expect(bubble()).toContainText(`Step ${n} of 10`);
+  const step = (n) => expect(bubble()).toContainText(`Step ${n} of 12`);
 
   test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext({ baseURL: BASE_URL, viewport: { width: 1440, height: 900 } });
@@ -718,7 +718,7 @@ test.describe.serial("Tutoriel d'accueil", () => {
     await expect(bubble()).toHaveCount(0);
   });
 
-  test("parcours complet : instruments, simulation, résultat, curseur", async () => {
+  test("parcours complet : instruments, simulation, résultat, curseur, onglets", async () => {
     await page.goto("/espace-personnel.html?settings=1");
     await page.locator("#settingsTourBtn").click();
     await step(1);                                                        // instruments : l'exemple est déjà créé
@@ -744,14 +744,20 @@ test.describe.serial("Tutoriel d'accueil", () => {
     await expect(link, "la simulation doit se terminer et se sauvegarder").toBeVisible({ timeout: 6 * 60 * 1000 });
     await step(8);
     await link.click();
-    await step(9);                                                        // image et indicateurs
-    await page.locator(".onb-bubble .onb-btn.primary").click();
-    await step(10);                                                       // curseur
+    await step(9);                                                        // image simulée + curseur
     const box = await page.locator("#compareWrap").boundingBox();
     await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
     await page.mouse.down();
     await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.5, { steps: 8 });
     await page.mouse.up();
+    await page.waitForTimeout(2000);
+    await step(9);                                                        // 5 s pour jouer avec le curseur : pas encore passé à la suite
+    await step(10);                                                       // onglet MTF (après 5 s)
+    await page.locator(".restab[data-tab='mtf']").click();
+    await step(11);                                                       // onglet SNR
+    await page.locator(".restab[data-tab='snr']").click();
+    await step(12);                                                       // indicateurs : dernière étape
+    await page.locator(".onb-bubble .onb-btn.primary").click();
     await expect(page.locator(".onb-modal h2")).toHaveText("First simulation complete!");
     await page.locator(".onb-modal .onb-btn").click();
     await expect(page.locator(".onb-modal")).toHaveCount(0);
