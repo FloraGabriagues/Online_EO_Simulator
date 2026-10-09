@@ -1105,6 +1105,7 @@ async function deleteResult(r){
       if(k.endsWith("_path") && bands[bn][k]) bands[bn][k] = await grab(bands[bn][k]);
     }
     var admin = (typeof isAdminAccount === "function") ? await isAdminAccount() : false;
+    if(admin && typeof simulatedPlan === "function" && await simulatedPlan()) admin = false;   // 09/10/2026 : pas de journaux pendant une simulation de plan
     var out = { format: "nysa-result", version: 1, exported_at: new Date().toISOString(),
       result: { name: r.name || null, scene: r.scene, conditions: r.conditions, instrument_snapshot: r.instrument_snapshot,
         diagnostics: diag, logs: admin ? (r.logs || "") : "", created_at: r.created_at, image: mainKey, source_image: srcKey },
@@ -1457,6 +1458,7 @@ async function deleteResult(r){
   // 07/10/2026 : onglet « Logs » pour l'administrateur seul. Les journaux sont enregistrés avec chaque
   // résultat (colonne logs) ; ils contiennent les paramètres de l'instrument, d'où cette restriction.
   var isAdmin = (typeof isAdminAccount === "function") ? await isAdminAccount() : false;
+  if(isAdmin && typeof simulatedPlan === "function" && await simulatedPlan()) isAdmin = false;   // 09/10/2026 : pas d'onglet Logs pendant une simulation de plan
   if(isAdmin){
     TABS.push({id:"logs", label:t("res.tab.logs")});
     document.getElementById("logsPre").textContent = (result && result.logs) ? String(result.logs) : t("res.logs.empty");

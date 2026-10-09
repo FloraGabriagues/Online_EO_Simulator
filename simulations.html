@@ -2272,7 +2272,8 @@ function admShowServerLogs(logs){
   // conditions choisis : c'est là que l'envie de voir le résultat est la
   // plus forte (choix du 04/10/2026, à la place de l'ouverture à l'arrivée).
   await loadEntitlement();
-  if(typeof isAdminAccount === "function" && await isAdminAccount()){
+  // 09/10/2026 : pendant une simulation de plan (« Voir comme »), les outils d'administration disparaissent, comme pour un vrai compte de ce plan.
+  if(typeof isAdminAccount === "function" && await isAdminAccount() && !(typeof simulatedPlan === "function" && await simulatedPlan())){
     isAdminUser = true;
     document.getElementById("adminBox").hidden = false;
   }
