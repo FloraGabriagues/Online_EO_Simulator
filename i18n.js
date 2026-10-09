@@ -66,7 +66,7 @@ var I18N = {
   "onb.welcome.s1.t": { fr: "Instrument", en: "Instrument" },
   "onb.welcome.s1.d": { fr: "Vous créez vos instruments ici. Pour commencer, un instrument d'exemple est déjà créé.", en: "You create your instruments here. To get you started, an example instrument is already created." },
   "onb.welcome.s2.t": { fr: "Simulation", en: "Simulation" },
-  "onb.welcome.s2.d": { fr: "Découvrez les conditions d'acquisition et lancez une simulation.", en: "Discover the acquisition conditions and run a simulation." },
+  "onb.welcome.s2.d": { fr: "Choisissez les conditions d'acquisition et lancez une simulation.", en: "Choose the acquisition conditions and run a simulation." },
   "onb.welcome.s3.t": { fr: "Résultats", en: "Results" },
   "onb.welcome.s3.d": { fr: "Visualisez l'image simulée et explorez les résultats.", en: "View the simulated image and explore the results." },
   "onb.v.optics": { fr: "Optique", en: "Optics" },

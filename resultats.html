@@ -1549,6 +1549,7 @@ async function deleteResult(r){
   TABS.forEach(function(tab, i){   // « tab » et non « t » : t() est la fonction de traduction
     var b = document.createElement("button");
     b.className = "restab"; b.type = "button";
+    b.dataset.tab = tab.id;   // repère stable pour le tutoriel d'accueil (onboarding.js)
     b.setAttribute("aria-selected", i === 0 ? "true" : "false");
     b.textContent = tab.label;
     b.addEventListener("click", function(){
