@@ -488,7 +488,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
               </select></span></div>
             <div class="minfo-row"><span class="label" data-i18n="settings.account.since">Membre depuis</span><span class="value" id="settingsCreated">-</span></div>
           </div>
-          <p class="mnote" data-i18n="settings.lang.note" style="margin-top:10px">Langue de l'interface et des e-mails que vous recevez.</p>
+          <p class="mnote" id="settingsLangNote" aria-live="polite" data-i18n="settings.lang.note" style="margin-top:10px">Langue de l'interface et des e-mails que vous recevez.</p>
         </div>
 
         <div class="msection" id="settingsSectionPwd">
@@ -931,9 +931,18 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   if(accountLang !== "en" && accountLang !== "fr" && supabaseClient.auth.updateUser){
     supabaseClient.auth.updateUser({ data: { lang: nysaLang() } }).catch(function(e){ console.warn("Préférence de langue non enregistrée :", e); });
   }
+  var langNote = document.getElementById("settingsLangNote");
   langSel.addEventListener("change", function(){
     langSel.disabled = true;
-    setNysaLang(langSel.value);
+    setNysaLang(langSel.value, function(state){
+      if(state === "saving") langNote.textContent = t("settings.lang.saving");
+      else if(state === "saved") langNote.textContent = t("settings.lang.saved");
+      else {                                  // échec : on reste dans la langue actuelle
+        langNote.textContent = t("settings.lang.error");
+        langSel.value = nysaLang();
+        langSel.disabled = false;
+      }
+    });
   });
   document.getElementById("settingsCreated").textContent = session.user.created_at
     ? formatDate(session.user.created_at) : "-";

@@ -39,6 +39,9 @@ var I18N = {
   "login.lang":          { fr: "Langue de l'interface et des e-mails", en: "Language for the interface and emails" },
   "settings.lang.label": { fr: "Langue", en: "Language" },
   "settings.lang.note":  { fr: "Langue de l'interface et des e-mails que vous recevez.", en: "Language of the interface and of the emails you receive." },
+  "settings.lang.saving": { fr: "Enregistrement…", en: "Saving…" },
+  "settings.lang.saved":  { fr: "Langue enregistrée", en: "Language saved" },
+  "settings.lang.error":  { fr: "Enregistrement impossible. Réessayez.", en: "Could not save. Please try again." },
   "demo.h1":             { fr: "Simulateur d'imagerie <span class=\"cool\">multispectrale</span>",
                            en: "<span class=\"cool\">Multispectral</span> imaging simulator" },
 
@@ -1100,20 +1103,30 @@ var I18N_API_FR = {
   // Change de langue : mémorise le choix, l'enregistre comme préférence du
   // compte si un utilisateur est connecté, puis recharge la page pour que
   // tous les textes construits en JavaScript repartent dans la bonne langue.
-  window.setNysaLang = async function(next){
+  window.setNysaLang = async function(next, onState){
     if(I18N_LANGS.indexOf(next) < 0 || next === lang) return;
-    store(next);
+    var say = function(s){ if(onState) onState(s); };
+    say("saving");
+    var ok = true;
     try {
       if(typeof supabaseClient !== "undefined" && supabaseClient.auth && supabaseClient.auth.updateUser){
-        var save = (async function(){
-          var res = await supabaseClient.auth.getSession();
-          if(res && res.data && res.data.session) await supabaseClient.auth.updateUser({ data: { lang: next } });
-        })();
-        // On n'attend pas plus de 3 secondes : la langue change de toute façon dans ce navigateur.
-        await Promise.race([save, new Promise(function(r){ setTimeout(r, 3000); })]);
+        var res = await supabaseClient.auth.getSession();
+        if(res && res.data && res.data.session){
+          // On attend la vraie confirmation, 8 secondes au plus.
+          var up = await Promise.race([
+            supabaseClient.auth.updateUser({ data: { lang: next } }),
+            new Promise(function(r){ setTimeout(function(){ r({ error: "timeout" }); }, 8000); })
+          ]);
+          ok = !(up && up.error);
+        }
       }
-    } catch(e){ console.warn("Préférence de langue non enregistrée :", e); }
-    window.location.reload();
+    } catch(e){ ok = false; console.warn("Préférence de langue non enregistrée :", e); }
+    // Avec une fonction de retour (paramètres) : en cas d'échec, on reste dans la langue actuelle.
+    // Sans (sélecteur EN / FR du haut) : on mémorise la langue et on recharge quand même.
+    if(!ok && onState){ say("error"); return; }
+    store(next);
+    say("saved");
+    setTimeout(function(){ window.location.reload(); }, onState ? 600 : 0);
   };
 
   // Sélecteur EN / FR : inséré dans tout élément portant data-lang-switch.
