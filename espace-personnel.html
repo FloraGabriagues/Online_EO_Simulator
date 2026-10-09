@@ -681,7 +681,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       missing: (row.config && row.config._missing) || [],
       pct: (row.config && typeof row.config._pct === "number") ? row.config._pct
            : ((row.config && row.config._draft === false) ? 100 : 0),
-      desc: (row.config && row.config.description) || t("inst.configured"),
+      desc: (row.config && row.config.description) || "",
       modified: formatDate(row.updated_at || row.created_at),
       created: formatDate(row.created_at)
     };
@@ -749,7 +749,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
               "</div>"+
             "</div>"+
           "</div>"+
-          "<p class='desc'>"+desc+"</p>"+
+          (desc ? "<p class='desc'>"+desc+"</p>" : "")+
           "<div><div class='pctrow'><span>"+(it.draft ? t("inst.config.incomplete") : t("inst.config.complete"))+"</span><span>"+it.pct+" %</span></div>"+
           "<div class='track'><div class='fill' style='width:"+it.pct+"%'></div></div></div>"+
           "<div class='datesrow'>"+

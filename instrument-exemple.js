@@ -12,7 +12,7 @@
 //
 // VALEURS : choisies par Flora le 06/10/2026 (instrument fictif de type
 // très haute résolution). Les supports du miroir secondaire ont été ajoutés
-// le même jour.
+// le même jour. Mis à jour le 09/10/2026 : iFoV 4 µrad, épaisseur des supports 0,05 m.
 // ============================================================================
 var NYSA_EXAMPLE_INSTRUMENT = {
   name: {
@@ -22,11 +22,11 @@ var NYSA_EXAMPLE_INSTRUMENT = {
   // Pas de description : le nom suffit, et la carte de l'instrument reste sobre.
   config: {
     // --- Optique ---
-    I: "2.2",            // iFoV                    [µrad]
+    I: "4",              // iFoV                    [µrad]
     D: "0.35",           // Diamètre de pupille     [m]
     E: "0.1",            // Obscuration centrale    [m]
-    NSUP: "3",           // Nombre de supports               À VALIDER
-    ESUP: "0.005",       // Épaisseur des supports  [m]      À VALIDER
+    NSUP: "3",           // Nombre de supports
+    ESUP: "0.05",        // Épaisseur des supports  [m]
     T: "0.80",           // Transmission optique    [0 à 1]
     // --- Détecteur ---
     DET_TYPE: "CMOS",

@@ -201,7 +201,6 @@ var I18N = {
   "inst.missing":        { fr: "Il manque : {list}", en: "Missing: {list}" },
   "inst.draft.desc":     { fr: "Instrument à compléter avant de pouvoir lancer une simulation.",
                            en: "Complete this instrument before you can run a simulation." },
-  "inst.configured":     { fr: "Instrument configuré.", en: "Instrument configured." },
   "inst.badge.draft":    { fr: "Brouillon", en: "Draft" },
   "inst.menu.options":   { fr: "Options", en: "Options" },
   "inst.menu.rename":    { fr: "Renommer", en: "Rename" },
