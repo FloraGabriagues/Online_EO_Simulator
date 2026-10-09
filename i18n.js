@@ -668,14 +668,14 @@ var I18N = {
 
   // FMC et bulles d'aide de la page Simulations
   "sim.fmc.toggle": { fr: "Afficher ou masquer le détail", en: "Show or hide details" },
-  "sim.fmc.label":       { fr: "FMC (facteur de compensation)", en: "FMC (compensation factor)" },
+  "sim.fmc.label":       { fr: "FMC (Forward Motion Compensation)", en: "FMC (Forward Motion Compensation)" },
   "sim.fmc.swept":       { fr: "Distance balayée pendant l'intégration : {px} px, ramenée à 1 px par la FMC.", en: "Distance scanned during integration: {px} px, brought back to 1 px by the FMC." },
   "sim.fmc.detail":      { fr: "Vitesse au sol {vg} km/s · Pas au sol {gsd} m", en: "Ground speed {vg} km/s · GSD {gsd} m" },
   "sim.fmc.unavailable": { fr: "Choisissez un instrument et des conditions valides pour afficher la FMC.", en: "Choose an instrument and valid conditions to display the FMC." },
   "sim.help.tdi.title":  { fr: "TDI, intégration à retard temporel", en: "TDI, time delay integration" },
   "sim.help.tdi.text":   { fr: "Le détecteur lit la même ligne de la scène plusieurs fois, au fil du défilement de l'image, et additionne ces lectures : le signal augmente. Ce champ est le nombre d'étages lus et additionnés.\n1 = pas de TDI (un seul étage).",
                            en: "The detector reads the same line of the scene several times as the image moves across it, and sums these readouts: the signal increases. This field is the number of stages read and summed.\n1 = no TDI (a single stage)." },
-  "sim.help.fmc.title":  { fr: "FMC, compensation du défilement", en: "FMC, forward motion compensation" },
+  "sim.help.fmc.title":  { fr: "FMC, Forward Motion Compensation", en: "FMC, Forward Motion Compensation" },
   "sim.help.fmc.text":   { fr: "Pendant le temps d'intégration, le satellite avance et la scène défile sur le détecteur de plusieurs pixels. Pour ramener ce défilement à 1 pixel, un facteur de FMC (Forward Motion Compensation) est appliqué : c'est la valeur affichée.\nFMC = 1 : aucune compensation nécessaire.\nCalcul pour une orbite circulaire, visée au nadir. Valeur indicative : le simulateur ne modélise pas encore le filé.",
                            en: "During the integration time, the satellite moves forward and the scene scrolls across the detector by several pixels. To bring this motion back to 1 pixel, a FMC factor (Forward Motion Compensation) is applied: this is the value displayed.\nFMC = 1: no compensation needed.\nComputed for a circular orbit, nadir viewing. Indicative value: the simulator does not model smear yet." },
 
