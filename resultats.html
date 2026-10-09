@@ -625,7 +625,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
               </div>
 
               <select id="dlMode" class="dlmode" aria-label="Format du fichier téléchargé" hidden>
-                <option value="scaled" data-i18n="res.dl.mode.scaled">Mis à l'échelle sur 16 bits (visible)</option>
+                <option value="scaled" data-i18n="res.dl.mode.scaled">Mis à l'échelle sur le maximum de l'image</option>
                 <option value="raw" data-i18n="res.dl.mode.raw">Valeurs brutes (DN)</option>
               </select>
               <div class="satwrap dlwrap">
@@ -1955,7 +1955,7 @@ async function deleteResult(r){
   function downloadName(key){
     var name = fileSlug((result && result.name) || tScene(sceneName)) || "resultat";
     var info = dnInfo(key);
-    return fileSlug(bandDisplayName(key)) + "_" + name + "_" + createdLabel + (info ? "_DN" + info.bits + "bit" + (dlScaled(info) ? "_echelle16" : "_brut") : "") + ".png";
+    return fileSlug(bandDisplayName(key)) + "_" + name + "_" + createdLabel + (info ? "_DN" + info.bits + "bit" + (dlScaled(info) ? "_echelle-max" : "_brut") : "") + ".png";
   }
   var CRC_TABLE = null;
   function crc32(buf){
@@ -2013,15 +2013,17 @@ async function deleteResult(r){
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
   }
-  // Mode « mis à l'échelle » : les codes sont décalés de (16 - bits) bits vers la gauche, donc multipliés par 2^(16-bits).
-  // Aucune information n'est perdue (l'opération est réversible) mais l'image occupe toute la plage 16 bits et se voit
-  // dans n'importe quelle visionneuse. Mode « brut » : les codes tels que l'électronique les produit.
-  function dlScaled(info){ return document.getElementById("dlMode").value === "scaled" && info.bits < 16; }
+  // Mode « mis à l'échelle » : tous les codes sont multipliés par un même facteur 65535 / (maximum de l'image), de sorte que
+  // le pixel le plus brillant vaut 65535. Aucun étirement de contraste : la relation entre pixels reste linéaire, et le
+  // facteur est inscrit dans le fichier (métadonnée tEXt) pour retrouver les DN d'origine. Pour le RGB, un seul facteur
+  // pour les trois canaux (le maximum global), afin de ne pas modifier les rapports entre bandes.
+  // Mode « brut » : les codes tels que l'électronique les produit.
+  function dlScaled(info){ return document.getElementById("dlMode").value === "scaled"; }
   async function inflateZlib(bytes){
     var stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate"));
     return new Uint8Array(await new Response(stream).arrayBuffer());
   }
-  async function scalePng16(blob, bits){
+  async function scalePng16(blob){
     var buf = new Uint8Array(await blob.arrayBuffer()), dv = new DataView(buf.buffer);
     var pos = 8, chunks = [], idat = [], w = 0, h = 0, ct = 0;
     while(pos < buf.length){
@@ -2034,18 +2036,26 @@ async function deleteResult(r){
     }
     var total = 0; idat.forEach(function(d){ total += d.length; });
     var z = new Uint8Array(total), o = 0; idat.forEach(function(d){ z.set(d, o); o += d.length; });
-    var raw = await inflateZlib(z), ch = ct === 2 ? 3 : 1, row = w * ch * 2, shift = 16 - bits;
+    var raw = await inflateZlib(z), ch = ct === 2 ? 3 : 1, row = w * ch * 2, mx = 0;
     for(var y = 0; y < h; y++){
       var base = y * (row + 1);
       if(raw[base] !== 0) throw new Error("filtre PNG inattendu");
       for(var i = base + 1; i < base + 1 + row; i += 2){
-        var v = ((raw[i] << 8) | raw[i + 1]) << shift;
-        raw[i] = (v >> 8) & 255; raw[i + 1] = v & 255;
+        var v0 = (raw[i] << 8) | raw[i + 1];
+        if(v0 > mx) mx = v0;
+      }
+    }
+    var factor = mx > 0 ? 65535 / mx : 1;
+    for(var y2 = 0; y2 < h; y2++){
+      var base2 = y2 * (row + 1);
+      for(var i2 = base2 + 1; i2 < base2 + 1 + row; i2 += 2){
+        var v = Math.min(65535, Math.round(((raw[i2] << 8) | raw[i2 + 1]) * factor));
+        raw[i2] = (v >> 8) & 255; raw[i2 + 1] = v & 255;
       }
     }
     var parts = [new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])];
     chunks.forEach(function(c){ parts.push(pngChunk(c[0], c[1])); });
-    var meta = new TextEncoder().encode("DN_display\u0000scaled x2^" + shift + " (raw DN = value / " + Math.pow(2, shift) + ")");
+    var meta = new TextEncoder().encode("DN_display\u0000scaled by " + factor.toFixed(6) + " (max DN = " + mx + "; raw DN = value / " + factor.toFixed(6) + ")");
     parts.push(pngChunk("tEXt", meta));
     parts.push(pngChunk("IDAT", await deflateZlib(raw)));
     parts.push(pngChunk("IEND", new Uint8Array(0)));
@@ -2061,7 +2071,7 @@ async function deleteResult(r){
         if(!sg.error && sg.data){
           var dnBlob = await (await fetch(sg.data.signedUrl)).blob();
           if(dlScaled(info) && typeof DecompressionStream !== "undefined" && typeof CompressionStream !== "undefined"){
-            try{ dnBlob = await scalePng16(dnBlob, info.bits); }
+            try{ dnBlob = await scalePng16(dnBlob); }
             catch(e2){ console.error("Mise à l'échelle impossible, fichier brut fourni :", e2); }
           }
           saveBlob(dnBlob, downloadName(key));
