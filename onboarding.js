@@ -74,7 +74,7 @@
     ".onb-bubble.wide{width:min(440px,calc(100vw - 24px))}"+
     ".onb-bubble .onb-chain{margin:0 0 12px;padding:0 0 0 18px;font-size:12.5px;line-height:1.5;color:var(--muted,#9BADBD)}"+
     ".onb-bubble .onb-chain li{margin:0 0 3px}"+
-    ".onb-bubble .onb-count{font:500 11px/1 var(--mono,monospace);letter-spacing:.06em;text-transform:uppercase;color:var(--photon,#F5AC57);margin-bottom:8px}"+
+    ".onb-bubble .onb-count{font:500 12px/1 var(--mono,monospace);letter-spacing:.06em;text-transform:uppercase;color:var(--photon,#F5AC57);margin-bottom:8px}"+
     ".onb-bubble .onb-text{margin:0 0 12px}"+
     ".onb-bubble .onb-row{display:flex;align-items:center;gap:12px;justify-content:space-between}"+
     ".onb-btn{font:600 12.5px/1 var(--body,system-ui,sans-serif);padding:9px 14px;border-radius:6px;cursor:pointer;"+

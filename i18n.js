@@ -148,14 +148,10 @@ var I18N = {
   "nav.platform":        { fr: "Plateforme", en: "Platform" },
   "nav.simulations":     { fr: "Simulations", en: "Simulations" },
   "nav.results":         { fr: "Résultats", en: "Results" },
-  "nav.compare":         { fr: "Comparateur", en: "Comparator" },
-  "nav.compare.title":   { fr: "Comparateur d'architectures : à venir dans Nysa V1",
-                           en: "Architecture comparator: coming in Nysa V1" },
   "nav.soon":            { fr: "à venir", en: "soon" },            // menu étroit : « coming soon » passait sur deux lignes
   "common.coming_soon":  { fr: "à venir", en: "coming soon" },
   "nav.help":            { fr: "Aide", en: "Help" },
   "nav.settings":        { fr: "Paramètres", en: "Settings" },
-  "top.notifications":   { fr: "Notifications", en: "Notifications" },
   "top.signout":         { fr: "Se déconnecter", en: "Sign out" },
 
   // scènes (le nom français est celui enregistré avec chaque résultat)
@@ -164,8 +160,6 @@ var I18N = {
   "scene.Port":          { fr: "Port", en: "Port" },
 
   // types d'instrument
-  "inst.type.multi":     { fr: "Multispectral", en: "Multispectral" },
-  "inst.type.hyper":     { fr: "Hyperspectral", en: "Hyperspectral" },
 
   // ---------------- espace personnel (espace-personnel.html) ----------------
   "home.doc_title":      { fr: "Espace personnel | Nysa", en: "My workspace | Nysa" },
@@ -173,9 +167,7 @@ var I18N = {
   "home.h1":             { fr: "Mes instruments", en: "My instruments" },
   "home.sub":            { fr: "Créez, configurez et gérez vos instruments d'imagerie.",
                            en: "Create, configure and manage your imaging instruments." },
-  "home.delete_all":     { fr: "Tout supprimer", en: "Delete all" },
   "home.create":         { fr: "+ Créer un instrument", en: "+ Create instrument" },
-  "home.tab.all":        { fr: "Tous", en: "All" },
   "home.activity":       { fr: "Activité récente", en: "Recent activity" },
   "home.doc":            { fr: "Documentation", en: "Documentation" },
   "home.hero.h2a":       { fr: "Analysez la performance de vos", en: "Analyze the performance of your" },
@@ -183,9 +175,6 @@ var I18N = {
   "home.hero.p":         { fr: "Créez vos instruments, configurez vos scénarios et obtenez des métriques détaillées sur la qualité de vos images.",
                            en: "Create your instruments, configure your scenarios and get detailed metrics on the quality of your images." },
   "home.hero.link":      { fr: "Voir les hypothèses physiques du modèle →", en: "See the model's physical assumptions →" },
-  "home.confirm.delete_all":  { fr: "Supprimer les {n} instrument(s) de ce compte ?", en: "Delete the {n} instrument(s) in this account?" },
-  "home.confirm.delete_all2": { fr: "Dernière confirmation : tous vos instruments disparaîtront de vos listes. Ils peuvent être restaurés sur demande pendant 30 jours. Continuer ?",
-                                en: "Final confirmation: all your instruments will disappear from your lists. They can be restored on request for 30 days. Continue?" },
   "home.confirm.delete_one":  { fr: "Supprimer l'instrument « {name} » ? Il peut être restauré sur demande pendant 30 jours.",
                                 en: "Delete the instrument “{name}”? It can be restored on request for 30 days." },
   "home.prompt.rename":  { fr: "Nouveau nom :", en: "New name:" },
@@ -196,6 +185,14 @@ var I18N = {
   "home.err.duplicate_msg": { fr: "La duplication a échoué : {msg}", en: "Duplication failed: {msg}" },
 
   // cartes d'instrument
+  "home.search.ph":      { fr: "Rechercher un instrument…", en: "Search for an instrument…" },
+  "home.filter.status":  { fr: "Filtrer par état", en: "Filter by status" },
+  "home.filter.all":     { fr: "Tous les instruments", en: "All instruments" },
+  "home.filter.complete": { fr: "Complets", en: "Complete" },
+  "home.filter.draft":   { fr: "Brouillons", en: "Drafts" },
+  "home.count_one":      { fr: "{n} instrument", en: "{n} instrument" },
+  "home.count_many":     { fr: "{n} instruments", en: "{n} instruments" },
+  "inst.nomatch":        { fr: "Aucun instrument ne correspond à ces filtres.", en: "No instrument matches these filters." },
   "inst.empty.title":    { fr: "Aucun instrument", en: "No instrument yet" },
   "inst.empty.sub":      { fr: "Créez votre premier instrument pour commencer.", en: "Create your first instrument to get started." },
   "inst.missing":        { fr: "Il manque : {list}", en: "Missing: {list}" },
@@ -709,8 +706,6 @@ var I18N_TEXT = {
   "Nom de l'instrument": "Instrument name",
   "Mon instrument": "My instrument",
   "Type": "Type",
-  "Multispectral": "Multispectral",
-  "Hyperspectral (bientôt)": "Hyperspectral (coming soon)",
   "Charger une configuration": "Load a configuration",
   "Exporter la configuration": "Export configuration",
   "Aide": "Help",
@@ -1187,6 +1182,14 @@ var I18N_API_FR = {
     setTimeout(function(){ window.location.reload(); }, onState ? 600 : 0);
   };
 
+  // Petits drapeaux (dessinés ici, rien n'est chargé d'un service extérieur ; les drapeaux en émoji
+  // ne s'affichent pas sous Windows). Anglais : drapeau britannique.
+  var FLAGS = {
+    fr: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 3 2'><rect width='1' height='2' fill='#0055A4'/><rect x='1' width='1' height='2' fill='#fff'/><rect x='2' width='1' height='2' fill='#EF4135'/></svg>",
+    en: "<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 40'><rect width='60' height='40' fill='#012169'/><path d='M0 0L60 40M60 0L0 40' stroke='#fff' stroke-width='8'/><path d='M0 0L60 40M60 0L0 40' stroke='#C8102E' stroke-width='3'/><path d='M30 0V40M0 20H60' stroke='#fff' stroke-width='13'/><path d='M30 0V40M0 20H60' stroke='#C8102E' stroke-width='8'/></svg>"
+  };
+  window.nysaFlagSrc = function(code){ return "data:image/svg+xml," + encodeURIComponent(FLAGS[code] || FLAGS.en); };
+
   // Sélecteur EN / FR : inséré dans tout élément portant data-lang-switch.
   function mountSwitch(){
     if(!I18N_SWITCH && !explicit) return;
@@ -1198,7 +1201,10 @@ var I18N_API_FR = {
       I18N_LANGS.forEach(function(code){
         var b = document.createElement("button");
         b.type = "button";
-        b.textContent = code.toUpperCase();
+        var flag = document.createElement("img");
+        flag.src = window.nysaFlagSrc(code); flag.alt = ""; flag.width = 16; flag.height = 11;
+        b.appendChild(flag);
+        b.appendChild(document.createTextNode(code.toUpperCase()));
         b.setAttribute("aria-pressed", code === lang ? "true" : "false");
         b.addEventListener("click", function(){ setNysaLang(code); });
         host.appendChild(b);
@@ -1211,9 +1217,10 @@ var I18N_API_FR = {
     // La page reste invisible le temps d'appliquer la langue : pas d'éclair de texte dans l'autre langue.
     "html.i18n-pending body{visibility:hidden}"+
     "[data-lang-switch]:empty{display:none}"+   // sélecteur masqué : il ne prend aucune place
-    ".langswitch{display:inline-flex;gap:2px;font-family:var(--mono,monospace);font-size:11px;letter-spacing:.04em}"+
+    ".langswitch{display:inline-flex;gap:2px;font-family:var(--mono,monospace);font-size:12px;letter-spacing:.04em}"+
     ".langswitch button{background:transparent;border:1px solid transparent;border-radius:4px;padding:3px 7px;"+
-      "color:var(--muted-2,#8497AA);cursor:pointer;font:inherit}"+
+      "color:var(--muted-2,#8497AA);cursor:pointer;font:inherit;display:inline-flex;align-items:center;gap:6px}"+
+    ".langswitch img{border-radius:2px;display:block}"+
     ".langswitch button:hover{color:var(--paper,#C4D6D4)}"+
     ".langswitch button[aria-pressed='true']{color:var(--paper,#C4D6D4);border-color:var(--line,#2E4152)}";
   document.head.appendChild(css);

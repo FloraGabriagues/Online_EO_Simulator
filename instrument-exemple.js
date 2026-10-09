@@ -16,13 +16,10 @@
 // ============================================================================
 var NYSA_EXAMPLE_INSTRUMENT = {
   name: {
-    fr: "Exemple : instrument de référence",
-    en: "Example: reference instrument"
+    fr: "Exemple",
+    en: "Example"
   },
-  description: {
-    fr: "Instrument d'exemple, du type satellite à très haute résolution. Ouvrez-le pour voir comment il est décrit, ou lancez directement une simulation.",
-    en: "Example instrument, of the very-high-resolution satellite type. Open it to see how it is described, or run a simulation right away."
-  },
+  // Pas de description : le nom suffit, et la carte de l'instrument reste sobre.
   config: {
     // --- Optique ---
     I: "2.2",            // iFoV                    [µrad]

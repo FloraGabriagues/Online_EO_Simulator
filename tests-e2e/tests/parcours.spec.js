@@ -346,6 +346,15 @@ for (const lang of ["en", "fr"]) {
     test("espace personnel : instrument d'exemple, accès bêta, réglages", async () => {
       await page.goto("/espace-personnel.html");
       await expect(page.locator(".instcard:not(.empty):not(.draft)").first(), "l'instrument d'exemple doit exister").toBeVisible({ timeout: 30 * 1000 });
+      // filtre des instruments : une recherche sans résultat, puis retour à la liste ; plus de cloche, de comparateur ni de « tout supprimer »
+      await page.locator("#fInstSearch").fill("zzz-aucun-instrument");
+      await expect(page.locator(".instcard:not(.empty)")).toHaveCount(0);
+      await expect(page.locator(".instcard.empty")).toBeVisible();
+      await page.locator("#fInstSearch").fill("");
+      await expect(page.locator(".instcard:not(.empty)").first()).toBeVisible();
+      await expect(page.locator("[aria-label='Notifications'], #btnDeleteAllInst, #tabsHost")).toHaveCount(0);
+      await expect(page.locator(".sidebar a[href='simulations.html']")).toBeVisible();
+      await expect(page.locator(".sidebar a.soon", { hasText: /Comparat/i })).toHaveCount(0);
       await page.goto("/espace-personnel.html?settings=1");
       await expect(page.locator("#settingsSubStatusText")).toHaveText(S.active);
       await expect(page.locator("#settingsLang")).toHaveValue(lang);

@@ -15,7 +15,11 @@
   if(!sidebar || !topbar) return;
   // 07/10/2026 : le lien « Administration » du menu n'est révélé qu'au compte administrateur.
   if(typeof isAdminAccount === "function"){
-    isAdminAccount().then(function(ok){ var li = document.getElementById("navAdminItem"); if(li && ok) li.hidden = false; });
+    // 09/10/2026 : pendant une simulation de plan (« Voir comme »), le lien disparaît, comme pour un vrai compte de ce plan.
+    Promise.all([isAdminAccount(), (typeof simulatedPlan === "function") ? simulatedPlan() : null]).then(function(r){
+      var li = document.getElementById("navAdminItem");
+      if(li && r[0] && !r[1]) li.hidden = false;
+    });
   }
   // Un administrateur qui simule un plan (page Administration, « Voir comme ») le voit sur toutes les pages à menu.
   if(typeof simulatedPlan === "function"){
