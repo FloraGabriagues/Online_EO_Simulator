@@ -114,7 +114,7 @@ async function signOut() {
 }
 
 /**
- * Ligne d'abonnement du compte connecté (plan, statut, rôle administrateur, plan simulé), lue avec son
+ * Rôle administrateur et plan simulé du compte connecté, lus dans sa ligne d'abonnement avec son
  * propre jeton (la RLS ne lui rend que sa ligne) et gardée le temps de la page.
  * ATTENTION : sert seulement à AFFICHER. Le vrai contrôle est fait par le serveur de calcul
  * (_require_admin et _require_active_plan dans main.py) et par la base (is_admin() dans les règles d'accès).
@@ -128,7 +128,7 @@ function _myEntitlementRow() {
         if (!session) return null;
         const { data } = await supabaseClient
           .from("account_entitlements")
-          .select("plan, subscription_status, is_admin, simulated_plan")
+          .select("is_admin, simulated_plan")
           .eq("account_id", session.user.id).maybeSingle();
         return data || null;
       } catch (e) { return null; }
@@ -137,9 +137,9 @@ function _myEntitlementRow() {
   return _entRowPromise;
 }
 
-// Même règle que is_admin() en SQL et _is_admin_row dans main.py : colonne is_admin, ou ancien plan « admin » actif.
+// Même règle que is_admin() en SQL et _is_admin_row dans main.py : colonne is_admin.
 function _isAdminRow(row) {
-  return !!row && (row.is_admin === true || (row.plan === "admin" && row.subscription_status === "active"));
+  return !!row && row.is_admin === true;
 }
 
 /** Le compte connecté a-t-il le rôle administrateur ? (indépendant du plan et de la simulation) */

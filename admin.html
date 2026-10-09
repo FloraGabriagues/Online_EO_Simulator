@@ -359,8 +359,6 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .followup select,.followup textarea{background:var(--panel-2);border:1px solid var(--line);color:var(--paper);border-radius:5px;padding:7px 9px;font-family:var(--body);font-size:13px}
 .empty{color:var(--muted);padding:26px 18px;font-size:13.5px}
 .toast{font-size:12.5px;color:var(--pixel);margin-top:10px;min-height:18px}
-.simpick{display:flex;align-items:center;gap:8px;font-size:12px;color:var(--muted);flex-wrap:wrap}
-.simpick select{background:var(--panel-2);border:1px solid var(--line);color:var(--paper);border-radius:5px;padding:6px 8px}
 </style>
 
 <body>
@@ -430,16 +428,6 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           <h1>Signalements</h1>
           <p class="sub">Résultats signalés par les utilisateurs, avec leur consentement. Cette page n'est visible que du compte administrateur.</p>
         </div>
-        <div class="simpick">
-          <label for="simSel">Voir comme</label>
-          <select id="simSel">
-            <option value="">Moi (admin)</option>
-            <option value="free">Gratuit</option>
-            <option value="beta">Bêta</option>
-            <option value="individuel">Individuel</option>
-          </select>
-          <span class="simnote" id="simNote" aria-live="polite"></span>
-        </div>
       </div>
       <div class="admwrap">
         <div class="admlist">
@@ -470,19 +458,6 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   // Cette page n'est qu'un confort : les règles d'accès de la base (is_admin) font foi. Un compte ordinaire
   // est renvoyé à son espace, et ne verrait de toute façon aucune ligne.
   if(!(await isAdminAccount())){ window.location.replace("espace-personnel.html"); return; }
-
-  // « Voir comme » : l'administrateur teste le site avec le plan d'un compte gratuit, bêta ou individuel.
-  // Le site et le serveur appliquent ce plan ; il reste administrateur et peut revenir ici à tout moment.
-  var simSel = document.getElementById("simSel"), simNote = document.getElementById("simNote");
-  simSel.value = (await simulatedPlan()) || "";
-  simSel.addEventListener("change", async function(){
-    simSel.disabled = true; simNote.textContent = "Enregistrement…";
-    var err = await setSimulatedPlan(simSel.value || null);
-    simSel.disabled = false;
-    if(err){ simNote.textContent = "Échec : " + err.message; simSel.value = (await simulatedPlan()) || ""; return; }
-    simNote.textContent = simSel.value ? "Enregistré. L'espace personnel et le simulateur utilisent ce plan." : "Simulation arrêtée.";
-    showSimulationBanner(simSel.value || null);
-  });
 
   var reports = [], current = null;
   var STATUS = { "new": "Nouveau", "in_progress": "En cours", "closed": "Clos" };

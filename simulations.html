@@ -598,7 +598,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                     <p class="fmcswept" id="fmcSwept"></p>
                     <p class="fmcdetail" id="fmcDetail"></p>
                   </div>
-                  <!-- 07/10/2026 : outils d'administration, visibles du seul compte au plan « admin » (hidden sinon).
+                  <!-- 07/10/2026 : outils d'administration, visibles du seul compte au rôle administrateur (hidden sinon).
                        Le vrai contrôle est côté serveur (_require_admin) : masquer ce bloc n'est qu'un confort. -->
                   <details class="adminbox" id="adminBox" hidden>
                     <summary data-i18n="sim.admin.title">Administration</summary>
@@ -1363,7 +1363,7 @@ function updateSummary(){
 // L'adresse des fonctions se déduit de celle du projet (supabase-client.js) :
 // un seul endroit à changer si le projet déménage.
 var FUNCTIONS_URL = SUPABASE_URL + "/functions/v1";
-var PAID_PLANS = ["individuel", "equipe", "admin"];   // "admin" : plan de l'administratrice (voir 3-role-administrateur.sql)
+var PAID_PLANS = ["individuel", "equipe"];   // le rôle administrateur est la colonne is_admin, pas un plan
 // Marge après l'échéance (04/10/2026), identique à celle du serveur
 // (main.py, _PERIOD_GRACE_DAYS) : à chaque renouvellement, le webhook Stripe
 // repousse la date d'échéance ; s'il a du retard ou échoue ce jour-là, un
@@ -2206,7 +2206,7 @@ async function autoSaveResultInner(){
 // ===================== Démarrage =====================
 // ===================== Administration (07/10/2026) =====================
 // Un fichier JSON et/ou un CSV Zernike chargés ici font passer la simulation par /simulate_admin (route
-// réservée au plan « admin », sans contrôle de plausibilité) au lieu de /simulate_account. Le JSON est
+// réservée au rôle administrateur, sans contrôle de plausibilité) au lieu de /simulate_account. Le JSON est
 // fusionné par le serveur sur son modèle : il remplace l'instrument et les conditions du formulaire.
 var isAdminUser = false, adminJson = null, adminJsonName = "", adminCsv = null, adminCsvName = "";
 var ADM_MAX_JSON = 1024 * 1024, ADM_MAX_CSV = 5 * 1024 * 1024;

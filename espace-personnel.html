@@ -528,6 +528,22 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
             <span class="pstatus" id="settingsSubStatusDot"><span class="sdot"></span><span id="settingsSubStatusText">-</span></span>
           </div>
           <p class="mnote" id="settingsSubNote" style="margin:0 0 12px"></p>
+          <!-- Administrateur seulement : choix de la vue (accès complet, ou plan simulé) -->
+          <div id="settingsSimRow" style="display:none">
+            <div class="planrow">
+              <div class="ptxt">
+                <div class="t1" data-i18n="sim.label">Voir comme</div>
+                <div class="t2" data-i18n="sim.note">Testez le site avec le plan d'un compte gratuit, bêta ou individuel. Vous restez administrateur.</div>
+              </div>
+              <select id="settingsSim" class="langselect" data-i18n-aria="sim.label">
+                <option value="" data-i18n="sim.opt.admin">Administrateur</option>
+                <option value="free" data-i18n="sim.opt.free">Gratuit</option>
+                <option value="beta" data-i18n="sim.opt.beta">Bêta</option>
+                <option value="individuel" data-i18n="sim.opt.individuel">Individuel</option>
+              </select>
+            </div>
+            <p class="mnote" id="settingsSimNote" aria-live="polite" style="margin:0 0 12px"></p>
+          </div>
           <div class="msection-actions">
             <button class="mbtn primary" id="settingsSubBtn" type="button">-</button>
           </div>
@@ -970,7 +986,19 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
   function renderSubscription(){
     subBtn.hidden = false;
-    if(isSubscribed() && isBeta()){
+    if(entitlement.isAdmin && !entitlement.simulated){
+      // Administrateur sans simulation : accès complet, quel que soit le plan réel en base.
+      planBadge.textContent = t("sub.badge.admin");
+      planBadge.classList.remove("free");
+      planName.textContent = t("sub.admin.name");
+      planDesc.textContent = t("sub.admin.desc");
+      subStatusDot.className = "pstatus";
+      subStatusText.textContent = t("sub.status.active");
+      subNote.className = "mnote";
+      subNote.textContent = "";
+      subBtn.hidden = true;
+
+    } else if(isSubscribed() && isBeta()){
       // 05/10/2026 — bêta gratuite : aucun prix, aucun abonnement à gérer.
       planBadge.textContent = t("sub.badge.beta");
       planBadge.classList.remove("free");
@@ -1050,11 +1078,34 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       subBtn.textContent = t("sub.subscribe");   // 05/10/2026 — plus de prix affiché (tarif décidé après la bêta)
       subBtn.className = "mbtn primary";
     }
-    // Vue simulée (page Administration) : pas de vrai paiement ni de portail Stripe sur le compte admin.
+    // Vue simulée : pas de vrai paiement ni de portail Stripe sur le compte admin.
     if(entitlement.simulated) subBtn.hidden = true;
     subBtn.disabled = false;
   }
   renderSubscription();
+
+  // Administrateur : choix de la vue (accès complet, ou plan simulé gratuit / bêta / individuel).
+  // Le serveur applique le même plan (main.py, _require_active_plan).
+  if(entitlement.isAdmin){
+    var simRow = document.getElementById("settingsSimRow");
+    var simSel = document.getElementById("settingsSim");
+    var simNote = document.getElementById("settingsSimNote");
+    simRow.style.display = "";
+    simSel.value = entitlement.simulated || "";
+    simSel.addEventListener("change", async function(){
+      simSel.disabled = true;
+      simNote.textContent = t("sim.saving");
+      var err = await setSimulatedPlan(simSel.value || null);
+      if(err){
+        simNote.textContent = t("sim.error");
+        simSel.value = entitlement.simulated || "";
+        simSel.disabled = false;
+        return;
+      }
+      simNote.textContent = t("sim.saved");
+      setTimeout(function(){ window.location.reload(); }, 500);
+    });
+  }
 
   // ---- Suppression du compte (04/10/2026) ----
   // Le bouton n'est actif que si le mot exact est saisi. La suppression
