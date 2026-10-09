@@ -169,6 +169,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .sathelp:hover,.sathelp[aria-expanded="true"]{border-color:var(--pixel);color:var(--pixel)}
 .sathint{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:20;margin:0;padding:10px 12px;font-size:12px;line-height:1.45;
   color:var(--paper);background:var(--panel-2);border:1px solid var(--pixel);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.4)}
+.dlmode{width:100%;margin-bottom:8px;background:var(--panel-2);color:var(--paper);border:1px solid var(--line);border-radius:4px;padding:7px 8px;font-size:12.5px}
+.dlmode[hidden]{display:none}
 .sathint.up{top:auto;bottom:calc(100% + 6px)}
 .sathint[hidden]{display:none}
 .checkrow.disabled{opacity:.5}
@@ -622,6 +624,10 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                   <span data-i18n="res.reset">Réinitialiser l'affichage</span></button>
               </div>
 
+              <select id="dlMode" class="dlmode" aria-label="Format du fichier téléchargé" hidden>
+                <option value="scaled" data-i18n="res.dl.mode.scaled">Mis à l'échelle sur 16 bits (visible)</option>
+                <option value="raw" data-i18n="res.dl.mode.raw">Valeurs brutes (DN)</option>
+              </select>
               <div class="satwrap dlwrap">
                 <button class="downloadbtn" type="button" id="downloadBtn" style="margin-top:0;flex:1">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v13M7 11l5 5 5-5M4 20h16"/></svg>
@@ -1685,7 +1691,7 @@ async function deleteResult(r){
   var SAT_BAND_NAMES = ["Rouge", "Vert", "Bleu"];
   function loadSatMask(channel){
     var d = diagBands[SAT_BAND_NAMES[channel]];
-    var path = d && d.saturation_mask_png_path;
+    var path = d && d.saturated_mask_png_path;
     if(!path) return Promise.resolve();
     return signedUrl(path).then(function(url){
       if(!url) return;
@@ -1927,6 +1933,7 @@ async function deleteResult(r){
   function updateDownloadLabel(){
     var key = adj.band || "RGB";
     var info = dnInfo(key);
+    document.getElementById("dlMode").hidden = !info;
     document.getElementById("downloadLabel").textContent = info
       ? (key === "RGB" ? t("res.download.rgb_dn", { bits: info.bits }) : t("res.download.band_dn", { band: bandDisplayName(key), bits: info.bits }))
       : (key === "RGB" ? t("res.download.rgb") : t("res.download.band", { band: bandDisplayName(key) }));
@@ -1935,11 +1942,11 @@ async function deleteResult(r){
   function dnInfo(key){
     var dn = result && result.diagnostics && result.diagnostics.dn;
     if(key === "RGB"){
-      if(dn && dn.rgb_path) return { path: dn.rgb_path, bits: dn.bits_adc || dn.bits_tdi };
+      if(dn && dn.rgb_path) return { path: dn.rgb_path, bits: dn.bits_tdi || dn.bits_adc };
       return null;
     }
-    var bd = diagBands[key];
-    if(bd && bd.dn_png16_path) return { path: bd.dn_png16_path, bits: bd.dn_bits || (dn && (dn.bits_adc || dn.bits_tdi)) };
+    var bd = diagBands[SAT_BAND_NAMES[CHANNEL_IDX[key]]];
+    if(bd && bd.dn_png16_path) return { path: bd.dn_png16_path, bits: bd.dn_bits || (dn && (dn.bits_tdi || dn.bits_adc)) };
     return null;
   }
   function fileSlug(s){
@@ -1948,7 +1955,7 @@ async function deleteResult(r){
   function downloadName(key){
     var name = fileSlug((result && result.name) || tScene(sceneName)) || "resultat";
     var info = dnInfo(key);
-    return fileSlug(bandDisplayName(key)) + "_" + name + "_" + createdLabel + (info ? "_DN" + info.bits + "bit" : "") + ".png";
+    return fileSlug(bandDisplayName(key)) + "_" + name + "_" + createdLabel + (info ? "_DN" + info.bits + "bit" + (dlScaled(info) ? "_echelle16" : "_brut") : "") + ".png";
   }
   var CRC_TABLE = null;
   function crc32(buf){
@@ -2006,6 +2013,44 @@ async function deleteResult(r){
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
     setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
   }
+  // Mode « mis à l'échelle » : les codes sont décalés de (16 - bits) bits vers la gauche, donc multipliés par 2^(16-bits).
+  // Aucune information n'est perdue (l'opération est réversible) mais l'image occupe toute la plage 16 bits et se voit
+  // dans n'importe quelle visionneuse. Mode « brut » : les codes tels que l'électronique les produit.
+  function dlScaled(info){ return document.getElementById("dlMode").value === "scaled" && info.bits < 16; }
+  async function inflateZlib(bytes){
+    var stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate"));
+    return new Uint8Array(await new Response(stream).arrayBuffer());
+  }
+  async function scalePng16(blob, bits){
+    var buf = new Uint8Array(await blob.arrayBuffer()), dv = new DataView(buf.buffer);
+    var pos = 8, chunks = [], idat = [], w = 0, h = 0, ct = 0;
+    while(pos < buf.length){
+      var len = dv.getUint32(pos), type = String.fromCharCode(buf[pos+4], buf[pos+5], buf[pos+6], buf[pos+7]);
+      var data = buf.subarray(pos + 8, pos + 8 + len);
+      if(type === "IHDR"){ w = dv.getUint32(pos + 8); h = dv.getUint32(pos + 12); ct = buf[pos + 8 + 9]; chunks.push([type, data]); }
+      else if(type === "IDAT") idat.push(data);
+      else if(type !== "IEND") chunks.push([type, data]);
+      pos += 12 + len;
+    }
+    var total = 0; idat.forEach(function(d){ total += d.length; });
+    var z = new Uint8Array(total), o = 0; idat.forEach(function(d){ z.set(d, o); o += d.length; });
+    var raw = await inflateZlib(z), ch = ct === 2 ? 3 : 1, row = w * ch * 2, shift = 16 - bits;
+    for(var y = 0; y < h; y++){
+      var base = y * (row + 1);
+      if(raw[base] !== 0) throw new Error("filtre PNG inattendu");
+      for(var i = base + 1; i < base + 1 + row; i += 2){
+        var v = ((raw[i] << 8) | raw[i + 1]) << shift;
+        raw[i] = (v >> 8) & 255; raw[i + 1] = v & 255;
+      }
+    }
+    var parts = [new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10])];
+    chunks.forEach(function(c){ parts.push(pngChunk(c[0], c[1])); });
+    var meta = new TextEncoder().encode("DN_display\u0000scaled x2^" + shift + " (raw DN = value / " + Math.pow(2, shift) + ")");
+    parts.push(pngChunk("tEXt", meta));
+    parts.push(pngChunk("IDAT", await deflateZlib(raw)));
+    parts.push(pngChunk("IEND", new Uint8Array(0)));
+    return new Blob(parts, { type: "image/png" });
+  }
   updateDownloadLabel();
   document.getElementById("downloadBtn").addEventListener("click", async function(){
     var key = adj.band || "RGB";
@@ -2014,7 +2059,12 @@ async function deleteResult(r){
       if(info){
         var sg = await supabaseClient.storage.from("results").createSignedUrl(info.path, 600);
         if(!sg.error && sg.data){
-          saveBlob(await (await fetch(sg.data.signedUrl)).blob(), downloadName(key));
+          var dnBlob = await (await fetch(sg.data.signedUrl)).blob();
+          if(dlScaled(info) && typeof DecompressionStream !== "undefined" && typeof CompressionStream !== "undefined"){
+            try{ dnBlob = await scalePng16(dnBlob, info.bits); }
+            catch(e2){ console.error("Mise à l'échelle impossible, fichier brut fourni :", e2); }
+          }
+          saveBlob(dnBlob, downloadName(key));
           return;
         }
       }
