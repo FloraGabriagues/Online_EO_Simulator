@@ -97,8 +97,27 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .navlist a.soon{cursor:default;opacity:.45;pointer-events:none}
 .navlist a.soon:hover{color:inherit;background:transparent}
 
-.instgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-  gap:14px;margin-bottom:20px}
+.instcar{position:relative;margin-bottom:20px}
+/* Carrousel : une rangée de cartes, on fait défiler (flèches, doigt, molette latérale). */
+.instgrid{--per:3;display:flex;gap:14px;overflow-x:auto;scroll-snap-type:x mandatory;
+  scrollbar-width:none;padding:4px 2px 6px;margin:-4px -2px 0;scroll-behavior:smooth}
+.instgrid::-webkit-scrollbar{display:none}
+.instgrid .instcard{flex:0 0 calc((100% - 14px*(var(--per) - 1)) / var(--per));scroll-snap-align:start;min-width:0}
+.instgrid .instcard.empty{flex:1 1 100%}
+@media(max-width:1000px){.instgrid{--per:2}}
+@media(max-width:640px){.instgrid{--per:1}}
+.carbtn{position:absolute;top:50%;transform:translateY(-50%);z-index:5;width:34px;height:34px;
+  border-radius:50%;border:1px solid var(--line);background:var(--panel-2);color:var(--paper);
+  font-size:18px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 14px rgba(0,0,0,.45);transition:border-color .14s,color .14s,opacity .14s}
+.carbtn:hover{border-color:var(--pixel);color:var(--pixel)}
+.carbtn.prev{left:-12px}.carbtn.next{right:-12px}
+.carbtn[hidden]{display:none}
+.cardots{display:flex;justify-content:center;gap:8px;margin-top:12px}
+.cardots:empty{display:none}
+.cardots button{width:8px;height:8px;border-radius:50%;border:none;padding:0;cursor:pointer;
+  background:var(--line);transition:background .14s,transform .14s}
+.cardots button.on{background:var(--pixel);transform:scale(1.25)}
 .instcard{display:flex;flex-direction:column;text-decoration:none;color:var(--paper);
   background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;overflow:hidden;
   transition:border-color .14s,transform .14s}
@@ -131,8 +150,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 /* 04/10/2026 — brouillon : instrument enregistré sans tous ses champs obligatoires */
 .instcard.draft{border-style:dashed}
 .instcard.draft .fill{background:var(--photon)}
-.instcard .draftbadge{font-family:var(--mono);font-size:12px;color:var(--photon);
-  border:1px solid var(--photon);border-radius:3px;padding:1px 6px;margin-left:8px}
+.instcard .titleblock{display:flex;align-items:center;flex-wrap:wrap;gap:6px 8px;min-width:0}
+.instcard .draftbadge{font-family:var(--mono);font-size:12px;line-height:1.3;color:var(--photon);
+  border:1px solid var(--photon);border-radius:3px;padding:1px 6px;white-space:nowrap}
 .instcard .datesrow{display:flex;flex-direction:column;gap:2px;font-family:var(--mono);
   font-size:12px;color:var(--muted-2)}
 .instcard .datesrow span{display:flex;align-items:center;gap:6px}
@@ -402,7 +422,12 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         <span class="count" id="fInstCount"></span>
       </div>
 
-      <div class="instgrid" id="instList"></div>
+      <div class="instcar">
+        <button class="carbtn prev" id="carPrev" type="button" data-i18n-aria="home.car.prev" aria-label="Précédent" hidden>‹</button>
+        <div class="instgrid" id="instList"></div>
+        <button class="carbtn next" id="carNext" type="button" data-i18n-aria="home.car.next" aria-label="Suivant" hidden>›</button>
+        <div class="cardots" id="carDots"></div>
+      </div>
 
       <div class="bottomrow">
         <!-- 06/10/2026 — remplace l'encadré « Activité récente ». Chaque phrase
@@ -723,6 +748,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       return;
     }
     list.innerHTML = "";
+    list.scrollLeft = 0;
     items.forEach(function(it){
       var a = document.createElement("a");
       a.className = "instcard" + (it.draft ? " draft" : "");
@@ -738,8 +764,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       a.innerHTML =
         "<div class='body'>"+
           "<div class='titlerow'>"+
-            "<span><div class='name'>"+it.name+"</div>"+
-            (it.draft ? "<div class='type'><span class='draftbadge'>" + t("inst.badge.draft") + "</span></div>" : "")+"</span>"+
+            "<div class='titleblock'><div class='name'>"+it.name+"</div>"+
+            (it.draft ? "<span class='draftbadge'>" + t("inst.badge.draft") + "</span>" : "")+"</div>"+
             "<div class='menuwrap'>"+
               "<button class='menubtn' type='button' aria-label='" + t("inst.menu.options") + "' data-menu-toggle data-id='"+it.id+"'>⋮</button>"+
               "<div class='dropdown' data-menu='"+it.id+"'>"+
@@ -760,7 +786,44 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         "</div>";
       list.appendChild(a);
     });
+    updateCarousel();
   }
+
+  // ===================== Carrousel =====================
+  var carPrev = document.getElementById("carPrev"), carNext = document.getElementById("carNext"), carDots = document.getElementById("carDots");
+  function carPages(){
+    var cards = list.querySelectorAll(".instcard:not(.empty)");
+    if(!cards.length) return 1;
+    var step = list.clientWidth + 14;
+    return Math.max(1, Math.ceil((list.scrollWidth - 4) / step));
+  }
+  function updateCarousel(){
+    var pages = carPages();
+    var page = Math.min(pages - 1, Math.round(list.scrollLeft / (list.clientWidth + 14)));
+    var multi = pages > 1;
+    carPrev.hidden = !multi || list.scrollLeft < 4;
+    carNext.hidden = !multi || list.scrollLeft + list.clientWidth >= list.scrollWidth - 4;
+    carDots.innerHTML = "";
+    if(multi){
+      for(var i = 0; i < pages; i++){
+        var d = document.createElement("button");
+        d.type = "button"; d.className = i === page ? "on" : "";
+        d.setAttribute("aria-label", (i + 1) + " / " + pages);
+        d.dataset.page = i;
+        carDots.appendChild(d);
+      }
+    }
+  }
+  function carGo(dir){ list.scrollBy({ left: dir * (list.clientWidth + 14), behavior: "smooth" }); }
+  carPrev.addEventListener("click", function(){ carGo(-1); });
+  carNext.addEventListener("click", function(){ carGo(1); });
+  carDots.addEventListener("click", function(e){
+    var b = e.target.closest("button[data-page]");
+    if(b) list.scrollTo({ left: b.dataset.page * (list.clientWidth + 14), behavior: "smooth" });
+  });
+  var carTimer = null;
+  list.addEventListener("scroll", function(){ clearTimeout(carTimer); carTimer = setTimeout(updateCarousel, 60); });
+  window.addEventListener("resize", updateCarousel);
   render();
 
   // ===================== Menu "⋮" des cartes instrument (Renommer / Dupliquer / Supprimer) =====================

@@ -188,6 +188,8 @@ var I18N = {
   "home.err.duplicate_msg": { fr: "La duplication a échoué : {msg}", en: "Duplication failed: {msg}" },
 
   // cartes d'instrument
+  "home.car.prev":      { fr: "Instruments précédents", en: "Previous instruments" },
+  "home.car.next":      { fr: "Instruments suivants", en: "Next instruments" },
   "home.search.ph":      { fr: "Rechercher un instrument…", en: "Search for an instrument…" },
   "home.filter.status":  { fr: "Filtrer par état", en: "Filter by status" },
   "home.filter.all":     { fr: "Tous les instruments", en: "All instruments" },
