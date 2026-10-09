@@ -162,6 +162,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .afield label svg{width:14px;height:14px;color:var(--muted-2);flex:none}
 .afield select{width:100%;background:var(--panel-2);border:1px solid var(--line-soft);color:var(--paper);
   border-radius:5px;padding:8px 11px;font-family:var(--body);font-size:12.5px}
+.sathint{margin:-8px 0 14px;font-size:12px;line-height:1.45;color:var(--muted-2)}
+.sathint[hidden]{display:none}
+.checkrow.disabled{opacity:.5}
 .checkrow{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-bottom:14px}
 .apanelbtns{display:flex;flex-direction:column;gap:8px;margin-bottom:14px}
 .downloadbtn{width:100%;border:1px solid var(--pixel);background:var(--pixel);color:#0A141A;
@@ -597,7 +600,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                 </select>
               </div>
 
-              <label class="checkrow"><input type="checkbox" id="satChk"> <span data-i18n="res.sat">Afficher les pixels saturés (magenta)</span></label>
+              <label class="checkrow" id="satRow"><input type="checkbox" id="satChk"> <span data-i18n="res.sat">Afficher les pixels saturés (magenta)</span></label>
+              <p class="sathint" id="satHint" data-i18n="res.sat.hint">Disponible sur une bande séparée (Rouge, Vert ou Bleu) : sur le RGB, la saturation n'a pas de sens.</p>
 
               <div class="apanelbtns">
                 <button class="srcbtn" type="button" id="whitePointBtn" style="margin-top:0">
@@ -1711,7 +1715,8 @@ async function deleteResult(r){
         var r = d[i], g = d[i+1], b = d[i+2];
         // Saturation mesurée sur l'image brute, AVANT point blanc et étirement : l'étirement p2/p98 ramène
         // par construction les 2 % de pixels les plus clairs à 255, ce qui les aurait tous affichés en magenta.
-        var saturated = opts.showSaturated && (r >= 253 || g >= 253 || b >= 253);
+        // Seulement sur une bande séparée (sur le RGB, « saturé » ne veut rien dire) : on teste le canal de la bande.
+        var saturated = opts.showSaturated && opts.channel != null && [r,g,b][opts.channel] >= 253;
         if(gains){ r = Math.min(255, r * gains.r); g = Math.min(255, g * gains.g); b = Math.min(255, b * gains.b); }
         if(stretch){ r = stretchVal(r, stretch.r); g = stretchVal(g, stretch.g); b = stretchVal(b, stretch.b); }
         if(opts.channel != null){ var v = [r,g,b][opts.channel]; r = g = b = v; }
@@ -1732,7 +1737,7 @@ async function deleteResult(r){
     // s'applique aux DEUX images : sans ça, comparer par exemple la bande
     // Rouge simulée à une source restée en RGB ne veut rien dire.
     var channelIdx = adj.band === "RGB" ? null : CHANNEL_IDX[adj.band];
-    var opts = { channel: channelIdx, p2p98: adj.render === "p2p98", showSaturated: adj.showSat,
+    var opts = { channel: channelIdx, p2p98: adj.render === "p2p98", showSaturated: adj.showSat && adj.band !== "RGB",
       whitePoint: adj.whitePointSim };
     var simUrl = processImage(simImgObj, opts);
     if(simUrl) imgSim.src = simUrl;
@@ -1767,14 +1772,25 @@ async function deleteResult(r){
     {key:"G", name:tBand("Vert"), color:BAND_COLOR.G},
     {key:"B", name:tBand("Bleu"), color:BAND_COLOR.B},
   ];
+  // La case « pixels saturés » n'a de sens que sur une bande séparée : désactivée (et décochée) sur le RGB.
+  function syncSatControl(){
+    var chk = document.getElementById("satChk"), row = document.getElementById("satRow"), hint = document.getElementById("satHint");
+    var rgb = adj.band === "RGB";
+    if(rgb){ chk.checked = false; adj.showSat = false; }
+    chk.disabled = rgb;
+    row.classList.toggle("disabled", rgb);
+    hint.hidden = !rgb;
+  }
   function selectBand(key){
     adj.band = key;
+    syncSatControl();
     updateDownloadLabel();
     bandThumbs.querySelectorAll(".bandthumb").forEach(function(x){
       x.classList.toggle("selected", x.dataset.key === key);
     });
     updateDisplay();
   }
+  syncSatControl();   // état initial : RGB, donc case désactivée
   BANDS.forEach(function(b){
     var d = document.createElement("div");
     d.className = "bandthumb" + (b.key === "RGB" ? " selected" : "");
@@ -1828,6 +1844,7 @@ async function deleteResult(r){
     document.getElementById("ctrlContrast").value = 100; document.getElementById("valContrast").textContent = "100 %";
     document.getElementById("renderSel").value = "p2p98";
     document.getElementById("satChk").checked = false;
+    syncSatControl();
     bandThumbs.querySelectorAll(".bandthumb").forEach(function(x){ x.classList.toggle("selected", x.dataset.key === "RGB"); });
     updateDownloadLabel();
     updateDisplay();

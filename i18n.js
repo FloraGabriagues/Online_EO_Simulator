@@ -525,6 +525,7 @@ var I18N = {
   "res.render":          { fr: "Rendu de l'image", en: "Image rendering" },
   "res.render.none":     { fr: "Aucun (brut)", en: "None (raw)" },
   "res.render.p2p98":    { fr: "Étirement p2/p98 (netteté seulement)", en: "p2/p98 stretch (sharpness only)" },
+  "res.sat.hint":       { fr: "Disponible sur une bande séparée (Rouge, Vert ou Bleu) : sur le RGB, la saturation n'a pas de sens.", en: "Available on a single band (Red, Green or Blue): saturation is meaningless on the RGB composite." },
   "res.sat":             { fr: "Afficher les pixels saturés (magenta)", en: "Show saturated pixels (magenta)" },
   "res.whitepoint":      { fr: "Choisir un point blanc sur l'image", en: "Pick a white point on the image" },
   "res.reset":           { fr: "Réinitialiser l'affichage", en: "Reset display" },
