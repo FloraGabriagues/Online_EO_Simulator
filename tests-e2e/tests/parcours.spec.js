@@ -69,7 +69,7 @@ function watchErrors(page) {
 }
 
 // Nom interne d'un texte non traduit, tel qu'il s'afficherait à l'écran (par exemple « res.download.rgb »).
-const RAW_KEY = /\b(?:home|res|sim|login|nav|field|settings|sub|inst|common|time|help|beta|menu|paywall|api|demo|band|block|lang|pwd|activity|top|auth)\.[a-z0-9_]+(?:\.[a-z0-9_]+)*\b/;
+const RAW_KEY = /\b(?:home|res|sim|login|nav|field|settings|sub|inst|common|time|help|beta|menu|paywall|api|demo|band|block|lang|pwd|activity|top|auth|onb)\.[a-z0-9_]+(?:\.[a-z0-9_]+)*\b/;
 
 async function loginAs(page, lang) {
   await page.goto(`/login.html?lang=${lang}`);
@@ -664,5 +664,87 @@ test.describe("Session unique", () => {
       await ctxA.close();
       await ctxB.close();
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Tutoriel d'accueil (onboarding), joué une fois en anglais, avec une vraie simulation
+// ---------------------------------------------------------------------------
+test.describe.serial("Tutoriel d'accueil", () => {
+  test.skip(!EMAIL || !PASSWORD, "NYSA_TEST_EMAIL et NYSA_TEST_PASSWORD ne sont pas définis");
+  test.setTimeout(10 * 60 * 1000);
+
+  /** @type {import('@playwright/test').Page} */
+  let page;
+  let errors;
+  const bubble = () => page.locator(".onb-bubble");
+  const step = (n) => expect(bubble()).toContainText(`Step ${n} of 9`);
+
+  test.beforeAll(async ({ browser }) => {
+    const context = await browser.newContext({ baseURL: BASE_URL, viewport: { width: 1440, height: 900 } });
+    page = await context.newPage();
+    errors = watchErrors(page);
+    await loginAs(page, "en");
+    await useLang(page, "en");
+    await wipeTestData(page);
+  });
+
+  test.afterAll(async () => {
+    try {
+      await page.goto("/espace-personnel.html");
+      await wipeTestData(page);
+    } catch (e) { console.warn("Nettoyage impossible :", e.message); }
+    await page.context().close();
+  });
+
+  test("on peut quitter le tutoriel à tout moment, et le relancer depuis les réglages", async () => {
+    await page.goto("/espace-personnel.html?settings=1");
+    await page.locator("#settingsTourBtn").click();
+    await step(1);
+    await page.locator(".onb-bubble .onb-link").click();
+    await expect(bubble()).toHaveCount(0);
+    // quitté : il ne revient pas tout seul au rechargement
+    await page.reload();
+    await expect(page.locator("h1")).toHaveText(STR.en.myInstruments);
+    await expect(bubble()).toHaveCount(0);
+  });
+
+  test("parcours complet : instrument d'exemple, simulation, résultat, curseur", async () => {
+    await page.goto("/espace-personnel.html?settings=1");
+    await page.locator("#settingsTourBtn").click();
+    await step(1);                                                        // menu : Simulations
+    await page.locator(".sidebar a[href='simulations.html']").click();
+    await step(2);                                                        // scène
+    await expect(page.locator("#panelActionBtn")).toBeEnabled({ timeout: 30 * 1000 });
+    await page.locator("#panelActionBtn").click();
+    await step(3);                                                        // instrument (déjà sélectionné)
+    await expect(page.locator("#panelActionBtn")).toBeEnabled({ timeout: 30 * 1000 });
+    await page.locator("#panelActionBtn").click();
+    await step(4);                                                        // conditions d'acquisition
+    await page.locator(".onb-bubble .onb-btn.primary").click();
+    await step(5);                                                        // lancement
+    await expect(page.locator("#panelActionBtn")).toContainText(STR.en.runBtn);
+    await page.locator("#panelActionBtn").click();
+    await step(6);                                                        // calcul en cours
+    const link = page.locator("a.viewresultsbtn");
+    await expect(link, "la simulation doit se terminer et se sauvegarder").toBeVisible({ timeout: 6 * 60 * 1000 });
+    await step(7);
+    await link.click();
+    await step(8);                                                        // image et indicateurs
+    await page.locator(".onb-bubble .onb-btn.primary").click();
+    await step(9);                                                        // curseur
+    const box = await page.locator("#compareWrap").boundingBox();
+    await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.5, { steps: 8 });
+    await page.mouse.up();
+    await expect(page.locator(".onb-modal h2")).toHaveText("First simulation complete!");
+    await page.locator(".onb-modal .onb-btn").click();
+    await expect(page.locator(".onb-modal")).toHaveCount(0);
+    expect(await page.evaluate(() => localStorage.getItem("nysa_onb"))).toBeNull();
+  });
+
+  test("aucune erreur JavaScript pendant le tutoriel", async () => {
+    expect(errors).toEqual([]);
   });
 });

@@ -487,6 +487,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                 <option value="fr">Français</option>
               </select></span></div>
             <div class="minfo-row"><span class="label" data-i18n="settings.account.since">Membre depuis</span><span class="value" id="settingsCreated">-</span></div>
+            <!-- 09/10/2026 : relancer le tutoriel d'accueil -->
+            <div class="minfo-row"><span class="label" data-i18n="settings.tour.label">Tutoriel</span><span class="value">
+              <button class="mbtn" id="settingsTourBtn" type="button" data-i18n="settings.tour.btn">Revoir le tutoriel</button></span></div>
           </div>
           <p class="mnote" id="settingsLangNote" aria-live="polite" data-i18n="settings.lang.note" style="margin-top:10px">Langue de l'interface et des e-mails que vous recevez.</p>
         </div>
@@ -649,8 +652,11 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         console.error("Instrument d'exemple non créé :", exErr);
       } else {
         instruments = [exRow];
-        var { error: flagErr } = await supabaseClient.auth.updateUser({ data: { example_created: true } });
+        // 09/10/2026 : onboarding = "welcome" fait apparaître la fenêtre de bienvenue (onboarding.js),
+        // une seule fois : les comptes existants n'ont pas cette valeur et ne la voient pas.
+        var { error: flagErr } = await supabaseClient.auth.updateUser({ data: { example_created: true, onboarding: "welcome" } });
         if(flagErr) console.warn("Marqueur de l'instrument d'exemple non enregistré :", flagErr.message);
+        else if(window.NysaOnboarding) window.NysaOnboarding.maybeWelcome();
       }
     }
   } catch(e){
@@ -1192,6 +1198,11 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     history.replaceState({}, "", window.location.pathname);
   }
   document.getElementById("settingsCloseBtn").addEventListener("click", closeSettings);
+  // 09/10/2026 : « Revoir le tutoriel » ferme les paramètres et relance le tutoriel d'accueil (onboarding.js).
+  document.getElementById("settingsTourBtn").addEventListener("click", function(){
+    closeSettings();
+    if(window.NysaOnboarding) window.NysaOnboarding.start();
+  });
   overlay.addEventListener("click", function(e){
     if(e.target === overlay) closeSettings();
   });
@@ -1325,5 +1336,6 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 <script src="aide.js"></script>
 <!-- Menu de gauche repliable sur petit écran -->
 <script src="menu.js"></script>
+<script src="onboarding.js"></script>
 </body>
 </html>
