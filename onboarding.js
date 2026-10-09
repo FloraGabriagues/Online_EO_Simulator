@@ -8,8 +8,10 @@
 //      d'exemple, simulation, résultat, curseur de comparaison. Il attend les
 //      vraies actions de l'utilisateur et ne modifie rien dans le calcul.
 //
-// Parcours : Simulations (scène, instrument, conditions, lancement) puis la
-// page du résultat (image, curseur de comparaison), puis un message de fin.
+// Parcours : présentation des instruments (espace personnel), puis Simulations
+// (choix de la scène, instrument, conditions, lancement et explication pendant
+// le calcul), puis la page du résultat (image, curseur de comparaison), puis un
+// message de fin.
 //
 // ÉTAT
 //   - Compte (user_metadata.onboarding) : "welcome" = fenêtre à montrer,
@@ -69,6 +71,9 @@
     ".onb-bubble{box-sizing:border-box;position:fixed;z-index:9990;width:min(340px,calc(100vw - 24px));padding:14px 16px 12px;border-radius:10px;"+
       "background:var(--panel,#131E27);color:var(--paper,#C4D6D4);border:1px solid var(--photon,#F5AC57);"+
       "box-shadow:0 10px 36px rgba(0,0,0,.55);font:400 13.5px/1.55 var(--body,system-ui,sans-serif)}"+
+    ".onb-bubble.wide{width:min(440px,calc(100vw - 24px))}"+
+    ".onb-bubble .onb-chain{margin:0 0 12px;padding:0 0 0 18px;font-size:12.5px;line-height:1.5;color:var(--muted,#9BADBD)}"+
+    ".onb-bubble .onb-chain li{margin:0 0 3px}"+
     ".onb-bubble .onb-count{font:500 11px/1 var(--mono,monospace);letter-spacing:.06em;text-transform:uppercase;color:var(--photon,#F5AC57);margin-bottom:8px}"+
     ".onb-bubble .onb-text{margin:0 0 12px}"+
     ".onb-bubble .onb-row{display:flex;align-items:center;gap:12px;justify-content:space-between}"+
@@ -208,7 +213,7 @@
   // ----------------------------------------------------------- les étapes
   // targets : éléments à surligner (le premier sert de repère à la bulle) ;
   // text : clé du texte ; next : bouton « Suivant » pour les étapes d'explication.
-  var ORDER = ["nav", "scene", "inst", "cond", "launch", "run", "viewres", "overview", "slider"];
+  var ORDER = ["inst0", "nav", "scene", "inst", "cond", "launch", "run", "viewres", "overview", "slider"];
   var SIM_STEPS = { scene: 1, inst: 2, cond: 3, launch: 3, run: 4, viewres: 4 };
 
   var sliderMoved = false, sliderWired = false;
@@ -245,14 +250,30 @@
     return "onb.s6";
   }
 
+  // Étape de la scène : l'utilisateur choisit lui-même son image source. Tant qu'il n'a
+  // pas cliqué sur une scène, seul le choix est surligné ; ensuite, le bouton « Suivant ».
+  var scenePicked = false, sceneWired = false;
+  function wireScene(){
+    var grid = $("#sceneGrid");
+    if(sceneWired || !grid) return;
+    sceneWired = true;
+    grid.addEventListener("click", function(e){
+      if(e.target.closest && e.target.closest(".scenecard")) scenePicked = true;
+    }, true);
+  }
+
   var STEPS = {
+    inst0:   { targets: function(){ return [$("a.simbtn[href='creer-instrument.html']"), $("#instList .instcard:not(.empty)")]; },
+               text: function(){ return $("#instList .instcard:not(.empty)") ? "onb.s0" : "onb.s0.none"; }, next: "nav" },
     nav:     { targets: navTargets, text: function(){ return "onb.s1"; } },
-    scene:   { targets: function(){ return [$("#sceneGrid"), $("#panelActionBtn")]; }, text: function(){ return "onb.s2"; } },
+    scene:   { targets: function(){ return scenePicked ? [$("#sceneGrid"), $("#panelActionBtn")] : [$("#sceneGrid")]; },
+               text: function(){ return scenePicked ? "onb.s2b" : "onb.s2"; } },
     inst:    { targets: function(){ return [$("#instList"), $("#panelActionBtn")]; },
                text: function(){ return (typeof window.selectedInstIdx === "number" && window.selectedInstIdx < 0) ? "onb.s3.none" : "onb.s3"; } },
     cond:    { targets: function(){ return [$(".acq-fields")]; }, text: function(){ return "onb.s4"; }, next: "launch" },
     launch:  { targets: function(){ return [$("#panelActionBtn")]; }, text: function(){ return "onb.s5"; } },
-    run:     { targets: function(){ return [$(".statuspanel")]; }, text: runTextKey },
+    run:     { targets: function(){ return [$(".statuspanel")]; }, text: runTextKey,
+               extra: function(key){ return key === "onb.s6" ? ["onb.s6.c1", "onb.s6.c2", "onb.s6.c3", "onb.s6.c4"] : null; } },
     viewres: { targets: function(){ return [$(".viewresultsbtn")]; }, text: function(){ return "onb.s7"; } },
     overview:{ targets: function(){ return [$("#viewerBox"), $("#restabsHost")]; }, text: function(){ return "onb.s8"; }, next: "slider" },
     slider:  { targets: function(){ return [$("#compareWrap")]; }, text: function(){ return "onb.s9"; } }
@@ -314,11 +335,17 @@
 
     if(shownKey !== key){
       if(bubble) bubble.remove();
-      bubble = el("div", "onb-bubble");
+      var extra = def.extra ? def.extra(textKey) : null;
+      bubble = el("div", "onb-bubble" + (extra ? " wide" : ""));
       bubble.setAttribute("role", "dialog");
       bubble.setAttribute("aria-label", tr("onb.aria"));
       bubble.appendChild(el("div", "onb-count", tr("onb.step", { n: ORDER.indexOf(id) + 1, total: ORDER.length })));
       bubble.appendChild(el("p", "onb-text", tr(textKey)));
+      if(extra){
+        var ol = el("ol", "onb-chain");
+        extra.forEach(function(k){ ol.appendChild(el("li", null, tr(k))); });
+        bubble.appendChild(ol);
+      }
       var row = el("div", "onb-row");
       var quitBtn = el("button", "onb-link", tr("onb.quit"));
       quitBtn.type = "button";
@@ -375,7 +402,9 @@
     if(!STEPS[step]){ clearState(); clearUi(); stopTick(); return; }
 
     // ---- recalage sur la page réellement affichée
-    if(step === "nav"){
+    if(step === "inst0"){
+      if(PAGE !== "espace-personnel.html"){ saveStep("nav"); step = "nav"; }
+    } else if(step === "nav"){
       if(PAGE === "simulations.html"){ saveStep("scene"); step = "scene"; }
     } else if(SIM_STEPS[step]){
       if(PAGE !== "simulations.html"){
@@ -395,6 +424,7 @@
       if(!isDetail()){ clearUi(); return; }   // le tutoriel reprend quand le résultat est rouvert
     }
 
+    if(step === "scene") wireScene();
     if(step === "slider"){
       wireSlider();
       if(sliderMoved){ saveStep("finish"); finish(); return; }
@@ -411,7 +441,7 @@
     if(!uid){
       try { uid = (await supabaseClient.auth.getSession()).data.session.user.id; } catch(e){ return; }
     }
-    saveStep("nav");
+    saveStep(PAGE === "espace-personnel.html" ? "inst0" : "nav");
     startTick();
     tick();
   }

@@ -678,7 +678,7 @@ test.describe.serial("Tutoriel d'accueil", () => {
   let page;
   let errors;
   const bubble = () => page.locator(".onb-bubble");
-  const step = (n) => expect(bubble()).toContainText(`Step ${n} of 9`);
+  const step = (n) => expect(bubble()).toContainText(`Step ${n} of 10`);
 
   test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext({ baseURL: BASE_URL, viewport: { width: 1440, height: 900 } });
@@ -709,30 +709,35 @@ test.describe.serial("Tutoriel d'accueil", () => {
     await expect(bubble()).toHaveCount(0);
   });
 
-  test("parcours complet : instrument d'exemple, simulation, résultat, curseur", async () => {
+  test("parcours complet : instruments, simulation, résultat, curseur", async () => {
     await page.goto("/espace-personnel.html?settings=1");
     await page.locator("#settingsTourBtn").click();
-    await step(1);                                                        // menu : Simulations
-    await page.locator(".sidebar a[href='simulations.html']").click();
-    await step(2);                                                        // scène
-    await expect(page.locator("#panelActionBtn")).toBeEnabled({ timeout: 30 * 1000 });
-    await page.locator("#panelActionBtn").click();
-    await step(3);                                                        // instrument (déjà sélectionné)
-    await expect(page.locator("#panelActionBtn")).toBeEnabled({ timeout: 30 * 1000 });
-    await page.locator("#panelActionBtn").click();
-    await step(4);                                                        // conditions d'acquisition
+    await step(1);                                                        // instruments : l'exemple est déjà créé
     await page.locator(".onb-bubble .onb-btn.primary").click();
-    await step(5);                                                        // lancement
+    await step(2);                                                        // menu : Simulations
+    await page.locator(".sidebar a[href='simulations.html']").click();
+    await step(3);                                                        // l'utilisateur choisit sa scène
+    await page.locator(".scenecard").nth(1).click();
+    await expect(bubble()).toContainText("Next");
+    await expect(page.locator("#panelActionBtn")).toBeEnabled({ timeout: 30 * 1000 });
+    await page.locator("#panelActionBtn").click();
+    await step(4);                                                        // instrument (déjà sélectionné)
+    await expect(page.locator("#panelActionBtn")).toBeEnabled({ timeout: 30 * 1000 });
+    await page.locator("#panelActionBtn").click();
+    await step(5);                                                        // conditions d'acquisition
+    await page.locator(".onb-bubble .onb-btn.primary").click();
+    await step(6);                                                        // lancement
     await expect(page.locator("#panelActionBtn")).toContainText(STR.en.runBtn);
     await page.locator("#panelActionBtn").click();
-    await step(6);                                                        // calcul en cours
+    await step(7);                                                        // calcul : explication pendant l'attente
+    await expect(bubble()).toContainText("between 1 and 2 minutes");
     const link = page.locator("a.viewresultsbtn");
     await expect(link, "la simulation doit se terminer et se sauvegarder").toBeVisible({ timeout: 6 * 60 * 1000 });
-    await step(7);
+    await step(8);
     await link.click();
-    await step(8);                                                        // image et indicateurs
+    await step(9);                                                        // image et indicateurs
     await page.locator(".onb-bubble .onb-btn.primary").click();
-    await step(9);                                                        // curseur
+    await step(10);                                                       // curseur
     const box = await page.locator("#compareWrap").boundingBox();
     await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
     await page.mouse.down();
