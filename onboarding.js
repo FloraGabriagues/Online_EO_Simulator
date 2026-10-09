@@ -102,6 +102,46 @@
     ".onb-toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:9996;padding:10px 16px;border-radius:8px;"+
       "background:var(--panel,#131E27);border:1px solid var(--line,#2E4152);color:var(--paper,#C4D6D4);font:400 13px/1.4 var(--body,system-ui,sans-serif);"+
       "box-shadow:0 8px 28px rgba(0,0,0,.5)}"+
+    /* Fenêtre de bienvenue : grande, sombre, trois cartes illustrées reliées par des flèches. */
+    ".onb-modal.rich{width:min(1080px,100%);position:relative;overflow:auto;padding:34px 40px 28px;border-radius:16px;border-color:rgba(95,220,208,.22);"+
+      "background:radial-gradient(130% 90% at 108% -18%,rgba(60,120,190,.36) 0,rgba(20,40,70,.0) 46%),linear-gradient(160deg,#101B27 0,#0B131B 100%)}"+
+    ".onb-modal.rich:before{content:'';position:absolute;right:-8%;top:-34%;width:62%;aspect-ratio:1;border-radius:50%;pointer-events:none;"+
+      "background:radial-gradient(circle at 30% 30%,rgba(120,190,255,.20),rgba(30,70,120,.10) 45%,transparent 66%);border-top:1px solid rgba(150,210,255,.35)}"+
+    ".onb-modal.rich>*{position:relative}"+
+    ".onb-brand{display:flex;align-items:center;gap:10px;margin:0 0 22px;font:500 26px/1 var(--display,system-ui,sans-serif);letter-spacing:.06em;color:#fff}"+
+    ".onb-brand img{width:34px;height:34px}"+
+    ".onb-modal.rich h2{font:600 38px/1.1 var(--display,system-ui,sans-serif);color:#fff;margin:0 0 12px}"+
+    ".onb-modal.rich p{max-width:760px;font-size:17px;line-height:1.6;color:#B9CCE0;margin:0 0 26px}"+
+    ".onb-x{position:absolute!important;right:18px;top:16px;width:36px;height:36px;border-radius:50%;border:0;background:transparent;color:#B9CCE0;font-size:24px;line-height:1;cursor:pointer}"+
+    ".onb-x:hover{color:#fff;background:rgba(255,255,255,.08)}"+
+    ".onb-flow{display:flex;align-items:stretch;gap:10px;margin:0 0 26px}"+
+    ".onb-flow .onb-arrow{flex:none;align-self:center;color:#7FA6C8;font-size:22px}"+
+    ".onb-card{flex:1 1 0;min-width:0;border:1px solid rgba(120,160,200,.22);border-radius:14px;padding:16px;background:rgba(14,24,36,.72);display:flex;flex-direction:column;gap:14px}"+
+    ".onb-card .vis{height:150px;display:flex;align-items:center;gap:10px;overflow:hidden}"+
+    ".onb-card .hd{display:flex;align-items:center;gap:12px}"+
+    ".onb-card .num{flex:none;width:34px;height:34px;border-radius:50%;background:var(--pixel,#5FDCD0);color:#07131A;font:700 17px/34px var(--display,system-ui,sans-serif);text-align:center}"+
+    ".onb-card .tt{font:600 21px/1.1 var(--display,system-ui,sans-serif);color:#fff}"+
+    ".onb-card .dd{font-size:14.5px;line-height:1.5;color:#B9CCE0}"+
+    ".onb-chips{display:flex;flex-direction:column;gap:7px;width:100%}"+
+    ".onb-chip{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:7px;background:rgba(40,60,82,.55);color:#C9D8E8;font-size:13.5px}"+
+    ".onb-chip i{width:14px;height:14px;border:1.5px solid #8FB0CF;border-radius:50%;flex:none}"+
+    ".onb-chip:nth-child(2) i{border-radius:3px}.onb-chip:nth-child(3) i{border-radius:2px 8px 2px 8px}"+
+    ".onb-form{flex:1;border-radius:8px;background:rgba(24,38,54,.9);padding:10px 12px;font-size:12px;color:#C9D8E8;display:flex;flex-direction:column;gap:6px}"+
+    ".onb-form b{font-weight:600;font-size:12px;color:#fff}"+
+    ".onb-form div{display:flex;justify-content:space-between;gap:8px;color:#9DB4CB}.onb-form div span:last-child{color:#E3EEF8;font-family:var(--mono,monospace)}"+
+    ".onb-form em{font-style:normal;margin-top:2px;text-align:center;border-radius:5px;background:var(--pixel,#5FDCD0);color:#07131A;font-weight:600;padding:5px 6px}"+
+    ".onb-map{width:34%;align-self:stretch;border-radius:8px;background:linear-gradient(135deg,#17415a 0,#285a66 38%,#5a6a4a 62%,#1b3550 100%)}"+
+    ".onb-split{flex:1;align-self:stretch;border-radius:8px;position:relative;overflow:hidden;background:linear-gradient(135deg,#1b3550,#285a66 40%,#5a6a4a 70%,#1b3550)}"+
+    ".onb-split:before{content:'';position:absolute;inset:0 50% 0 0;background:rgba(170,175,180,.55);backdrop-filter:blur(3px)}"+
+    ".onb-split:after{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;background:#fff}"+
+    ".onb-metrics{width:46%;display:flex;flex-direction:column;gap:6px;justify-content:center}"+
+    ".onb-metrics div{border-radius:6px;background:rgba(24,38,54,.9);padding:6px 9px;font-size:11px;color:#C9D8E8}"+
+    ".onb-metrics div span{display:flex;justify-content:space-between;gap:6px;margin-bottom:4px;white-space:nowrap}"+
+    ".onb-metrics div i{display:block;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--pixel,#5FDCD0) var(--w),rgba(255,255,255,.12) var(--w))}"+
+    ".onb-modal.rich .onb-actions{border-top:1px solid rgba(120,160,200,.2);padding-top:20px;margin-top:0}"+
+    ".onb-modal.rich .onb-btn{font-size:16px;padding:14px 22px;border-radius:9px;border-color:rgba(160,200,235,.55);color:#fff}"+
+    ".onb-modal.rich .onb-btn.primary{background:var(--pixel,#5FDCD0);border-color:var(--pixel,#5FDCD0);color:#07131A}"+
+    "@media (max-width:860px){.onb-flow{flex-direction:column}.onb-flow .onb-arrow{transform:rotate(90deg)}.onb-modal.rich{padding:26px 20px 20px}.onb-modal.rich h2{font-size:30px}}"+
     "@media (max-width:640px){.onb-steps{grid-template-columns:1fr}.onb-modal{padding:22px 18px 18px}}"+
     "@media (prefers-reduced-motion:reduce){.onb-ring{transition:none}}";
   document.head.appendChild(css);
@@ -124,17 +164,46 @@
 
   // ------------------------------------------------------- fenêtres modales
   // Fenêtre simple (bienvenue, fin) : titre, texte, éventuellement une liste, boutons.
+  // Petites illustrations de la fenêtre de bienvenue (gabarit simple, aucune image à charger).
+  function welcomeVisual(i){
+    if(i === 0) return "<div class='onb-chips'><div class='onb-chip'><i></i>" + tr("onb.v.optics") + "</div><div class='onb-chip'><i></i>" + tr("onb.v.detector") + "</div><div class='onb-chip'><i></i>" + tr("onb.v.electronics") + "</div></div>";
+    if(i === 1) return "<div class='onb-form'><b>" + tr("onb.v.conditions") + "</b><div><span>" + tr("onb.v.date") + "</span><span>2025-06-12</span></div><div><span>" + tr("onb.v.sun") + "</span><span>10:24</span></div><div><span>" + tr("onb.v.angle") + "</span><span>Nadir</span></div><em>" + tr("onb.v.run") + "</em></div><div class='onb-map'></div>";
+    return "<div class='onb-split'></div><div class='onb-metrics'><div><span><b>SNR</b><b>42.8</b></span><i style='--w:72%'></i></div><div><span><b>" + tr("onb.v.res") + "</b><b>1.5 m</b></span><i style='--w:55%'></i></div><div><span><b>Full well</b><b>78k e⁻</b></span><i style='--w:34%'></i></div></div>";
+  }
+
   function openModal(opts){
     var scrim = el("div", "onb-scrim");
     var box = el("div", "onb-modal");
     box.setAttribute("role", "dialog");
     box.setAttribute("aria-modal", "true");
+    var rich = !!opts.steps;
+    if(rich){
+      box.className += " rich";
+      var brand = el("div", "onb-brand");
+      var logo = el("img"); logo.src = "nysa-fleur.svg"; logo.alt = ""; logo.setAttribute("aria-hidden", "true");
+      brand.appendChild(logo); brand.appendChild(el("span", null, "Nysa"));
+      box.appendChild(brand);
+    }
     var h = el("h2", null, opts.title);
     h.id = "onbModalTitle";
     box.setAttribute("aria-labelledby", h.id);
     box.appendChild(h);
     box.appendChild(el("p", null, opts.text));
-    if(opts.steps){
+    if(rich){
+      var flow = el("div", "onb-flow");
+      opts.steps.forEach(function(st, i){
+        if(i) flow.appendChild(el("span", "onb-arrow", "→"));
+        var card = el("div", "onb-card");
+        var vis = el("div", "vis"); vis.innerHTML = welcomeVisual(i); card.appendChild(vis);
+        var hd = el("div", "hd"); hd.appendChild(el("span", "num", String(i + 1))); hd.appendChild(el("span", "tt", st.title));
+        card.appendChild(hd); card.appendChild(el("div", "dd", st.desc));
+        flow.appendChild(card);
+      });
+      box.appendChild(flow);
+      var x = el("button", "onb-x", "×"); x.type = "button"; x.setAttribute("aria-label", tr("onb.quit"));
+      x.addEventListener("click", function(){ close(); if(opts.onEscape) opts.onEscape(); });
+      box.appendChild(x);
+    } else if(opts.steps){
       var ul = el("ul", "onb-steps");
       opts.steps.forEach(function(s, i){
         var li = el("li");

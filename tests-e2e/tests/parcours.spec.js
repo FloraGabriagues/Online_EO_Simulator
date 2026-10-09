@@ -745,10 +745,25 @@ test.describe.serial("Tutoriel d'accueil", () => {
     await step(8);
     await link.click();
     await step(9);                                                        // image simulée + curseur
-    const box = await page.locator("#compareWrap").boundingBox();
-    await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
+    // Le défilement vers l'image est animé : on attend qu'il soit fini, puis on cherche un point de
+    // l'image réellement visible et non recouvert (ni par la bulle, ni hors écran).
+    await page.locator("#compareWrap").scrollIntoViewIfNeeded();
+    await page.waitForTimeout(1200);
+    const pt = await page.evaluate(() => {
+      const w = document.getElementById("compareWrap");
+      const r = w.getBoundingClientRect();
+      for (let fy = 0.5; fy <= 0.95; fy += 0.15) for (const fx of [0.4, 0.3, 0.2]) {
+        const x = r.left + r.width * fx, y = r.top + r.height * fy;
+        if (x < 0 || y < 0 || x > innerWidth - r.width * 0.35 || y > innerHeight) continue;
+        const e = document.elementFromPoint(x, y);
+        if (e && w.contains(e)) return { x, y, w: r.width };
+      }
+      return null;
+    });
+    expect(pt, "un point de l'image doit être visible et libre").not.toBeNull();
+    await page.mouse.move(pt.x, pt.y);
     await page.mouse.down();
-    await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.5, { steps: 8 });
+    await page.mouse.move(pt.x + pt.w * 0.3, pt.y, { steps: 8 });
     await page.mouse.up();
     await page.waitForTimeout(2000);
     await step(9);                                                        // 5 s pour jouer avec le curseur : pas encore passé à la suite
