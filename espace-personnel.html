@@ -800,7 +800,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   }
   function updateCarousel(){
     var pages = carPages();
-    var page = Math.min(pages - 1, Math.round(list.scrollLeft / (list.clientWidth + 14)));
+    var atEnd = list.scrollLeft + list.clientWidth >= list.scrollWidth - 4;
+    // La dernière page est souvent plus courte (4 cartes pour 3 visibles) : en fin de course, on allume le dernier point.
+    var page = atEnd ? pages - 1 : Math.min(pages - 1, Math.round(list.scrollLeft / (list.clientWidth + 14)));
     var multi = pages > 1;
     carPrev.disabled = list.scrollLeft < 4;
     carNext.disabled = list.scrollLeft + list.clientWidth >= list.scrollWidth - 4;

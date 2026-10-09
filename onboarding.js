@@ -69,6 +69,8 @@
     ".onb-dim{position:fixed;left:0;top:0;width:100%;height:100%;z-index:9970;pointer-events:none}"+
     ".onb-ring{box-sizing:border-box;position:fixed;z-index:9980;pointer-events:none;border-radius:8px;border:2px solid var(--photon,#F5AC57);"+
       "box-shadow:0 0 0 4px rgba(245,172,87,.22),0 0 26px rgba(245,172,87,.35);transition:left .15s,top .15s,width .15s,height .15s}"+
+    "@keyframes onbNudge{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}"+
+    ".onb-bubble.onb-nudge{animation:onbNudge .4s ease}"+
     ".onb-bubble{box-sizing:border-box;position:fixed;z-index:9990;width:min(340px,calc(100vw - 24px));padding:14px 16px 12px;border-radius:10px;"+
       "background:var(--panel,#131E27);color:var(--paper,#C4D6D4);border:1px solid var(--photon,#F5AC57);"+
       "box-shadow:0 10px 36px rgba(0,0,0,.55);font:400 13.5px/1.55 var(--body,system-ui,sans-serif)}"+
@@ -268,16 +270,19 @@
   }
 
   var STEPS = {
-    inst0:   { targets: function(){ return [$("a.simbtn[href='creer-instrument.html']"), $("#instList .instcard:not(.empty)")]; },
+    inst0:   { allow: function(){ return []; },   // simple présentation : on ne quitte pas la page
+               targets: function(){ return [$("a.simbtn[href='creer-instrument.html']"), $("#instList .instcard:not(.empty)")]; },
                text: function(){ return $("#instList .instcard:not(.empty)") ? "onb.s0" : "onb.s0.none"; }, next: "nav" },
     nav:     { targets: navTargets, text: function(){ return "onb.s1"; } },
     scene:   { targets: function(){ return scenePicked ? [$("#sceneGrid"), $("#panelActionBtn")] : [$("#sceneGrid")]; },
                text: function(){ return scenePicked ? "onb.s2b" : "onb.s2"; } },
-    inst:    { targets: function(){ return [$("#instList"), $("#panelActionBtn")]; },
+    inst:    { allow: function(){ return [$("#instList .instoption:not(.draft)"), $("#panelActionBtn")]; },   // pas de brouillon : il ouvre l'éditeur
+               targets: function(){ return [$("#instList"), $("#panelActionBtn")]; },
                text: function(){ return (typeof window.selectedInstIdx === "number" && window.selectedInstIdx < 0) ? "onb.s3.none" : "onb.s3"; } },
     cond:    { targets: function(){ return [$(".acq-fields")]; }, text: function(){ return "onb.s4"; }, next: "launch" },
     launch:  { targets: function(){ return [$("#panelActionBtn")]; }, text: function(){ return "onb.s5"; } },
-    run:     { targets: function(){ return [$(".statuspanel")]; }, text: runTextKey,
+    run:     { allow: function(){ return []; },   // le calcul tourne : on ne l'interrompt pas
+               targets: function(){ return [$(".statuspanel")]; }, text: runTextKey,
                extra: function(key){ return key === "onb.s6" ? ["onb.s6.c1", "onb.s6.c2", "onb.s6.c3", "onb.s6.c4"] : null; } },
     viewres: { targets: function(){ return [$(".viewresultsbtn")]; }, text: function(){ return "onb.s7"; } },
     // Page du résultat : d'abord l'image (avec le curseur), puis les graphes, onglet par onglet.
@@ -323,7 +328,36 @@
     });
   }
 
+  // ---- Verrou : pendant une étape, seuls les éléments visés (ou ceux que l'étape autorise) répondent.
+  // Un clic ailleurs est ignoré, et la bulle « tremble » pour rappeler ce qu'il faut faire.
+  // Le choix de la scène (image source) reste libre, comme l'instrument de la liste.
+  var allowEls = null;   // null : pas de verrou
+  function inAllowed(node){
+    if(!node || !node.closest) return false;
+    if(node.closest(".onb-bubble, .onb-modal, .onb-backdrop")) return true;
+    if(!allowEls) return true;
+    return allowEls.some(function(a){ return a && a.contains(node); });
+  }
+  function nudge(){
+    if(!bubble) return;
+    bubble.classList.remove("onb-nudge"); void bubble.offsetWidth; bubble.classList.add("onb-nudge");
+  }
+  function guard(e){
+    if(!allowEls) return;
+    if(inAllowed(e.target)) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    if(e.type === "click") nudge();
+  }
+  ["click", "dblclick", "auxclick", "mousedown", "pointerdown", "touchstart", "submit"].forEach(function(ev){
+    document.addEventListener(ev, guard, true);
+  });
+  document.addEventListener("keydown", function(e){
+    if(!allowEls || (e.key !== "Enter" && e.key !== " ")) return;
+    if(!inAllowed(e.target)) { e.preventDefault(); e.stopPropagation(); }
+  }, true);
+
   function clearUi(){
+    allowEls = null;
     rings.forEach(function(r){ r.remove(); });
     rings = [];
     if(dim){ dim.remove(); dim = null; holes = []; }
@@ -390,6 +424,8 @@
     var textKey = def.text();
     var key = id + "|" + textKey;
     var primary = targets[0];
+    allowEls = (def.allow ? def.allow() : targets).filter(Boolean);
+    if(def.allow && !allowEls.length) allowEls = [];
 
     // Cadres de surlignage (un par élément).
     while(rings.length > targets.length){ rings.pop().remove(); }
