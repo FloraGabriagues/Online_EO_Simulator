@@ -42,6 +42,11 @@ var I18N = {
   "settings.lang.saving": { fr: "Enregistrement…", en: "Saving…" },
   "settings.lang.saved":  { fr: "Langue enregistrée", en: "Language saved" },
   "settings.lang.error":  { fr: "Enregistrement impossible. Réessayez.", en: "Could not save. Please try again." },
+  "sim.banner":          { fr: "Vue simulée : {plan}", en: "Simulated view: {plan}" },
+  "sim.exit":            { fr: "Quitter la simulation", en: "Exit simulation" },
+  "sim.plan.free":       { fr: "gratuit", en: "free" },
+  "sim.plan.beta":       { fr: "bêta", en: "beta" },
+  "sim.plan.individuel": { fr: "individuel", en: "individual" },
   "demo.h1":             { fr: "Simulateur d'imagerie <span class=\"cool\">multispectrale</span>",
                            en: "<span class=\"cool\">Multispectral</span> imaging simulator" },
 

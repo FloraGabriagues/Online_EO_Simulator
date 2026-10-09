@@ -17,6 +17,10 @@
   if(typeof isAdminAccount === "function"){
     isAdminAccount().then(function(ok){ var li = document.getElementById("navAdminItem"); if(li && ok) li.hidden = false; });
   }
+  // Un administrateur qui simule un plan (page Administration, « Voir comme ») le voit sur toutes les pages à menu.
+  if(typeof simulatedPlan === "function"){
+    simulatedPlan().then(function(p){ if(p) showSimulationBanner(p); });
+  }
   var tr = (typeof t === "function") ? t : function(k){ return k === "nav.menu" ? "Menu" : "Fermer le menu"; };
   var NARROW = "(max-width: 900px)";
 

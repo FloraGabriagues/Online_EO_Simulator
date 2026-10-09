@@ -1374,6 +1374,7 @@ var accessKnown = false;    // false tant que la lecture n'a pas abouti : on ne 
 function hasSimAccess(){
   if(!accessKnown) return true;
   if(!entitlement) return false;
+  if(entitlement.isAdmin && !entitlement.simulated) return true;   // administrateur sans simulation : accès complet, comme le serveur
   if(PAID_PLANS.indexOf(entitlement.plan) < 0 || entitlement.subscription_status !== "active") return false;
   if(entitlement.current_period_end
      && new Date(entitlement.current_period_end).getTime() + PERIOD_GRACE_MS <= Date.now()) return false;
@@ -1396,10 +1397,10 @@ async function loadEntitlement(){
   try {
     var { data, error } = await supabaseClient
       .from("account_entitlements")
-      .select("plan, subscription_status, current_period_end")
+      .select("plan, subscription_status, current_period_end, is_admin, simulated_plan")
       .maybeSingle();
     if(error) throw error;
-    entitlement = data || null;
+    entitlement = data ? applySimulatedPlan(data) : null;
     accessKnown = true;
   } catch(e){
     // Lecture impossible (aperçu, réseau) : on n'affiche rien, le serveur tranchera.

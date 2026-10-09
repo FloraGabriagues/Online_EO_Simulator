@@ -114,24 +114,88 @@ async function signOut() {
 }
 
 /**
- * Le compte connecté a-t-il le rôle administrateur (plan « admin » actif) ?
- * Lu avec son propre jeton (la RLS ne lui rend que sa ligne), gardé le temps de la page.
- * ATTENTION : sert seulement à AFFICHER les outils d'administration. Le vrai contrôle est fait par le
- * serveur de calcul (_require_admin dans main.py) et par la base (is_admin() dans les règles d'accès).
+ * Ligne d'abonnement du compte connecté (plan, statut, rôle administrateur, plan simulé), lue avec son
+ * propre jeton (la RLS ne lui rend que sa ligne) et gardée le temps de la page.
+ * ATTENTION : sert seulement à AFFICHER. Le vrai contrôle est fait par le serveur de calcul
+ * (_require_admin et _require_active_plan dans main.py) et par la base (is_admin() dans les règles d'accès).
  */
-let _isAdminCache = null;
-async function isAdminAccount() {
-  if (_isAdminCache !== null) return _isAdminCache;
-  try {
-    const { data: { session } } = await supabaseClient.auth.getSession();
-    if (!session) return (_isAdminCache = false);
-    const { data } = await supabaseClient
-      .from("account_entitlements").select("plan, subscription_status").eq("account_id", session.user.id).maybeSingle();
-    _isAdminCache = !!(data && data.plan === "admin" && data.subscription_status === "active");
-  } catch (e) {
-    _isAdminCache = false;
+let _entRowPromise = null;
+function _myEntitlementRow() {
+  if (!_entRowPromise) {
+    _entRowPromise = (async () => {
+      try {
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (!session) return null;
+        const { data } = await supabaseClient
+          .from("account_entitlements")
+          .select("plan, subscription_status, is_admin, simulated_plan")
+          .eq("account_id", session.user.id).maybeSingle();
+        return data || null;
+      } catch (e) { return null; }
+    })();
   }
-  return _isAdminCache;
+  return _entRowPromise;
+}
+
+// Même règle que is_admin() en SQL et _is_admin_row dans main.py : colonne is_admin, ou ancien plan « admin » actif.
+function _isAdminRow(row) {
+  return !!row && (row.is_admin === true || (row.plan === "admin" && row.subscription_status === "active"));
+}
+
+/** Le compte connecté a-t-il le rôle administrateur ? (indépendant du plan et de la simulation) */
+async function isAdminAccount() { return _isAdminRow(await _myEntitlementRow()); }
+
+/** Plan simulé par l'administrateur : "free", "beta", "individuel", ou null (pas de simulation). */
+async function simulatedPlan() {
+  const row = await _myEntitlementRow();
+  return _isAdminRow(row) ? (row.simulated_plan || null) : null;
+}
+
+/** Choisit le plan simulé (null = arrêter la simulation). Renvoie l'erreur, ou null si c'est bon. */
+async function setSimulatedPlan(plan) {
+  const { error } = await supabaseClient.rpc("set_simulated_plan", { p: plan });
+  _entRowPromise = null;
+  return error || null;
+}
+
+/**
+ * Ligne d'abonnement « effective » : pour un administrateur qui simule un plan (page Administration,
+ * « Voir comme »), la ligne est remplacée par celle d'un compte de ce plan, comme le fait le serveur
+ * (main.py, _require_active_plan). Sans simulation, la ligne est inchangée. Ajoute isAdmin et simulated.
+ */
+function applySimulatedPlan(row) {
+  if (!row) return row;
+  const isAdmin = _isAdminRow(row);
+  const sim = isAdmin ? (row.simulated_plan || null) : null;
+  const base = Object.assign({}, row, { isAdmin: isAdmin, simulated: sim });
+  if (!sim) return base;
+  const none = { stripe_subscription_id: null, current_period_end: null, cancel_at_period_end: false, subscription_ended_at: null };
+  if (sim === "free") return Object.assign(base, none, { plan: "free", subscription_status: "inactive", beta_access: false });
+  if (sim === "beta") return Object.assign(base, none, { plan: "individuel", subscription_status: "active", beta_access: true });
+  return Object.assign(base, none, { plan: "individuel", subscription_status: "active", beta_access: false });
+}
+
+/** Bandeau « Vue simulée » en bas de l'écran, avec un bouton pour quitter la simulation. */
+function showSimulationBanner(plan) {
+  const old = document.getElementById("simBar");
+  if (old) old.remove();
+  if (!plan) return;
+  const bar = document.createElement("div");
+  bar.id = "simBar";
+  bar.setAttribute("role", "status");
+  bar.style.cssText = "position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:90;display:flex;gap:12px;align-items:center;padding:8px 14px;border-radius:999px;background:var(--photon,#F5AC57);color:#0B1116;font:600 12px/1.2 var(--mono,monospace);box-shadow:0 4px 18px rgba(0,0,0,.4)";
+  const txt = document.createElement("span");
+  txt.textContent = t("sim.banner", { plan: t("sim.plan." + plan) });
+  const btn = document.createElement("button");
+  btn.type = "button";
+  btn.textContent = t("sim.exit");
+  btn.style.cssText = "border:1px solid #0B1116;background:transparent;color:inherit;border-radius:999px;padding:3px 10px;cursor:pointer;font:inherit";
+  btn.addEventListener("click", async () => {
+    btn.disabled = true;
+    if (!(await setSimulatedPlan(null))) window.location.reload(); else btn.disabled = false;
+  });
+  bar.append(txt, btn);
+  document.body.appendChild(bar);
 }
 
 /**

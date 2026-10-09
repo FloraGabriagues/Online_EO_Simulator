@@ -909,7 +909,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     .select("*") // toute la ligne : si la colonne cancel_at_period_end n'existe pas encore, la lecture ne casse pas
     .maybeSingle();
   if(entErr) console.error("Erreur chargement abonnement :", entErr);
-  if(entRow) entitlement = entRow;
+  if(entRow) entitlement = applySimulatedPlan(entRow);
 
   var overlay = document.getElementById("settingsOverlay");
   var planBadge = document.getElementById("settingsPlanBadge");
@@ -1050,6 +1050,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       subBtn.textContent = t("sub.subscribe");   // 05/10/2026 — plus de prix affiché (tarif décidé après la bêta)
       subBtn.className = "mbtn primary";
     }
+    // Vue simulée (page Administration) : pas de vrai paiement ni de portail Stripe sur le compte admin.
+    if(entitlement.simulated) subBtn.hidden = true;
     subBtn.disabled = false;
   }
   renderSubscription();
