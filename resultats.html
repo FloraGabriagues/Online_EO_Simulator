@@ -601,7 +601,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
               </div>
 
               <label class="checkrow" id="satRow"><input type="checkbox" id="satChk"> <span data-i18n="res.sat">Afficher les pixels saturés (magenta)</span></label>
-              <p class="sathint" id="satHint" data-i18n="res.sat.hint">Disponible sur une bande séparée (Rouge, Vert ou Bleu) : sur le RGB, la saturation n'a pas de sens.</p>
+              <p class="sathint" id="satHint">Disponible sur une bande séparée (Rouge, Vert ou Bleu) : sur le RGB, la saturation n'a pas de sens.</p>
 
               <div class="apanelbtns">
                 <button class="srcbtn" type="button" id="whitePointBtn" style="margin-top:0">
@@ -1042,6 +1042,7 @@ async function deleteResult(r){
   // 07/10/2026 : l'image source du crop (source_image_path) était oubliée ici : elle restait stockée après
   // la suppression du résultat. Trouvé par le test automatique, qui voyait le stockage grossir.
   if(r.source_image_path) paths.push(r.source_image_path);
+  if(r.diagnostics && r.diagnostics.dn && r.diagnostics.dn.rgb_path) paths.push(r.diagnostics.dn.rgb_path);
   var bands = (r.diagnostics && r.diagnostics.bands) || {};
   for(var bandName in bands){
     for(var key in bands[bandName]){
@@ -1104,6 +1105,7 @@ async function deleteResult(r){
       return base;
     }
     var mainKey = await grab(r.image_path), srcKey = await grab(r.source_image_path);
+    if(diag.dn && diag.dn.rgb_path) diag.dn.rgb_path = await grab(diag.dn.rgb_path);
     var bands = diag.bands || {};
     for(var bn in bands) for(var k in bands[bn]){
       if(k.endsWith("_path") && bands[bn][k]) bands[bn][k] = await grab(bands[bn][k]);
@@ -1441,11 +1443,23 @@ async function deleteResult(r){
     [{key:"mtf_at_nyquist", label:t("res.sort.mtf"), dec:3}],
     ["psf_png_b64", "mtf_png_b64", "pupil_png_b64"],
   );
+  // Saturation (09/10/2026) : valeurs à plat pour les lignes du panneau SNR (résultats récents seulement).
+  for(var sbn in diagBands){
+    var sd = diagBands[sbn].saturation;
+    if(sd){
+      diagBands[sbn].sat_pct = sd.pct; diagBands[sbn].sat_fw = sd.n_sat_full_well;
+      diagBands[sbn].sat_adc = sd.n_sat_adc; diagBands[sbn].sat_tdi = sd.n_sat_tdi;
+    }
+  }
   document.getElementById("snrContent").innerHTML = await buildDiagPanel(
     "SNR",
     [
       {key:"snr_mean", label:t("res.snr_mean"), dec:1},
       {key:"fill_pct", label:t("res.fill"), unit:"%", dec:1},
+      {key:"sat_pct", label:t("res.satpct"), unit:" %", dec:2},
+      {key:"sat_fw", label:t("res.sat.fw"), dec:0},
+      {key:"sat_adc", label:t("res.sat.adc"), dec:0},
+      {key:"sat_tdi", label:t("res.sat.tdi"), dec:0},
       {key:"S_ref_e", label:"S_ref", unit:" e⁻", dec:0},
     ],
     ["snr_regimes_png_b64", "snr_noise_budget_png_b64", "snr_map_png_b64",
@@ -1516,6 +1530,7 @@ async function deleteResult(r){
         var paths = [];
         if(result.image_path) paths.push(result.image_path);
         if(result.source_image_path) paths.push(result.source_image_path);
+        if(result.diagnostics && result.diagnostics.dn && result.diagnostics.dn.rgb_path) paths.push(result.diagnostics.dn.rgb_path);
         var bands = (result.diagnostics && result.diagnostics.bands) || {};
         for(var bn in bands) for(var k in bands[bn]) if(k.endsWith("_path") && bands[bn][k]) paths.push(bands[bn][k]);
         var failed = 0;
@@ -1655,9 +1670,35 @@ async function deleteResult(r){
   simImgObj.crossOrigin = "anonymous";
   var srcImgObj = new Image();
   srcImgObj.crossOrigin = "anonymous";
+  // Cartes des pixels saturés, une par bande (renvoyées par le serveur, 09/10/2026) : la saturation ne se lit
+  // pas sur l'image 8 bits (étirée p2/p98). Absentes des résultats lancés avant ce changement.
+  var satMasks = {};   // indice de canal (0 R, 1 G, 2 B) -> { w, h, data }
+  var SAT_BAND_NAMES = ["Rouge", "Vert", "Bleu"];
+  function loadSatMask(channel){
+    var d = diagBands[SAT_BAND_NAMES[channel]];
+    var path = d && d.saturation_mask_png_path;
+    if(!path) return Promise.resolve();
+    return signedUrl(path).then(function(url){
+      if(!url) return;
+      return new Promise(function(res){
+        var im = new Image(); im.crossOrigin = "anonymous";
+        im.onload = function(){
+          try{
+            var c = document.createElement("canvas"); c.width = im.naturalWidth; c.height = im.naturalHeight;
+            var cx = c.getContext("2d"); cx.drawImage(im, 0, 0);
+            satMasks[channel] = { w: c.width, h: c.height, data: cx.getImageData(0, 0, c.width, c.height).data };
+          }catch(e){ console.error("Carte de saturation illisible :", e); }
+          res();
+        };
+        im.onerror = function(){ res(); };
+        im.src = url;
+      });
+    });
+  }
   var imagesReady = Promise.all([
     new Promise(function(res){ simImgObj.onload = res; simImgObj.onerror = res; simImgObj.src = imgUrl; }),
     new Promise(function(res){ srcImgObj.onload = res; srcImgObj.onerror = res; srcImgObj.src = sourceUrl; }),
+    loadSatMask(0), loadSatMask(1), loadSatMask(2),
   ]);
 
   // ---- Étirement de contraste p2/p98 : calcule les percentiles 2/98 par
@@ -1715,8 +1756,13 @@ async function deleteResult(r){
         var r = d[i], g = d[i+1], b = d[i+2];
         // Saturation mesurée sur l'image brute, AVANT point blanc et étirement : l'étirement p2/p98 ramène
         // par construction les 2 % de pixels les plus clairs à 255, ce qui les aurait tous affichés en magenta.
-        // Seulement sur une bande séparée (sur le RGB, « saturé » ne veut rien dire) : on teste le canal de la bande.
-        var saturated = opts.showSaturated && opts.channel != null && [r,g,b][opts.channel] >= 253;
+        // Seulement sur une bande séparée (sur le RGB, « saturé » ne veut rien dire). Le pixel est saturé quand le
+        // serveur l'a marqué (puits, ADC ou accumulateur TDI) : l'image 8 bits étirée ne permet pas de le déduire.
+        var saturated = false;
+        if(opts.showSaturated && opts.channel != null){
+          var sm = satMasks[opts.channel];
+          saturated = !!sm && sm.w === canvas.width && sm.h === canvas.height && sm.data[i] > 127;
+        }
         if(gains){ r = Math.min(255, r * gains.r); g = Math.min(255, g * gains.g); b = Math.min(255, b * gains.b); }
         if(stretch){ r = stretchVal(r, stretch.r); g = stretchVal(g, stretch.g); b = stretchVal(b, stretch.b); }
         if(opts.channel != null){ var v = [r,g,b][opts.channel]; r = g = b = v; }
@@ -1776,10 +1822,13 @@ async function deleteResult(r){
   function syncSatControl(){
     var chk = document.getElementById("satChk"), row = document.getElementById("satRow"), hint = document.getElementById("satHint");
     var rgb = adj.band === "RGB";
-    if(rgb){ chk.checked = false; adj.showSat = false; }
-    chk.disabled = rgb;
-    row.classList.toggle("disabled", rgb);
-    hint.hidden = !rgb;
+    var noMask = Object.keys(satMasks).length === 0;   // résultat lancé avant l'ajout des cartes de saturation
+    var off = rgb || noMask;
+    if(off){ chk.checked = false; adj.showSat = false; }
+    chk.disabled = off;
+    row.classList.toggle("disabled", off);
+    hint.hidden = !off;
+    hint.textContent = t(rgb ? "res.sat.hint" : "res.sat.nomask");
   }
   function selectBand(key){
     adj.band = key;
@@ -1852,23 +1901,36 @@ async function deleteResult(r){
 
   // ---- Téléchargement (07/10/2026) ----
   // Le bouton télécharge ce qui est sélectionné dans les vignettes : la composition RGB ou une bande.
-  //   - RGB : les octets du fichier calculé par le serveur, tels quels (aucun réencodage, aucun réglage d'affichage) ;
-  //   - bande : le canal correspondant de ce même fichier, mêmes dimensions, valeurs identiques, enregistré en
-  //     PNG à un seul canal de 8 bits (niveaux de gris), sans aucune perte ;
-  //   - nom : bande, nom du résultat, date, par exemple Rouge_essai-1_2026-10-07_1120.png.
-  // Les images du serveur sont des PNG RGB de 8 bits : les DN d'origine ne sont pas conservés dans le résultat.
+  //   - résultats récents : PNG 16 bits contenant les DN bruts de l'électronique de l'instrument (valeur numérique
+  //     = code du convertisseur, sans gain ni étirement), le nombre de bits réel étant indiqué dans le nom du fichier ;
+  //   - anciens résultats (sans DN enregistrés) : repli sur l'image 8 bits étirée du serveur (RGB tel quel, bande = canal).
+  // Nom : bande, nom du résultat, date, bits, par exemple Rouge_essai-1_2026-10-07_1120_DN12bit.png.
   function bandDisplayName(key){ return key === "RGB" ? "RGB" : tBand({R:"Rouge", G:"Vert", B:"Bleu"}[key]); }
   function updateDownloadLabel(){
     var key = adj.band || "RGB";
-    document.getElementById("downloadLabel").textContent =
-      key === "RGB" ? t("res.download.rgb") : t("res.download.band", { band: bandDisplayName(key) });
+    var info = dnInfo(key);
+    document.getElementById("downloadLabel").textContent = info
+      ? (key === "RGB" ? t("res.download.rgb_dn", { bits: info.bits }) : t("res.download.band_dn", { band: bandDisplayName(key), bits: info.bits }))
+      : (key === "RGB" ? t("res.download.rgb") : t("res.download.band", { band: bandDisplayName(key) }));
+  }
+  // Fichier DN brut disponible pour la sélection courante ? (chemin + nombre de bits ADC)
+  function dnInfo(key){
+    var dn = result && result.diagnostics && result.diagnostics.dn;
+    if(key === "RGB"){
+      if(dn && dn.rgb_path) return { path: dn.rgb_path, bits: dn.bits_adc || dn.bits_tdi };
+      return null;
+    }
+    var bd = diagBands[key];
+    if(bd && bd.dn_png16_path) return { path: bd.dn_png16_path, bits: bd.dn_bits || (dn && (dn.bits_adc || dn.bits_tdi)) };
+    return null;
   }
   function fileSlug(s){
     return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
   }
   function downloadName(key){
     var name = fileSlug((result && result.name) || tScene(sceneName)) || "resultat";
-    return fileSlug(bandDisplayName(key)) + "_" + name + "_" + createdLabel + ".png";
+    var info = dnInfo(key);
+    return fileSlug(bandDisplayName(key)) + "_" + name + "_" + createdLabel + (info ? "_DN" + info.bits + "bit" : "") + ".png";
   }
   var CRC_TABLE = null;
   function crc32(buf){
@@ -1930,6 +1992,14 @@ async function deleteResult(r){
   document.getElementById("downloadBtn").addEventListener("click", async function(){
     var key = adj.band || "RGB";
     try{
+      var info = dnInfo(key);
+      if(info){
+        var sg = await supabaseClient.storage.from("results").createSignedUrl(info.path, 600);
+        if(!sg.error && sg.data){
+          saveBlob(await (await fetch(sg.data.signedUrl)).blob(), downloadName(key));
+          return;
+        }
+      }
       var blob = await (await fetch(imgUrl)).blob();
       saveBlob(key === "RGB" ? blob : await extractBandPng(blob, CHANNEL_IDX[key]), downloadName(key));
     }catch(e){
@@ -1938,7 +2008,7 @@ async function deleteResult(r){
     }
   });
 
-  imagesReady.then(updateDisplay);
+  imagesReady.then(function(){ syncSatControl(); updateDisplay(); });
 
   // ===================== Échelle graphique (05/10/2026) =====================
   // L'image simulée couvre toujours la même emprise au sol : 200 m de large

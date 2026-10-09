@@ -2159,7 +2159,7 @@ async function autoSaveResultInner(){
     // Graphiques par bande — mêmes clés que la réponse de /simulate_account
     var GRAPH_KEYS = ["pupil_png_b64","psf_png_b64","mtf_png_b64","snr_noise_maps_sim_png_b64",
       "snr_image_compare_png_b64","snr_regimes_png_b64","snr_noise_budget_png_b64",
-      "snr_map_png_b64","snr_histogram_png_b64"];
+      "snr_map_png_b64","snr_histogram_png_b64","saturated_mask_png_b64","dn_png16_b64"];
 
     var diagBands = {};
     for(var bandName in lastResult.bands){
@@ -2169,6 +2169,7 @@ async function autoSaveResultInner(){
         reflectance_mean: d.reflectance_mean, full_well_e: d.full_well_e, signal_mean_e: d.signal_mean_e,
         signal_median_e: d.signal_median_e, fill_pct: d.fill_pct, snr_mean: d.snr_mean,
         mtf_at_nyquist: d.mtf_at_nyquist, S_ref_e: d.S_ref_e, rgb_gain_applied: d.rgb_gain_applied,
+        saturation: d.saturation || null, dn_bits: d.dn_bits || null,
       };
       for(var gi = 0; gi < GRAPH_KEYS.length; gi++){
         var key = GRAPH_KEYS[gi];
@@ -2179,6 +2180,13 @@ async function autoSaveResultInner(){
         if(!gErr) bandDiag[key.replace("_b64", "_path")] = basePath + fname;
       }
       diagBands[bandName] = bandDiag;
+    }
+
+    // Image RGB en DN bruts (nombre de bits réel de l'électronique de l'instrument)
+    var dnDiag = null;
+    if(lastResult.dn_raw_png16_b64){
+      var { error: dnErr } = await supabaseClient.storage.from("results").upload(basePath + "dn_rgb.png", base64ToBlob(lastResult.dn_raw_png16_b64, "image/png"));
+      if(!dnErr) dnDiag = Object.assign({}, lastResult.dn_info || {}, { rgb_path: basePath + "dn_rgb.png" });
     }
 
     var { error: insErr } = await supabaseClient.from("saved_results").insert({
@@ -2195,7 +2203,7 @@ async function autoSaveResultInner(){
       }),
       image_path: basePath + "main.png",
       source_image_path: sourceImagePath,
-      diagnostics: { bands: diagBands },
+      diagnostics: { bands: diagBands, dn: dnDiag },
       logs: lastResult.logs || "",
     });
     if(insErr) throw insErr;
