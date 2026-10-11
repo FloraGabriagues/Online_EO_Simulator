@@ -130,6 +130,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .compareimg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;user-select:none;
   -webkit-user-drag:none;pointer-events:none}
 .compareimg.right{clip-path:inset(0 0 0 50%);will-change:clip-path}
+/* 11/10/2026 : l'image simulée est montrée telle quelle, pixel par pixel : aucun lissage à l'agrandissement
+   (le navigateur interpole sinon, et les pixels du capteur disparaissent). */
+#imgSim{image-rendering:pixelated}
 .comparehandle{position:absolute;top:0;bottom:0;left:0;margin-left:-1px;width:2px;background:var(--paper);
   cursor:ew-resize;z-index:4;will-change:transform;pointer-events:none}
 .comparehandle .grip{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
