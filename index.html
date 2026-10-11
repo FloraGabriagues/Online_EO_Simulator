@@ -243,8 +243,7 @@ details.adv .inner{margin-top:16px}
   border-top:none;box-shadow:0 1px 3px rgba(0,0,0,.7)}
 .scalebar .lab{font-family:var(--mono);font-size:12px;color:var(--paper);
   text-shadow:0 1px 3px rgba(0,0,0,.95);letter-spacing:.04em;text-align:center}
-.minibtns{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 6px}
-.minibtn{font:inherit;font-size:12.5px;color:var(--paper);background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:7px 11px;cursor:pointer}
+.minibtn{display:block;width:100%;margin:12px 0 6px;text-align:center;font:inherit;font-size:12.5px;color:var(--paper);background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:7px 11px;cursor:pointer}
 .minibtn:hover{border-color:var(--paper)}
 .demonote{margin:14px 0 0;padding:12px 14px;background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;font-size:12.5px;line-height:1.6;color:var(--muted)}
 .tbd-note{margin:0;font-size:12.5px;color:var(--muted)}
@@ -475,10 +474,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <p class="grouphead"><span class="dot cool"></span><span data-tx>Détecteur</span></p>
       <div id="g-detector"></div>
       </div>
-      <div class="minibtns">
-        <button type="button" class="minibtn" id="resetDemo" data-tx>Configuration de référence</button>
-        <button type="button" class="minibtn" id="newNoise" data-tx>Nouvelle réalisation du bruit</button>
-      </div>
+      <button type="button" class="minibtn" id="resetDemo" data-tx>Réinitialisation des valeurs</button>
       <p class="note" style="margin-top:2px">
         <a href="espace-personnel.html" style="color:var(--photon);text-decoration:none" data-tx>Plus de paramètres dans le simulateur complet →</a>
       </p>
@@ -886,7 +882,7 @@ function getLevel(f){
 }
 // Réalisation du bruit figée : le tirage aléatoire (un nombre par pixel et par canal) est mémorisé et réutilisé
 // à chaque rendu. Quand on bouge un curseur, seule l'amplitude du bruit change, pas son motif : on peut donc
-// comparer deux réglages. Le bouton "Nouvelle réalisation du bruit" change la graine.
+// comparer deux réglages.
 var noiseSeed = 1234567, noiseField = null, noiseKey = "";
 function getNoiseField(n){
   var key = noiseSeed + ":" + n;
@@ -1336,9 +1332,6 @@ function resetDemo(){
   refresh();
 }
 document.getElementById("resetDemo").addEventListener("click", resetDemo);
-document.getElementById("newNoise").addEventListener("click", function(){
-  noiseSeed = (noiseSeed * 48271 + 12345) % 2147483647; refresh();
-});
 
 // on n'affiche/rend rien tant que l'image de la scène par défaut n'est pas décodée
 sceneReadyP[activeScene].then(function(){
