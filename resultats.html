@@ -910,9 +910,11 @@ async function renderResultsList(){
   // "instruments(name)" : jointure vers l'instrument vivant, absente si
   // supprimé depuis (cf. migration ON DELETE SET NULL) — on retombe alors
   // sur instrument_snapshot.name, sauvegardé au moment du résultat.
+  // 11/10/2026 : colonnes listées au lieu de « * » : la liste n'utilise jamais les journaux de calcul (logs),
+  // volumineux et présents sur chaque résultat. Ils restent lus par la page de détail (select("*") plus bas).
   var { data: results, error } = await supabaseClient
     .from("saved_results")
-    .select("*, instruments(name, deleted_at)")
+    .select("id, created_at, name, scene, image_path, source_image_path, conditions, diagnostics, instrument_snapshot, instruments(name, deleted_at)")
     .order("created_at", { ascending: false });
 
   if(error){
@@ -926,14 +928,33 @@ async function renderResultsList(){
     return;
   }
 
+  // 11/10/2026 : les URLs signées de toutes les vignettes sont demandées EN UNE FOIS (createSignedUrls) avant
+  // de construire les lignes. Avant : un aller-retour vers Supabase par résultat, l'un après l'autre, et
+  // aucune ligne n'apparaissait avant la fin. Si l'appel groupé échoue, chaque ligne retombe sur l'appel
+  // unitaire d'avant (même résultat, plus lent).
+  var thumbUrls = {};
+  var thumbPaths = results.map(function(x){ return x.image_path; }).filter(Boolean);
+  if(thumbPaths.length){
+    try{
+      var { data: thumbBatch, error: thumbBatchErr } = await supabaseClient.storage.from("results").createSignedUrls(thumbPaths, 3600);
+      if(thumbBatchErr || !thumbBatch) throw thumbBatchErr || new Error("réponse vide");
+      thumbBatch.forEach(function(it){ if(it && it.path && it.signedUrl) thumbUrls[it.path] = it.signedUrl; });
+    }catch(e){
+      console.warn("URLs signées groupées indisponibles (liste), repli appel par appel :", e);
+    }
+  }
+
   grid.innerHTML = "";
   resultRowEls = [];
   for(var i = 0; i < results.length; i++){
     var r = results[i];
     var thumbUrl = "";
     if(r.image_path){
-      var { data: signed } = await supabaseClient.storage.from("results").createSignedUrl(r.image_path, 3600);
-      if(signed) thumbUrl = signed.signedUrl;
+      thumbUrl = thumbUrls[r.image_path] || "";
+      if(!thumbUrl){
+        var { data: signed } = await supabaseClient.storage.from("results").createSignedUrl(r.image_path, 3600);
+        if(signed) thumbUrl = signed.signedUrl;
+      }
     }
     // 07/10/2026 — date et heure, à l'heure locale du navigateur (« 7 oct. 2026, 11:20 »)
     var dateLabel = new Date(r.created_at).toLocaleString(nysaLocale(), {day:"numeric", month:"short", year:"numeric", hour:"2-digit", minute:"2-digit"});
@@ -1356,7 +1377,11 @@ async function deleteResult(r){
       renderResultHead();
     });
   }
+  // 11/10/2026 : crossOrigin posé AVANT src, comme sur les copies hors-DOM (simImgObj / srcImgObj) : le
+  // navigateur voit alors la même requête et ne télécharge qu'une fois chaque fichier, au lieu de deux.
+  document.getElementById("imgSim").crossOrigin = "anonymous";
   document.getElementById("imgSim").src = imgUrl;
+  document.getElementById("imgSrc").crossOrigin = "anonymous";
   document.getElementById("imgSrc").src = sourceUrl;
 
   // ===================== Onglet Entrées (scène / instrument / conditions) =====================
@@ -1399,6 +1424,7 @@ async function deleteResult(r){
     return "<div><div style='font-family:var(--mono);font-size:12px;color:var(--muted-2);text-transform:uppercase'>"+
       label + "</div><div style='font-family:var(--mono);font-size:15px;color:var(--paper)'>" + value + "</div></div>";
   }
+  document.getElementById("entSceneImg").crossOrigin = "anonymous";   // même requête que l'image source : pas de 3e téléchargement
   document.getElementById("entSceneImg").src = sourceUrl;
   document.getElementById("entSceneName").textContent = tScene(sceneName);
   document.getElementById("entInstName").textContent = instName;
@@ -1845,8 +1871,17 @@ async function deleteResult(r){
     var simUrl = processImage(simImgObj, opts);
     if(simUrl) imgSim.src = simUrl;
 
-    var srcUrl2 = processImage(srcImgObj, { channel: channelIdx, p2p98: false, showSaturated: false, whitePoint: null });
-    if(srcUrl2) imgSrc.src = srcUrl2;
+    // 11/10/2026 : en RGB, la source n'a AUCUN retraitement (ni étirement, ni point blanc, ni saturation) :
+    // le passage par le canvas (boucle sur tous les pixels + ré-encodage PNG) donnait une copie identique, pour
+    // un coût élevé. On réaffiche directement le fichier d'origine. Le canvas ne sert plus que pour extraire
+    // un canal (bandes Rouge / Vert / Bleu).
+    var imgSrcEl = document.getElementById("imgSrc");
+    if(channelIdx == null){
+      if(imgSrcEl.getAttribute("src") !== sourceUrl) imgSrcEl.src = sourceUrl;
+    } else {
+      var srcUrl2 = processImage(srcImgObj, { channel: channelIdx, p2p98: false, showSaturated: false, whitePoint: null });
+      if(srcUrl2) imgSrcEl.src = srcUrl2;
+    }
 
     applyCssFilters();
   }
