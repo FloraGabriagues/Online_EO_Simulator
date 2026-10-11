@@ -155,7 +155,6 @@ h1 .cool{color:var(--pixel)}
 .ctrl-val input:hover{border-bottom-color:var(--muted)}
 .ctrl-val input:focus{outline:none;border-bottom-color:var(--photon);border-bottom-style:solid}
 .ctrl-val em{font-style:normal;color:var(--muted);font-size:12px}
-.ctrl.touched .ctrl-name{color:var(--photon)}
 
 input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:24px;
   background:transparent;cursor:grab;display:block}
@@ -386,11 +385,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
   <!-- scène et image -->
   <div class="col-view">
     <p class="steptitle"><span class="stepnum">1.</span> <span data-tx>Choisissez une image source</span></p>
-    <div class="tabs" role="tablist" aria-label="Vue" data-tx-aria>
-      <button class="tab" id="tab-image" type="button" role="tab" aria-selected="true" aria-controls="tp-image" data-tx>Image simplifiée</button>
-      <button class="tab" id="tab-graphs" type="button" role="tab" aria-selected="false" aria-controls="tp-graphs" data-tx>Graphes</button>
-    </div>
-    <div class="tabpanel" id="tp-image" role="tabpanel" aria-labelledby="tab-image">
+    <div class="tabpanel" id="tp-image">
       <div class="viewer">
       <div class="headline compact">
         <div class="hl-item">
@@ -436,29 +431,6 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <div class="scenebar" id="scenes" style="margin-top:14px"></div>
       </div>
     </div>
-    <div class="tabpanel" id="tp-graphs" role="tabpanel" aria-labelledby="tab-graphs" hidden>
-      <div class="analysis">
-      <div class="panel wide">
-      <p class="grouphead"><span class="dot cool"></span><span data-tx>Fonction de transfert de modulation</span></p>
-      <canvas class="chart" id="mtfChart"></canvas>
-      <p class="note" id="mtfNote"></p>
-      </div>
-      <div class="panel">
-      <p class="grouphead"><span class="dot warm"></span><span data-tx>Pupille et front d'onde</span></p>
-      <canvas class="sq" id="pupilCv" width="256" height="256"></canvas>
-      <div class="cbar pupil"></div>
-      <div class="cbar-lab"><span data-tx>avance de phase</span><span data-tx>retard</span></div>
-      <p class="note" id="pupilNote"></p>
-      </div>
-      <div class="panel">
-      <p class="grouphead"><span class="dot warm"></span>PSF</p>
-      <canvas class="sq" id="psfCv" width="128" height="128"></canvas>
-      <div class="cbar psf"></div>
-      <div class="cbar-lab"><span>10⁻⁵</span><span data-tx>intensité relative</span><span>1</span></div>
-      <p class="note" id="psfNote"></p>
-      </div>
-      </div>
-    </div>
     <div class="panel offer">
     <p class="grouphead"><span class="dot warm"></span><span data-tx>Vous travaillez sur votre propre instrument ?</span></p>
     <p class="offer-body" data-tx>Passez de la démonstration à la simulation complète de votre instrument.</p>
@@ -491,7 +463,6 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <div class="panel params cool-ctrl" id="p-detector">
       <p class="grouphead"><span class="dot cool"></span><span data-tx>Détecteur</span></p>
       <div id="g-detector"></div>
-      <p class="note" id="detectorDerived" style="margin-top:10px"></p>
       </div>
       <p class="note" style="margin-top:2px">
         <a href="espace-personnel.html" style="color:var(--photon);text-decoration:none" data-tx>Plus de paramètres dans le simulateur complet →</a>
@@ -533,7 +504,7 @@ var curW = Math.round(curExtW / curRes), curH = Math.round(curExtH / curRes);
 var NP = 256, DPX = 64;
 
 var st = {D:0.65, E:0.35, W:25, T:0.62, I:0.484, R:12, P:1.6, K:150, H:620, S:45,
-          TI:45, TDI:20, PX:10, Z:"defoc"};
+          TI:45, TDI:20, Z:"defoc"};
 
 var PARAMS = [
   {k:"D", g:"optics",   adv:false, name:"Diamètre de pupille",  unit:"m",     min:0.20, max:1.30, step:0.01, dec:2},
@@ -542,7 +513,6 @@ var PARAMS = [
   {k:"E", g:"optics",   adv:true,  name:"Obscuration centrale", unit:"m",     min:0,    max:0.5,  step:0.005, dec:3},
   {k:"T", g:"optics",   adv:true,  name:"Transmission optique", unit:"τ",     min:0.15, max:0.95, step:0.01, dec:2},
   {k:"R",   g:"detector", adv:false, name:"Bruit de lecture",     unit:"e⁻",    min:1,    max:80,   step:0.5,  dec:1},
-  {k:"PX",  g:"detector", adv:false, name:"Pitch pixel",          unit:"µm",    min:5,    max:25,   step:0.1,  dec:1},
   {k:"TI",  g:"acq", adv:false, name:"Temps d'intégration",  unit:"µs",    min:5,    max:2000, step:5,    dec:0},
   {k:"TDI", g:"acq", adv:false, name:"Étages TDI",           unit:"×",     min:1,    max:64,   step:1,    dec:0},
   {k:"P", g:"detector", adv:true,  name:"PRNU",                 unit:"%",     min:0,    max:5,    step:0.05, dec:2},
@@ -561,11 +531,6 @@ function gsdOf(s){ return ifovRad(s) * altM(s); }
 function cutoffOf(s){ return s.D / (LAMBDA * altM(s)); }
 function nyqOf(s){ return 1 / (2 * gsdOf(s)); }
 function qOf(s){ return LAMBDA / (s.D * ifovRad(s)); }
-// Focale et F/# dérivés du pitch pixel et de l'iFoV (pitch = focale × iFoV) —
-// purement informatif : la résolution simulée reste pilotée par l'iFoV, pas
-// par ce couple pitch/focale.
-function focalOf(s){ return (s.PX * 1e-6) / ifovRad(s); }
-function fnumOf(s){ return focalOf(s) / s.D; }
 function groundSpeed(s){ var r = RE + altM(s); return Math.sqrt(GM/r) * RE / r; }
 function tIntOf(s){ return s.TI * 1e-6; }
 // durée nominale d'un pushbroom : GSD parcouru à la vitesse sol
@@ -910,17 +875,21 @@ function gaussNoise(){
   while(v===0) v=Math.random();
   return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
 }
-var prnuMap=null, prnuW=0, prnuH=0;
-function getPrnuMap(w,h){
-  if(prnuMap && prnuW===w && prnuH===h) return prnuMap;
-  var s=987654321, total=w*h;
+// PRNU d'un capteur à balayage (pushbroom) : chaque colonne du détecteur a son propre gain, le même pour toutes
+// les lignes de l'image, ce qui donne des rayures verticales. Avec un TDI, chaque point du sol est vu par tous les
+// étages et les gains de leurs pixels se moyennent : la rayure est plus faible, d'un facteur racine du nombre
+// d'étages. Approximation de démonstration : un gain aléatoire par colonne, fixé une fois pour toutes.
+var prnuCols=null, prnuColsW=0;
+function getPrnuCols(w){
+  if(prnuCols && prnuColsW===w) return prnuCols;
+  var s=987654321;
   function r(){ s=(s*1664525+1013904223)%4294967296; return s/4294967296; }
-  prnuMap = new Float32Array(total);
-  for(var i=0;i<total;i++){
+  prnuCols = new Float32Array(w);
+  for(var i=0;i<w;i++){
     var u=Math.max(1e-6,r()), v=Math.max(1e-6,r());
-    prnuMap[i]=Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+    prnuCols[i]=Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
   }
-  prnuW=w; prnuH=h; return prnuMap;
+  prnuColsW=w; return prnuCols;
 }
 
 function renderSim(){
@@ -955,11 +924,11 @@ function renderSim(){
       grid[(gy*outW+gx)*3]=s0/cnt; grid[(gy*outW+gx)*3+1]=s1/cnt; grid[(gy*outW+gx)*3+2]=s2/cnt;
     }
   }
-  var Sfull = signal(), pr = st.P/100, dk = darkE(), pmap = getPrnuMap(outW,outH);
+  var Sfull = signal(), pr = st.P/100, dk = darkE(), pcol = getPrnuCols(outW), prTdi = pr/Math.sqrt(Math.max(1, st.TDI));
   work.width = outW; work.height = outH;
   var img = wctx.createImageData(outW,outH);
   for(var i=0;i<outW*outH;i++){
-    var gain = 1 + pr*pmap[i];
+    var gain = 1 + prTdi*pcol[i % outW];
     for(c=0;c<3;c++){
       var e = Math.max(0, grid[i*3+c]/255) * Sfull * gain;
       var sg = Math.sqrt(e + st.R*st.R + dk);
@@ -972,120 +941,6 @@ function renderSim(){
   simCv.width = outW; simCv.height = outH;
   sctx.imageSmoothingEnabled = false;
   sctx.drawImage(work,0,0);
-}
-
-// ===================== PUPILLE / PSF =====================
-function drawPupil(){
-  var cv = document.getElementById("pupilCv"), ctx;
-  var n = NP, crop = 88, half = crop/2, c = n/2;   // recadré : la pupille remplit le cadre
-  cv.width = cv.height = crop; ctx = cv.getContext("2d");
-  var img = ctx.createImageData(crop,crop);
-  var ph = OPTICS.phase, mk = OPTICS.mask, maxp = 0.001, i;
-  for(i=0;i<n*n;i++) if(mk[i] > 0.5 && Math.abs(ph[i])>maxp) maxp = Math.abs(ph[i]);
-  for(var y=0;y<crop;y++) for(var x=0;x<crop;x++){
-    var si = (y - half + c)*n + (x - half + c);
-    var o = (y*crop+x)*4, a = mk[si];
-    if(a <= 0.02){ img.data[o]=9; img.data[o+1]=14; img.data[o+2]=19; img.data[o+3]=255; continue; }
-    var t = ph[si]/maxp, r, g, b;
-    if(t >= 0){ r = 90+155*t; g = 106+66*t; b = 118-31*t; }
-    else      { r = 90+5*t;   g = 106-114*t; b = 118-90*t; }
-    img.data[o]=9+(r-9)*a; img.data[o+1]=14+(g-14)*a; img.data[o+2]=19+(b-19)*a; img.data[o+3]=255;
-  }
-  ctx.putImageData(img,0,0);
-  document.getElementById("pupilNote").innerHTML =
-    st.W <= 0
-      ? tx("Pupille annulaire, obscuration centrale ε = {e}. Front d'onde plat : la PSF est une tache d'Airy.", { e: st.E.toFixed(2) })
-      : tx("Budget d'erreur de front d'onde de <b>{w} nm RMS</b>, soit ±{p} onde en crête, modélisé par un étalement équivalent de la PSF. C'est cette carte de phase qui la déforme ci-contre.", { w: st.W, p: maxp.toFixed(2) });
-}
-function drawPsf(){
-  var cv = document.getElementById("psfCv"), ctx;
-  var n = NP, crop = 88, half = crop/2, c = n/2;
-  cv.width = cv.height = crop; ctx = cv.getContext("2d");
-  var img = ctx.createImageData(crop,crop);
-  var psf = OPTICS.psf, mx = OPTICS.psfMax || 1, dec = 4;
-  for(var y=0;y<crop;y++) for(var x=0;x<crop;x++){
-    var sx = (x - half + c + n) % n, sy = (y - half + c + n) % n;
-    var v = psf[sy*n + sx]/mx;
-    var t = Math.max(0, Math.min(1, (Math.log10(Math.max(v,1e-12)) + dec)/dec));
-    var o = (y*crop+x)*4, r, g, b;
-    if(t < 0.55){ var u=t/0.55; r=9+228*u; g=14+121*u; b=19+41*u; }
-    else { var u2=(t-0.55)/0.45; r=237+18*u2; g=135+120*u2; b=60+180*u2; }
-    img.data[o]=r; img.data[o+1]=g; img.data[o+2]=b; img.data[o+3]=255;
-  }
-  ctx.putImageData(img,0,0);
-  var airyGround = 1.22 * LAMBDA / st.D * altM(st);
-  document.getElementById("psfNote").innerHTML =
-    tx("Échelle logarithmique sur 4 décades. La tache d'Airy mesure <b>{a} m</b> au sol, pour un pixel de <b>{g} m</b>.", { a: airyGround.toFixed(2), g: gsd().toFixed(2) }) + " " +
-    (airyGround > gsd()*1.5
-      ? tx("<span class='flag'>La tache déborde largement du pixel</span> : c'est l'optique qui limite la résolution.")
-      : tx("Tache et pixel sont du même ordre : l'échantillonnage suit l'optique."));
-}
-
-// ===================== GRAPHIQUE FTM =====================
-function setupCanvas(cv){
-  var dpr = window.devicePixelRatio||1, r = cv.getBoundingClientRect();
-  cv.width = r.width*dpr; cv.height = r.height*dpr;
-  var ctx = cv.getContext("2d"); ctx.setTransform(dpr,0,0,dpr,0,0);
-  return {ctx:ctx, w:r.width, h:r.height};
-}
-function drawMtfChart(){
-  var s = setupCanvas(document.getElementById("mtfChart")), ctx=s.ctx, W=s.w, H=s.h;
-  var pad={l:54,r:18,t:22,b:52}, pw=W-pad.l-pad.r, ph=H-pad.t-pad.b;
-  ctx.clearRect(0,0,W,H);
-  var nyq = nyquist(), fmax = Math.max(nyq*1.4, cutoff()*0.12);
-  var X=function(f){return pad.l+(f/fmax)*pw;}, Y=function(m){return pad.t+(1-m)*ph;};
-  var MONO = "'IBM Plex Mono',monospace";
-
-  ctx.strokeStyle="#22323F"; ctx.lineWidth=1;
-  [0,0.25,0.5,0.75,1].forEach(function(m){
-    ctx.beginPath(); ctx.moveTo(pad.l,Y(m)); ctx.lineTo(W-pad.r,Y(m)); ctx.stroke();
-    ctx.fillStyle="#9BADBD"; ctx.font="12px "+MONO; ctx.textAlign="right";
-    ctx.fillText(m.toFixed(2), pad.l-9, Y(m)+4);
-  });
-  ctx.fillStyle="#8497AA"; ctx.font="11.5px "+MONO; ctx.textAlign="center";
-  for(var t=0;t<=4;t++){
-    var fv = fmax*t/4;
-    ctx.fillText(fv.toFixed(fv<1?2:1), X(fv), pad.t+ph+18);
-  }
-  ctx.fillStyle="#9BADBD"; ctx.font="12px "+MONO;
-  ctx.fillText(tx("fréquence spatiale au sol (cycles/m)"), pad.l+pw/2, pad.t+ph+42);
-  ctx.save(); ctx.translate(15, pad.t+ph/2); ctx.rotate(-Math.PI/2);
-  ctx.fillText(tx("contraste transmis"), 0, 0); ctx.restore();
-
-  ctx.strokeStyle="#4A6072"; ctx.setLineDash([4,3]); ctx.lineWidth=1.2;
-  ctx.beginPath(); ctx.moveTo(X(nyq),pad.t); ctx.lineTo(X(nyq),pad.t+ph); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle="#9BADBD"; ctx.textAlign="center"; ctx.font="11.5px "+MONO;
-  ctx.fillText("Nyquist", X(nyq), pad.t-7);
-  if(cutoff() < fmax){
-    ctx.fillStyle="#8497AA"; ctx.fillText("coupure optique", X(cutoff()), pad.t-7);
-    ctx.strokeStyle="#2E4152"; ctx.setLineDash([2,4]);
-    ctx.beginPath(); ctx.moveTo(X(cutoff()),pad.t); ctx.lineTo(X(cutoff()),pad.t+ph); ctx.stroke();
-    ctx.setLineDash([]);
-  }
-  function curve(fn,color,width,dash){
-    ctx.strokeStyle=color; ctx.lineWidth=width; ctx.setLineDash(dash||[]);
-    ctx.beginPath();
-    for(var i=0;i<=200;i++){
-      var f=(i/200)*fmax, m=fn(f);
-      if(i===0) ctx.moveTo(X(f),Y(m)); else ctx.lineTo(X(f),Y(m));
-    }
-    ctx.stroke(); ctx.setLineDash([]);
-  }
-  curve(mtfDet,"#4E9A97",1.4,[5,4]);
-  curve(mtfOptAt,"#F5AC57",1.9);
-  curve(mtfTot,"#5FDCD0",2.6);
-
-  var items = [["#F5AC57",tx("optique (pupille + WFE)")],["#4E9A97",tx("détecteur")],
-               ["#5FDCD0",tx("chaîne complète")]];
-  var lx = pad.l+12, ly = pad.t+10, lw = 182, lh = 14+items.length*17;
-  ctx.fillStyle="rgba(9,14,19,0.86)"; ctx.strokeStyle="#22323F";
-  ctx.fillRect(lx,ly,lw,lh); ctx.strokeRect(lx,ly,lw,lh);
-  ctx.textAlign="left"; ctx.font="11.5px "+MONO;
-  items.forEach(function(e,i){
-    ctx.fillStyle=e[0]; ctx.fillRect(lx+10, ly+15+i*17-5, 14, 3);
-    ctx.fillStyle="#C4D6D4"; ctx.fillText(e[1], lx+31, ly+15+i*17);
-  });
 }
 
 // ===================== ÉTAT DE COMPARAISON =====================
@@ -1278,7 +1133,6 @@ function applyChange(k, v){
   if(k === "D" || k === "I" || k === "H") updateDynamicRanges();
   else if(k === "TDI") updateExposureBounds();
   syncOne(k);
-  els[k].row.classList.add("touched");
   markPreset(null);
   refresh();
 }
@@ -1291,25 +1145,9 @@ function updateMetrics(){
 
   document.getElementById("m-gsd").innerHTML = (g<1?g.toFixed(2):g.toFixed(1))+"<u>m</u>";
 
-  var detNote = document.getElementById("detectorDerived");
-  if(detNote){
-    var f = focalOf(st), fn = fnumOf(st);
-    detNote.innerHTML = tx("Focale ≈ <b>{f}</b> · F/# ≈ <b>{n}</b>, dérivés du pitch et de l'iFoV.", { f: (f<1 ? (f*1000).toFixed(0)+" mm" : f.toFixed(2)+" m"), n: fn.toFixed(1) });
-  }
-
   document.getElementById("m-snr").textContent = sn.toFixed(1);
   document.getElementById("m-mtfnyq").textContent = mtfTot(nyquist()).toFixed(3);
   document.getElementById("m-q").textContent = q.toFixed(2);
-
-  var mtfNote = document.getElementById("mtfNote");
-  if(q < 1){
-    mtfNote.innerHTML = tx("<span class='flag'>Q = {q}, inférieur à 1.</span> L'optique transmet encore du contraste au-delà de Nyquist : ce contenu trop fin pour le pixel se replie dans l'image sous forme d'artefacts. C'est un choix de conception assumé, pas un défaut. Il privilégie le rapport signal/bruit et la largeur de fauchée.", { q: q.toFixed(2) });
-  } else if(q > 2.2){
-    mtfNote.textContent = tx("Q = {q}, supérieur à 2. Le pixel n'est plus le facteur limitant : affiner le détecteur n'apporterait rien tant que la pupille ne grandit pas.", { q: q.toFixed(2) });
-  } else {
-    mtfNote.textContent = tx("Q = {q}. L'échantillonnage est accordé à la coupure optique : optique et détecteur pèsent du même ordre dans le budget de contraste.", { q: q.toFixed(2) });
-  }
-
 }
 
 
@@ -1350,7 +1188,6 @@ var pending = null;
 function refresh(){
   computeOptics();
   syncAll(); updateMetrics();
-  if(graphsVisible){ drawPupil(); drawPsf(); drawMtfChart(); }
   if(typeof updateCustomRow === "function") updateCustomRow();
   if(pending) cancelAnimationFrame(pending);
   pending = requestAnimationFrame(function(){
@@ -1528,11 +1365,6 @@ function setupTabs(listSel, onShow){
   return {show:show, tabs:tabs};
 }
 
-var graphsVisible = false;
-setupTabs(".tabs[aria-label='Vue']", function(id){
-  graphsVisible = (id === "tp-graphs");
-  if(graphsVisible){ drawPupil(); drawPsf(); drawMtfChart(); }
-});
 setupTabs(".tabs.chain");
 
 // on n'affiche/rend rien tant que l'image de la scène par défaut n'est pas décodée
@@ -1540,7 +1372,6 @@ sceneReadyP[activeScene].then(function(){
   useScene(activeScene);
   loadPreset(PRESETS[0]);
 });
-window.addEventListener("resize", function(){ if(graphsVisible) drawMtfChart(); });
 
 // Libellés des modes de rendu, en portée globale : utilisés à la fois par le
 // panneau de réglages et par la fonction de rendu, définies dans deux IIFE.
