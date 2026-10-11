@@ -243,6 +243,9 @@ details.adv .inner{margin-top:16px}
   border-top:none;box-shadow:0 1px 3px rgba(0,0,0,.7)}
 .scalebar .lab{font-family:var(--mono);font-size:12px;color:var(--paper);
   text-shadow:0 1px 3px rgba(0,0,0,.95);letter-spacing:.04em;text-align:center}
+.minibtns{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0 6px}
+.minibtn{font:inherit;font-size:12.5px;color:var(--paper);background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:7px 11px;cursor:pointer}
+.minibtn:hover{border-color:var(--paper)}
 .demonote{margin:14px 0 0;padding:12px 14px;background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;font-size:12.5px;line-height:1.6;color:var(--muted)}
 .tbd-note{margin:0;font-size:12.5px;color:var(--muted)}
 .analysis{align-items:stretch}
@@ -472,6 +475,10 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <p class="grouphead"><span class="dot cool"></span><span data-tx>Détecteur</span></p>
       <div id="g-detector"></div>
       </div>
+      <div class="minibtns">
+        <button type="button" class="minibtn" id="resetDemo" data-tx>Configuration de référence</button>
+        <button type="button" class="minibtn" id="newNoise" data-tx>Nouvelle réalisation du bruit</button>
+      </div>
       <p class="note" style="margin-top:2px">
         <a href="espace-personnel.html" style="color:var(--photon);text-decoration:none" data-tx>Plus de paramètres dans le simulateur complet →</a>
       </p>
@@ -526,7 +533,7 @@ var PARAMS = [
   {k:"P", g:"detector", adv:false, name:"PRNU",                 unit:"%",     min:0,    max:5,    step:0.05, dec:2, tip:"Écart de sensibilité entre les colonnes du détecteur. Un capteur à balayage en tire des rayures verticales, atténuées par la racine du nombre d'étages TDI."},
   {k:"K", g:"detector", adv:false, name:"Courant d'obscurité",  unit:"e⁻/s",  min:0,    max:4000, step:10,   dec:0, tip:"Électrons créés par la chaleur dans le pixel, même sans lumière. Ils ajoutent du bruit, surtout aux longs temps d'intégration."},
   {k:"H", g:"orbit",    adv:false, name:"Altitude",             unit:"km",    min:400,  max:675,  step:5,    dec:0, tip:"Hauteur du satellite. Plus il est haut, plus un pixel couvre de sol (GSD plus grand)."},
-  {k:"S", g:"orbit",    adv:false, name:"Élévation solaire",    unit:"°",     min:8,    max:80,   step:1,    dec:0, tip:"Hauteur du soleil au-dessus de l'horizon. Plus elle est grande, plus la scène est éclairée et plus le signal est fort."}
+  {k:"S", g:"orbit",    adv:false, name:"Élévation solaire",    unit:"°",     min:8,    max:80,   step:1,    dec:0, tip:"Hauteur du soleil au-dessus de l'horizon. Plus elle est grande, plus la scène est éclairée et plus le signal est fort. La photo de la scène est fixe : l\'élévation modifie l\'éclairement calculé, pas les ombres visibles sur l\'image."}
 ];
 var PMAP = {}; PARAMS.forEach(function(p){ PMAP[p.k]=p; });
 
@@ -877,11 +884,20 @@ function getLevel(f){
   pyramid[f] = {data:dst, w:w, h:h, stride:3};
   return pyramid[f];
 }
-function gaussNoise(){
-  var u=0,v=0;
-  while(u===0) u=Math.random();
-  while(v===0) v=Math.random();
-  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+// Réalisation du bruit figée : le tirage aléatoire (un nombre par pixel et par canal) est mémorisé et réutilisé
+// à chaque rendu. Quand on bouge un curseur, seule l'amplitude du bruit change, pas son motif : on peut donc
+// comparer deux réglages. Le bouton "Nouvelle réalisation du bruit" change la graine.
+var noiseSeed = 1234567, noiseField = null, noiseKey = "";
+function getNoiseField(n){
+  var key = noiseSeed + ":" + n;
+  if(noiseField && noiseKey === key) return noiseField;
+  var s = noiseSeed >>> 0;
+  function r(){ s = (Math.imul(s, 1664525) + 1013904223) >>> 0; return (s + 0.5) / 4294967296; }
+  noiseField = new Float32Array(n);
+  for(var i = 0; i < n; i++){
+    noiseField[i] = Math.sqrt(-2*Math.log(r())) * Math.cos(2*Math.PI*r());
+  }
+  noiseKey = key; return noiseField;
 }
 // PRNU d'un capteur à balayage (pushbroom) : chaque colonne du détecteur a son propre gain, le même pour toutes
 // les lignes de l'image, ce qui donne des rayures verticales. Avec un TDI, chaque point du sol est vu par tous les
@@ -932,7 +948,7 @@ function renderSim(){
       grid[(gy*outW+gx)*3]=s0/cnt; grid[(gy*outW+gx)*3+1]=s1/cnt; grid[(gy*outW+gx)*3+2]=s2/cnt;
     }
   }
-  var Sfull = signal(), pr = st.P/100, dk = darkE(), pcol = getPrnuCols(outW), prTdi = pr/Math.sqrt(Math.max(1, st.TDI));
+  var Sfull = signal(), pr = st.P/100, dk = darkE(), pcol = getPrnuCols(outW), nf = getNoiseField(outW*outH*3), prTdi = pr/Math.sqrt(Math.max(1, st.TDI));
   work.width = outW; work.height = outH;
   var img = wctx.createImageData(outW,outH);
   for(var i=0;i<outW*outH;i++){
@@ -940,7 +956,7 @@ function renderSim(){
     for(c=0;c<3;c++){
       var e = Math.max(0, grid[i*3+c]/255) * Sfull * gain;
       var sg = Math.sqrt(e + st.R*st.R + dk);
-      var val = (e + sg*gaussNoise())/Sfull*255;
+      var val = (e + sg*nf[i*3+c])/Sfull*255;
       img.data[i*4+c] = val<0?0:(val>255?255:val);
     }
     img.data[i*4+3] = 255;
@@ -1312,17 +1328,25 @@ function setupTabs(listSel, onShow){
 
 setupTabs(".tabs.chain");
 
+var DEMO_START = {D:0.3, I:4.4, W:50, R:12, P:1.6, K:150, H:500, S:60, TDI:4};
+function resetDemo(){
+  Object.keys(DEMO_START).forEach(function(k){ st[k] = DEMO_START[k]; });
+  updateDynamicRanges();
+  st.TI = PMAP.TI.min;
+  refresh();
+}
+document.getElementById("resetDemo").addEventListener("click", resetDemo);
+document.getElementById("newNoise").addEventListener("click", function(){
+  noiseSeed = (noiseSeed * 48271 + 12345) % 2147483647; refresh();
+});
+
 // on n'affiche/rend rien tant que l'image de la scène par défaut n'est pas décodée
 sceneReadyP[activeScene].then(function(){
   useScene(activeScene);
   loadPreset(PRESETS[0]);
   // Réglage de départ de la démonstration (choisi par Flora le 12/10/2026). Le temps d'intégration de départ est
   // son minimum, fixé par l'iFoV et l'altitude.
-  var DEMO_START = {D:0.3, I:4.4, W:50, R:12, P:1.6, K:150, H:500, S:60, TDI:4};
-  Object.keys(DEMO_START).forEach(function(k){ st[k] = DEMO_START[k]; });
-  updateDynamicRanges();
-  st.TI = PMAP.TI.min;
-  refresh();
+  resetDemo();
 });
 
 // Libellés des modes de rendu, en portée globale : utilisés à la fois par le
