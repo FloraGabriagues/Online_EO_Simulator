@@ -146,6 +146,11 @@ h1 .cool{color:var(--pixel)}
 .ctrl{margin-bottom:17px} .ctrl:last-child{margin-bottom:0}
 .ctrl-top{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:6px}
 .ctrl-name{font-size:14px;color:var(--paper)}
+.ctrl-top .ctrl-name{flex:none}
+.ctrl-tip{flex:1;text-align:left;margin:0 0 0 -6px;padding:0;border:0;background:none;color:var(--muted-2);font-size:12px;line-height:1;cursor:pointer}
+.ctrl-tip:hover,.ctrl-tip[aria-expanded="true"]{color:var(--pixel)}
+.ctrl-bubble{margin:0 0 8px;padding:9px 12px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:5px;font-size:12.5px;line-height:1.55;color:var(--muted)}
+.ctrl-bubble[hidden]{display:none}
 .ctrl-val{display:inline-flex;align-items:baseline;gap:3px;white-space:nowrap}
 .ctrl-val input{width:62px;text-align:right;background:transparent;border:none;
   border-bottom:1px dashed var(--line);color:var(--paper);font-family:var(--mono);
@@ -507,18 +512,18 @@ var st = {D:0.65, E:0.35, W:25, T:0.62, I:0.484, R:12, P:1.6, K:150, H:620, S:45
           TI:45, TDI:20, Z:"defoc"};
 
 var PARAMS = [
-  {k:"D", g:"optics",   adv:false, name:"Diamètre de pupille",  unit:"m",     min:0.20, max:1.30, step:0.01, dec:2},
-  {k:"I", g:"optics",   adv:false, name:"iFoV",                 unit:"µrad",  min:0.75, max:15.0, step:0.01, dec:2},
-  {k:"W", g:"optics",   adv:false, name:"WFE RMS",              unit:"nm",    min:0,    max:150,  step:1,    dec:0},
+  {k:"D", g:"optics",   adv:false, name:"Diamètre de pupille",  unit:"m",     min:0.20, max:1.30, step:0.01, dec:2, tip:"Plus la pupille est grande, plus l'image peut être nette (limite de diffraction) et plus elle reçoit de lumière."},
+  {k:"I", g:"optics",   adv:false, name:"iFoV",                 unit:"µrad",  min:0.75, max:15.0, step:0.01, dec:2, tip:"Angle de vue d'un pixel. Avec l'altitude, il fixe la taille d'un pixel au sol (GSD) : un petit iFoV donne une image plus fine."},
+  {k:"W", g:"optics",   adv:false, name:"WFE RMS",              unit:"nm",    min:0,    max:150,  step:1,    dec:0, tip:"Défauts de surface de l'optique, en nm RMS. Ils étalent la lumière et font perdre du contraste. Ici, ils sont représentés par un défocus équivalent."},
   {k:"E", g:"optics",   adv:true,  name:"Obscuration centrale", unit:"m",     min:0,    max:0.5,  step:0.005, dec:3},
   {k:"T", g:"optics",   adv:true,  name:"Transmission optique", unit:"τ",     min:0.15, max:0.95, step:0.01, dec:2},
-  {k:"R",   g:"detector", adv:false, name:"Bruit de lecture",     unit:"e⁻",    min:1,    max:80,   step:0.5,  dec:1},
-  {k:"TI",  g:"acq", adv:false, name:"Temps d'intégration",  unit:"µs",    min:5,    max:2000, step:5,    dec:0},
-  {k:"TDI", g:"acq", adv:false, name:"Étages TDI",           unit:"×",     min:1,    max:64,   step:1,    dec:0},
-  {k:"P", g:"detector", adv:true,  name:"PRNU",                 unit:"%",     min:0,    max:5,    step:0.05, dec:2},
-  {k:"K", g:"detector", adv:true,  name:"Courant d'obscurité",  unit:"e⁻/s",  min:0,    max:4000, step:10,   dec:0},
-  {k:"H", g:"orbit",    adv:false, name:"Altitude",             unit:"km",    min:400,  max:675,  step:5,    dec:0},
-  {k:"S", g:"orbit",    adv:false, name:"Élévation solaire",    unit:"°",     min:8,    max:80,   step:1,    dec:0}
+  {k:"R",   g:"detector", adv:false, name:"Bruit de lecture",     unit:"e⁻",    min:1,    max:80,   step:0.5,  dec:1, tip:"Bruit ajouté à chaque lecture d'un pixel, en électrons. Il domine surtout quand l'image est sombre."},
+  {k:"TI",  g:"acq", adv:false, name:"Temps d'intégration",  unit:"µs",    min:5,    max:2000, step:5,    dec:0, tip:"Durée pendant laquelle un pixel collecte la lumière. Plus elle est longue, plus le signal augmente."},
+  {k:"TDI", g:"acq", adv:false, name:"Étages TDI",           unit:"×",     min:1,    max:64,   step:1,    dec:0, tip:"Nombre de lectures additionnées de la même ligne du sol. Il augmente le signal et le SNR, et atténue les rayures du PRNU. 1 = pas de TDI."},
+  {k:"P", g:"detector", adv:false, name:"PRNU",                 unit:"%",     min:0,    max:5,    step:0.05, dec:2, tip:"Écart de sensibilité entre les colonnes du détecteur. Un capteur à balayage en tire des rayures verticales, atténuées par la racine du nombre d'étages TDI."},
+  {k:"K", g:"detector", adv:false, name:"Courant d'obscurité",  unit:"e⁻/s",  min:0,    max:4000, step:10,   dec:0, tip:"Électrons créés par la chaleur dans le pixel, même sans lumière. Ils ajoutent du bruit, surtout aux longs temps d'intégration."},
+  {k:"H", g:"orbit",    adv:false, name:"Altitude",             unit:"km",    min:400,  max:675,  step:5,    dec:0, tip:"Hauteur du satellite. Plus il est haut, plus un pixel couvre de sol (GSD plus grand)."},
+  {k:"S", g:"orbit",    adv:false, name:"Élévation solaire",    unit:"°",     min:8,    max:80,   step:1,    dec:0, tip:"Hauteur du soleil au-dessus de l'horizon. Plus elle est grande, plus la scène est éclairée et plus le signal est fort."}
 ];
 var PMAP = {}; PARAMS.forEach(function(p){ PMAP[p.k]=p; });
 
@@ -1070,6 +1075,12 @@ function updateExposureBounds(){
 }
 
 var els = {};
+function closeTips(){
+  document.querySelectorAll(".ctrl-bubble").forEach(function(b){ b.hidden = true; });
+  document.querySelectorAll(".ctrl-tip").forEach(function(t){ t.setAttribute("aria-expanded", "false"); });
+}
+document.addEventListener("click", function(e){ if(!e.target.closest || !e.target.closest(".ctrl-bubble")) closeTips(); });
+document.addEventListener("keydown", function(e){ if(e.key === "Escape") closeTips(); });
 // ===================== CONSTRUCTION DES CONTRÔLES =====================
 function buildControls(){
   var groups = {optics:"g-optics", "optics-adv":"g-optics-adv",
@@ -1086,6 +1097,24 @@ function buildControls(){
       '" min="'+p.min+'" max="'+p.max+'" aria-label="'+txa(p.name)+'"><em>'+p.unit+'</em></span></div>'+
       '<input type="range" id="s-'+p.k+'" min="'+p.min+'" max="'+p.max+'" step="'+p.step+
       '" aria-label="'+txa(p.name)+'">';
+    // Bulle d'hypothèse : un clic sur ⓘ l'ouvre ou la ferme (aussi utilisable au toucher).
+    if(p.tip){
+      var nameEl = d.querySelector(".ctrl-name");
+      var tb = document.createElement("button");
+      tb.type = "button"; tb.className = "ctrl-tip"; tb.textContent = "ⓘ";
+      tb.setAttribute("aria-expanded", "false");
+      tb.setAttribute("aria-label", tx("Hypothèse de ce réglage"));
+      var bub = document.createElement("p");
+      bub.className = "ctrl-bubble"; bub.hidden = true; bub.textContent = tx(p.tip);
+      tb.addEventListener("click", function(e){
+        e.stopPropagation();
+        var open = bub.hidden;
+        closeTips();
+        bub.hidden = !open; tb.setAttribute("aria-expanded", open ? "true" : "false");
+      });
+      nameEl.insertAdjacentElement("afterend", tb);
+      d.querySelector(".ctrl-top").insertAdjacentElement("afterend", bub);
+    }
     host.appendChild(d);
     els[p.k] = {row:d, s:d.querySelector('input[type=range]'), n:d.querySelector('input[type=number]')};
 
