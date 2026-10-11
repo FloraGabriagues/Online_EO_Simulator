@@ -999,7 +999,7 @@ var I18N_TEXT = {
   "Électrons créés par la chaleur dans le pixel, même sans lumière. Ils ajoutent du bruit, surtout aux longs temps d'intégration.": "Electrons created by heat in the pixel, even without light. They add noise, especially at long integration times.",
   "Hauteur du satellite. Plus il est haut, plus un pixel couvre de sol (GSD plus grand).": "Height of the satellite. The higher it is, the more ground a pixel covers (larger GSD).",
   "Hauteur du soleil au-dessus de l'horizon. Plus elle est grande, plus la scène est éclairée et plus le signal est fort.": "Height of the sun above the horizon. The higher it is, the brighter the scene and the stronger the signal.",
-  "Durée pendant laquelle un pixel collecte la lumière. Plus elle est longue, plus le signal augmente.": "Time during which a pixel collects light. The longer it is, the stronger the signal.",
+  "Durée pendant laquelle un pixel collecte la lumière. Plus elle est longue, plus le signal augmente. Le minimum est le temps que met le satellite à parcourir un pixel au sol : il dépend de l'iFoV et de l'altitude.": "Time during which a pixel collects light. The longer it is, the stronger the signal. The minimum is the time the satellite takes to travel one pixel on the ground: it depends on the iFoV and the altitude.",
   "Nombre de lectures additionnées de la même ligne du sol. Il augmente le signal et le SNR, et atténue les rayures du PRNU. 1 = pas de TDI.": "Number of readouts summed for the same ground line. It increases the signal and the SNR, and reduces PRNU stripes. 1 = no TDI.",
   "Hypothèse de ce réglage": "Assumption behind this setting",
   "Image simplifiée": "Simplified image",

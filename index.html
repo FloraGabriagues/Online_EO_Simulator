@@ -518,7 +518,7 @@ var PARAMS = [
   {k:"E", g:"optics",   adv:true,  name:"Obscuration centrale", unit:"m",     min:0,    max:0.5,  step:0.005, dec:3},
   {k:"T", g:"optics",   adv:true,  name:"Transmission optique", unit:"τ",     min:0.15, max:0.95, step:0.01, dec:2},
   {k:"R",   g:"detector", adv:false, name:"Bruit de lecture",     unit:"e⁻",    min:1,    max:80,   step:0.5,  dec:1, tip:"Bruit ajouté à chaque lecture d'un pixel, en électrons. Il domine surtout quand l'image est sombre."},
-  {k:"TI",  g:"acq", adv:false, name:"Temps d'intégration",  unit:"µs",    min:80,   max:2000, step:5,    dec:0, tip:"Durée pendant laquelle un pixel collecte la lumière. Plus elle est longue, plus le signal augmente."},
+  {k:"TI",  g:"acq", adv:false, name:"Temps d'intégration",  unit:"µs",    min:80,   max:2000, step:1,    dec:0, tip:"Durée pendant laquelle un pixel collecte la lumière. Plus elle est longue, plus le signal augmente. Le minimum est le temps que met le satellite à parcourir un pixel au sol : il dépend de l'iFoV et de l'altitude."},
   {k:"TDI", g:"acq", adv:false, name:"Étages TDI",           unit:"×",     min:1,    max:20,   step:1,    dec:0, tip:"Nombre de lectures additionnées de la même ligne du sol. Il augmente le signal et le SNR, et atténue les rayures du PRNU. 1 = pas de TDI."},
   {k:"P", g:"detector", adv:false, name:"PRNU",                 unit:"%",     min:0,    max:5,    step:0.05, dec:2, tip:"Écart de sensibilité entre les colonnes du détecteur. Un capteur à balayage en tire des rayures verticales, atténuées par la racine du nombre d'étages TDI."},
   {k:"K", g:"detector", adv:false, name:"Courant d'obscurité",  unit:"e⁻/s",  min:0,    max:4000, step:10,   dec:0, tip:"Électrons créés par la chaleur dans le pixel, même sans lumière. Ils ajoutent du bruit, surtout aux longs temps d'intégration."},
@@ -973,6 +973,9 @@ function applyDynamicBound(k, lo, hi){
 }
 function updateDynamicRanges(){
   applyDynamicBound("E", 0, 0.55 * st.D);
+  // Temps d'intégration minimal : le temps que met le satellite à parcourir un pixel au sol
+  // (GSD divisé par la vitesse au sol), donc fixé par l'iFoV et l'altitude. Arrondi à l'unité supérieure.
+  applyDynamicBound("TI", Math.ceil(tIntNominal(st) * 1e6), 2000);
 }
 
 var els = {};
@@ -1060,7 +1063,7 @@ function applyChange(k, v){
   // le full_well calibré du dernier preset ne vaut que pour SES réglages
   // exacts — dès qu'un curseur bouge, on retombe sur le défaut du template.
   st.FW = null;
-  if(k === "D") updateDynamicRanges();
+  if(k === "D" || k === "I" || k === "H") updateDynamicRanges();
   syncOne(k);
   markPreset(null);
   refresh();
@@ -1300,11 +1303,12 @@ setupTabs(".tabs.chain");
 sceneReadyP[activeScene].then(function(){
   useScene(activeScene);
   loadPreset(PRESETS[0]);
-  // Réglage de départ de la démonstration : une scène modérément éclairée (soleil bas, intégration courte,
-  // peu d'étages TDI), pour que le bruit de lecture et le PRNU se voient dès l'ouverture. Avec une scène très
-  // éclairée, le bruit de photons les masque et les curseurs du détecteur n'ont presque aucun effet visible.
-  var DEMO_START = {S:30, TI:80, TDI:1};
+  // Réglage de départ de la démonstration (choisi par Flora le 12/10/2026). Le temps d'intégration de départ est
+  // son minimum, fixé par l'iFoV et l'altitude.
+  var DEMO_START = {D:0.3, I:4.4, W:50, R:12, P:1.6, K:150, H:500, S:60, TDI:4};
   Object.keys(DEMO_START).forEach(function(k){ st[k] = DEMO_START[k]; });
+  updateDynamicRanges();
+  st.TI = PMAP.TI.min;
   refresh();
 });
 
