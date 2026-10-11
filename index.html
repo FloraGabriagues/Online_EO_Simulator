@@ -1300,6 +1300,12 @@ setupTabs(".tabs.chain");
 sceneReadyP[activeScene].then(function(){
   useScene(activeScene);
   loadPreset(PRESETS[0]);
+  // Réglage de départ de la démonstration : une scène modérément éclairée (soleil bas, intégration courte,
+  // peu d'étages TDI), pour que le bruit de lecture et le PRNU se voient dès l'ouverture. Avec une scène très
+  // éclairée, le bruit de photons les masque et les curseurs du détecteur n'ont presque aucun effet visible.
+  var DEMO_START = {S:30, TI:20, TDI:4};
+  Object.keys(DEMO_START).forEach(function(k){ st[k] = DEMO_START[k]; });
+  refresh();
 });
 
 // Libellés des modes de rendu, en portée globale : utilisés à la fois par le
