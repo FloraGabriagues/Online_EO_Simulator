@@ -151,6 +151,8 @@ h1 .cool{color:var(--pixel)}
 .ctrl-tip:hover,.ctrl-tip[aria-expanded="true"]{color:var(--pixel)}
 .ctrl-bubble{margin:0 0 8px;padding:9px 12px;background:var(--panel-2);border:1px solid var(--line-soft);border-radius:5px;font-size:12.5px;line-height:1.55;color:var(--muted)}
 .ctrl-bubble[hidden]{display:none}
+.hl-k .qtip{flex:none;margin:0 0 0 2px;font-size:12px}
+#qBubble{width:min(100%,108vh);margin:-6px auto 14px;box-sizing:border-box}
 .ctrl-val{display:inline-flex;align-items:baseline;gap:3px;white-space:nowrap}
 .ctrl-val input{width:62px;text-align:right;background:transparent;border:none;
   border-bottom:1px dashed var(--line);color:var(--paper);font-family:var(--mono);
@@ -407,9 +409,10 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
         </div>
         <div class="hl-item">
           <div class="hl-v" id="m-q">-</div>
-          <div class="hl-k"><span data-tx>Facteur Q</span> <span class="snr-info" data-tx-title title="Rapport entre la coupure optique et la fréquence de Nyquist du détecteur. Q < 1 : le pixel limite. Q > 2 : l'optique limite.">ⓘ</span></div>
+          <div class="hl-k"><span data-tx>Facteur Q</span> <button type="button" class="ctrl-tip qtip" id="qTip" aria-expanded="false" data-tx-aria aria-label="Hypothèse de ce réglage">ⓘ</button></div>
         </div>
       </div>
+      <p class="ctrl-bubble" id="qBubble" hidden data-tx>Rapport entre la coupure optique et la fréquence de Nyquist du détecteur. Q &lt; 1 : le pixel limite. Q > 2 : l'optique limite.</p>
       <div class="compare" id="compare">
       <canvas id="truthLayer" width="1024" height="1024"></canvas>
       <canvas id="simLayer" width="1024" height="1024"></canvas>
@@ -983,6 +986,16 @@ function closeTips(){
   document.querySelectorAll(".ctrl-bubble").forEach(function(b){ b.hidden = true; });
   document.querySelectorAll(".ctrl-tip").forEach(function(t){ t.setAttribute("aria-expanded", "false"); });
 }
+(function(){
+  var qt = document.getElementById("qTip"), qb = document.getElementById("qBubble");
+  if(!qt || !qb) return;
+  qt.addEventListener("click", function(e){
+    e.stopPropagation();
+    var open = qb.hidden;
+    closeTips();
+    qb.hidden = !open; qt.setAttribute("aria-expanded", open ? "true" : "false");
+  });
+})();
 document.addEventListener("click", function(e){ if(!e.target.closest || !e.target.closest(".ctrl-bubble")) closeTips(); });
 document.addEventListener("keydown", function(e){ if(e.key === "Escape") closeTips(); });
 // ===================== CONSTRUCTION DES CONTRÔLES =====================
