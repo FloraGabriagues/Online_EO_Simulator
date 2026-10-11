@@ -980,6 +980,11 @@ async function renderResultsList(){
 
     var wfeCaseName = (r.conditions && r.conditions.wfeCaseName) || null;
     var displayName = r.name || tScene(r.scene); // "name" optionnel (cf. rename) — replie sur la scène si absent
+    // 11/10/2026 : GSD (m au sol) visible directement dans la ligne, même formule que le bloc « entrées » :
+    // iFoV (µrad) x altitude (km). Absente si l'une des deux valeurs manque (très anciens résultats).
+    var rowCfg = (r.instrument_snapshot && r.instrument_snapshot.config) || {}, rowCond = r.conditions || {};
+    var rowGsd = (rowCfg.I != null && rowCfg.I !== "" && rowCond.H != null && rowCond.H !== "" && !isNaN(Number(rowCfg.I)) && !isNaN(Number(rowCond.H)))
+      ? Number((Number(rowCfg.I) * 1e-6 * Number(rowCond.H) * 1000).toPrecision(4)) : null;
 
     // 04/10/2026 — une ligne par résultat. Les noms saisis par l'utilisateur
     // (résultat, instrument, cas WFE) sont insérés en texte, pas en HTML.
@@ -994,6 +999,7 @@ async function renderResultsList(){
           "<div class='namerow'><span class='name'>" + esc(displayName) + "</span>"+
             (instGone ? "<span class='instgone'>" + t("res.inst_gone") + "</span>" : "")+"</div>"+
           "<div class='sub'><span>" + esc(instName) + "</span><span class='date'>" + dateLabel + "</span>"+
+            (rowGsd != null ? "<span class='date'>GSD " + rowGsd + " m</span>" : "")+
             (wfeCaseName ? "<span class='wfebadge'>" + t("sim.sum.wfe_line", { name: esc(wfeCaseName) }) + "</span>" : "")+
             "<span class='more'>" + t("res.inputs_closed") + "</span></div>"+
         "</div>"+
@@ -1525,11 +1531,42 @@ async function deleteResult(r){
       "<span>" + t("res.no_diag") + "</span></p></div>";
   }
 
+  // 11/10/2026 : GSD et pipeline de convolution par bande, dans l'onglet MTF. Le pipeline est lu dans les logs du
+  // calcul (« Band : Rouge » puis « Pipeline A » ou « Pipeline B ») : il explique pourquoi la PSF « rebinnée » du
+  // graphique est identique à la PSF oversamplée en pipeline A (la PSF y est calculée à la GSD source), et
+  // différente en pipeline B (rebinnée à la GSD cible).
+  var enLang = (typeof nysaLang === "function" && nysaLang() === "en");
+  var mtfCfg = (result && result.instrument_snapshot && result.instrument_snapshot.config) || {}, mtfCond = (result && result.conditions) || {};
+  var mtfGsd = (mtfCfg.I != null && mtfCfg.I !== "" && mtfCond.H != null && mtfCond.H !== "" && !isNaN(Number(mtfCfg.I)) && !isNaN(Number(mtfCond.H)))
+    ? Number((Number(mtfCfg.I) * 1e-6 * Number(mtfCond.H) * 1000).toPrecision(4)) : null;
+  var pipeByBand = {}, curLogBand = null;
+  resultLogs.split("\n").forEach(function(line){
+    var mb = line.match(/^Band\s*:\s*(\S+)/);
+    if(mb){ curLogBand = mb[1]; return; }
+    var mp = line.match(/Pipeline\s+([AB])\b/);
+    if(mp && curLogBand && !pipeByBand[curLogBand]) pipeByBand[curLogBand] = mp[1];
+  });
+  var anyPipe = false;
+  for(var gb in diagBands){
+    if(mtfGsd != null) diagBands[gb].gsd_txt = String(mtfGsd);
+    var pp = pipeByBand[gb];
+    if(pp){
+      anyPipe = true;
+      diagBands[gb].psf_txt = pp === "A" ? (enLang ? "A: source GSD grid" : "A : grille GSD source")
+                                          : (enLang ? "B: target GSD grid" : "B : grille GSD cible");
+    }
+  }
   document.getElementById("mtfContent").innerHTML = await buildDiagPanel(
     "MTF",
-    [{key:"mtf_at_nyquist", label:t("res.sort.mtf"), dec:3}],
+    [{key:"mtf_at_nyquist", label:t("res.sort.mtf"), dec:3},
+     {key:"gsd_txt", label:"GSD", unit:" m"},
+     {key:"psf_txt", label:"PSF"}],
     GRAPH_KEYS_MTF,
-  );
+  ) + (anyPipe
+    ? "<p style='font-size:12.5px;color:var(--muted-2);margin:10px 2px 0'>" + (enLang
+        ? "Pipeline A: the PSF is computed directly at the source GSD, so the \"rebinned\" PSF is identical to the oversampled one. Pipeline B: it is rebinned to the target GSD (the instrument pixel)."
+        : "Pipeline A : la PSF est calculée directement à la GSD source, la PSF « rebinnée » est donc identique à la PSF oversamplée. Pipeline B : elle est rebinnée à la GSD cible (le pixel de l'instrument).") + "</p>"
+    : "");
   // Saturation (09/10/2026) : valeurs à plat pour les lignes du panneau SNR (résultats récents seulement).
   for(var sbn in diagBands){
     var sd = diagBands[sbn].saturation;
@@ -1860,6 +1897,90 @@ async function deleteResult(r){
     }
   }
 
+  // ---- Rendu « Aucun (brut) » : les vrais DN de l'instrument (11/10/2026) ----
+  // Avant, « brut » affichait le PNG 8 bits enregistré, DÉJÀ étiré par le serveur (bornes lo/hi du log
+  // « diag-stretch ») : le choix n'avait donc presque aucun effet. Maintenant, on relit le PNG 16 bits des DN
+  // (dn.rgb_path, sorti de l'électronique : sans gain, sans étirement) et on le ramène à 8 bits en PLEINE
+  // ÉCHELLE du convertisseur (0 .. 2^bits - 1 -> 0 .. 255). Une scène saturée apparaît donc blanche, une scène
+  // sombre reste sombre. Le navigateur ne sait pas lire le 16 bits sans le tronquer à 4 bits utiles (le canvas
+  // garde l'octet de poids fort : 4095 -> 15), d'où le décodage PNG fait ici, filtres PNG compris.
+  // Chargé seulement quand on choisit « brut ». Si les DN ne sont pas disponibles (anciens résultats,
+  // navigateur sans DecompressionStream), l'image enregistrée reste affichée, comme avant.
+  async function decodePng16(buf){
+    var dv = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
+    var pos = 8, idat = [], w = 0, h = 0, ct = 0, bd = 0;
+    while(pos + 12 <= buf.length){
+      var len = dv.getUint32(pos), type = String.fromCharCode(buf[pos+4], buf[pos+5], buf[pos+6], buf[pos+7]);
+      if(type === "IHDR"){ w = dv.getUint32(pos + 8); h = dv.getUint32(pos + 12); bd = buf[pos + 16]; ct = buf[pos + 17]; }
+      else if(type === "IDAT") idat.push(buf.subarray(pos + 8, pos + 8 + len));
+      pos += 12 + len;
+    }
+    if(bd !== 16 || (ct !== 0 && ct !== 2)) throw new Error("PNG de DN inattendu (profondeur " + bd + ", type " + ct + ")");
+    var total = 0; idat.forEach(function(d){ total += d.length; });
+    var z = new Uint8Array(total), o = 0; idat.forEach(function(d){ z.set(d, o); o += d.length; });
+    var raw = await inflateZlib(z);
+    var ch = ct === 2 ? 3 : 1, bpp = ch * 2, row = w * bpp;
+    var out = new Uint8Array(h * row);
+    for(var y = 0; y < h; y++){
+      var ft = raw[y * (row + 1)], src = y * (row + 1) + 1, dst = y * row;
+      for(var i = 0; i < row; i++){
+        var x = raw[src + i];
+        var a = i >= bpp ? out[dst + i - bpp] : 0;
+        var b = y > 0 ? out[dst - row + i] : 0;
+        var c = (y > 0 && i >= bpp) ? out[dst - row + i - bpp] : 0;
+        var v;
+        if(ft === 0) v = x;
+        else if(ft === 1) v = x + a;
+        else if(ft === 2) v = x + b;
+        else if(ft === 3) v = x + ((a + b) >> 1);
+        else {
+          var p = a + b - c, pa = Math.abs(p - a), pb = Math.abs(p - b), pc = Math.abs(p - c);
+          v = x + ((pa <= pb && pa <= pc) ? a : (pb <= pc ? b : c));
+        }
+        out[dst + i] = v & 255;
+      }
+    }
+    return { w: w, h: h, ch: ch, bytes: out };
+  }
+  var rawImgObj = null, rawPromise = null;
+  function ensureRaw(){
+    if(rawPromise) return rawPromise;
+    rawPromise = (async function(){
+      try{
+        var dn = result && result.diagnostics && result.diagnostics.dn;
+        if(!dn || !dn.rgb_path || typeof DecompressionStream === "undefined") return;
+        if(dn.dn_scale != null && Number(dn.dn_scale) !== 1) return;      // échelle inconnue : on ne devine pas
+        var bits = Number(dn.bits_tdi || dn.bits_adc);
+        if(!(bits >= 1 && bits <= 16)) return;
+        var url = await signedUrl(dn.rgb_path);
+        if(!url) return;
+        var resp = await fetch(url);
+        if(!resp.ok) return;
+        var dec = await decodePng16(new Uint8Array(await resp.arrayBuffer()));
+        if(dec.ch !== 3) return;
+        var fullScale = Math.pow(2, bits) - 1;
+        var cv = document.createElement("canvas"); cv.width = dec.w; cv.height = dec.h;
+        var cx = cv.getContext("2d"), id = cx.createImageData(dec.w, dec.h), d = id.data, n = dec.w * dec.h;
+        for(var k = 0; k < n; k++){
+          for(var c = 0; c < 3; c++){
+            var s = (3 * k + c) * 2;
+            d[4*k + c] = Math.min(255, Math.round(((dec.bytes[s] << 8) | dec.bytes[s + 1]) * 255 / fullScale));
+          }
+          d[4*k + 3] = 255;
+        }
+        cx.putImageData(id, 0, 0);
+        var im = new Image();
+        await new Promise(function(res){ im.onload = res; im.onerror = res; im.src = cv.toDataURL("image/png"); });
+        if(im.naturalWidth) rawImgObj = im;
+      }catch(e){
+        console.warn("DN bruts illisibles, l'image enregistrée reste affichée :", e);
+      }
+    })();
+    return rawPromise;
+  }
+  // Image de base des retraitements : les DN bruts en mode « brut » (une fois chargés), sinon l'image enregistrée.
+  function baseImg(){ return (adj.render === "none" && rawImgObj) ? rawImgObj : simImgObj; }
+
   function updateDisplay(){
     // Étirement/pixels saturés/point blanc/contraste ne s'appliquent qu'à
     // l'image SIMULÉE (cf. applyCssFilters) — mais la bande sélectionnée
@@ -1868,7 +1989,7 @@ async function deleteResult(r){
     var channelIdx = adj.band === "RGB" ? null : CHANNEL_IDX[adj.band];
     var opts = { channel: channelIdx, p2p98: adj.render === "p2p98", showSaturated: adj.showSat && adj.band !== "RGB",
       whitePoint: adj.whitePointSim };
-    var simUrl = processImage(simImgObj, opts);
+    var simUrl = processImage(baseImg(), opts);
     if(simUrl) imgSim.src = simUrl;
 
     // 11/10/2026 : en RGB, la source n'a AUCUN retraitement (ni étirement, ni point blanc, ni saturation) :
@@ -1964,6 +2085,9 @@ async function deleteResult(r){
   document.getElementById("renderSel").addEventListener("change", function(e){
     adj.render = e.target.value;
     updateDisplay();
+    if(adj.render === "none"){
+      ensureRaw().then(function(){ if(adj.render === "none" && rawImgObj) updateDisplay(); });
+    }
   });
   document.getElementById("satChk").addEventListener("change", function(e){
     adj.showSat = e.target.checked;
@@ -1983,7 +2107,7 @@ async function deleteResult(r){
     var rect = wrap.getBoundingClientRect();
     var relX = (e.clientX - rect.left) / rect.width;
     var relY = (e.clientY - rect.top) / rect.height;
-    adj.whitePointSim = samplePixel(simImgObj, relX, relY);
+    adj.whitePointSim = samplePixel(baseImg(), relX, relY);
     updateDisplay();
   });
 
