@@ -58,7 +58,11 @@ header{padding:20px 0;border-bottom:1px solid var(--line-soft);margin-bottom:22p
    sur deux lignes et « 0 % » se coupait en deux. Lettres resserrées, et le
    pourcentage ne se coupe plus. */
 .progresswrap .row{gap:10px;letter-spacing:0;font-size:12px}
-.progresswrap .row span:first-child{min-width:0;white-space:nowrap}
+/* 11/10/2026 : le titre (lettres larges de la police mono) dépassait sur le pourcentage dans la colonne étroite.
+   Il peut maintenant passer sur deux lignes ; le pourcentage reste d'un bloc, à droite, en haut de la ligne. */
+.progresswrap .row{align-items:flex-start}
+.progresswrap .row span:first-child{min-width:0;white-space:normal;line-height:1.35}
+.progresswrap .row span:last-child{line-height:1.35}
 .progresswrap .row span:last-child{white-space:nowrap;flex:none}
 .progresswrap .track{height:5px;background:var(--line-soft);border-radius:3px;overflow:hidden}
 .progresswrap .fill{height:100%;background:var(--pixel);transition:width .25s ease}

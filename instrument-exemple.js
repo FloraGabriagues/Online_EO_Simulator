@@ -13,6 +13,7 @@
 // VALEURS : choisies par Flora le 06/10/2026 (instrument fictif de type
 // très haute résolution). Les supports du miroir secondaire ont été ajoutés
 // le même jour. Mis à jour le 09/10/2026 : iFoV 4 µrad, épaisseur des supports 0,05 m.
+// Mis à jour le 11/10/2026 : PRNU 1 %, diamètre 0,3 m (aligné sur l'export exemple.json).
 // ============================================================================
 var NYSA_EXAMPLE_INSTRUMENT = {
   name: {
@@ -23,7 +24,7 @@ var NYSA_EXAMPLE_INSTRUMENT = {
   config: {
     // --- Optique ---
     I: "4",              // iFoV                    [µrad]
-    D: "0.35",           // Diamètre de pupille     [m]
+    D: "0.3",            // Diamètre de pupille     [m]
     E: "0.1",            // Obscuration centrale    [m]
     NSUP: "3",           // Nombre de supports
     ESUP: "0.05",        // Épaisseur des supports  [m]
@@ -32,7 +33,7 @@ var NYSA_EXAMPLE_INSTRUMENT = {
     DET_TYPE: "CMOS",
     PX: "4.6",           // Largeur pixel           [µm]
     QE: "0.75",          // Rendement quantique     [0 à 1]
-    P: "1.6",            // PRNU                    [%]
+    P: "1",              // PRNU                    [%]
     K: "150",            // Courant d'obscurité     [e⁻/s]
     // --- Électronique ---
     ADC: "12",           // Résolution ADC          [bits]
