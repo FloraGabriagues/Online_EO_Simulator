@@ -245,11 +245,19 @@
   }
 
   var welcomeOpen = false;
-  async function maybeWelcome(){
+  async function maybeWelcome(fresh){
     if(welcomeOpen || document.getElementById("onbWelcomeMarker")) return;
     try {
       var s = (await supabaseClient.auth.getSession()).data.session;
-      if(!s || (s.user.user_metadata || {}).onboarding !== "welcome") return;
+      if(!s) return;
+      var meta = s.user.user_metadata || {};
+      // 11/10/2026 : à l'ouverture de la page, l'état du compte est relu sur le serveur : le drapeau a pu être posé
+      // depuis un autre appareil (la session de ce navigateur garde sinon l'ancienne valeur).
+      if(fresh){
+        var u = await supabaseClient.auth.getUser();
+        if(u && u.data && u.data.user) meta = u.data.user.user_metadata || {};
+      }
+      if(meta.onboarding !== "welcome") return;
       uid = s.user.id;
     } catch(e){ return; }
     welcomeOpen = true;
@@ -631,6 +639,10 @@
       uid = s.user.id;
     } catch(e){ return; }
     if(loadState()){ startTick(); tick(); }
+    // 11/10/2026 : la fenêtre de bienvenue est proposée à chaque arrivée dans l'espace personnel tant qu'elle n'a pas
+    // été cliquée (le drapeau passe alors à "started" ou "skipped"). Avant, elle n'était proposée qu'une fois, à la
+    // création de l'instrument d'exemple : fermée sans clic, ou vue sur un autre appareil, elle ne revenait jamais.
+    if(PAGE === "espace-personnel.html") maybeWelcome(true);
   }
 
   window.NysaOnboarding = { maybeWelcome: maybeWelcome, start: start };
