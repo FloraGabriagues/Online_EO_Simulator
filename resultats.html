@@ -1234,12 +1234,45 @@ async function deleteResult(r){
   // Le bucket "results" est privé — image_path est un CHEMIN, pas une URL
   // utilisable directement : on génère une URL signée temporaire (1h,
   // largement suffisant pour la durée d'une visite de cette page).
+  //
+  // 11/10/2026 — TOUTES les URLs signées de la page (images, graphiques MTF/SNR, cartes de saturation)
+  // sont demandées EN UNE SEULE FOIS (createSignedUrls) puis lues dans urlCache. Avant, chaque graphique
+  // coûtait un aller-retour vers Supabase, l'un après l'autre (une trentaine d'appels successifs) : c'est ce
+  // qui rendait l'ouverture d'un résultat longue. Si l'appel groupé échoue, signedUrl() retombe sur l'appel
+  // unitaire d'avant : le comportement reste le même, seulement plus lent.
+  var diagBands = (result && result.diagnostics && result.diagnostics.bands) || {};
+  var GRAPH_KEYS_MTF = ["psf_png_b64", "mtf_png_b64", "pupil_png_b64"];
+  var GRAPH_KEYS_SNR = ["snr_regimes_png_b64", "snr_noise_budget_png_b64", "snr_map_png_b64",
+    "snr_noise_maps_sim_png_b64", "snr_image_compare_png_b64", "snr_histogram_png_b64"];
+  var urlCache = {};   // chemin dans le bucket "results" -> URL signée
+  async function prefetchSignedUrls(paths){
+    var todo = [];
+    paths.forEach(function(p){ if(p && !urlCache[p] && todo.indexOf(p) < 0) todo.push(p); });
+    if(!todo.length) return;
+    try{
+      var { data: batch, error: batchErr } = await supabaseClient.storage.from("results").createSignedUrls(todo, 3600);
+      if(batchErr || !batch) throw batchErr || new Error("réponse vide");
+      batch.forEach(function(it){ if(it && it.path && it.signedUrl) urlCache[it.path] = it.signedUrl; });
+    }catch(e){
+      console.warn("URLs signées groupées indisponibles, repli appel par appel :", e);
+    }
+  }
+  var pathsToSign = [];
+  if(result){
+    pathsToSign.push(result.image_path, result.source_image_path);
+    for(var pbn in diagBands){
+      var pd = diagBands[pbn];
+      GRAPH_KEYS_MTF.concat(GRAPH_KEYS_SNR).forEach(function(k){ pathsToSign.push(pd[k.replace("_b64", "_path")]); });
+      pathsToSign.push(pd.saturated_mask_png_path);
+    }
+  }
+  await prefetchSignedUrls(pathsToSign);
+
   var imgUrl = "assets/scenes/port_thumb.jpg"; // repli si pas de résultat/erreur
   if(result && result.image_path){
-    var { data: signedData, error: signErr } = await supabaseClient
-      .storage.from("results").createSignedUrl(result.image_path, 3600);
-    if(!signErr && signedData) imgUrl = signedData.signedUrl;
-    else console.error("Erreur génération URL signée :", signErr);
+    var signedImg = await signedUrl(result.image_path);
+    if(signedImg) imgUrl = signedImg;
+    else console.error("Erreur génération URL signée :", result.image_path);
   }
 
   // Image SOURCE réelle (vrai crop plein résolution utilisé en entrée du
@@ -1256,13 +1289,21 @@ async function deleteResult(r){
   };
   var sourceUrl = SCENE_THUMBS[sceneName] || "assets/scenes/port_thumb.jpg";
   if(result && result.source_image_path){
-    var { data: signedSrcData, error: signSrcErr } = await supabaseClient
-      .storage.from("results").createSignedUrl(result.source_image_path, 3600);
-    if(!signSrcErr && signedSrcData) sourceUrl = signedSrcData.signedUrl;
-    else console.error("Erreur génération URL signée (source) :", signSrcErr);
+    var signedSrc = await signedUrl(result.source_image_path);
+    if(signedSrc) sourceUrl = signedSrc;
+    else console.error("Erreur génération URL signée (source) :", result.source_image_path);
   }
 
-  var diagBands = (result && result.diagnostics && result.diagnostics.bands) || {};
+  // 11/10/2026 — copie hors-DOM des images simulée et source (base de tous les retraitements, cf. plus bas) :
+  // leur téléchargement démarre ICI, dès que les deux URLs sont connues, au lieu d'attendre la fin du reste
+  // de la page (panneaux MTF/SNR, rôle admin...). Elles chargent ainsi pendant que la page se construit.
+  var simImgObj = new Image();
+  simImgObj.crossOrigin = "anonymous";
+  var srcImgObj = new Image();
+  srcImgObj.crossOrigin = "anonymous";
+  var simLoaded = new Promise(function(res){ simImgObj.onload = res; simImgObj.onerror = res; simImgObj.src = imgUrl; });
+  var srcLoaded = new Promise(function(res){ srcImgObj.onload = res; srcImgObj.onerror = res; srcImgObj.src = sourceUrl; });
+
   var resultLogs = (result && result.logs) || "";
 
   // 07/10/2026 — le titre ne porte plus la date entre parenthèses (« essai 1 (2026-10-07_0920) ») :
@@ -1417,10 +1458,15 @@ async function deleteResult(r){
   // ===================== MTF / SNR (réel, par bande) =====================
   var BAND_COLORS = {Rouge:"#F0776D", Vert:"#7FD88F", Bleu:"#5FDCD0"};
 
+  // URL signée d'un fichier : lue dans urlCache (rempli d'un coup par prefetchSignedUrls, plus haut) ;
+  // sinon appel unitaire, comme avant.
   async function signedUrl(path){
     if(!path) return null;
+    if(urlCache[path]) return urlCache[path];
     var { data, error } = await supabaseClient.storage.from("results").createSignedUrl(path, 3600);
-    return error ? null : data.signedUrl;
+    if(error) return null;
+    urlCache[path] = data.signedUrl;
+    return data.signedUrl;
   }
 
   async function buildDiagPanel(title, valueRows, graphKeys){
@@ -1456,7 +1502,7 @@ async function deleteResult(r){
   document.getElementById("mtfContent").innerHTML = await buildDiagPanel(
     "MTF",
     [{key:"mtf_at_nyquist", label:t("res.sort.mtf"), dec:3}],
-    ["psf_png_b64", "mtf_png_b64", "pupil_png_b64"],
+    GRAPH_KEYS_MTF,
   );
   // Saturation (09/10/2026) : valeurs à plat pour les lignes du panneau SNR (résultats récents seulement).
   for(var sbn in diagBands){
@@ -1477,8 +1523,7 @@ async function deleteResult(r){
       {key:"sat_tdi", label:t("res.sat.tdi"), dec:0},
       {key:"S_ref_e", label:"S_ref", unit:" e⁻", dec:0},
     ],
-    ["snr_regimes_png_b64", "snr_noise_budget_png_b64", "snr_map_png_b64",
-     "snr_noise_maps_sim_png_b64", "snr_image_compare_png_b64", "snr_histogram_png_b64"],
+    GRAPH_KEYS_SNR,
   );
 
   // ===================== Onglets Image/MTF/SNR/Entrées/Logs =====================
@@ -1681,10 +1726,7 @@ async function deleteResult(r){
   // images (comparaison honnête) — contraste/étirement/point blanc
   // restent réservés à l'image simulée (cf. applyCssFilters), la source
   // reste la donnée brute pour ces réglages-là.
-  var simImgObj = new Image();
-  simImgObj.crossOrigin = "anonymous";
-  var srcImgObj = new Image();
-  srcImgObj.crossOrigin = "anonymous";
+  // (simImgObj / srcImgObj sont créés et leur chargement démarré plus haut, dès que les URLs sont connues.)
   // Cartes des pixels saturés, une par bande (renvoyées par le serveur, 09/10/2026) : la saturation ne se lit
   // pas sur l'image 8 bits (étirée p2/p98). Absentes des résultats lancés avant ce changement.
   var satMasks = {};   // indice de canal (0 R, 1 G, 2 B) -> { w, h, data }
@@ -1711,8 +1753,8 @@ async function deleteResult(r){
     });
   }
   var imagesReady = Promise.all([
-    new Promise(function(res){ simImgObj.onload = res; simImgObj.onerror = res; simImgObj.src = imgUrl; }),
-    new Promise(function(res){ srcImgObj.onload = res; srcImgObj.onerror = res; srcImgObj.src = sourceUrl; }),
+    simLoaded,
+    srcLoaded,
     loadSatMask(0), loadSatMask(1), loadSatMask(2),
   ]);
 
