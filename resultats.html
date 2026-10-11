@@ -195,9 +195,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .resultsfilters input:focus,.resultsfilters select:focus{outline:none;border-color:var(--pixel)}
 .resultsfilters .count{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted-2)}
 .resultsfilters .reset{background:none;border:none;color:var(--pixel);cursor:pointer;font-family:var(--body);font-size:12.5px;padding:0;margin-left:8px}
-/* En-tête triable. Colonnes : [vignette + texte] | MTF | SNR | menu — mêmes
+/* En-tête triable. Colonnes : [vignette + texte] | MTF | SNR | GSD | menu — mêmes
    largeurs que dans .resultrow (118px par mesure, 47px pour le menu). */
-.resultshead{display:grid;grid-template-columns:1fr 118px 118px 47px;padding:0 1px 8px;align-items:end}
+.resultshead{display:grid;grid-template-columns:1fr 118px 118px 118px 47px;padding:0 1px 8px;align-items:end}
 .resultshead[hidden]{display:none}
 .resultshead button{background:none;border:none;cursor:pointer;text-align:left;padding:4px 22px;
   font-family:var(--body);font-size:12px;color:var(--muted-2);white-space:nowrap}
@@ -210,7 +210,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .resultrow[hidden]{display:none}
 .resultrow.open{border-color:var(--line)}
 .resultrow:hover{border-color:var(--pixel)}
-.resultrow .rowlink{display:grid;grid-template-columns:116px 1fr 118px 118px;align-items:stretch;
+.resultrow .rowlink{display:grid;grid-template-columns:116px 1fr 118px 118px 118px;align-items:stretch;
   text-decoration:none;color:var(--paper);min-width:0;min-height:92px;cursor:pointer}
 .resultrow .rowlink:focus-visible{outline:2px solid var(--pixel);outline-offset:-2px;border-radius:7px}
 .resultrow .more{font-size:12px;color:var(--muted-2);white-space:nowrap}
@@ -257,8 +257,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .resultrow .dropdown button.danger{color:var(--alert)}
 .resultrow .dropdown button.danger:hover{background:rgba(240,119,109,.1)}
 @media(max-width:720px){
-  .resultrow .rowlink{grid-template-columns:72px 1fr 76px 76px}
-  .resultshead{grid-template-columns:1fr 76px 76px 47px}
+  .resultrow .rowlink{grid-template-columns:72px 1fr 76px 76px 76px}
+  .resultshead{grid-template-columns:1fr 76px 76px 76px 47px}
   .resultshead button{padding:4px 12px}
   .resultrow .txt{padding:0 12px}
   .resultrow .name{font-size:17px}
@@ -537,6 +537,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           <button type="button" data-sort="date"><span data-i18n="res.sort.date">Date</span></button>
           <button type="button" data-sort="mtf"><span data-i18n="res.sort.mtf">MTF à Nyquist</span></button>
           <button type="button" data-sort="snr"><span data-i18n="res.sort.snr">SNR</span></button>
+          <button type="button" data-sort="gsd"><span>GSD (m)</span></button>
           <span></span>
         </div>
         <div id="resultsGrid" class="resultslist"></div>
@@ -980,7 +981,7 @@ async function renderResultsList(){
 
     var wfeCaseName = (r.conditions && r.conditions.wfeCaseName) || null;
     var displayName = r.name || tScene(r.scene); // "name" optionnel (cf. rename) — replie sur la scène si absent
-    // 11/10/2026 : GSD (m au sol) visible directement dans la ligne, même formule que le bloc « entrées » :
+    // 11/10/2026 : GSD (m au sol) en colonne triable de la liste, comme MTF et SNR, même formule que le bloc « entrées » :
     // iFoV (µrad) x altitude (km). Absente si l'une des deux valeurs manque (très anciens résultats).
     var rowCfg = (r.instrument_snapshot && r.instrument_snapshot.config) || {}, rowCond = r.conditions || {};
     var rowGsd = (rowCfg.I != null && rowCfg.I !== "" && rowCond.H != null && rowCond.H !== "" && !isNaN(Number(rowCfg.I)) && !isNaN(Number(rowCond.H)))
@@ -999,12 +1000,12 @@ async function renderResultsList(){
           "<div class='namerow'><span class='name'>" + esc(displayName) + "</span>"+
             (instGone ? "<span class='instgone'>" + t("res.inst_gone") + "</span>" : "")+"</div>"+
           "<div class='sub'><span>" + esc(instName) + "</span><span class='date'>" + dateLabel + "</span>"+
-            (rowGsd != null ? "<span class='date'>GSD " + rowGsd + " m</span>" : "")+
             (wfeCaseName ? "<span class='wfebadge'>" + t("sim.sum.wfe_line", { name: esc(wfeCaseName) }) + "</span>" : "")+
             "<span class='more'>" + t("res.inputs_closed") + "</span></div>"+
         "</div>"+
         "<div class='metric'><div class='v'>" + (mtfAvg != null ? mtfAvg.toFixed(2) : "-") + "</div></div>"+
         "<div class='metric'><div class='v'>" + (snrAvg != null ? snrAvg.toFixed(1) : "-") + "</div></div>"+
+        "<div class='metric'><div class='v'>" + (rowGsd != null ? rowGsd : "-") + "</div></div>"+
       "</div>"+
       "<div class='rowmenu'>"+
         "<button type='button' class='menubtn' aria-label='" + t("inst.menu.options") + "'>⋮</button>"+
@@ -1046,7 +1047,7 @@ async function renderResultsList(){
       });
     })(r, card);
     // Valeurs de tri de cette ligne (cf. drawResultRows).
-    card._sort = { date: new Date(r.created_at).getTime(), mtf: mtfAvg, snr: snrAvg };
+    card._sort = { date: new Date(r.created_at).getTime(), mtf: mtfAvg, snr: snrAvg, gsd: rowGsd };
     // Valeurs de filtre de cette ligne (cf. applyResultFilters).
     card._filter = { scene: r.scene || "", inst: instName,
       text: [displayName, instName, r.scene, wfeCaseName].join(" ").toLowerCase() };
