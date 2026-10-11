@@ -395,15 +395,17 @@ document.getElementById("signupForm").addEventListener("submit", async function(
 
   // 04/10/2026 — adresse de retour du lien de confirmation envoyé par e-mail.
   // Sans elle, Supabase utilise son « Site URL », qui vaut localhost:3000
-  // par défaut : le lien menait à une page inaccessible. On revient sur
-  // cette page de connexion, à l'adresse réelle du site. Cette adresse doit
-  // aussi figurer dans Supabase (Authentication > URL Configuration >
+  // par défaut : le lien menait à une page inaccessible. Cette adresse doit
+  // figurer dans Supabase (Authentication > URL Configuration >
   // Redirect URLs), sinon Supabase l'ignore.
+  // 11/10/2026 — le lien mène maintenant à une page « e-mail validé » (email-valide.html) et non plus à
+  // cette page de connexion : la validation se fait souvent sur le téléphone, et la fenêtre de bienvenue
+  // ne doit pas s'y ouvrir (ni être consommée) avant la première vraie connexion sur l'ordinateur.
   var { data, error } = await supabaseClient.auth.signUp({
     email: email,
     password: password,
     options: {
-      emailRedirectTo: new URL("login.html", window.location.href).href,
+      emailRedirectTo: new URL("email-valide.html", window.location.href).href,
       data: { lang: signupLang }   // préférence de langue du compte (interface et e-mails)
     }
   });
