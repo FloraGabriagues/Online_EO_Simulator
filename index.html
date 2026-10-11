@@ -518,7 +518,7 @@ var PARAMS = [
   {k:"E", g:"optics",   adv:true,  name:"Obscuration centrale", unit:"m",     min:0,    max:0.5,  step:0.005, dec:3},
   {k:"T", g:"optics",   adv:true,  name:"Transmission optique", unit:"τ",     min:0.15, max:0.95, step:0.01, dec:2},
   {k:"R",   g:"detector", adv:false, name:"Bruit de lecture",     unit:"e⁻",    min:1,    max:80,   step:0.5,  dec:1, tip:"Bruit ajouté à chaque lecture d'un pixel, en électrons. Il domine surtout quand l'image est sombre."},
-  {k:"TI",  g:"acq", adv:false, name:"Temps d'intégration",  unit:"µs",    min:5,    max:80, step:5,    dec:0, tip:"Durée pendant laquelle un pixel collecte la lumière. Plus elle est longue, plus le signal augmente."},
+  {k:"TI",  g:"acq", adv:false, name:"Temps d'intégration",  unit:"µs",    min:80,   max:2000, step:5,    dec:0, tip:"Durée pendant laquelle un pixel collecte la lumière. Plus elle est longue, plus le signal augmente."},
   {k:"TDI", g:"acq", adv:false, name:"Étages TDI",           unit:"×",     min:1,    max:20,   step:1,    dec:0, tip:"Nombre de lectures additionnées de la même ligne du sol. Il augmente le signal et le SNR, et atténue les rayures du PRNU. 1 = pas de TDI."},
   {k:"P", g:"detector", adv:false, name:"PRNU",                 unit:"%",     min:0,    max:5,    step:0.05, dec:2, tip:"Écart de sensibilité entre les colonnes du détecteur. Un capteur à balayage en tire des rayures verticales, atténuées par la racine du nombre d'étages TDI."},
   {k:"K", g:"detector", adv:false, name:"Courant d'obscurité",  unit:"e⁻/s",  min:0,    max:4000, step:10,   dec:0, tip:"Électrons créés par la chaleur dans le pixel, même sans lumière. Ils ajoutent du bruit, surtout aux longs temps d'intégration."},
@@ -1303,7 +1303,7 @@ sceneReadyP[activeScene].then(function(){
   // Réglage de départ de la démonstration : une scène modérément éclairée (soleil bas, intégration courte,
   // peu d'étages TDI), pour que le bruit de lecture et le PRNU se voient dès l'ouverture. Avec une scène très
   // éclairée, le bruit de photons les masque et les curseurs du détecteur n'ont presque aucun effet visible.
-  var DEMO_START = {S:30, TI:20, TDI:4};
+  var DEMO_START = {S:30, TI:80, TDI:1};
   Object.keys(DEMO_START).forEach(function(k){ st[k] = DEMO_START[k]; });
   refresh();
 });
