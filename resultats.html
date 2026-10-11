@@ -172,8 +172,19 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .sathelp:hover,.sathelp[aria-expanded="true"]{border-color:var(--pixel);color:var(--pixel)}
 .sathint{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:20;margin:0;padding:10px 12px;font-size:12px;line-height:1.45;
   color:var(--paper);background:var(--panel-2);border:1px solid var(--pixel);border-radius:6px;box-shadow:0 6px 18px rgba(0,0,0,.4)}
-.dlmode{width:100%;margin-bottom:8px;background:var(--panel-2);color:var(--paper);border:1px solid var(--line);border-radius:4px;padding:7px 8px;font-size:12.5px}
-.dlmode[hidden]{display:none}
+/* 12/10/2026 : le téléchargement est un seul bouton à menu déroulant (mise à l'échelle ou valeurs brutes) */
+.dlmenu{position:relative;flex:1;min-width:0}
+.dlmenu .downloadbtn{display:flex;align-items:center;justify-content:center;gap:10px}
+.dlmenu .dlchev{flex:none;margin-left:2px;transition:transform .15s}
+.dlmenu .downloadbtn[aria-expanded="true"] .dlchev{transform:rotate(180deg)}
+.dlmenu .dlchev[hidden]{display:none}
+.dlmenulist{position:absolute;left:0;right:0;bottom:calc(100% + 6px);z-index:30;display:flex;flex-direction:column;
+  background:var(--panel-2);border:1px solid var(--pixel);border-radius:6px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+.dlmenulist[hidden]{display:none}
+.dlmenulist button{font-family:var(--body);font-size:13.5px;text-align:left;padding:11px 14px;background:transparent;border:0;
+  color:var(--paper);cursor:pointer}
+.dlmenulist button+button{border-top:1px solid var(--line-soft)}
+.dlmenulist button:hover,.dlmenulist button:focus-visible{background:rgba(95,220,208,.14);color:var(--pixel);outline:none}
 .sathint.up{top:auto;bottom:calc(100% + 6px)}
 .sathint[hidden]{display:none}
 .checkrow.disabled{opacity:.5}
@@ -468,8 +479,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .impbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:0 0 18px}
 .importmsg{font-size:12.5px;color:var(--muted)}
 .importmsg.err{color:var(--alert)}
-.reportbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;padding:11px 16px;background:transparent;border:1px solid var(--line);border-radius:6px;color:var(--muted);font-family:var(--body);font-size:14px;cursor:pointer;transition:border-color .15s,color .15s}
-.reportbtn:hover:not(:disabled){border-color:var(--photon);color:var(--photon)}
+.reportbtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;padding:11px 16px;background:transparent;border:1px solid var(--photon);border-radius:6px;color:var(--photon);font-family:var(--body);font-size:14px;cursor:pointer;transition:border-color .15s,color .15s}
+.reportbtn:hover:not(:disabled){background:rgba(245,172,87,.12)}
 .reportbtn:disabled{opacity:.5;cursor:not-allowed}
 .rptbtn{font-family:var(--body);font-size:14px;line-height:1.2;min-height:42px;border-radius:6px;padding:10px 18px;cursor:pointer;border:1px solid var(--line);background:var(--panel-2);color:var(--paper)}
 .rptbtn:hover:not(:disabled){border-color:var(--pixel)}
@@ -646,14 +657,17 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                   <span data-i18n="res.reset">Réinitialiser l'affichage</span></button>
               </div>
 
-              <select id="dlMode" class="dlmode" aria-label="Format du fichier téléchargé" hidden>
-                <option value="scaled" data-i18n="res.dl.mode.scaled">Mis à l'échelle sur le maximum de l'image</option>
-                <option value="raw" data-i18n="res.dl.mode.raw">Valeurs brutes (DN)</option>
-              </select>
               <div class="satwrap dlwrap">
-                <button class="downloadbtn" type="button" id="downloadBtn" style="margin-top:0;flex:1">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v13M7 11l5 5 5-5M4 20h16"/></svg>
-                  <span id="downloadLabel">Télécharger l'image RGB</span></button>
+                <div class="dlmenu">
+                  <button class="downloadbtn" type="button" id="downloadBtn" style="margin-top:0" aria-haspopup="menu" aria-expanded="false">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v13M7 11l5 5 5-5M4 20h16"/></svg>
+                    <span id="downloadLabel">Télécharger l'image RGB</span>
+                    <svg class="dlchev" id="dlChev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></button>
+                  <div class="dlmenulist" id="dlMenu" role="menu" hidden>
+                    <button type="button" role="menuitem" data-mode="scaled" data-i18n="res.dl.mode.scaled">Mis à l'échelle sur le maximum de l'image</button>
+                    <button type="button" role="menuitem" data-mode="raw" data-i18n="res.dl.mode.raw">Valeurs brutes (DN)</button>
+                  </div>
+                </div>
                 <button type="button" class="sathelp" id="noteHelp" aria-expanded="false" aria-controls="noteHint" aria-label="?">?</button>
                 <p class="sathint up" id="noteHint" role="note" hidden data-i18n="res.note">Ces réglages n'affectent que l'affichage dans ce navigateur : le téléchargement fournit les valeurs brutes de l'instrument (DN), au nombre de bits de son électronique, en pleine résolution et sans retouche.</p>
               </div>
@@ -2156,7 +2170,7 @@ async function deleteResult(r){
   function updateDownloadLabel(){
     var key = adj.band || "RGB";
     var info = dnInfo(key);
-    document.getElementById("dlMode").hidden = !info;
+    document.getElementById("dlChev").style.display = info ? "" : "none";   // menu seulement si les DN existent
     document.getElementById("downloadLabel").textContent = info
       ? (key === "RGB" ? t("res.download.rgb_dn", { bits: info.bits }) : t("res.download.band_dn", { band: bandDisplayName(key), bits: info.bits }))
       : (key === "RGB" ? t("res.download.rgb") : t("res.download.band", { band: bandDisplayName(key) }));
@@ -2175,10 +2189,10 @@ async function deleteResult(r){
   function fileSlug(s){
     return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
   }
-  function downloadName(key){
+  function downloadName(key, mode){
     var name = fileSlug((result && result.name) || tScene(sceneName)) || "resultat";
     var info = dnInfo(key);
-    return fileSlug(bandDisplayName(key)) + "_" + name + "_" + createdLabel + (info ? "_DN" + info.bits + "bit" + (dlScaled(info) ? "_echelle-max" : "_brut") : "") + ".png";
+    return fileSlug(bandDisplayName(key)) + "_" + name + "_" + createdLabel + (info && mode ? "_DN" + info.bits + "bit" + (dlScaled(mode) ? "_echelle-max" : "_brut") : "") + ".png";
   }
   var CRC_TABLE = null;
   function crc32(buf){
@@ -2241,7 +2255,7 @@ async function deleteResult(r){
   // facteur est inscrit dans le fichier (métadonnée tEXt) pour retrouver les DN d'origine. Pour le RGB, un seul facteur
   // pour les trois canaux (le maximum global), afin de ne pas modifier les rapports entre bandes.
   // Mode « brut » : les codes tels que l'électronique les produit.
-  function dlScaled(info){ return document.getElementById("dlMode").value === "scaled"; }
+  function dlScaled(mode){ return mode === "scaled"; }
   async function inflateZlib(bytes){
     var stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("deflate"));
     return new Uint8Array(await new Response(stream).arrayBuffer());
@@ -2285,7 +2299,28 @@ async function deleteResult(r){
     return new Blob(parts, { type: "image/png" });
   }
   updateDownloadLabel();
-  document.getElementById("downloadBtn").addEventListener("click", async function(){
+  // Un clic sur le bouton ouvre le menu (mis à l'échelle ou valeurs brutes) ; sans DN enregistrés (anciens
+  // résultats), il télécharge directement l'image du serveur.
+  var dlMenuEl = document.getElementById("dlMenu"), dlBtnEl = document.getElementById("downloadBtn");
+  function closeDlMenu(){ dlMenuEl.hidden = true; dlBtnEl.setAttribute("aria-expanded", "false"); }
+  dlBtnEl.addEventListener("click", function(e){
+    e.stopPropagation();
+    var key = adj.band || "RGB";
+    if(!dnInfo(key)){ doDownload(null); return; }
+    var open = dlMenuEl.hidden;
+    dlMenuEl.hidden = !open;
+    dlBtnEl.setAttribute("aria-expanded", open ? "true" : "false");
+    if(open) dlMenuEl.querySelector("button").focus();
+  });
+  dlMenuEl.addEventListener("click", function(e){
+    var it = e.target.closest("button[data-mode]");
+    if(!it) return;
+    closeDlMenu();
+    doDownload(it.dataset.mode);
+  });
+  document.addEventListener("click", function(e){ if(!dlMenuEl.hidden && !e.target.closest(".dlmenu")) closeDlMenu(); });
+  document.addEventListener("keydown", function(e){ if(e.key === "Escape" && !dlMenuEl.hidden){ closeDlMenu(); dlBtnEl.focus(); } });
+  async function doDownload(mode){
     var key = adj.band || "RGB";
     try{
       var info = dnInfo(key);
@@ -2293,11 +2328,11 @@ async function deleteResult(r){
         var sg = await supabaseClient.storage.from("results").createSignedUrl(info.path, 600);
         if(!sg.error && sg.data){
           var dnBlob = await (await fetch(sg.data.signedUrl)).blob();
-          if(dlScaled(info) && typeof DecompressionStream !== "undefined" && typeof CompressionStream !== "undefined"){
+          if(dlScaled(mode) && typeof DecompressionStream !== "undefined" && typeof CompressionStream !== "undefined"){
             try{ dnBlob = await scalePng16(dnBlob); }
             catch(e2){ console.error("Mise à l'échelle impossible, fichier brut fourni :", e2); }
           }
-          saveBlob(dnBlob, downloadName(key));
+          saveBlob(dnBlob, downloadName(key, mode));
           return;
         }
       }
@@ -2307,7 +2342,7 @@ async function deleteResult(r){
       console.error("Téléchargement impossible :", e);
       window.open(imgUrl, "_blank");
     }
-  });
+  }
 
   imagesReady.then(function(){ syncSatControl(); updateDisplay(); });
 
