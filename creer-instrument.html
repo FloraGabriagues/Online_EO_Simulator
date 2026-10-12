@@ -353,6 +353,10 @@ var SCHEMA = [
        help:"Pas entre deux pixels voisins, ligne « pixel pitch » ou « pixel size » des datasheets."},
       {k:"QE", label:"Rendement quantique", unit:"0 à 1", placeholder:"1 (défaut)", min:0, max:1,
        help:"Probabilité qu'un photon arrivant sur le pixel donne un électron. Saisir 0,65 pour 65 %."},
+      // 12/10/2026 : transmission du filtre de bande, jusque-là fixée à 0,76 par le modèle serveur
+      // sans être demandée. Défaut 1 (pas de filtre, ou déjà compté dans le rendement quantique).
+      {k:"T_filter", label:"Transmission du filtre", unit:"0 à 1", placeholder:"1 (défaut)", min:0, max:1,
+       help:"Transmission du filtre de bande (filtre spectral ou mosaïque de filtres devant le détecteur). Saisir 1 en l'absence de filtre, ou si elle est déjà comptée dans le rendement quantique."},
       {k:"P",  label:"PRNU", unit:"%", placeholder:"0 (défaut)",
        help:"Dispersion de la réponse d'un pixel à l'autre, en % RMS. Une valeur crête à crête est plusieurs fois plus grande et ne doit pas être saisie telle quelle."},
       {k:"K",  label:"Courant d'obscurité", unit:"e⁻/s", placeholder:"0 (défaut)",
@@ -485,6 +489,7 @@ var FIELD_RULES = {
   T:            {plausible:[0.2, 1]},
   PX:           {positive:true, plausible:[1, 30]},         // µm
   QE:           {plausible:[0.1, 1]},
+  T_filter:     {plausible:[0.2, 1]},
   P:            {plausible:[0, 5]},                         // %
   K:            {plausible:[0, 10000]},                     // e⁻/s
   dsnu_1288:    {plausible:[0, 1000]},                      // e⁻
@@ -2321,6 +2326,7 @@ function buildExport(){
   if(has("PX")) det.pixel_pitch = clean(num("PX") * 1e-6);              // µm -> m
   var qeCurve = exportCurve("QE");
   if(qeCurve) det.QE_spectral = qeCurve;
+  if(has("T_filter")) det.T_filter = num("T_filter");
   if(has("FW")) det.full_well = num("FW");
   if(has("R")) det.read_noise = num("R");
   if(has("K")) det.dark_current = num("K");
@@ -2437,6 +2443,7 @@ document.getElementById("fileInput").addEventListener("change", function(e){
         if(det.bits != null) state.values.ADC = det.bits;
         // QE en fraction (0-1), comme le champ du formulaire.
         importCurve("QE", det.QE_spectral);
+        if(det.T_filter != null) state.values.T_filter = det.T_filter;
         if(det.dsnu_1288 != null) state.values.dsnu_1288 = det.dsnu_1288;
         if(det.dsnu_T_ref != null) state.values.dsnu_T_ref = det.dsnu_T_ref;
         if(det.DN0 != null) state.values.DN0 = det.DN0;

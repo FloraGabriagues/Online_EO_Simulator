@@ -265,6 +265,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   background:var(--panel-2);border:1px solid var(--line);border-radius:6px;padding:5px;
   box-shadow:0 10px 30px rgba(0,0,0,.45)}
 .resultrow .dropdown.open{display:block}
+.resultrow .dropdown.up{top:auto;bottom:calc(50% + 18px)}
 .resultrow .dropdown button{display:block;width:100%;text-align:left;background:none;border:none;
   color:var(--paper);font-family:var(--body);font-size:13px;padding:8px 10px;border-radius:4px;cursor:pointer}
 .resultrow .dropdown button:hover{background:var(--panel)}
@@ -1072,7 +1073,16 @@ async function renderResultsList(){
         e.stopPropagation();
         var wasOpen = dd.classList.contains("open");
         document.querySelectorAll(".resultrow .dropdown.open").forEach(function(o){ o.classList.remove("open"); });
-        if(!wasOpen) dd.classList.add("open");
+        if(!wasOpen){
+          dd.classList.add("open");
+          // 12/10/2026 : sur les dernières lignes le menu dépassait de la liste et était coupé ; il s'ouvre alors vers le haut
+          dd.classList.remove("up");
+          var lv = document.getElementById("listView").getBoundingClientRect();
+          if(dd.getBoundingClientRect().bottom > lv.bottom){
+            dd.classList.add("up");
+            if(dd.getBoundingClientRect().top < lv.top) dd.classList.remove("up");
+          }
+        }
       });
       dd.querySelector("[data-act='rename']").addEventListener("click", function(){
         dd.classList.remove("open"); renameResult(resultRow, cardEl);

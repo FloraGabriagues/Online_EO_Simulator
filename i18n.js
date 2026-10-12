@@ -316,6 +316,7 @@ var I18N = {
   "field.K":             { fr: "Courant d'obscurité", en: "Dark current" },
   "field.FW":            { fr: "Full well", en: "Full well" },
   "field.QE":            { fr: "Rendement quantique", en: "Quantum efficiency" },
+  "field.T_filter":      { fr: "Transmission du filtre", en: "Filter transmission" },
   "field.ADC":           { fr: "Résolution ADC", en: "ADC resolution" },
   "field.H":             { fr: "Altitude", en: "Altitude" },
   "field.S":             { fr: "Élévation solaire", en: "Sun elevation" },
@@ -758,6 +759,7 @@ var I18N_TEXT = {
   "Type de détecteur": "Detector type",
   "Largeur pixel": "Pixel pitch",
   "Rendement quantique": "Quantum efficiency",
+  "Transmission du filtre": "Filter transmission",
   "PRNU": "PRNU",
   "Courant d'obscurité": "Dark current",
   "DSNU (EMVA 1288)": "DSNU (EMVA 1288)",
@@ -802,6 +804,8 @@ var I18N_TEXT = {
     "Distance between two neighboring pixels, the “pixel pitch” or “pixel size” line in datasheets.",
   "Probabilité qu'un photon arrivant sur le pixel donne un électron. Saisir 0,65 pour 65 %.":
     "Probability that a photon reaching the pixel produces an electron. Enter 0.65 for 65%.",
+  "Transmission du filtre de bande (filtre spectral ou mosaïque de filtres devant le détecteur). Saisir 1 en l'absence de filtre, ou si elle est déjà comptée dans le rendement quantique.":
+    "Transmission of the band filter (spectral filter or filter mosaic in front of the detector). Enter 1 if there is no filter, or if it is already counted in the quantum efficiency.",
   "Dispersion de la réponse d'un pixel à l'autre, en % RMS. Une valeur crête à crête est plusieurs fois plus grande et ne doit pas être saisie telle quelle.":
     "Pixel-to-pixel response variation, in % RMS. A peak-to-peak value is several times larger and must not be entered as is.",
   "Électrons générés sans lumière, par pixel et par seconde, à la température de fonctionnement. Depuis des nA/cm² : multiplier par la surface du pixel et diviser par la charge de l'électron.":
@@ -1043,7 +1047,8 @@ var I18N_FIELD_FR = {
   "Transmission optique": "field.T", "WFE RMS": "field.W", "Largeur pixel": "field.PX",
   "Nombre de supports": "field.NSUP", "Épaisseur des supports": "field.ESUP",
   "Bruit de lecture": "field.R", "PRNU": "field.P", "Courant d'obscurité": "field.K",
-  "Full well": "field.FW", "Rendement quantique": "field.QE", "Résolution ADC": "field.ADC"
+  "Full well": "field.FW", "Rendement quantique": "field.QE", "Transmission du filtre": "field.T_filter",
+  "Résolution ADC": "field.ADC"
 };
 
 // Messages d'erreur du serveur de simulation (main.py), écrits en français :
