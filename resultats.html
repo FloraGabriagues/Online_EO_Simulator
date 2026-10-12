@@ -300,6 +300,25 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   .resultrow .metric .v{font-size:15px}
 }
 /* résultat dont l'instrument a été supprimé (ligne de la liste et page de détail) */
+
+/* 12/10/2026 : sélection multiple (suppression groupée) */
+.selbtn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:4px;font-family:var(--mono);font-size:12px;padding:6px 11px;cursor:pointer}
+.selbtn:hover{border-color:var(--pixel);color:var(--pixel)}
+.selbtn.on{border-color:var(--pixel);color:var(--pixel)}
+.selbtn.danger:not(:disabled):hover{border-color:var(--alert);color:var(--alert)}
+.selbtn.danger:not(:disabled){border-color:var(--alert);color:var(--alert)}
+.selbtn:disabled{opacity:.45;cursor:not-allowed}
+.selbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px;padding:10px 12px;border:1px solid var(--line-soft);border-radius:6px;background:var(--panel)}
+.selbar[hidden]{display:none}
+.selbar .selcount{font-family:var(--mono);font-size:12px;color:var(--muted-2);margin-right:auto}
+.selbox{display:none;width:20px;height:20px;border:1.5px solid var(--line);border-radius:4px;align-items:center;justify-content:center;
+  font-size:13px;line-height:1;color:transparent;flex:none;background:var(--void)}
+.sel .selbox{background:var(--pixel);border-color:var(--pixel);color:var(--void)}
+.selmode .menubtn{display:none}
+.selmode .selbox{display:flex}
+.selmode .dropdown{display:none!important}
+.resultrow.sel{border-color:var(--pixel)}
+.resultrow .rowmenu .selbox{margin:0}
 .instgone{font-family:var(--mono);font-size:12px;color:var(--photon);
   border:1px solid var(--photon);border-radius:3px;padding:1px 6px;white-space:nowrap;flex:none}
 .delbtn, .renbtn{background:none;border:1px solid var(--line);color:var(--muted);border-radius:4px;
@@ -565,7 +584,14 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           <input type="search" id="fSearch" placeholder="Rechercher un résultat, un instrument…" data-i18n-ph="res.search.ph" autocomplete="off">
           <select id="fScene"><option value="" data-i18n="res.filter.all_scenes">Toutes les scènes</option></select>
           <select id="fInst"><option value="" data-i18n="res.filter.all_inst">Tous les instruments</option></select>
+          <button type="button" class="selbtn" id="btnSelMode" data-i18n="sel.btn">Sélectionner</button>
           <span class="count" id="fCount"></span>
+        </div>
+        <div class="selbar" id="selBar" hidden>
+          <button type="button" class="selbtn" id="selAll" data-i18n="sel.all">Tout sélectionner</button>
+          <span class="selcount" id="selCount"></span>
+          <button type="button" class="selbtn danger" id="selDelete" disabled>Supprimer (0)</button>
+          <button type="button" class="selbtn" id="selCancel" data-i18n="sel.cancel">Annuler</button>
         </div>
         <div class="resultshead" id="resultsHead" hidden>
           <button type="button" data-sort="date"><span data-i18n="res.sort.date">Date</span></button>
@@ -838,6 +864,7 @@ function applyResultFilters(){
     });
     count.appendChild(reset);
   }
+  if(selMode) refreshSel();   // la sélection ne compte que les lignes visibles
 }
 ["fSearch", "fScene", "fInst"].forEach(function(id){
   document.getElementById(id).addEventListener("input", applyResultFilters);
@@ -929,6 +956,65 @@ document.querySelectorAll("#resultsHead button").forEach(function(btn){
     else resultSort = { key: key, dir: "desc" };
     drawResultRows();
   });
+});
+
+// ===================== Sélection multiple et suppression groupée (12/10/2026) =====================
+// « Sélectionner » remplace le menu ⋮ de chaque ligne par une case ; un clic sur la ligne la coche
+// (le détail ne se déplie plus). « Tout sélectionner » ne prend que les lignes visibles (filtres
+// compris), et la suppression ne touche que les lignes visibles cochées. Une seule confirmation.
+var selMode = false, selIds = {};
+function selectedRows(){ return resultRowEls.filter(function(el){ return !el.hidden && selIds[el._res.id]; }); }
+function refreshSel(){
+  resultRowEls.forEach(function(el){ el.classList.toggle("sel", !!selIds[el._res.id]); });
+  var vis = resultRowEls.filter(function(el){ return !el.hidden; }), sel = selectedRows();
+  document.getElementById("selCount").textContent = t(sel.length === 1 ? "sel.count_one" : "sel.count_many", { n: sel.length });
+  var del = document.getElementById("selDelete");
+  del.textContent = t("sel.delete", { n: sel.length }); del.disabled = sel.length === 0;
+  var all = document.getElementById("selAll");
+  all.textContent = (vis.length > 0 && sel.length === vis.length) ? t("sel.none") : t("sel.all");
+  all.disabled = vis.length === 0;
+}
+function setSelMode(on){
+  selMode = on; selIds = {};
+  document.getElementById("resultsGrid").classList.toggle("selmode", on);
+  document.getElementById("selBar").hidden = !on;
+  document.getElementById("btnSelMode").classList.toggle("on", on);
+  document.querySelectorAll(".resultrow .dropdown.open").forEach(function(o){ o.classList.remove("open"); });
+  if(on) refreshSel();
+}
+document.getElementById("btnSelMode").addEventListener("click", function(){ setSelMode(!selMode); });
+document.getElementById("selCancel").addEventListener("click", function(){ setSelMode(false); });
+document.getElementById("selAll").addEventListener("click", function(){
+  var vis = resultRowEls.filter(function(el){ return !el.hidden; });
+  var allOn = vis.length > 0 && vis.every(function(el){ return selIds[el._res.id]; });
+  vis.forEach(function(el){ if(allOn) delete selIds[el._res.id]; else selIds[el._res.id] = true; });
+  refreshSel();
+});
+// En phase de capture : le clic coche la ligne avant que le dépliage du détail ne le voie.
+document.getElementById("resultsGrid").addEventListener("click", function(e){
+  if(!selMode) return;
+  var row = e.target.closest(".resultrow");
+  if(!row || !row._res || e.target.closest(".inputs")) return;
+  e.preventDefault(); e.stopPropagation();
+  if(selIds[row._res.id]) delete selIds[row._res.id]; else selIds[row._res.id] = true;
+  refreshSel();
+}, true);
+document.addEventListener("keydown", function(e){ if(e.key === "Escape" && selMode) setSelMode(false); });
+document.getElementById("selDelete").addEventListener("click", async function(){
+  var rows = selectedRows(), n = rows.length;
+  if(!n) return;
+  if(!confirm(t(n === 1 ? "sel.confirm.results_one" : "sel.confirm.results_many", { n: n }))) return;
+  var btn = this, ok = 0, fail = 0;
+  document.querySelectorAll("#selBar button").forEach(function(b){ b.disabled = true; });
+  for(var i = 0; i < n; i++){
+    btn.textContent = t("sel.progress", { i: i + 1, n: n });
+    var err = await removeResult(rows[i]._res);
+    if(err){ console.error("Suppression groupée, échec :", err); fail++; } else ok++;
+  }
+  setSelMode(false);
+  await renderResultsList();
+  document.querySelectorAll("#selBar button").forEach(function(b){ b.disabled = false; });
+  if(fail) alert(t("sel.partial", { ok: ok, fail: fail }));
 });
 
 // Ferme le menu ⋮ d'une ligne de résultat quand on clique ailleurs.
@@ -1041,6 +1127,7 @@ async function renderResultsList(){
       "</div>"+
       "<div class='rowmenu'>"+
         "<button type='button' class='menubtn' aria-label='" + t("inst.menu.options") + "'>⋮</button>"+
+        "<span class='selbox' aria-hidden='true'>✓</span>"+
         "<div class='dropdown'>"+
           "<button type='button' data-act='rename'>" + t("inst.menu.rename") + "</button>"+
           "<button type='button' class='danger' data-act='delete'>" + t("inst.menu.delete") + "</button>"+
@@ -1088,6 +1175,7 @@ async function renderResultsList(){
       });
     })(r, card);
     // Valeurs de tri de cette ligne (cf. drawResultRows).
+    card._res = r;
     card._sort = { date: new Date(r.created_at).getTime(), mtf: mtfAvg, snr: snrAvg, gsd: rowGsd };
     // Valeurs de filtre de cette ligne (cf. applyResultFilters).
     card._filter = { scene: r.scene || "", inst: instName,
@@ -1115,9 +1203,9 @@ async function renameResult(r, cardEl){
   if(nameEl) nameEl.textContent = newName;
 }
 
-async function deleteResult(r){
-  if(!confirm(t("res.confirm.delete", { scene: tScene(r.scene) }))) return;
-
+// Supprime les fichiers puis la ligne d'un résultat ; renvoie l'erreur de la base (ou null). Sert à la
+// suppression d'un résultat et à la suppression groupée.
+async function removeResult(r){
   // Rassemble tous les chemins de fichiers liés (image principale + tous
   // les graphiques de diagnostic par bande) pour ne rien laisser d'orphelin
   // dans le bucket une fois la ligne supprimée.
@@ -1143,6 +1231,12 @@ async function deleteResult(r){
   }
 
   var { error: delErr } = await supabaseClient.from("saved_results").delete().eq("id", r.id);
+  return delErr || null;
+}
+
+async function deleteResult(r){
+  if(!confirm(t("res.confirm.delete", { scene: tScene(r.scene) }))) return;
+  var delErr = await removeResult(r);
   if(delErr){
     alert(t("home.err.delete", { msg: delErr.message }));
     return;
