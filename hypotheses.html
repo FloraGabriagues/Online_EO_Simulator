@@ -220,17 +220,19 @@ footer a{color:var(--muted)}
     <h2><span lang="fr">Lecture des résultats</span><span lang="en">Reading the results</span></h2>
     <div lang="fr"><ul>
   <li><b>MTF à Nyquist</b> : contraste transmis par l'instrument à la fréquence de Nyquist du détecteur, optique et pixel compris.</li>
-  <li><b>SNR</b> : rapport entre le signal moyen et le bruit, calculé par bande.</li>
-  <li><b>Remplissage</b> : part du full well occupée par le signal.</li>
-  <li><b>Image affichée</b> : les réglages d'affichage (étirement p2/p98, contraste, point blanc) ne modifient que le rendu dans le navigateur. L'image téléchargée est celle calculée par le serveur.</li>
-  <li><b>Équilibre des couleurs</b> : pour l'affichage, les bandes sont ramenées à une référence commune. Ce n'est pas un étalonnage radiométrique absolu.</li>
+  <li><b>SNR</b> : rapport entre le signal moyen et le bruit, calculé par bande. Il est calculé avant saturation : il ne tient pas compte de l'écrêtage des pixels saturés (puits plein, convertisseur ou accumulateur TDI). Consultez toujours la carte des pixels saturés avant de l'interpréter.</li>
+  <li><b>Remplissage</b> : part du full well occupée par le signal moyen, avant écrêtage.</li>
+  <li><b>Image affichée</b> : le rendu (brut, brut avec balance des blancs ou étirement p2/p98) et le point blanc choisi ne modifient que l'affichage dans le navigateur.</li>
+  <li><b>Image téléchargée</b> : les comptes numériques (DN) de l'instrument, au nombre de bits de l'ADC, ou davantage quand plusieurs étages TDI sont additionnés (un ADC de 12 bits et 4 étages donnent 14 bits). En RGB, trois formes au choix : brut, brut avec balance des blancs, ou avec étirement p2/p98. Sur une bande seule : brut, ou mis à l'échelle sur le maximum de l'image.</li>
+  <li><b>Équilibre des couleurs</b> : pour l'affichage, les bandes sont ramenées à une référence commune, avec un point blanc propre à chaque scène (un objet blanc repéré dans l'image) que vous pouvez remplacer par le vôtre. Ce n'est pas un étalonnage radiométrique absolu.</li>
 </ul></div>
     <div lang="en"><ul>
   <li><b>MTF at Nyquist</b>: contrast transmitted by the instrument at the detector Nyquist frequency, optics and pixel included.</li>
-  <li><b>SNR</b>: ratio between mean signal and noise, computed per band.</li>
-  <li><b>Well fill</b>: share of the full well occupied by the signal.</li>
-  <li><b>Displayed image</b>: display settings (p2/p98 stretch, contrast, white point) only change the rendering in the browser. The downloaded image is the one computed by the server.</li>
-  <li><b>Color balance</b>: for display, the bands are brought to a common reference. This is not an absolute radiometric calibration.</li>
+  <li><b>SNR</b>: ratio between mean signal and noise, computed per band. It is computed before saturation: it does not account for the clipping of saturated pixels (full well, converter or TDI accumulator). Always check the saturated-pixel map before interpreting it.</li>
+  <li><b>Well fill</b>: share of the full well occupied by the mean signal, before clipping.</li>
+  <li><b>Displayed image</b>: the rendering (raw, raw with white balance or p2/p98 stretch) and the chosen white point only change the display in the browser.</li>
+  <li><b>Downloaded image</b>: the instrument's digital numbers (DN), at the ADC bit depth, or more when several TDI stages are summed (a 12-bit ADC and 4 stages give 14 bits). In RGB, three forms to choose from: raw, raw with white balance, or with a p2/p98 stretch. On a single band: raw, or scaled to the image maximum.</li>
+  <li><b>Color balance</b>: for display, the bands are brought to a common reference, using a white point specific to each scene (a white object located in the image) that you can replace with your own. This is not an absolute radiometric calibration.</li>
 </ul></div>
   </section>
   <section id="limites">
