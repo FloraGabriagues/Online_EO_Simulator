@@ -1694,7 +1694,7 @@ function setStatus(kind, text){
 // Libellés lisibles des champs du payload — utilisés pour traduire les
 // erreurs de validation de l'API (qui ne connaît que les codes courts).
 var FIELD_LABELS = {};   // libellés dans i18n.js (clés field.*), dans la langue de l'interface
-["scene","D","I","E","T","W","PX","NSUP","ESUP","R","P","K","FW","QE","ADC","H","S","TI","TDI","perfoCsv","perfoCsvAlign","perfoCsvConvention","qeSpectral"].forEach(function(k){
+["scene","D","I","E","T","W","PX","NSUP","ESUP","R","P","K","FW","QE","ADC","T_filter","H","S","TI","TDI","perfoCsv","perfoCsvAlign","perfoCsvConvention","qeSpectral"].forEach(function(k){
   FIELD_LABELS[k] = t("field." + k);
 });
 
@@ -1796,6 +1796,8 @@ async function launchSimulation(){
     R: orDefault(inst.config.R, 0), P: orDefault(inst.config.P, 0), K: orDefault(inst.config.K, 0),
     FW: inst.config.FW,
     PX: inst.config.PX, QE: orDefault(inst.config.QE, 1), ADC: inst.config.ADC,
+    // 12/10/2026 : transmission du filtre, 1 par défaut (instrument sans filtre ou créé avant ce champ)
+    T_filter: orDefault(inst.config.T_filter, 1),
     NSUP: orDefault(inst.config.NSUP, 0), ESUP: orDefault(inst.config.ESUP, 0),
   }, conditions);
   // Pas de supports sans obscuration centrale (04/10/2026) : le formulaire
