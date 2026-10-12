@@ -1907,15 +1907,16 @@ async function deleteResult(r){
   }
 
   // ---- Point blanc par défaut de chaque scène (12/10/2026) ----
-  // Même liste que SCENE_WHITE_POINT_FRAC dans eo_adapter.py (repères relevés à la main le 01/09/2026, en
+  // Même liste que SCENE_WHITE_POINT_FRAC dans eo_adapter.py, clés « aix / avion / port » côté serveur (repères relevés à la main le 01/09/2026, en
   // fraction de l'image 200 m). Côté serveur, l'image 8 bits enregistrée est déjà corrigée avec ce point ; les DN
   // bruts, eux, ne le sont pas. Si la liste change dans eo_adapter.py, la mettre à jour ici aussi.
   // En RGB (jamais sur une bande séparée), le rendu « Aucun (brut) » et le téléchargement l'appliquent tant que
   // l'utilisateur n'a pas choisi son propre point blanc.
+  // Clés = nom de la scène tel qu'enregistré dans le résultat (« Ville », « Avion », « Port », cf. SCENE_THUMBS).
   var SCENE_WHITE_POINT_FRAC = {
-    aix:   { x: 0.36, y: 0.56 },   // bus blanc
-    avion: { x: 0.44, y: 0.46 },   // fuselage
-    port:  { x: 0.92, y: 0.50 }    // superstructure du navire
+    "Ville": { x: 0.36, y: 0.56 },   // bus blanc (aix côté serveur)
+    "Avion": { x: 0.44, y: 0.46 },   // fuselage
+    "Port":  { x: 0.92, y: 0.50 }    // superstructure du navire
   };
   var DEFAULT_WP_RADIUS = 2;       // moyenne sur 5 × 5 pixels : un seul pixel d'une image bruitée serait trop aléatoire
   // Emplacement du point blanc à appliquer : celui choisi, sinon celui de la scène (ou null).
