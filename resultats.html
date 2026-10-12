@@ -628,19 +628,12 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
             <div class="rpanel apanel">
               <h3><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="13" rx="2"/><path d="M8 20h8M12 17v3"/></svg><span data-i18n="res.display">Affichage</span></h3>
 
-              <div class="aslider">
-                <div class="aslider-head">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>
-                  <span data-i18n="res.contrast">Contraste</span><span class="aval" id="valContrast">100 %</span>
-                </div>
-                <input type="range" id="ctrlContrast" min="30" max="200" value="100">
-              </div>
-
               <div class="afield">
                 <label><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M3 15l5-5 4 4 4-6 5 7"/></svg><span data-i18n="res.render">Rendu de l'image</span></label>
                 <select id="renderSel">
-                  <option value="none" data-i18n="res.render.none">Aucun (brut)</option>
-                  <option value="p2p98" selected data-i18n="res.render.p2p98">Étirement p2/p98 (netteté seulement)</option>
+                  <option value="none" data-i18n="res.render.none">Brut</option>
+                  <option value="wb" data-i18n="res.render.wb">Brut avec balance des blancs</option>
+                  <option value="p2p98" selected data-i18n="res.render.p2p98">Percentile p2/p98 (avec balance des blancs)</option>
                 </select>
               </div>
 
@@ -1210,7 +1203,12 @@ async function deleteResult(r){
     var blob = new Blob([JSON.stringify(out)], { type: "application/json" });
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "nysa-" + String(r.id).slice(0, 8) + ".nysa-result.json";
+    // 12/10/2026 : nom du fichier = nom de la simulation (s'il y en a un), scène, date et heure de création, comme les images.
+    var slug = function(x){ return String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60); };
+    var cd = r.created_at ? new Date(r.created_at) : null, z2 = function(n){ return String(n).padStart(2, "0"); };
+    var dateTxt = cd && !isNaN(cd) ? cd.getFullYear() + "-" + z2(cd.getMonth() + 1) + "-" + z2(cd.getDate()) + "_" + z2(cd.getHours()) + z2(cd.getMinutes()) : "";
+    var nameParts = [slug(r.name), slug(tScene(r.scene)), dateTxt].filter(Boolean);
+    a.download = (nameParts.length ? nameParts.join("_") : "nysa-" + String(r.id).slice(0, 8)) + ".nysa-result.json";
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(function(){ URL.revokeObjectURL(a.href); }, 5000);
   }
@@ -1825,7 +1823,6 @@ async function deleteResult(r){
   // jamais à l'image sauvegardée en base ni au fichier téléchargé. Ils ne
   // s'appliquent qu'à l'image SIMULÉE — la source reste toujours brute.
   var adj = {
-    contrast:100,
     // 05/10/2026 — le rendu par défaut est l'étirement p2/p98 (avant :
     // « Aucun (brut) »). Le rendu brut reste disponible dans la liste.
     band:"RGB", render:"p2p98", showSat:false,
@@ -2056,18 +2053,21 @@ async function deleteResult(r){
     return rawPromise;
   }
   // Image de base des retraitements : les DN bruts en mode « brut » (une fois chargés), sinon l'image enregistrée.
-  function baseImg(){ return (adj.render === "none" && rawImgObj) ? rawImgObj : simImgObj; }
+  // Rendus « Brut » et « Brut avec balance des blancs » : les DN lus tels quels (une fois chargés), sinon l'image enregistrée.
+  function baseImg(){ return ((adj.render === "none" || adj.render === "wb") && rawImgObj) ? rawImgObj : simImgObj; }
 
   function updateDisplay(){
-    // Étirement/pixels saturés/point blanc/contraste ne s'appliquent qu'à
+    // Étirement/pixels saturés/point blanc ne s'appliquent qu'à
     // l'image SIMULÉE (cf. applyCssFilters) — mais la bande sélectionnée
     // s'applique aux DEUX images : sans ça, comparer par exemple la bande
     // Rouge simulée à une source restée en RGB ne veut rien dire.
     var channelIdx = adj.band === "RGB" ? null : CHANNEL_IDX[adj.band];
-    // 12/10/2026 : en RGB et en rendu brut (DN lus tels quels, sans correction), le point blanc de la scène est
-    // appliqué par défaut. En étirement p2/p98, l'image enregistrée l'a déjà reçu du serveur. Pas sur les bandes.
+    // 12/10/2026 : mêmes trois rendus que le téléchargement RGB. « Brut » : aucun réglage. « Brut avec balance des
+    // blancs » : le point blanc de la scène (ou celui choisi) est appliqué sur les DN. « Percentile » : l'image
+    // enregistrée, déjà équilibrée par le serveur au point blanc de la scène, puis étirée p2/p98. Pas de balance
+    // des blancs par défaut sur une bande séparée.
     var whiteForView = adj.whitePointSim;
-    if(!whiteForView && channelIdx == null && adj.render === "none" && rawImgObj) whiteForView = defaultWhitePointFor(rawImgObj);
+    if(!whiteForView && channelIdx == null && adj.render === "wb" && rawImgObj) whiteForView = defaultWhitePointFor(rawImgObj);
     var opts = { channel: channelIdx, p2p98: adj.render === "p2p98", showSaturated: adj.showSat && adj.band !== "RGB",
       whitePoint: whiteForView };
     var simUrl = processImage(baseImg(), opts);
@@ -2085,23 +2085,7 @@ async function deleteResult(r){
       if(srcUrl2) imgSrcEl.src = srcUrl2;
     }
 
-    applyCssFilters();
   }
-
-  function applyCssFilters(){
-    // Contraste : filtre CSS natif, instantané — image simulée uniquement.
-    imgSim.style.filter = "contrast(" + adj.contrast + "%)";
-  }
-
-  function bindSlider(id, valId, suffix, key){
-    var el = document.getElementById(id);
-    el.addEventListener("input", function(){
-      adj[key] = Number(el.value);
-      document.getElementById(valId).textContent = el.value + suffix;
-      applyCssFilters();
-    });
-  }
-  bindSlider("ctrlContrast", "valContrast", " %", "contrast");
 
   // ---- Bandes spectrales (miniatures cliquables) ----
   var bandThumbs = document.getElementById("bandThumbs");
@@ -2166,8 +2150,8 @@ async function deleteResult(r){
   document.getElementById("renderSel").addEventListener("change", function(e){
     adj.render = e.target.value;
     updateDisplay();
-    if(adj.render === "none"){
-      ensureRaw().then(function(){ if(adj.render === "none" && rawImgObj) updateDisplay(); });
+    if(adj.render === "none" || adj.render === "wb"){
+      ensureRaw().then(function(){ if((adj.render === "none" || adj.render === "wb") && rawImgObj) updateDisplay(); });
     }
   });
   document.getElementById("satChk").addEventListener("change", function(e){
@@ -2195,9 +2179,8 @@ async function deleteResult(r){
 
   // ---- Réinitialiser l'affichage ----
   document.getElementById("resetDisplayBtn").addEventListener("click", function(){
-    adj = { contrast:100, band:"RGB", render:"p2p98",   // retour au rendu par défaut
+    adj = { band:"RGB", render:"p2p98",   // retour au rendu par défaut
       showSat:false, whitePointSim:null, whitePointXY:null };
-    document.getElementById("ctrlContrast").value = 100; document.getElementById("valContrast").textContent = "100 %";
     document.getElementById("renderSel").value = "p2p98";
     document.getElementById("satChk").checked = false;
     syncSatControl();
@@ -2216,9 +2199,14 @@ async function deleteResult(r){
   function updateDownloadLabel(){
     var key = adj.band || "RGB";
     var info = dnInfo(key);
+    // 12/10/2026 : avec plusieurs étages TDI, le fichier a plus de bits que l'ADC (la somme de n étages de 12 bits en
+    // demande 12 + log2(n)). Le libellé dit d'où vient le chiffre, pour ne pas laisser croire à une erreur.
+    var dnDiag = result && result.diagnostics && result.diagnostics.dn, nTdi = result && result.conditions && Number(result.conditions.TDI);
+    var sumNote = !!(info && dnDiag && dnDiag.bits_adc && Number(info.bits) !== Number(dnDiag.bits_adc) && nTdi > 1);
+    var lblVars = { band: bandDisplayName(key), bits: info ? info.bits : "", adc: dnDiag ? dnDiag.bits_adc : "", tdi: nTdi };
     document.getElementById("dlChev").style.display = info ? "" : "none";   // menu seulement si les DN existent
     document.getElementById("downloadLabel").textContent = info
-      ? (key === "RGB" ? t("res.download.rgb_dn", { bits: info.bits }) : t("res.download.band_dn", { band: bandDisplayName(key), bits: info.bits }))
+      ? (key === "RGB" ? t(sumNote ? "res.download.rgb_dn_tdi" : "res.download.rgb_dn", lblVars) : t(sumNote ? "res.download.band_dn_tdi" : "res.download.band_dn", lblVars))
       : (key === "RGB" ? t("res.download.rgb") : t("res.download.band", { band: bandDisplayName(key) }));
   }
   // Fichier DN brut disponible pour la sélection courante ? (chemin + nombre de bits ADC)
@@ -2353,8 +2341,7 @@ async function deleteResult(r){
   //   - « Percentile » : balance des blancs, puis étirement p2/p98 canal par canal sur les codes (p2 -> 0, p98 -> pleine
   //     échelle), le fichier gardant son nombre de bits.
   // Tout est refait sur les codes 16 bits eux-mêmes, jamais sur l'image 8 bits affichée, qui a perdu la résolution.
-  // Le contraste du curseur reste un réglage d'affichage : il n'entre pas dans les fichiers. Les gains et les bornes
-  // sont écrits dans le fichier (métadonnée tEXt).
+  // Les gains et les bornes sont écrits dans le fichier (métadonnée tEXt).
   async function encodePng16Rgb(w, h, bytes, text){
     var row = w * 6, raw = new Uint8Array(h * (row + 1));
     for(var y = 0; y < h; y++){ raw[y * (row + 1)] = 0; raw.set(bytes.subarray(y * row, (y + 1) * row), y * (row + 1) + 1); }
