@@ -2162,11 +2162,12 @@ function wireQeSpectralUI(){
  *     for each row execute function check_instrument_limit();
  *
  * Nom unique par compte (12/10/2026) : à vérifier d'abord qu'il n'y a pas de doublon existant
- *   select account_id, lower(trim(name)) as n, count(*) from instruments
+ *   select account_id, lower(trim(name)) as n, count(*) from instruments where deleted_at is null
  *     group by 1, 2 having count(*) > 1;
- * puis, si la requête ne renvoie rien :
+ * puis, si la requête ne renvoie rien (les instruments supprimés, deleted_at non vide, sont ignorés) :
  *   create unique index if not exists instruments_account_name_uniq
- *     on instruments (account_id, lower(trim(name)));
+ *     on instruments (account_id, lower(trim(name)))
+ *     where deleted_at is null;
  */
 async function saveToSupabase(){
   var btn = document.getElementById("btnSave");
@@ -2214,7 +2215,7 @@ async function saveToSupabase(){
   // autour ignorés). L'instrument en cours de modification est exclu, pour pouvoir le réenregistrer tel quel.
   // Le vrai garde-fou est l'index unique en base (cf. le SQL ci-dessous) ; ce contrôle donne le message clair.
   var DUP_NAME_MSG = "Un instrument porte déjà ce nom. Choisissez-en un autre.";
-  var sameName = await supabaseClient.from("instruments").select("id,name").eq("account_id", session.user.id);
+  var sameName = await supabaseClient.from("instruments").select("id,name").eq("account_id", session.user.id).is("deleted_at", null);
   if(!sameName.error && (sameName.data || []).some(function(r){
     return r.id !== state.instrumentId && String(r.name || "").trim().toLowerCase() === name.toLowerCase();
   })){
