@@ -2160,6 +2160,13 @@ function wireQeSpectralUI(){
  *   create trigger trg_check_instrument_limit
  *     before insert on instruments
  *     for each row execute function check_instrument_limit();
+ *
+ * Nom unique par compte (12/10/2026) : à vérifier d'abord qu'il n'y a pas de doublon existant
+ *   select account_id, lower(trim(name)) as n, count(*) from instruments
+ *     group by 1, 2 having count(*) > 1;
+ * puis, si la requête ne renvoie rien :
+ *   create unique index if not exists instruments_account_name_uniq
+ *     on instruments (account_id, lower(trim(name)));
  */
 async function saveToSupabase(){
   var btn = document.getElementById("btnSave");
@@ -2203,6 +2210,21 @@ async function saveToSupabase(){
   var session = await requireAuth();
   if(!session) return; // requireAuth a déjà redirigé vers login.html
 
+  // 12/10/2026 : deux instruments d'un même compte ne peuvent pas porter le même nom (majuscules et espaces
+  // autour ignorés). L'instrument en cours de modification est exclu, pour pouvoir le réenregistrer tel quel.
+  // Le vrai garde-fou est l'index unique en base (cf. le SQL ci-dessous) ; ce contrôle donne le message clair.
+  var DUP_NAME_MSG = "Un instrument porte déjà ce nom. Choisissez-en un autre.";
+  var sameName = await supabaseClient.from("instruments").select("id,name").eq("account_id", session.user.id);
+  if(!sameName.error && (sameName.data || []).some(function(r){
+    return r.id !== state.instrumentId && String(r.name || "").trim().toLowerCase() === name.toLowerCase();
+  })){
+    btn.disabled = false;
+    hint.style.color = "var(--alert)";
+    hint.textContent = tx(DUP_NAME_MSG);
+    document.getElementById("instName").focus();
+    return;
+  }
+
   var row = { name: name, config: state.values, updated_at: new Date().toISOString() };
 
   var result;
@@ -2230,9 +2252,12 @@ async function saveToSupabase(){
     // Postgres check_instrument_limit — même convention de message que la
     // limite de 20 résultats sauvegardés côté simulations.html) — affiché
     // tel quel, sans le préfixe générique, pour rester une info actionnable.
-    hint.textContent = result.error.message.indexOf("Limite de") === 0
-      ? txq(result.error.message)   // message du déclencheur de la base, traduit s'il est connu
-      : tx("Échec de l'enregistrement : {msg}", { msg: result.error.message });
+    // 23505 = violation de l'index unique sur (compte, nom) : même message que le contrôle ci-dessus.
+    hint.textContent = result.error.code === "23505"
+      ? tx(DUP_NAME_MSG)
+      : result.error.message.indexOf("Limite de") === 0
+        ? txq(result.error.message)   // message du déclencheur de la base, traduit s'il est connu
+        : tx("Échec de l'enregistrement : {msg}", { msg: result.error.message });
     return;
   }
 

@@ -935,6 +935,7 @@ var I18N_TEXT = {
   "Lumière incidente": "Incident light",
 
   // ---- enregistrement et chargement ----
+  "Un instrument porte déjà ce nom. Choisissez-en un autre.": "An instrument already has this name. Choose another one.",
   "Donnez un nom à l'instrument avant de l'enregistrer.": "Give the instrument a name before saving it.",
   "À corriger avant d'enregistrer : {list}.": "To fix before saving: {list}.",
   "Enregistrement…": "Saving…",
