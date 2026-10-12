@@ -183,9 +183,16 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .sumlines{font-family:var(--mono);font-size:12px;color:var(--muted);line-height:1.9}
 
 .panelbtn{margin-top:auto;padding-top:14px}
-.quotanote{margin:8px 0 0;font-family:var(--mono);font-size:12px;color:var(--muted-2);text-align:right}
-.quotanote.full{color:var(--alert)}
+.quotanote{margin:10px 0 0;font-family:var(--mono);font-size:12px;color:var(--muted-2)}
 .quotanote[hidden]{display:none}
+.quotanote .qrow{display:flex;justify-content:space-between;align-items:baseline;gap:12px}
+.quotanote .qval{color:var(--paper);white-space:nowrap}
+.quotanote .qbar{height:4px;margin-top:6px;border-radius:2px;background:var(--line-soft);overflow:hidden}
+.quotanote .qfill{display:block;height:100%;width:0;background:var(--pixel);border-radius:2px;transition:width .3s}
+.quotanote.warn .qfill{background:var(--photon)}
+.quotanote.full .qfill,.quotanote.full .qval{background:var(--alert)}
+.quotanote.full .qval{background:none;color:var(--alert)}
+.quotanote .qfull{margin:6px 0 0;color:var(--alert);line-height:1.4}
 .nextbtn,.launchbtn{width:100%;border:1px solid var(--pixel);background:var(--pixel);color:#0A141A;
   font-family:var(--mono);font-size:12.5px;font-weight:600;letter-spacing:.03em;
   padding:11px 18px;border-radius:5px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;
@@ -696,7 +703,11 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
             <!-- 07/10/2026 : grisé jusqu'à la fin du chargement (updatePanelButton le réactive). Avant, il était cliquable
                  dès l'affichage alors que son action n'était branchée qu'une seconde plus tard : un clic rapide ne faisait rien. -->
             <button class="nextbtn" type="button" id="panelActionBtn" disabled>Suivant →</button>
-            <p class="quotanote" id="quotaNote" role="status" hidden></p>
+            <div class="quotanote" id="quotaNote" role="status" hidden>
+              <div class="qrow"><span id="quotaLabel"></span><span class="qval" id="quotaVal"></span></div>
+              <div class="qbar"><span class="qfill" id="quotaFill"></span></div>
+              <p class="qfull" id="quotaFullMsg" hidden></p>
+            </div>
           </div>
         </div>
       </div>
@@ -1579,6 +1590,7 @@ function validateConditions(show){
 // 12/10/2026 : limite de simulations par semaine glissante (plan bêta). Le serveur la fait respecter (main.py,
 // _BETA_WEEKLY_LIMIT) ; ici on l'affiche, et on grise le bouton quand elle est atteinte. L'administrateur n'en a pas.
 var QUOTA_MAX = 20;        // même valeur que _BETA_WEEKLY_LIMIT dans main.py
+var quotaMsg = "";
 var quotaUsed = null;      // dates (ms) des simulations réussies des 7 derniers jours ; null = sans objet ou illisible
 function quotaApplies(){ return !!entitlement && !entitlement.isAdmin && entitlement.beta_access === true; }
 function quotaFull(){ return quotaApplies() && quotaUsed !== null && quotaUsed.length >= QUOTA_MAX; }
@@ -1598,13 +1610,19 @@ async function loadQuota(){
   var n = quotaUsed.length;
   note.hidden = false;
   note.classList.toggle("full", n >= QUOTA_MAX);
+  note.classList.toggle("warn", n >= QUOTA_MAX * 0.8 && n < QUOTA_MAX);
+  document.getElementById("quotaLabel").textContent = t("sim.quota");
+  document.getElementById("quotaVal").textContent = n + " / " + QUOTA_MAX;
+  document.getElementById("quotaFill").style.width = Math.min(100, Math.round(100 * n / QUOTA_MAX)) + "%";
+  var fm = document.getElementById("quotaFullMsg");
+  quotaMsg = "";
   if(n >= QUOTA_MAX){
     var freeAt = new Date(quotaUsed[n - QUOTA_MAX] + 7 * 24 * 3600 * 1000);
-    note.textContent = t("sim.quota.full", { max: QUOTA_MAX,
+    quotaMsg = t("sim.quota.full", { max: QUOTA_MAX,
       date: freeAt.toLocaleString(nysaLocale(), { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }) });
-  } else {
-    note.textContent = t("sim.quota", { n: n, max: QUOTA_MAX });
   }
+  fm.textContent = quotaMsg;
+  fm.hidden = !quotaMsg;
   updatePanelButton();
 }
 
@@ -1623,7 +1641,7 @@ function updatePanelButton(){
     syncTimeField();
     var badRule = adminMode() ? null : CONDITION_RULES.filter(function(r){ return ruleMessage(r) !== ""; })[0];
     btn.disabled = selectedInstIdx < 0 || !!badRule || quotaFull();
-    btn.title = badRule ? ruleMessage(badRule) : (quotaFull() ? document.getElementById("quotaNote").textContent : "");
+    btn.title = badRule ? ruleMessage(badRule) : (quotaFull() ? quotaMsg : "");
     btn.onclick = function(){ showStep(4); };
   } else {
     btn.textContent = t("common.next");

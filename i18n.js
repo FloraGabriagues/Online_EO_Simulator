@@ -209,7 +209,7 @@ var I18N = {
   "sel.partial":         { fr: "{ok} supprimé(s), {fail} en échec. Réessayez pour les restants.",
                            en: "{ok} deleted, {fail} failed. Try again for the remaining ones." },
   // 12/10/2026 : limite de simulations par semaine glissante (plan bêta)
-  "sim.quota":           { fr: "Simulations cette semaine : {n} / {max}", en: "Simulations this week: {n} / {max}" },
+  "sim.quota":           { fr: "Simulations cette semaine", en: "Simulations this week" },
   "sim.quota.full":      { fr: "Limite de {max} simulations atteinte. Prochaine place libre le {date}.",
                            en: "Limit of {max} simulations reached. Next slot available on {date}." },
   "api.weekly_limit":    { fr: "Limite hebdomadaire de simulations atteinte pour votre compte. Une place se libère dans les jours qui suivent.",
