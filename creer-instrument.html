@@ -999,7 +999,7 @@ function renderPanel(){
   block.fields.forEach(function(f){
     if(!fieldVisible(f) || f.mention) return;
     var v = state.values[f.k] !== undefined ? state.values[f.k] : (f.k === "DET_TYPE" ? "CMOS" : "");
-    var valueAttr = v !== "" ? " value='"+v+"'" : "";
+    var valueAttr = v !== "" ? " value='"+escH(v)+"'" : "";
     // ESUP : obligatoire seulement si des supports sont renseignés
     // (NSUP > 0) — sinon 0 par défaut, comme NSUP lui-même.
     var placeholder = f.placeholder;
@@ -1234,10 +1234,10 @@ function renderWfeCasesHtml(){
   var cases = state.values.wfeCases || [];
   var rows = cases.map(function(c){
     if(c.mode === "rms"){
-      return "<div class='caserow' data-case-id='"+c.id+"'>"+
-        "<span class='cname'>"+c.name+"</span>"+
-        "<span class='cfile'>RMS "+c.rms+" nm</span>"+
-        "<button type='button' class='cdel' data-del-case='"+c.id+"' aria-label='"+txa("Supprimer ce cas")+"'>×</button>"+
+      return "<div class='caserow' data-case-id='"+escH(c.id)+"'>"+
+        "<span class='cname'>"+escH(c.name)+"</span>"+
+        "<span class='cfile'>RMS "+escH(c.rms)+" nm</span>"+
+        "<button type='button' class='cdel' data-del-case='"+escH(c.id)+"' aria-label='"+txa("Supprimer ce cas")+"'>×</button>"+
       "</div>";
     }
     var alignOpts = ["center", "left", "right"].map(function(a){
@@ -1246,12 +1246,12 @@ function renderWfeCasesHtml(){
     var convOpts = ["osa", "noll", "fringe"].map(function(v){
       return "<option value='"+v+"'"+((c.convention||"osa") === v ? " selected" : "")+">"+WFE_CONVENTION_LABELS[v]+"</option>";
     }).join("");
-    return "<div class='caserow' data-case-id='"+c.id+"'>"+
-      "<span class='cname'>"+c.name+"</span>"+
-      "<span class='cfile'>"+(c.rowCount != null ? tx("{n} lignes · {file}", { n: c.rowCount, file: c.filename }) : "-")+"</span>"+
-      "<select class='calign' data-conv-case='"+c.id+"' title='"+txa("Convention Zernike")+"'>"+convOpts+"</select>"+
+    return "<div class='caserow' data-case-id='"+escH(c.id)+"'>"+
+      "<span class='cname'>"+escH(c.name)+"</span>"+
+      "<span class='cfile'>"+(c.rowCount != null ? tx("{n} lignes · {file}", { n: escH(c.rowCount), file: escH(c.filename) }) : "-")+"</span>"+
+      "<select class='calign' data-conv-case='"+escH(c.id)+"' title='"+txa("Convention Zernike")+"'>"+convOpts+"</select>"+
       "<select class='calign' data-align-case='"+c.id+"'>"+alignOpts+"</select>"+
-      "<button type='button' class='cdel' data-del-case='"+c.id+"' aria-label='"+txa("Supprimer ce cas")+"'>×</button>"+
+      "<button type='button' class='cdel' data-del-case='"+escH(c.id)+"' aria-label='"+txa("Supprimer ce cas")+"'>×</button>"+
     "</div>";
   }).join("");
   return "<div class='wfecases'>"+
@@ -1307,7 +1307,7 @@ function renderZernikeDetailHtml(cases){
     "<p class='wfesub'>"+tx("Front d'onde combiné (fausses couleurs) d'une colonne donnée, pour un cas WFE fichier chargé ci-dessus.")+"</p>"+
     (fileCases.length
       ? "<div class='zpickrow'>"+
-          "<select id='zernCaseSel'>"+fileCases.map(function(c){ return "<option value='"+c.id+"'>"+c.name+"</option>"; }).join("")+"</select>"+
+          "<select id='zernCaseSel'>"+fileCases.map(function(c){ return "<option value='"+escH(c.id)+"'>"+escH(c.name)+"</option>"; }).join("")+"</select>"+
           "<select id='zernColSel'></select>"+
         "</div>"+
         "<div id='zernOut'></div>"
@@ -1463,7 +1463,7 @@ function renderZernikeDetail(){
   var rows = parsePerfoCsvRows(selectedCase.csv);
   var prevCol = colSel.value;
   colSel.innerHTML = rows.map(function(r, i){
-    return "<option value='"+i+"'>"+(r.band ? tx("Bande {b} · ", { b: tBand(r.band) }) : "")+tx("Colonne {c}", { c: r.column })+"</option>";
+    return "<option value='"+i+"'>"+(r.band ? tx("Bande {b} · ", { b: tBand(r.band) }) : "")+tx("Colonne {c}", { c: escH(r.column) })+"</option>";
   }).join("") || "<option value=''>-</option>";
   if(rows.some(function(r, i){ return String(i) === prevCol; })) colSel.value = prevCol;
 
@@ -1958,8 +1958,8 @@ function renderTSpectralHtml(){
   var st = curveStatus(pts, "t");
   var rows = pts.map(function(p, i){
     return "<div class='qerow'>"+
-      "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qewl tswl"+(st.dup[i] ? " invalid" : (st.odd[i] ? " odd" : ""))+"' data-t-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
-      "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qeval tsval"+(p.t !== "" && !inUnitRange(p.t) ? " invalid" : "")+"' data-t-idx='"+i+"' value='"+p.t+"' min='0' max='1' placeholder='Transmission (0-1)'>"+
+      "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qewl tswl"+(st.dup[i] ? " invalid" : (st.odd[i] ? " odd" : ""))+"' data-t-idx='"+i+"' value='"+escH(p.wl)+"' placeholder='λ (nm)'>"+
+      "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qeval tsval"+(p.t !== "" && !inUnitRange(p.t) ? " invalid" : "")+"' data-t-idx='"+i+"' value='"+escH(p.t)+"' min='0' max='1' placeholder='Transmission (0-1)'>"+
       "<button type='button' class='qedel' data-t-del='"+i+"' aria-label='"+txa("Supprimer ce point")+"'>×</button>"+
     "</div>";
   }).join("");
@@ -2013,8 +2013,8 @@ function renderQeSpectralHtml(){
   var st = curveStatus(pts, "qe");
   var rows = pts.map(function(p, i){
     return "<div class='qerow' data-qe-idx='"+i+"'>"+
-      "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qewl"+(st.dup[i] ? " invalid" : (st.odd[i] ? " odd" : ""))+"' data-qe-idx='"+i+"' value='"+p.wl+"' placeholder='λ (nm)'>"+
-      "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qeval"+(p.qe !== "" && !inUnitRange(p.qe) ? " invalid" : "")+"' data-qe-idx='"+i+"' value='"+p.qe+"' min='0' max='1' placeholder='QE (0-1)'>"+
+      "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qewl"+(st.dup[i] ? " invalid" : (st.odd[i] ? " odd" : ""))+"' data-qe-idx='"+i+"' value='"+escH(p.wl)+"' placeholder='λ (nm)'>"+
+      "<input type='text' inputmode='decimal' autocomplete='off' data-num class='qeval"+(p.qe !== "" && !inUnitRange(p.qe) ? " invalid" : "")+"' data-qe-idx='"+i+"' value='"+escH(p.qe)+"' min='0' max='1' placeholder='QE (0-1)'>"+
       "<button type='button' class='qedel' data-qe-del='"+i+"' aria-label='"+txa("Supprimer ce point")+"'>×</button>"+
     "</div>";
   }).join("");

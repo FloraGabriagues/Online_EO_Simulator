@@ -1569,7 +1569,7 @@ async function deleteResult(r){
   var ELEC_MODE_NAMES = { detailed: t("res.in.mode.detailed"), datasheet: t("res.in.mode.datasheet"), full_scale: t("res.in.mode.full_scale") };
   function entTile(label, value){
     return "<div><div style='font-family:var(--mono);font-size:12px;color:var(--muted-2);text-transform:uppercase'>"+
-      label + "</div><div style='font-family:var(--mono);font-size:15px;color:var(--paper)'>" + value + "</div></div>";
+      label + "</div><div style='font-family:var(--mono);font-size:15px;color:var(--paper)'>" + escH(value) + "</div></div>";
   }
   document.getElementById("entSceneImg").crossOrigin = "anonymous";   // même requête que l'image source : pas de 3e téléchargement
   document.getElementById("entSceneImg").src = sourceUrl;

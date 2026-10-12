@@ -945,7 +945,7 @@ function renderInstruments(){
       b.title = miss.length ? t("inst.missing", { list: miss.map(tField).join(", ") }) : t("sim.inst.to_complete");
       b.innerHTML =
         "<span class='thumb'>" + satThumb(inst) + "</span>"+
-        "<span><div class='nameline'><div class='name'>" + inst.name + "</div><span class='draftbadge'>" + t("inst.badge.draft") + "</span></div>"+
+        "<span><div class='nameline'><div class='name'>" + escH(inst.name) + "</div><span class='draftbadge'>" + t("inst.badge.draft") + "</span></div>"+
         "<div class='meta'>" +
           (miss.length ? t(miss.length > 1 ? "sim.inst.fields_many" : "sim.inst.fields_one", { n: miss.length }) : t("sim.inst.to_complete_short")) + "</div></span>"+
         "<span class='draftgo'>" + t("inst.complete_cta") + "</span>";
@@ -958,7 +958,7 @@ function renderInstruments(){
     b.className = "instoption" + (i === selectedInstIdx ? " selected" : "");
     b.innerHTML =
       "<span class='thumb" + (isExample(inst) ? " example" : "") + "'>" + satThumb(inst) + "</span>"+
-      "<span><div class='nameline'><div class='name'>" + inst.name + "</div>" + exBadge + "</div></span>"+
+      "<span><div class='nameline'><div class='name'>" + escH(inst.name) + "</div>" + exBadge + "</div></span>"+
       "<span class='check'>✓</span>";
     b.addEventListener("click", function(){
       selectedInstIdx = i;
@@ -979,7 +979,7 @@ function renderWfeCaseOptions(){
   var cases = (selectedInstIdx >= 0 && instruments[selectedInstIdx].config && instruments[selectedInstIdx].config.wfeCases) || [];
   var current = sel.value;
   sel.innerHTML = "<option value=\"\">" + t("sim.wfe.simplified") + "</option>" +
-    cases.map(function(c){ return "<option value='"+c.id+"'>"+c.name+(c.mode === "rms" ? " (RMS)" : t("sim.wfe.file_suffix"))+"</option>"; }).join("");
+    cases.map(function(c){ return "<option value='"+escH(c.id)+"'>"+escH(c.name)+(c.mode === "rms" ? " (RMS)" : t("sim.wfe.file_suffix"))+"</option>"; }).join("");
   sel.value = cases.some(function(c){ return c.id === current; }) ? current : "";
 }
 
@@ -1338,7 +1338,7 @@ function updateSummary(){
   if(currentStep >= 2 && selectedInstIdx >= 0){
     document.getElementById("sumInstSlot").innerHTML =
       "<div class='sumfilled'><span class='mini pupil'>" + satThumb(instruments[selectedInstIdx]) + "</span><div class='txt'>"+
-      "<div class='t1'>" + instruments[selectedInstIdx].name + "</div></div></div>";
+      "<div class='t1'>" + escH(instruments[selectedInstIdx].name) + "</div></div></div>";
   } else {
     document.getElementById("sumInstSlot").innerHTML = "<span class='empty'>-</span>";
   }
@@ -1996,7 +1996,7 @@ async function launchSimulation(){
     } else {
       ppct.textContent = t("sim.pct.failed");
       etaText.textContent = "-";
-      addLog(t("common.error_msg", { msg: err.message }));
+      addLog(t("common.error_msg", { msg: escH(err.message) }));
       setStatus("error", t("sim.status.failed"));
     }
   }
@@ -2218,9 +2218,9 @@ async function autoSaveResultInner(){
     var msg = (err.message || "").includes("Limite de")
       ? (nysaLang() === "fr" ? err.message : t("sim.save.limit"))
       : t("sim.save.fail", { msg: (err.message || err) });
-    addLog(t("common.error_msg", { msg: msg }));
+    addLog(t("common.error_msg", { msg: escH(msg) }));
     actions.innerHTML =
-      "<p class='savingnote' style='color:var(--alert)'>" + msg + "</p>"+
+      "<p class='savingnote' style='color:var(--alert)'>" + escH(msg) + "</p>"+
       "<button class='retrybtn' type='button' id='retrySaveBtn'>" + t("sim.save.retry") + "</button>";
     document.getElementById("retrySaveBtn").addEventListener("click", autoSaveResult);
   }

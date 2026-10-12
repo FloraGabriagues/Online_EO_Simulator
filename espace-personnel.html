@@ -794,7 +794,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       a.innerHTML =
         "<div class='body'>"+
           "<div class='titlerow'>"+
-            "<div class='titleblock'><div class='name'>"+it.name+"</div>"+
+            "<div class='titleblock'><div class='name'>"+escH(it.name)+"</div>"+
             (it.draft ? "<span class='draftbadge'>" + t("inst.badge.draft") + "</span>" : "")+"</div>"+
             "<div class='menuwrap'>"+
               "<button class='menubtn' type='button' aria-label='" + t("inst.menu.options") + "' data-menu-toggle data-id='"+it.id+"'>⋮</button>"+
@@ -806,7 +806,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
               "</div>"+
             "</div>"+
           "</div>"+
-          (desc ? "<p class='desc'>"+desc+"</p>" : "")+
+          (desc ? "<p class='desc'>"+escH(desc)+"</p>" : "")+
           "<div><div class='pctrow'><span>"+(it.draft ? t("inst.config.incomplete") : t("inst.config.complete"))+"</span><span>"+it.pct+" %</span></div>"+
           "<div class='track'><div class='fill' style='width:"+it.pct+"%'></div></div></div>"+
           "<div class='datesrow'>"+

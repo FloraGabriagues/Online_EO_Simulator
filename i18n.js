@@ -1188,6 +1188,14 @@ var I18N_API_FR = {
     return tx(fr, vars).replace(/&/g, "&amp;").replace(/'/g, "&#39;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
   };
 
+  // 12/10/2026 : échappe un texte venant de l'utilisateur (nom d'instrument, cas WFE, valeur importée…) avant de
+  // l'insérer dans du HTML construit en texte, que ce soit entre balises ou dans un attribut entre apostrophes
+  // ou guillemets. Sans cela, un nom contenant une balise s'exécutait (surtout via l'import d'un fichier).
+  window.escH = function(v){
+    return String(v == null ? "" : v).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  };
+
   // Message d'erreur du serveur : traduit s'il est connu, sinon affiché tel quel.
   window.tApi = function(msg){
     if(typeof msg !== "string") return msg;
