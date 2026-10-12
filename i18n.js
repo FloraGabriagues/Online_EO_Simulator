@@ -208,6 +208,12 @@ var I18N = {
                                 en: "Delete these {n} instruments? They can be restored on request for 30 days." },
   "sel.partial":         { fr: "{ok} supprimé(s), {fail} en échec. Réessayez pour les restants.",
                            en: "{ok} deleted, {fail} failed. Try again for the remaining ones." },
+  // 12/10/2026 : limite de simulations par semaine glissante (plan bêta)
+  "sim.quota":           { fr: "Simulations cette semaine : {n} / {max}", en: "Simulations this week: {n} / {max}" },
+  "sim.quota.full":      { fr: "Limite de {max} simulations atteinte. Prochaine place libre le {date}.",
+                           en: "Limit of {max} simulations reached. Next slot available on {date}." },
+  "api.weekly_limit":    { fr: "Limite hebdomadaire de simulations atteinte pour votre compte. Une place se libère dans les jours qui suivent.",
+                           en: "Weekly simulation limit reached for your account. A slot frees up in the coming days." },
   "home.prompt.rename":  { fr: "Nouveau nom :", en: "New name:" },
   "home.copy_suffix":    { fr: " (copie)", en: " (copy)" },
   "home.err.delete":     { fr: "La suppression a échoué : {msg}", en: "Deletion failed: {msg}" },
@@ -1091,7 +1097,8 @@ var I18N_API_FR = {
   "Trop de simulations depuis ce compte": "api.rate_account",
   "Trop de requêtes depuis ce compte": "api.rate_requests",
   "Accès réservé à l'administrateur": "api.admin_only",
-  "Électronique non renseignée : ouvrez l'instrument": "api.electronics"
+  "Électronique non renseignée : ouvrez l'instrument": "api.electronics",
+  "Limite hebdomadaire atteinte": "api.weekly_limit"
 };
 
 // ============================================================================
