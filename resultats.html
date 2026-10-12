@@ -181,6 +181,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .dlmenulist{position:absolute;left:0;right:0;bottom:calc(100% + 6px);z-index:30;display:flex;flex-direction:column;
   background:var(--panel-2);border:1px solid var(--pixel);border-radius:6px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.45)}
 .dlmenulist[hidden]{display:none}
+.dlmenulist button[hidden]{display:none}
 .dlmenulist button{font-family:var(--body);font-size:13.5px;text-align:left;padding:11px 14px;background:transparent;border:0;
   color:var(--paper);cursor:pointer}
 .dlmenulist button+button{border-top:1px solid var(--line-soft)}
@@ -665,12 +666,14 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                     <span id="downloadLabel">Télécharger l'image RGB</span>
                     <svg class="dlchev" id="dlChev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></button>
                   <div class="dlmenulist" id="dlMenu" role="menu" hidden>
-                    <button type="button" role="menuitem" data-mode="scaled" data-i18n="res.dl.mode.scaled">Mis à l'échelle sur le maximum de l'image</button>
                     <button type="button" role="menuitem" data-mode="raw" data-i18n="res.dl.mode.raw">Valeurs brutes (DN)</button>
+                    <button type="button" role="menuitem" data-mode="wb" data-for="rgb" data-i18n="res.dl.mode.wb">Brut avec balance des blancs</button>
+                    <button type="button" role="menuitem" data-mode="pct" data-for="rgb" data-i18n="res.dl.mode.pct">Percentile p2/p98 (avec balance des blancs)</button>
+                    <button type="button" role="menuitem" data-mode="scaled" data-for="band" data-i18n="res.dl.mode.scaled">Mis à l'échelle sur le maximum de l'image</button>
                   </div>
                 </div>
                 <button type="button" class="sathelp" id="noteHelp" aria-expanded="false" aria-controls="noteHint" aria-label="?">?</button>
-                <p class="sathint up" id="noteHint" role="note" hidden data-i18n="res.note">Ces réglages n'affectent que l'affichage dans ce navigateur : le téléchargement fournit les valeurs brutes de l'instrument (DN), au nombre de bits de son électronique, en pleine résolution et sans retouche.</p>
+                <p class="sathint up" id="noteHint" role="note" hidden data-i18n="res.note">Ces réglages n'affectent que l'affichage dans ce navigateur : le téléchargement fournit les valeurs de l'instrument (DN), au nombre de bits de son électronique, en pleine résolution. En RGB, trois formes au choix : brut, avec balance des blancs, ou avec étirement percentile.</p>
               </div>
               <button type="button" class="reportbtn" id="btnReport" disabled>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 21V4M5 4h11l-2 4 2 4H5"/></svg>
@@ -1827,6 +1830,7 @@ async function deleteResult(r){
     // « Aucun (brut) »). Le rendu brut reste disponible dans la liste.
     band:"RGB", render:"p2p98", showSat:false,
     whitePointSim:null,
+    whitePointXY:null,   // emplacement du point blanc choisi (fractions de l'image), pour le refaire sur les DN au téléchargement
   };
 
   // Copie hors-DOM des images simulée ET source, chargées une fois pour
@@ -1889,15 +1893,42 @@ async function deleteResult(r){
     return Math.max(0, Math.min(255, (v - s.lo) / (s.hi - s.lo) * 255));
   }
 
-  function samplePixel(imgEl, relX, relY){
+  // rad : demi-côté de la fenêtre moyennée (0 = un seul pixel, comme avant).
+  function samplePixel(imgEl, relX, relY, rad){
     var c = document.createElement("canvas");
     c.width = imgEl.naturalWidth; c.height = imgEl.naturalHeight;
     var ctx = c.getContext("2d");
     ctx.drawImage(imgEl, 0, 0);
     var x = Math.min(c.width - 1, Math.max(0, Math.round(relX * c.width)));
     var y = Math.min(c.height - 1, Math.max(0, Math.round(relY * c.height)));
-    var p = ctx.getImageData(x, y, 1, 1).data;
-    return {r:p[0], g:p[1], b:p[2]};
+    rad = rad || 0;
+    var x0 = Math.max(0, x - rad), y0 = Math.max(0, y - rad);
+    var x1 = Math.min(c.width - 1, x + rad), y1 = Math.min(c.height - 1, y + rad);
+    var p = ctx.getImageData(x0, y0, x1 - x0 + 1, y1 - y0 + 1).data, n = p.length / 4, r = 0, g = 0, b = 0;
+    for(var i = 0; i < p.length; i += 4){ r += p[i]; g += p[i+1]; b += p[i+2]; }
+    return {r:Math.round(r / n), g:Math.round(g / n), b:Math.round(b / n)};
+  }
+
+  // ---- Point blanc par défaut de chaque scène (12/10/2026) ----
+  // Même liste que SCENE_WHITE_POINT_FRAC dans eo_adapter.py (repères relevés à la main le 01/09/2026, en
+  // fraction de l'image 200 m). Côté serveur, l'image 8 bits enregistrée est déjà corrigée avec ce point ; les DN
+  // bruts, eux, ne le sont pas. Si la liste change dans eo_adapter.py, la mettre à jour ici aussi.
+  // En RGB (jamais sur une bande séparée), le rendu « Aucun (brut) » et le téléchargement l'appliquent tant que
+  // l'utilisateur n'a pas choisi son propre point blanc.
+  var SCENE_WHITE_POINT_FRAC = {
+    aix:   { x: 0.36, y: 0.56 },   // bus blanc
+    avion: { x: 0.44, y: 0.46 },   // fuselage
+    port:  { x: 0.92, y: 0.50 }    // superstructure du navire
+  };
+  var DEFAULT_WP_RADIUS = 2;       // moyenne sur 5 × 5 pixels : un seul pixel d'une image bruitée serait trop aléatoire
+  // Emplacement du point blanc à appliquer : celui choisi, sinon celui de la scène (ou null).
+  function activeWhiteXY(){ return adj.whitePointXY || SCENE_WHITE_POINT_FRAC[sceneName] || null; }
+  var defaultWpCache = { img: null, wp: null };
+  function defaultWhitePointFor(imgEl){
+    var xy = SCENE_WHITE_POINT_FRAC[sceneName];
+    if(!xy || !imgEl) return null;
+    if(defaultWpCache.img !== imgEl){ defaultWpCache = { img: imgEl, wp: samplePixel(imgEl, xy.x, xy.y, DEFAULT_WP_RADIUS) }; }
+    return defaultWpCache.wp;
   }
 
   // ---- Retraitement pixel par pixel : point blanc -> étirement -> bande -> pixels saturés.
@@ -2033,8 +2064,12 @@ async function deleteResult(r){
     // s'applique aux DEUX images : sans ça, comparer par exemple la bande
     // Rouge simulée à une source restée en RGB ne veut rien dire.
     var channelIdx = adj.band === "RGB" ? null : CHANNEL_IDX[adj.band];
+    // 12/10/2026 : en RGB et en rendu brut (DN lus tels quels, sans correction), le point blanc de la scène est
+    // appliqué par défaut. En étirement p2/p98, l'image enregistrée l'a déjà reçu du serveur. Pas sur les bandes.
+    var whiteForView = adj.whitePointSim;
+    if(!whiteForView && channelIdx == null && adj.render === "none" && rawImgObj) whiteForView = defaultWhitePointFor(rawImgObj);
     var opts = { channel: channelIdx, p2p98: adj.render === "p2p98", showSaturated: adj.showSat && adj.band !== "RGB",
-      whitePoint: adj.whitePointSim };
+      whitePoint: whiteForView };
     var simUrl = processImage(baseImg(), opts);
     if(simUrl) imgSim.src = simUrl;
 
@@ -2154,13 +2189,14 @@ async function deleteResult(r){
     var relX = (e.clientX - rect.left) / rect.width;
     var relY = (e.clientY - rect.top) / rect.height;
     adj.whitePointSim = samplePixel(baseImg(), relX, relY);
+    adj.whitePointXY = { x: relX, y: relY };
     updateDisplay();
   });
 
   // ---- Réinitialiser l'affichage ----
   document.getElementById("resetDisplayBtn").addEventListener("click", function(){
     adj = { contrast:100, band:"RGB", render:"p2p98",   // retour au rendu par défaut
-      showSat:false, whitePointSim:null };
+      showSat:false, whitePointSim:null, whitePointXY:null };
     document.getElementById("ctrlContrast").value = 100; document.getElementById("valContrast").textContent = "100 %";
     document.getElementById("renderSel").value = "p2p98";
     document.getElementById("satChk").checked = false;
@@ -2199,10 +2235,11 @@ async function deleteResult(r){
   function fileSlug(s){
     return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
   }
+  var DL_NAME_SUFFIX = { raw: "_brut", scaled: "_echelle-max", wb: "_balance-blancs", pct: "_p2-p98" };
   function downloadName(key, mode){
     var name = fileSlug((result && result.name) || tScene(sceneName)) || "resultat";
     var info = dnInfo(key);
-    return fileSlug(bandDisplayName(key)) + "_" + name + "_" + createdLabel + (info && mode ? "_DN" + info.bits + "bit" + (dlScaled(mode) ? "_echelle-max" : "_brut") : "") + ".png";
+    return fileSlug(bandDisplayName(key)) + "_" + name + "_" + createdLabel + (info && mode ? "_DN" + info.bits + "bit" + (DL_NAME_SUFFIX[mode] || "_brut") : "") + ".png";
   }
   var CRC_TABLE = null;
   function crc32(buf){
@@ -2308,6 +2345,77 @@ async function deleteResult(r){
     parts.push(pngChunk("IEND", new Uint8Array(0)));
     return new Blob(parts, { type: "image/png" });
   }
+  // ---- RGB téléchargé : trois formes, toujours au nombre de bits de l'ADC ou du sommeur TDI (12/10/2026) ----
+  //   - « Brut » : les codes de l'instrument, sans aucun réglage.
+  //   - « Brut avec balance des blancs » : gains = maximum / canal, mesurés sur les codes au point blanc (celui
+  //     choisi, sinon celui de la scène, moyenné sur 5 × 5 pixels). Le canal le plus fort garde le gain 1, les autres
+  //     sont relevés, écrêtés à la pleine échelle 2^bits - 1. Même formule que l'affichage.
+  //   - « Percentile » : balance des blancs, puis étirement p2/p98 canal par canal sur les codes (p2 -> 0, p98 -> pleine
+  //     échelle), le fichier gardant son nombre de bits.
+  // Tout est refait sur les codes 16 bits eux-mêmes, jamais sur l'image 8 bits affichée, qui a perdu la résolution.
+  // Le contraste du curseur reste un réglage d'affichage : il n'entre pas dans les fichiers. Les gains et les bornes
+  // sont écrits dans le fichier (métadonnée tEXt).
+  async function encodePng16Rgb(w, h, bytes, text){
+    var row = w * 6, raw = new Uint8Array(h * (row + 1));
+    for(var y = 0; y < h; y++){ raw[y * (row + 1)] = 0; raw.set(bytes.subarray(y * row, (y + 1) * row), y * (row + 1) + 1); }
+    var ihdr = new Uint8Array(13), dv = new DataView(ihdr.buffer);
+    dv.setUint32(0, w); dv.setUint32(4, h); ihdr[8] = 16; ihdr[9] = 2;     // 16 bits, RGB
+    var parts = [new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]), pngChunk("IHDR", ihdr)];
+    if(text) parts.push(pngChunk("tEXt", new TextEncoder().encode(text)));
+    parts.push(pngChunk("IDAT", await deflateZlib(raw)));
+    parts.push(pngChunk("IEND", new Uint8Array(0)));
+    return new Blob(parts, { type: "image/png" });
+  }
+  // percentile : true -> étirement p2/p98 après la balance des blancs. Retourne le nouveau fichier, ou null si rien n'est à appliquer.
+  async function adjustRgbDn(blob, bits, percentile){
+    var dec = await decodePng16(new Uint8Array(await blob.arrayBuffer()));
+    if(dec.ch !== 3) return null;
+    var full = Math.pow(2, bits) - 1, gains = [1, 1, 1], xy = activeWhiteXY(), wpTxt = "none";
+    if(xy){
+      var cx = Math.min(dec.w - 1, Math.max(0, Math.round(xy.x * dec.w))), cy = Math.min(dec.h - 1, Math.max(0, Math.round(xy.y * dec.h)));
+      var x0 = Math.max(0, cx - DEFAULT_WP_RADIUS), x1 = Math.min(dec.w - 1, cx + DEFAULT_WP_RADIUS);
+      var y0 = Math.max(0, cy - DEFAULT_WP_RADIUS), y1 = Math.min(dec.h - 1, cy + DEFAULT_WP_RADIUS);
+      var sum = [0, 0, 0], cnt = 0;
+      for(var yy = y0; yy <= y1; yy++) for(var xx = x0; xx <= x1; xx++){
+        var q = (yy * dec.w + xx) * 6;
+        for(var c = 0; c < 3; c++) sum[c] += (dec.bytes[q + 2*c] << 8) | dec.bytes[q + 2*c + 1];
+        cnt++;
+      }
+      var wp = sum.map(function(s){ return Math.max(s / cnt, 1); });
+      var mx = Math.max(wp[0], wp[1], wp[2]);
+      gains = wp.map(function(v){ return mx / v; });
+      wpTxt = (adj.whitePointXY ? "chosen" : "scene default") + " at x=" + xy.x.toFixed(3) + " y=" + xy.y.toFixed(3) +
+        " (DN " + wp.map(function(v){ return v.toFixed(1); }).join("/") + ", gains " + gains.map(function(g){ return g.toFixed(4); }).join("/") + ")";
+    }
+    if(!xy && !percentile) return null;
+    var b = dec.bytes, n = dec.w * dec.h * 3, vals = new Uint16Array(n);
+    for(var i = 0; i < n; i++){
+      var s0 = 2 * i, v = ((b[s0] << 8) | b[s0 + 1]) * gains[i % 3];
+      vals[i] = Math.round(v > full ? full : v);
+    }
+    var stTxt = "none";
+    if(percentile){
+      var hist = [new Uint32Array(full + 1), new Uint32Array(full + 1), new Uint32Array(full + 1)], npx = dec.w * dec.h;
+      for(var i2 = 0; i2 < n; i2++) hist[i2 % 3][vals[i2]]++;
+      var lo = [0, 0, 0], hi = [full, full, full];
+      for(var c2 = 0; c2 < 3; c2++){
+        var cum = 0, t2 = npx * 0.02, t98 = npx * 0.98, gotLo = false;
+        for(var u = 0; u <= full; u++){
+          cum += hist[c2][u];
+          if(!gotLo && cum >= t2){ lo[c2] = u; gotLo = true; }
+          if(cum >= t98){ hi[c2] = u; break; }
+        }
+      }
+      for(var i3 = 0; i3 < n; i3++){
+        var cc = i3 % 3, span = hi[cc] - lo[cc];
+        if(span > 0){ var w2 = (vals[i3] - lo[cc]) / span * full; vals[i3] = Math.round(w2 < 0 ? 0 : (w2 > full ? full : w2)); }
+      }
+      stTxt = "p2/p98 per channel, low " + lo.join("/") + ", high " + hi.join("/");
+    }
+    for(var i4 = 0; i4 < n; i4++){ var s4 = 2 * i4; b[s4] = (vals[i4] >> 8) & 255; b[s4 + 1] = vals[i4] & 255; }
+    var txt = "Nysa_adjustments\u0000white balance: " + wpTxt + "; stretch: " + stTxt + "; full scale: " + full + " (" + bits + " bits)";
+    return encodePng16Rgb(dec.w, dec.h, b, txt);
+  }
   updateDownloadLabel();
   // Un clic sur le bouton ouvre le menu (mis à l'échelle ou valeurs brutes) ; sans DN enregistrés (anciens
   // résultats), il télécharge directement l'image du serveur.
@@ -2318,6 +2426,8 @@ async function deleteResult(r){
     var key = adj.band || "RGB";
     if(!dnInfo(key)){ doDownload(null); return; }
     var open = dlMenuEl.hidden;
+    // entrées propres au RGB (balance des blancs, percentile) ou aux bandes séparées (mise à l'échelle)
+    dlMenuEl.querySelectorAll("button[data-for]").forEach(function(btn){ btn.hidden = btn.dataset.for !== (key === "RGB" ? "rgb" : "band"); });
     dlMenuEl.hidden = !open;
     dlBtnEl.setAttribute("aria-expanded", open ? "true" : "false");
     if(open) dlMenuEl.querySelector("button").focus();
@@ -2338,11 +2448,19 @@ async function deleteResult(r){
         var sg = await supabaseClient.storage.from("results").createSignedUrl(info.path, 600);
         if(!sg.error && sg.data){
           var dnBlob = await (await fetch(sg.data.signedUrl)).blob();
+          var fileMode = mode;
+          if(key === "RGB" && (mode === "wb" || mode === "pct")){
+            try{
+              if(typeof DecompressionStream === "undefined" || typeof CompressionStream === "undefined") throw new Error("navigateur sans compression");
+              var adjusted = await adjustRgbDn(dnBlob, Number(info.bits), mode === "pct");
+              if(adjusted) dnBlob = adjusted; else fileMode = "raw";
+            }catch(e3){ console.error("Réglages impossibles sur les DN, fichier brut fourni :", e3); fileMode = "raw"; }
+          }
           if(dlScaled(mode) && typeof DecompressionStream !== "undefined" && typeof CompressionStream !== "undefined"){
             try{ dnBlob = await scalePng16(dnBlob); }
             catch(e2){ console.error("Mise à l'échelle impossible, fichier brut fourni :", e2); }
           }
-          saveBlob(dnBlob, downloadName(key, mode));
+          saveBlob(dnBlob, downloadName(key, fileMode));
           return;
         }
       }
