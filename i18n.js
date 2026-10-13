@@ -983,7 +983,7 @@ var I18N_TEXT = {
   "Source": "Source",
   "Atmosphère": "Atmosphere",
   "Radiométrie": "Radiometry",
-  "Simulateur complet →": "Full simulator →",
+  "Accéder à la bêta complète": "Access the full beta",
   "Choisissez une image source": "Choose a source image",
   "Configurez votre instrument": "Configure your instrument",
   "Vue": "View",
