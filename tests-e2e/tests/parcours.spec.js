@@ -615,16 +615,21 @@ for (const lang of ["en", "fr"]) {
     });
 
     test("téléchargement de la composition RGB et d'une bande", async () => {
+      // Le bouton ouvre un menu (valeurs brutes, balance des blancs, etc.) : on choisit « valeurs brutes ».
+      const dlRaw = async () => {
+        await page.locator("#downloadBtn").click({ timeout: 15 * 1000 });
+        await page.locator("#dlMenu button[data-mode='raw']").click({ timeout: 15 * 1000 });
+      };
       await expect(page.locator("#downloadLabel")).toContainText(S.dlRgb);
-      let [download] = await Promise.all([page.waitForEvent("download"), page.locator("#downloadBtn").click()]);
-      expect(download.suggestedFilename()).toMatch(/^RGB_e2e-resultat-\w+_\d{4}-\d{2}-\d{2}_\d{4}(_DN\d+bit)?\.png$/);
+      let [download] = await Promise.all([page.waitForEvent("download", { timeout: 30 * 1000 }), dlRaw()]);
+      expect(download.suggestedFilename()).toMatch(/^RGB_e2e-resultat-\w+_\d{4}-\d{2}-\d{2}_\d{4}(_DN\d+bit\w*)?\.png$/);
       let h = await pngInfo(download);
       expect(h.signature, "le fichier doit être un PNG").toEqual([137, 80, 78, 71]);
       expect(h.size).toBeGreaterThan(1000);
-      await page.locator(".bandthumb[data-key='R']").click();
+      await page.locator(".bandthumb[data-key='R']").click({ timeout: 15 * 1000 });
       await expect(page.locator("#downloadLabel")).toContainText(S.dlRed);
-      [download] = await Promise.all([page.waitForEvent("download"), page.locator("#downloadBtn").click()]);
-      expect(download.suggestedFilename()).toMatch(new RegExp(`^${S.fileRed}_e2e-resultat-\\w+_\\d{4}-\\d{2}-\\d{2}_\\d{4}(_DN\\d+bit)?\\.png$`));
+      [download] = await Promise.all([page.waitForEvent("download", { timeout: 30 * 1000 }), dlRaw()]);
+      expect(download.suggestedFilename()).toMatch(new RegExp(`^${S.fileRed}_e2e-resultat-\\w+_\\d{4}-\\d{2}-\\d{2}_\\d{4}(_DN\\d+bit\\w*)?\\.png$`));
       h = await pngInfo(download);
       expect(h.signature).toEqual([137, 80, 78, 71]);
       expect(h.size).toBeGreaterThan(500);
