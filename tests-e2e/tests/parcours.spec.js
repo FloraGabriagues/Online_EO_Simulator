@@ -2,7 +2,8 @@
 // Nysa : tests automatiques du site, sur le vrai site.
 //
 // PAGES PUBLIQUES (aucun compte nécessaire)
-//   - la démo : s'affiche, calcule une vraie simulation, en anglais et en français ;
+//   - la démo : s'affiche en anglais et en français, ses liens mènent au mode invité ;
+//   - le mode invité : essai complet sans compte et sans serveur (simulation fictive, résultat pré-calculé) ;
 //   - la connexion : mauvais mot de passe, mot de passe oublié, inscription (contrôles),
 //     choix de la langue ;
 //   - aucun appel à un service tiers, aucun texte non traduit, aucun tiret long ;
@@ -153,38 +154,97 @@ test.describe("Pages publiques @public", () => {
     const errors = watchErrors(page);
     await page.goto("/index.html");
     await expect(page.locator("h1")).toContainText("imaging simulator");
-    await expect(page.locator("#simBtn")).toHaveText("Run simulation");
+    await expect(page.locator("#fullSimLink")).toHaveText("Access the full beta");
     await expect(page.locator("[data-lang-switch] button")).toHaveCount(2);
     await page.locator("[data-lang-switch] button", { hasText: "FR" }).click();
     await expect(page.locator("h1")).toContainText("Simulateur d'imagerie");
-    await expect(page.locator("#simBtn")).toHaveText("Lancer la simulation");
+    await expect(page.locator("#fullSimLink")).toHaveText("Accéder à la bêta complète");
     expect(errors, "erreurs JavaScript sur la démo").toEqual([]);
   });
 
-  test("la démo n'a plus d'administration et mène au simulateur complet", async ({ page }) => {
+  // 16/10/2026 : les liens vers le simulateur complet passent par le mode invité (?invite=1).
+  test("la démo n'a plus d'administration et mène au simulateur complet (mode invité)", async ({ page }) => {
     const errors = watchErrors(page);
     await page.goto("/index.html?lang=en");
     await expect(page.locator("#adminTrigger, #adminOverlay, #adminResultPage"), "reste d'administration dans la démo").toHaveCount(0);
     const link = page.locator("#fullSimLink");
     await expect(link).toBeVisible();
-    await expect(link).toHaveText("Full simulator →");
-    await expect(link).toHaveAttribute("href", "espace-personnel.html");
+    await expect(link).toHaveAttribute("href", "espace-personnel.html?invite=1");
+    await expect(page.locator(".offer-cta")).toHaveAttribute("href", "espace-personnel.html?invite=1");
     await link.click();
-    await page.waitForURL(/login\.html|espace-personnel\.html/);          // connexion d'abord pour un visiteur
-    await page.goto("/index.html?lang=fr");
-    await expect(page.locator("#fullSimLink")).toHaveText("Simulateur complet →");
+    await page.waitForURL(/espace-personnel\.html/);                       // plus de connexion d'abord : le visiteur arrive en invité
+    await expect(page.locator("#userEmail")).toHaveText("Guest");
     expect(errors).toEqual([]);
   });
 
-  for (const lang of ["en", "fr"]) {
-    test(`la démo calcule une vraie simulation (${lang})`, async ({ page }) => {
-      const errors = watchErrors(page);
-      await page.goto(`/index.html?lang=${lang}`);
-      await page.locator("#simBtn").click();
-      await expect(page.locator(".prog-note").first(), "la démo doit annoncer la fin du calcul").toHaveText(STR[lang].demoDone, { timeout: 4 * 60 * 1000 });
-      expect(errors).toEqual([]);
+  test("l'espace personnel reste protégé sans le lien d'invitation", async ({ page }) => {
+    await page.goto("/espace-personnel.html");
+    await page.waitForURL(/login\.html/);
+  });
+
+  test("« Créer un compte » ouvre directement l'inscription", async ({ page }) => {
+    await page.goto("/login.html?signup=1&lang=en");
+    await expect(page.locator("#signupForm")).toBeVisible();
+    await expect(page.locator("#loginForm")).toBeHidden();
+  });
+
+  // Mode invité : essai sans compte. Aucun appel au serveur de calcul ni aux données Supabase ;
+  // simulation fictive (environ une minute, horloge accélérée ici) puis résultat pré-calculé (dossier demo/).
+  test("mode invité : essai complet sans compte et sans serveur", async ({ page }) => {
+    const errors = watchErrors(page);
+    const server = [];
+    page.on("request", (r) => {
+      const u = r.url();
+      if (/scw\.cloud|supabase\.co\/(rest|storage|functions)/.test(u)) server.push(u);
     });
-  }
+    await page.clock.install();
+    await page.goto("/espace-personnel.html?invite=1&lang=en");
+    await expect(page.locator("h1")).toHaveText(STR.en.myInstruments);
+    await expect(page.locator("#userEmail")).toHaveText("Guest");
+    await expect(page.locator(".instcard")).toHaveCount(1);
+
+    // Fenêtre de bienvenue : proposée une fois, puis plus jamais dans ce navigateur.
+    await expect(page.locator(".onb-modal")).toBeVisible();
+    await page.locator(".onb-modal button", { hasText: "Explore on my own" }).click();
+    await expect(page.locator(".onb-modal")).toHaveCount(0);
+    await page.reload();
+    await page.clock.runFor(3000);
+    await expect(page.locator(".onb-modal")).toHaveCount(0);
+
+    // Boutons de modification grisés : l'invitation s'ouvre au clic.
+    await expect(page.locator("a.createbtn")).toHaveClass(/guestlock/);
+    await page.locator("a.createbtn").click({ force: true });
+    await expect(page.locator("#guestOverlay")).toHaveClass(/open/);
+    await page.keyboard.press("Escape");
+    await expect(page.locator("#guestOverlay")).not.toHaveClass(/open/);
+
+    // L'exemple s'ouvre en lecture seule.
+    await page.locator(".instcard").first().click();
+    await page.waitForURL(/creer-instrument\.html\?id=example/);
+    await expect(page.locator("#instName")).toBeDisabled();
+    await expect(page.locator("#btnSave")).toHaveClass(/guestlock/);
+
+    // Simulation fictive : seule la scène se choisit, conditions figées.
+    await page.goto("/simulations.html?lang=en");
+    await page.locator(".scenecard").first().click();
+    await page.locator("#panelActionBtn").click();
+    await page.locator("#panelActionBtn").click();
+    await expect(page.locator("#fH")).toHaveValue("500");
+    await expect(page.locator("#fTI")).toHaveValue("298");
+    await expect(page.locator("#fH")).toBeDisabled();
+    await page.locator("#panelActionBtn").click();
+    await expect(page.locator("#statText")).toHaveText(STR.en.simRunning);
+    await page.clock.runFor(70 * 1000);
+    await expect(page.locator("#statText")).toHaveText(STR.en.simDone);
+    await page.locator("#statusActions .viewresultsbtn").click();
+    await page.waitForURL(/resultats\.html\?id=demo-/);
+    await expect(page.locator("#compareWrap")).toBeVisible();
+    await expect(page.locator("#btnRenameResult")).toHaveClass(/guestlock/);
+    await expect(page.locator("#userEmail")).toHaveText("Guest");
+
+    expect(server, "appels au serveur de calcul ou aux données en mode invité").toEqual([]);
+    expect(errors).toEqual([]);
+  });
 
   test("les polices et les bibliothèques viennent du site, pas d'un tiers", async ({ page }) => {
     const outside = [];
