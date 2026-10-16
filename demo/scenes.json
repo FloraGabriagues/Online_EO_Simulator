@@ -1,0 +1,20 @@
+{
+ "version": 1,
+ "scenes": [
+  {
+   "scene": "Port",
+   "slug": "port",
+   "result": "demo/port/result.json"
+  },
+  {
+   "scene": "Avion",
+   "slug": "avion",
+   "result": "demo/avion/result.json"
+  },
+  {
+   "scene": "Ville",
+   "slug": "ville",
+   "result": "demo/ville/result.json"
+  }
+ ]
+}

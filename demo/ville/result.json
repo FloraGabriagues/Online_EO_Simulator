@@ -1,0 +1,194 @@
+{
+ "name": null,
+ "scene": "Ville",
+ "conditions": {
+  "H": 500,
+  "S": 60,
+  "Z": "none",
+  "TI": 298,
+  "TDI": 4,
+  "wfeCaseName": null
+ },
+ "instrument_snapshot": {
+  "name": "Exemple",
+  "config": {
+   "D": "0.3",
+   "E": "0.1",
+   "I": "4.2",
+   "K": "0",
+   "P": "0",
+   "R": "10",
+   "T": "0.80",
+   "W": "0",
+   "FW": "20000",
+   "PX": "4.4",
+   "ADC": "12",
+   "ESUP": "0.03",
+   "NSUP": "3",
+   "_pct": 100,
+   "_draft": false,
+   "QE_mode": "curve",
+   "DET_TYPE": "CMOS",
+   "T_filter": "1",
+   "_example": true,
+   "_missing": [],
+   "qeSpectral": [
+    {
+     "qe": "0.64",
+     "wl": "400"
+    },
+    {
+     "qe": "0.67",
+     "wl": "500"
+    },
+    {
+     "qe": "0.74",
+     "wl": "600"
+    },
+    {
+     "qe": "0.73",
+     "wl": "700"
+    },
+    {
+     "qe": "0.65",
+     "wl": "800"
+    }
+   ],
+   "electronics_mode": "full_scale"
+  }
+ },
+ "diagnostics": {
+  "dn": {
+   "DN0": 0,
+   "dn_max": 16383,
+   "bits_adc": 12,
+   "bits_tdi": 14,
+   "dn_scale": 1,
+   "rgb_path": "demo/ville/dn_rgb.png"
+  },
+  "bands": {
+   "Bleu": {
+    "S_ref_e": 15498.911947569948,
+    "dn_bits": 14,
+    "rho_ref": 0.2,
+    "fill_pct": 28.858364257812504,
+    "snr_mean": 151.25683562406397,
+    "saturation": {
+     "pct": 0,
+     "n_sat_adc": 0,
+     "n_sat_tdi": 0,
+     "n_sat_full_well": 0,
+     "n_pixels_saturated": 0
+    },
+    "full_well_e": 20000,
+    "mtf_png_path": "demo/shared/Bleu_mtf.png",
+    "psf_png_path": "demo/shared/Bleu_psf.png",
+    "dn_png16_path": "demo/ville/Bleu_dn_png16_b64.png",
+    "signal_mean_e": 23512.177734375,
+    "mtf_at_nyquist": 0.3454148930239391,
+    "pupil_png_path": "demo/shared/Bleu_pupil.png",
+    "reflectance_max": 0.8693539693898663,
+    "reflectance_min": 0.22521765572792227,
+    "signal_median_e": 23086.69140625,
+    "reflectance_mean": 0.4523851459251875,
+    "rgb_gain_applied": 0.9514644005319872,
+    "snr_map_png_path": "demo/ville/Bleu_snr_map.png",
+    "snr_regimes_png_path": "demo/ville/Bleu_snr_regimes.png",
+    "snr_histogram_png_path": "demo/ville/Bleu_snr_histogram.png",
+    "saturated_mask_png_path": "demo/ville/Bleu_saturated_mask.png",
+    "snr_noise_budget_png_path": "demo/ville/Bleu_snr_noise_budget.png",
+    "snr_image_compare_png_path": "demo/ville/Bleu_snr_image_compare.png",
+    "snr_noise_maps_sim_png_path": "demo/ville/Bleu_snr_noise_maps_sim.png",
+    "gsd_txt": "2.1",
+    "psf_txt": "A : grille GSD source",
+    "sat_pct": 0,
+    "sat_fw": 0,
+    "sat_adc": 0,
+    "sat_tdi": 0
+   },
+   "Vert": {
+    "S_ref_e": 13515.432299731357,
+    "dn_bits": 14,
+    "rho_ref": 0.2,
+    "fill_pct": 28.16849853515625,
+    "snr_mean": 148.9296628255292,
+    "saturation": {
+     "pct": 0,
+     "n_sat_adc": 0,
+     "n_sat_tdi": 0,
+     "n_sat_full_well": 0,
+     "n_pixels_saturated": 0
+    },
+    "full_well_e": 20000,
+    "mtf_png_path": "demo/shared/Vert_mtf.png",
+    "psf_png_path": "demo/shared/Vert_psf.png",
+    "dn_png16_path": "demo/ville/Vert_dn_png16_b64.png",
+    "signal_mean_e": 22987.28515625,
+    "mtf_at_nyquist": 0.31580002600272716,
+    "pupil_png_path": "demo/shared/Vert_pupil.png",
+    "reflectance_max": 0.8732412147429597,
+    "reflectance_min": 0.18365373212285843,
+    "signal_median_e": 22534.798828125,
+    "reflectance_mean": 0.47506143076341034,
+    "rgb_gain_applied": 1.091098134196256,
+    "snr_map_png_path": "demo/ville/Vert_snr_map.png",
+    "snr_regimes_png_path": "demo/ville/Vert_snr_regimes.png",
+    "snr_histogram_png_path": "demo/ville/Vert_snr_histogram.png",
+    "saturated_mask_png_path": "demo/ville/Vert_saturated_mask.png",
+    "snr_noise_budget_png_path": "demo/ville/Vert_snr_noise_budget.png",
+    "snr_image_compare_png_path": "demo/ville/Vert_snr_image_compare.png",
+    "snr_noise_maps_sim_png_path": "demo/ville/Vert_snr_noise_maps_sim.png",
+    "gsd_txt": "2.1",
+    "psf_txt": "A : grille GSD source",
+    "sat_pct": 0,
+    "sat_fw": 0,
+    "sat_adc": 0,
+    "sat_tdi": 0
+   },
+   "Rouge": {
+    "S_ref_e": 15309.1159117124,
+    "dn_bits": 14,
+    "rho_ref": 0.2,
+    "fill_pct": 36.263735351562495,
+    "snr_mean": 166.48599536469376,
+    "saturation": {
+     "pct": 0,
+     "n_sat_adc": 0,
+     "n_sat_tdi": 0,
+     "n_sat_full_well": 0,
+     "n_pixels_saturated": 0
+    },
+    "full_well_e": 20000,
+    "mtf_png_path": "demo/shared/Rouge_mtf.png",
+    "psf_png_path": "demo/shared/Rouge_psf.png",
+    "dn_png16_path": "demo/ville/Rouge_dn_png16_b64.png",
+    "signal_mean_e": 28921.224609375,
+    "mtf_at_nyquist": 0.27991839718629224,
+    "pupil_png_path": "demo/shared/Rouge_pupil.png",
+    "reflectance_max": 0.8744515180303921,
+    "reflectance_min": 0.17068950757154508,
+    "signal_median_e": 29010.98828125,
+    "reflectance_mean": 0.49890875056362816,
+    "rgb_gain_applied": 0.96326025945173,
+    "snr_map_png_path": "demo/ville/Rouge_snr_map.png",
+    "snr_regimes_png_path": "demo/ville/Rouge_snr_regimes.png",
+    "snr_histogram_png_path": "demo/ville/Rouge_snr_histogram.png",
+    "saturated_mask_png_path": "demo/ville/Rouge_saturated_mask.png",
+    "snr_noise_budget_png_path": "demo/ville/Rouge_snr_noise_budget.png",
+    "snr_image_compare_png_path": "demo/ville/Rouge_snr_image_compare.png",
+    "snr_noise_maps_sim_png_path": "demo/ville/Rouge_snr_noise_maps_sim.png",
+    "gsd_txt": "2.1",
+    "psf_txt": "A : grille GSD source",
+    "sat_pct": 0,
+    "sat_fw": 0,
+    "sat_adc": 0,
+    "sat_tdi": 0
+   }
+  }
+ },
+ "logs": "",
+ "created_at": "2026-10-16T08:23:52.141512+00:00",
+ "image_path": "demo/ville/main.png",
+ "source_image_path": "demo/ville/source.png",
+ "scene_slug": "ville"
+}

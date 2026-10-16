@@ -1,0 +1,194 @@
+{
+ "name": null,
+ "scene": "Port",
+ "conditions": {
+  "H": 500,
+  "S": 60,
+  "Z": "none",
+  "TI": 298,
+  "TDI": 4,
+  "wfeCaseName": null
+ },
+ "instrument_snapshot": {
+  "name": "Exemple",
+  "config": {
+   "D": "0.3",
+   "E": "0.1",
+   "I": "4.2",
+   "K": "0",
+   "P": "0",
+   "R": "10",
+   "T": "0.80",
+   "W": "0",
+   "FW": "20000",
+   "PX": "4.4",
+   "ADC": "12",
+   "ESUP": "0.03",
+   "NSUP": "3",
+   "_pct": 100,
+   "_draft": false,
+   "QE_mode": "curve",
+   "DET_TYPE": "CMOS",
+   "T_filter": "1",
+   "_example": true,
+   "_missing": [],
+   "qeSpectral": [
+    {
+     "qe": "0.64",
+     "wl": "400"
+    },
+    {
+     "qe": "0.67",
+     "wl": "500"
+    },
+    {
+     "qe": "0.74",
+     "wl": "600"
+    },
+    {
+     "qe": "0.73",
+     "wl": "700"
+    },
+    {
+     "qe": "0.65",
+     "wl": "800"
+    }
+   ],
+   "electronics_mode": "full_scale"
+  }
+ },
+ "diagnostics": {
+  "dn": {
+   "DN0": 0,
+   "dn_max": 16383,
+   "bits_adc": 12,
+   "bits_tdi": 14,
+   "dn_scale": 1,
+   "rgb_path": "demo/port/dn_rgb.png"
+  },
+  "bands": {
+   "Bleu": {
+    "S_ref_e": 14219.87157058343,
+    "dn_bits": 14,
+    "rho_ref": 0.2,
+    "fill_pct": 20.915751953125,
+    "snr_mean": 135.41694226146862,
+    "saturation": {
+     "pct": 0,
+     "n_sat_adc": 0,
+     "n_sat_tdi": 0,
+     "n_sat_full_well": 0,
+     "n_pixels_saturated": 0
+    },
+    "full_well_e": 20000,
+    "mtf_png_path": "demo/shared/Bleu_mtf.png",
+    "psf_png_path": "demo/shared/Bleu_psf.png",
+    "dn_png16_path": "demo/port/Bleu_dn_png16_b64.png",
+    "signal_mean_e": 18928.71484375,
+    "mtf_at_nyquist": 0.3454148930239391,
+    "pupil_png_path": "demo/shared/Bleu_pupil.png",
+    "reflectance_max": 0.8814953353580575,
+    "reflectance_min": 0.23267485436278765,
+    "signal_median_e": 16732.6015625,
+    "reflectance_mean": 0.351015477465814,
+    "rgb_gain_applied": 0.9209058002568984,
+    "snr_map_png_path": "demo/port/Bleu_snr_map.png",
+    "snr_regimes_png_path": "demo/port/Bleu_snr_regimes.png",
+    "snr_histogram_png_path": "demo/port/Bleu_snr_histogram.png",
+    "saturated_mask_png_path": "demo/port/Bleu_saturated_mask.png",
+    "snr_noise_budget_png_path": "demo/port/Bleu_snr_noise_budget.png",
+    "snr_image_compare_png_path": "demo/port/Bleu_snr_image_compare.png",
+    "snr_noise_maps_sim_png_path": "demo/port/Bleu_snr_noise_maps_sim.png",
+    "gsd_txt": "2.1",
+    "psf_txt": "A : grille GSD source",
+    "sat_pct": 0,
+    "sat_fw": 0,
+    "sat_adc": 0,
+    "sat_tdi": 0
+   },
+   "Vert": {
+    "S_ref_e": 12048.943899719128,
+    "dn_bits": 14,
+    "rho_ref": 0.2,
+    "fill_pct": 16.770451660156247,
+    "snr_mean": 125.00432416314388,
+    "saturation": {
+     "pct": 0,
+     "n_sat_adc": 0,
+     "n_sat_tdi": 0,
+     "n_sat_full_well": 0,
+     "n_pixels_saturated": 0
+    },
+    "full_well_e": 20000,
+    "mtf_png_path": "demo/shared/Vert_mtf.png",
+    "psf_png_path": "demo/shared/Vert_psf.png",
+    "dn_png16_path": "demo/port/Vert_dn_png16_b64.png",
+    "signal_mean_e": 16382.556640625,
+    "mtf_at_nyquist": 0.31580002600272716,
+    "pupil_png_path": "demo/shared/Vert_pupil.png",
+    "reflectance_max": 0.8933477748819312,
+    "reflectance_min": 0.1790949117712278,
+    "signal_median_e": 13416.361328125,
+    "reflectance_mean": 0.32824089848803734,
+    "rgb_gain_applied": 1.086830706263286,
+    "snr_map_png_path": "demo/port/Vert_snr_map.png",
+    "snr_regimes_png_path": "demo/port/Vert_snr_regimes.png",
+    "snr_histogram_png_path": "demo/port/Vert_snr_histogram.png",
+    "saturated_mask_png_path": "demo/port/Vert_saturated_mask.png",
+    "snr_noise_budget_png_path": "demo/port/Vert_snr_noise_budget.png",
+    "snr_image_compare_png_path": "demo/port/Vert_snr_image_compare.png",
+    "snr_noise_maps_sim_png_path": "demo/port/Vert_snr_noise_maps_sim.png",
+    "gsd_txt": "2.1",
+    "psf_txt": "A : grille GSD source",
+    "sat_pct": 0,
+    "sat_fw": 0,
+    "sat_adc": 0,
+    "sat_tdi": 0
+   },
+   "Rouge": {
+    "S_ref_e": 13106.537992629153,
+    "dn_bits": 14,
+    "rho_ref": 0.2,
+    "fill_pct": 14.114774169921876,
+    "snr_mean": 123.13071159748935,
+    "saturation": {
+     "pct": 0,
+     "n_sat_adc": 0,
+     "n_sat_tdi": 0,
+     "n_sat_full_well": 0,
+     "n_pixels_saturated": 0
+    },
+    "full_well_e": 20000,
+    "mtf_png_path": "demo/shared/Rouge_mtf.png",
+    "psf_png_path": "demo/shared/Rouge_psf.png",
+    "dn_png16_path": "demo/port/Rouge_dn_png16_b64.png",
+    "signal_mean_e": 16441.24609375,
+    "mtf_at_nyquist": 0.27991839718629224,
+    "pupil_png_path": "demo/shared/Rouge_pupil.png",
+    "reflectance_max": 0.8827840894860353,
+    "reflectance_min": 0.1387052304366578,
+    "signal_median_e": 11291.8193359375,
+    "reflectance_mean": 0.2747391261248939,
+    "rgb_gain_applied": 0.9991320526917864,
+    "snr_map_png_path": "demo/port/Rouge_snr_map.png",
+    "snr_regimes_png_path": "demo/port/Rouge_snr_regimes.png",
+    "snr_histogram_png_path": "demo/port/Rouge_snr_histogram.png",
+    "saturated_mask_png_path": "demo/port/Rouge_saturated_mask.png",
+    "snr_noise_budget_png_path": "demo/port/Rouge_snr_noise_budget.png",
+    "snr_image_compare_png_path": "demo/port/Rouge_snr_image_compare.png",
+    "snr_noise_maps_sim_png_path": "demo/port/Rouge_snr_noise_maps_sim.png",
+    "gsd_txt": "2.1",
+    "psf_txt": "A : grille GSD source",
+    "sat_pct": 0,
+    "sat_fw": 0,
+    "sat_adc": 0,
+    "sat_tdi": 0
+   }
+  }
+ },
+ "logs": "",
+ "created_at": "2026-10-16T08:28:36.220961+00:00",
+ "image_path": "demo/port/main.png",
+ "source_image_path": "demo/port/source.png",
+ "scene_slug": "port"
+}
