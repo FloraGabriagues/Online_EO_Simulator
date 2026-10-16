@@ -615,16 +615,16 @@ for (const lang of ["en", "fr"]) {
     });
 
     test("téléchargement de la composition RGB et d'une bande", async () => {
-      await expect(page.locator("#downloadLabel")).toHaveText(S.dlRgb);
+      await expect(page.locator("#downloadLabel")).toContainText(S.dlRgb);
       let [download] = await Promise.all([page.waitForEvent("download"), page.locator("#downloadBtn").click()]);
-      expect(download.suggestedFilename()).toMatch(/^RGB_e2e-resultat-\w+_\d{4}-\d{2}-\d{2}_\d{4}\.png$/);
+      expect(download.suggestedFilename()).toMatch(/^RGB_e2e-resultat-\w+_\d{4}-\d{2}-\d{2}_\d{4}(_DN\d+bit)?\.png$/);
       let h = await pngInfo(download);
       expect(h.signature, "le fichier doit être un PNG").toEqual([137, 80, 78, 71]);
       expect(h.size).toBeGreaterThan(1000);
       await page.locator(".bandthumb[data-key='R']").click();
-      await expect(page.locator("#downloadLabel")).toHaveText(S.dlRed);
+      await expect(page.locator("#downloadLabel")).toContainText(S.dlRed);
       [download] = await Promise.all([page.waitForEvent("download"), page.locator("#downloadBtn").click()]);
-      expect(download.suggestedFilename()).toMatch(new RegExp(`^${S.fileRed}_e2e-resultat-\\w+_\\d{4}-\\d{2}-\\d{2}_\\d{4}\\.png$`));
+      expect(download.suggestedFilename()).toMatch(new RegExp(`^${S.fileRed}_e2e-resultat-\\w+_\\d{4}-\\d{2}-\\d{2}_\\d{4}(_DN\\d+bit)?\\.png$`));
       h = await pngInfo(download);
       expect(h.signature).toEqual([137, 80, 78, 71]);
       expect(h.size).toBeGreaterThan(500);
@@ -751,7 +751,9 @@ test.describe.serial("Tutoriel d'accueil", () => {
   let page;
   let errors;
   const bubble = () => page.locator(".onb-bubble");
-  const step = (n) => expect(bubble()).toContainText(`Step ${n} of 12`);
+  // L'étape d'accueil « Bienvenue » est la 1re sur 13 : step(n) désigne l'étape n des zones surlignées.
+  const step = (n) => expect(bubble()).toContainText(`Step ${n + 1} of 13`);
+  const welcome = () => expect(bubble()).toContainText("Step 1 of 13");
 
   test.beforeAll(async ({ browser }) => {
     const context = await browser.newContext({ baseURL: BASE_URL, viewport: { width: 1440, height: 900 } });
@@ -773,7 +775,7 @@ test.describe.serial("Tutoriel d'accueil", () => {
   test("on peut quitter le tutoriel à tout moment, et le relancer depuis les réglages", async () => {
     await page.goto("/espace-personnel.html?settings=1");
     await page.locator("#settingsTourBtn").click();
-    await step(1);
+    await welcome();
     await page.locator(".onb-bubble .onb-link").click();
     await expect(bubble()).toHaveCount(0);
     // quitté : il ne revient pas tout seul au rechargement
@@ -785,6 +787,8 @@ test.describe.serial("Tutoriel d'accueil", () => {
   test("parcours complet : instruments, simulation, résultat, curseur, onglets", async () => {
     await page.goto("/espace-personnel.html?settings=1");
     await page.locator("#settingsTourBtn").click();
+    await welcome();                                                      // accueil sans voile
+    await page.locator(".onb-bubble .onb-btn.primary").click();
     await step(1);                                                        // instruments : l'exemple est déjà créé
     await page.locator(".onb-bubble .onb-btn.primary").click();
     await step(2);                                                        // menu : Simulations
