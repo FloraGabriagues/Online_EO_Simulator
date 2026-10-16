@@ -508,11 +508,42 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .rptbtn.primary{background:var(--pixel);border-color:var(--pixel);color:#06231F;font-weight:500;flex:1 1 200px}
 .rptbtn:disabled{opacity:.4;cursor:not-allowed}
 .rptbtn[hidden]{display:none}
+
+/* 16/10/2026 : mode invité (résultat pré-calculé en lecture seule) */
+.guestlock{opacity:.5;cursor:not-allowed}
+.g-tip{position:fixed;z-index:300;max-width:260px;padding:8px 11px;border-radius:6px;background:var(--panel-2);border:1px solid var(--pixel);color:var(--paper);font-size:12.5px;line-height:1.4;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.g-tip[hidden]{display:none}
+.g-overlay{position:fixed;inset:0;z-index:250;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(5,10,14,.72);backdrop-filter:blur(3px)}
+.g-overlay.open{display:flex}
+.g-modal{width:100%;max-width:440px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.g-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.g-head h2{margin:0;font-size:16px;color:var(--paper)}
+.g-close{background:none;border:0;color:var(--muted);font-size:16px;cursor:pointer;padding:4px 8px}
+.g-close:hover{color:var(--paper)}
+.g-body{margin:0;padding:18px 20px 6px;font-size:14px;line-height:1.55;color:var(--paper)}
+.g-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:14px 20px 20px}
+.g-btn{display:inline-block;font:inherit;font-size:13px;padding:9px 14px;border-radius:5px;border:1px solid var(--line);background:none;color:var(--paper);cursor:pointer;text-decoration:none}
+.g-btn.primary{background:var(--photon);border-color:var(--photon);color:#1a1208;font-weight:600}
 </style>
 </head>
 <body>
 <!-- Bandeau « version bêta » : se désactive dans beta.js (BETA_ACTIVE = false) -->
 <script src="beta.js"></script>
+<!-- 16/10/2026 : fenêtre d'invitation du mode invité -->
+<div class="g-overlay" id="guestOverlay">
+  <div class="g-modal" role="dialog" aria-modal="true" aria-labelledby="guestTitle">
+    <div class="g-head">
+      <h2 id="guestTitle" data-i18n="guest.invite.title">Créez votre compte gratuit</h2>
+      <button class="g-close" id="guestCloseBtn" type="button" aria-label="Fermer" data-i18n-aria="common.close">✕</button>
+    </div>
+    <p class="g-body" data-i18n="guest.invite.text">Avec un compte, vous créez vos propres instruments, lancez vos simulations et retrouvez vos résultats. C'est gratuit pendant la bêta.</p>
+    <div class="g-actions">
+      <button class="g-btn" id="guestLaterBtn" type="button" data-i18n="guest.invite.later">Plus tard</button>
+      <a class="g-btn primary" id="guestGoBtn" href="login.html?signup=1" data-i18n="guest.invite.go">Créer un compte gratuit</a>
+    </div>
+  </div>
+</div>
+<div class="g-tip" id="guestTip" role="tooltip" hidden></div>
 <div class="app">
 
   <aside class="sidebar">
@@ -796,6 +827,87 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 // Textes par défaut des éléments que ce script met ensuite à jour lui-même :
 // ils ne portent pas d'attribut data-i18n, qui écraserait la valeur calculée.
 document.getElementById("resTitle").textContent = t("res.title_default");
+
+// ===================== Mode invité (16/10/2026) =====================
+// L'invité ne voit que les résultats pré-calculés (demo/<scène>/result.json) des scènes qu'il a « simulées » dans
+// cet onglet (sessionStorage), en lecture seule : aucun appel à Supabase. Les images se lisent par leur chemin relatif.
+var guest = false;
+function lockForGuest(el){
+  el.classList.add("guestlock");
+  el.setAttribute("aria-disabled", "true");
+  el.setAttribute("data-guest-tip", t("guest.tip"));
+}
+async function guestFetchResult(id){
+  var slug = String(id || "").replace(/^demo-/, "");
+  if(!/^[a-z]{2,20}$/.test(slug)) return null;
+  try {
+    var resp = await fetch("demo/" + slug + "/result.json");
+    if(!resp.ok) return null;
+    var r = await resp.json();
+    var at = null;
+    try { (JSON.parse(sessionStorage.getItem("nysa_guest_results") || "[]")).forEach(function(x){ if(x.slug === slug) at = x.at; }); } catch(e){}
+    r.id = "demo-" + slug;
+    r.created_at = new Date(at || Date.now()).toISOString();
+    var snapName = r.instrument_snapshot && r.instrument_snapshot.name;
+    r.instruments = { name: (snapName && typeof snapName === "object") ? (snapName[nysaLang()] || snapName.en) : snapName, deleted_at: null };
+    return r;
+  } catch(e){ console.warn("Résultat de démonstration illisible :", e); return null; }
+}
+async function guestResults(){
+  var kept = [];
+  try { kept = JSON.parse(sessionStorage.getItem("nysa_guest_results") || "[]"); } catch(e){}
+  var out = [];
+  for(var i = 0; i < kept.length; i++){
+    var r = await guestFetchResult("demo-" + kept[i].slug);
+    if(r) out.push(r);
+  }
+  return out.sort(function(a, b){ return new Date(b.created_at) - new Date(a.created_at); });
+}
+function setupGuestUI(){
+  var overlay = document.getElementById("guestOverlay"), tip = document.getElementById("guestTip"), lastFocus = null;
+  function openInvite(){
+    lastFocus = document.activeElement; tip.hidden = true;
+    overlay.classList.add("open");
+    document.getElementById("guestGoBtn").focus();
+  }
+  function closeInvite(){
+    overlay.classList.remove("open");
+    if(lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  document.getElementById("guestCloseBtn").addEventListener("click", closeInvite);
+  document.getElementById("guestLaterBtn").addEventListener("click", closeInvite);
+  overlay.addEventListener("click", function(e){ if(e.target === overlay) closeInvite(); });
+  document.addEventListener("keydown", function(e){
+    if(!overlay.classList.contains("open")) return;
+    if(e.key === "Escape"){ e.stopPropagation(); closeInvite(); return; }
+    if(e.key === "Tab"){
+      var f = [document.getElementById("guestCloseBtn"), document.getElementById("guestLaterBtn"), document.getElementById("guestGoBtn")];
+      var i = f.indexOf(document.activeElement);
+      e.preventDefault();
+      f[(i + (e.shiftKey ? f.length - 1 : 1)) % f.length].focus();
+    }
+  }, true);
+  function show(el){
+    tip.textContent = el.getAttribute("data-guest-tip"); tip.hidden = false;
+    var r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + "px";
+    var y = r.bottom + 8; if(y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 8);
+    tip.style.top = y + "px";
+  }
+  function target(e){ return e.target.closest && e.target.closest("[data-guest-tip]"); }
+  document.addEventListener("mouseover", function(e){ var el = target(e); if(el) show(el); else tip.hidden = true; });
+  document.addEventListener("focusin", function(e){ var el = target(e); if(el) show(el); else tip.hidden = true; });
+  document.addEventListener("focusout", function(){ tip.hidden = true; });
+  window.addEventListener("scroll", function(){ tip.hidden = true; }, true);
+  // Un clic sur un bouton grisé ouvre l'invitation et ne fait rien d'autre.
+  document.addEventListener("click", function(e){
+    var el = e.target.closest && e.target.closest(".guestlock");
+    if(!el) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    openInvite();
+  }, true);
+  ["btnImport", "btnSelMode", "btnRenameResult", "btnReport"].forEach(function(id){ lockForGuest(document.getElementById(id)); });
+}
 // ===================== Lightbox (zoom plein écran sur les graphes) =====================
 // Global (pas dans une fonction async plus bas) — utilisée depuis
 // buildDiagPanel (onglets Graphes MTF/SNR) pour agrandir un graphique au
@@ -1031,10 +1143,16 @@ async function renderResultsList(){
   // sur instrument_snapshot.name, sauvegardé au moment du résultat.
   // 11/10/2026 : colonnes listées au lieu de « * » : la liste n'utilise jamais les journaux de calcul (logs),
   // volumineux et présents sur chaque résultat. Ils restent lus par la page de détail (select("*") plus bas).
-  var { data: results, error } = await supabaseClient
-    .from("saved_results")
-    .select("id, created_at, name, scene, image_path, source_image_path, conditions, diagnostics, instrument_snapshot, instruments(name, deleted_at)")
-    .order("created_at", { ascending: false });
+  var results, error = null;
+  if(guest){
+    results = await guestResults();
+  } else {
+    var listRes = await supabaseClient
+      .from("saved_results")
+      .select("id, created_at, name, scene, image_path, source_image_path, conditions, diagnostics, instrument_snapshot, instruments(name, deleted_at)")
+      .order("created_at", { ascending: false });
+    results = listRes.data; error = listRes.error;
+  }
 
   if(error){
     console.error("Erreur chargement des résultats :", error);
@@ -1053,7 +1171,9 @@ async function renderResultsList(){
   // unitaire d'avant (même résultat, plus lent).
   var thumbUrls = {};
   var thumbPaths = results.map(function(x){ return x.image_path; }).filter(Boolean);
-  if(thumbPaths.length){
+  if(guest){
+    thumbPaths.forEach(function(p){ thumbUrls[p] = p; });   // invité : chemins relatifs, pas d'URL signée
+  } else if(thumbPaths.length){
     try{
       var { data: thumbBatch, error: thumbBatchErr } = await supabaseClient.storage.from("results").createSignedUrls(thumbPaths, 3600);
       if(thumbBatchErr || !thumbBatch) throw thumbBatchErr || new Error("réponse vide");
@@ -1186,6 +1306,7 @@ async function renderResultsList(){
   fillResultFilters();
   drawResultRows();
   applyResultFilters();
+  if(guest) document.querySelectorAll(".resultrow .dropdown button").forEach(lockForGuest);
 }
 
 async function renameResult(r, cardEl){
@@ -1277,6 +1398,12 @@ async function deleteResult(r){
       if(!path) return null;
       var base = path.split("/").pop();
       if(files[base]) return base;
+      if(guest){
+        var gr = await fetch(path);
+        if(!gr.ok) return null;
+        files[base] = await blobToB64(await gr.blob());
+        return base;
+      }
       var { data, error } = await supabaseClient.storage.from("results").download(path);
       if(error || !data) return null;
       files[base] = await blobToB64(data);
@@ -1288,7 +1415,7 @@ async function deleteResult(r){
     for(var bn in bands) for(var k in bands[bn]){
       if(k.endsWith("_path") && bands[bn][k]) bands[bn][k] = await grab(bands[bn][k]);
     }
-    var admin = (typeof isAdminAccount === "function") ? await isAdminAccount() : false;
+    var admin = (!guest && typeof isAdminAccount === "function") ? await isAdminAccount() : false;
     if(admin && typeof simulatedPlan === "function" && await simulatedPlan()) admin = false;   // 09/10/2026 : pas de journaux pendant une simulation de plan
     var out = { format: "nysa-result", version: 1, exported_at: new Date().toISOString(),
       result: { name: r.name || null, scene: r.scene, conditions: r.conditions, instrument_snapshot: r.instrument_snapshot,
@@ -1364,9 +1491,22 @@ async function deleteResult(r){
     });
   })();
 
-  document.getElementById("userEmail").textContent = session.user.email || "";
-  document.getElementById("userAvatar").textContent = (session.user.email || "").slice(0, 2).toUpperCase();
-  document.getElementById("signOutBtn").addEventListener("click", signOut);
+  guest = !!session.guest;
+  if(guest){
+    document.getElementById("userEmail").textContent = t("guest.name");
+    document.getElementById("userAvatar").textContent = "?";
+    var soBtn = document.getElementById("signOutBtn");
+    soBtn.removeAttribute("data-i18n-aria"); soBtn.removeAttribute("data-i18n-title");
+    soBtn.removeAttribute("aria-label"); soBtn.removeAttribute("title");
+    soBtn.className = "g-btn primary";
+    soBtn.textContent = t("guest.create");
+    soBtn.addEventListener("click", function(){ window.location.href = "login.html?signup=1"; });
+    setupGuestUI();
+  } else {
+    document.getElementById("userEmail").textContent = session.user.email || "";
+    document.getElementById("userAvatar").textContent = (session.user.email || "").slice(0, 2).toUpperCase();
+    document.getElementById("signOutBtn").addEventListener("click", signOut);
+  }
 
   var params = new URLSearchParams(window.location.search);
   var resultId = params.get("id");
@@ -1384,7 +1524,9 @@ async function deleteResult(r){
   // ===================== Chargement du résultat (?id=<uuid>) =====================
   var result = null;
 
-  if(resultId){
+  if(resultId && guest){
+    result = await guestFetchResult(resultId);
+  } else if(resultId){
     var { data, error } = await supabaseClient
       .from("saved_results")
       .select("*, instruments(name, deleted_at)")
@@ -1414,6 +1556,7 @@ async function deleteResult(r){
     "snr_noise_maps_sim_png_b64", "snr_image_compare_png_b64", "snr_histogram_png_b64"];
   var urlCache = {};   // chemin dans le bucket "results" -> URL signée
   async function prefetchSignedUrls(paths){
+    if(guest) return;   // invité : chemins relatifs, rien à signer
     var todo = [];
     paths.forEach(function(p){ if(p && !urlCache[p] && todo.indexOf(p) < 0) todo.push(p); });
     if(!todo.length) return;
@@ -1635,6 +1778,7 @@ async function deleteResult(r){
   // sinon appel unitaire, comme avant.
   async function signedUrl(path){
     if(!path) return null;
+    if(guest) return path;
     if(urlCache[path]) return urlCache[path];
     var { data, error } = await supabaseClient.storage.from("results").createSignedUrl(path, 3600);
     if(error) return null;
@@ -1739,7 +1883,7 @@ async function deleteResult(r){
   ];
   // 07/10/2026 : onglet « Logs » pour l'administrateur seul. Les journaux sont enregistrés avec chaque
   // résultat (colonne logs) ; ils contiennent les paramètres de l'instrument, d'où cette restriction.
-  var isAdmin = (typeof isAdminAccount === "function") ? await isAdminAccount() : false;
+  var isAdmin = (!guest && typeof isAdminAccount === "function") ? await isAdminAccount() : false;
   if(isAdmin && typeof simulatedPlan === "function" && await simulatedPlan()) isAdmin = false;   // 09/10/2026 : pas d'onglet Logs pendant une simulation de plan
   if(isAdmin){
     TABS.push({id:"logs", label:t("res.tab.logs")});
@@ -2527,7 +2671,7 @@ async function deleteResult(r){
     try{
       var info = dnInfo(key);
       if(info){
-        var sg = await supabaseClient.storage.from("results").createSignedUrl(info.path, 600);
+        var sg = guest ? { data: { signedUrl: info.path } } : await supabaseClient.storage.from("results").createSignedUrl(info.path, 600);
         if(!sg.error && sg.data){
           var dnBlob = await (await fetch(sg.data.signedUrl)).blob();
           var fileMode = mode;

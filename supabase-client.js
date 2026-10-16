@@ -13,6 +13,14 @@
 // Le nouveau projet utilise une clé « publishable » (sb_publishable_…), qui
 // remplace l'ancienne clé « anon ». Le nom de la constante est conservé parce
 // que les pages l'utilisent.
+//
+// 16/10/2026 : mode invité (essai sans compte).
+//   Un lien « ?invite=1 » vers l'espace personnel ouvre le simulateur complet sans
+//   inscription : instrument d'exemple en lecture seule, trois résultats
+//   pré-calculés (dossier demo/). Il n'y a ni compte, ni jeton, ni appel au
+//   serveur de calcul : isGuest() ne sert qu'à l'AFFICHAGE. Toute requête vers
+//   Supabase partirait avec la seule clé publique et serait refusée par les
+//   règles d'accès, comme pour n'importe quel visiteur anonyme.
 // ============================================================================
 
 const SUPABASE_URL = "https://szosbxkhnsjmbrzivlsb.supabase.co";
@@ -24,6 +32,38 @@ const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_
 // et la vérification dans requireAuth() ci-dessous (une seule session
 // active par compte, cf. échange du 14/09/2026).
 const SESSION_MARKER_KEY = "eo_session_marker";
+
+// ---------------------------------------------------------------------------
+// Mode invité (16/10/2026).
+//   - GUEST_KEY (sessionStorage) : l'onglet est en mode invité. Posé par l'arrivée
+//     avec ?invite=1, effacé dès qu'une vraie session existe ou à la déconnexion.
+//     Il disparaît avec l'onglet.
+//   - GUEST_TOUR_KEY (localStorage) : ce navigateur a déjà vu le tutoriel en
+//     invité, pour ne pas le reproposer pendant la bêta. Aucune donnée n'est
+//     envoyée nulle part ; un autre navigateur le reverra.
+// ---------------------------------------------------------------------------
+const GUEST_KEY = "nysa_guest";
+const GUEST_TOUR_KEY = "nysa_guest_tour_seen";
+
+function _readStore(store, key) {
+  try { return store.getItem(key); } catch (e) { return null; }
+}
+function _writeStore(store, key, value) {
+  try { if (value === null) store.removeItem(key); else store.setItem(key, value); } catch (e) { /* stockage bloqué : sans gravité */ }
+}
+
+/** Cet onglet est-il en mode invité ? (à tester après requireAuth(), qui efface le drapeau si une vraie session existe) */
+function isGuest() { return _readStore(sessionStorage, GUEST_KEY) === "1"; }
+
+/** Ce navigateur a-t-il déjà vu le tutoriel en mode invité ? */
+function guestTourSeen() { return _readStore(localStorage, GUEST_TOUR_KEY) === "1"; }
+function markGuestTourSeen() { _writeStore(localStorage, GUEST_TOUR_KEY, "1"); }
+
+/** Fausse session renvoyée à un invité : même forme qu'une vraie, sans jeton. */
+function _guestSession() {
+  const lang = (typeof nysaLang === "function") ? nysaLang() : "en";
+  return { guest: true, access_token: null, user: { id: "guest", email: null, user_metadata: { lang: lang }, app_metadata: {} } };
+}
 
 /**
  * À appeler juste après une connexion réussie (login.html) — génère un
@@ -57,10 +97,23 @@ async function registerSessionMarker(userId) {
  * ce même compte (une seule session active à la fois) — si le marqueur
  * local ne correspond plus à celui enregistré en base, déconnecte cette
  * session et redirige avec une explication.
+ *
+ * 16/10/2026 : sans session, un visiteur arrivé par un lien « ?invite=1 » (ou
+ * dont l'onglet est déjà en mode invité) reçoit une fausse session invité
+ * (session.guest === true) au lieu d'être renvoyé vers la connexion. Une vraie
+ * session l'emporte toujours : le drapeau invité est alors effacé. Sans lien
+ * d'invitation, rien ne change : on est renvoyé vers login.html.
  */
 async function requireAuth() {
   const { data: { session }, error } = await supabaseClient.auth.getSession();
-  if (error || !session) {
+  if (!error && session) {
+    _writeStore(sessionStorage, GUEST_KEY, null);
+  } else {
+    const invited = new URLSearchParams(window.location.search).get("invite") === "1";
+    if (!error && (invited || isGuest())) {
+      _writeStore(sessionStorage, GUEST_KEY, "1");
+      return _guestSession();   // ni vérification de session unique, ni langue de compte
+    }
     window.location.href = "login.html";
     return null;
   }
@@ -108,6 +161,7 @@ async function requireAuth() {
 
 /** Déconnexion — à brancher sur le bouton correspondant dans chaque page. */
 async function signOut() {
+  _writeStore(sessionStorage, GUEST_KEY, null);   // mode invité : rien d'autre à fermer
   await supabaseClient.auth.signOut();
   localStorage.removeItem(SESSION_MARKER_KEY);
   window.location.href = "login.html";

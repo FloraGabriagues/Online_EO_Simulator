@@ -25,6 +25,10 @@
 // par un texte. Le tutoriel ne bloque rien : tout est cliquable, et il se range
 // si la page ne correspond plus (retour en arrière, autre page).
 //
+// MODE INVITÉ (16/10/2026) : sans compte (voir supabase-client.js, isGuest), le tutoriel fonctionne de la même
+// façon, avec l'identifiant « guest ». La fenêtre de bienvenue n'est proposée qu'une fois par navigateur
+// (localStorage, guestTourSeen / markGuestTourSeen) ; rien n'est écrit sur un compte.
+//
 // À charger en fin de page, après menu.js (pages : espace personnel,
 // simulations, résultats).
 // ============================================================================
@@ -38,6 +42,15 @@
 
   // ------------------------------------------------------------------ état
   var uid = null;
+  var guest = false;
+  // Sans session Supabase : invité si le drapeau est posé (autres pages) ou si l'on arrive par un lien « ?invite=1 »
+  // (à l'arrivée, la page n'a peut-être pas encore posé le drapeau).
+  function guestActive(){
+    try {
+      if(typeof isGuest === "function" && isGuest()) return true;
+      return PAGE === "espace-personnel.html" && new URLSearchParams(location.search).get("invite") === "1";
+    } catch(e){ return false; }
+  }
   function loadState(){
     try {
       var raw = localStorage.getItem(STORE_KEY);
@@ -57,6 +70,7 @@
     try { localStorage.removeItem(STORE_KEY); } catch(e){ /* sans gravité */ }
   }
   async function setAccountState(value){
+    if(guest){ if(typeof markGuestTourSeen === "function") markGuestTourSeen(); return; }   // invité : on retient seulement le choix, dans ce navigateur
     try {
       var r = await supabaseClient.auth.updateUser({ data: { onboarding: value } });
       if(r && r.error) console.warn("Onboarding : état non enregistré :", r.error.message);
@@ -249,7 +263,11 @@
     if(welcomeOpen || document.getElementById("onbWelcomeMarker")) return;
     try {
       var s = (await supabaseClient.auth.getSession()).data.session;
-      if(!s) return;
+      if(!s){
+        // Invité : la fenêtre n'est proposée que tant qu'elle n'a pas déjà été vue dans ce navigateur.
+        if(!guestActive() || (typeof guestTourSeen === "function" && guestTourSeen())) return;
+        guest = true; uid = "guest";
+      } else {
       var meta = s.user.user_metadata || {};
       // 11/10/2026 : à l'ouverture de la page, l'état du compte est relu sur le serveur : le drapeau a pu être posé
       // depuis un autre appareil (la session de ce navigateur garde sinon l'ancienne valeur).
@@ -259,6 +277,7 @@
       }
       if(meta.onboarding !== "welcome") return;
       uid = s.user.id;
+      }
     } catch(e){ return; }
     welcomeOpen = true;
     var marker = el("span"); marker.id = "onbWelcomeMarker"; marker.hidden = true; document.body.appendChild(marker);
@@ -293,7 +312,7 @@
   // ----------------------------------------------------------- les étapes
   // targets : éléments à surligner (le premier sert de repère à la bulle) ;
   // text : clé du texte ; next : bouton « Suivant » pour les étapes d'explication.
-  var ORDER = ["inst0", "nav", "scene", "inst", "cond", "launch", "run", "viewres", "image", "mtf", "snr", "graphs"];
+  var ORDER = ["intro", "inst0", "nav", "scene", "inst", "cond", "launch", "run", "viewres", "image", "mtf", "snr", "graphs"];
   var SIM_STEPS = { scene: 1, inst: 2, cond: 3, launch: 3, run: 4, viewres: 4 };
 
   var sliderMoved = false, sliderMovedAt = 0, sliderWired = false;
@@ -347,6 +366,8 @@
   }
 
   var STEPS = {
+    // 16/10/2026 : accueil sans voile ni surlignage, pour voir l'interface entière avant les zones d'intérêt (free).
+    intro:   { free: true, targets: function(){ return [document.body]; }, text: function(){ return "onb.intro"; }, next: "inst0" },
     inst0:   { allow: function(){ return []; },   // simple présentation : on ne quitte pas la page
                targets: function(){ return [$("a.simbtn[href='creer-instrument.html']"), $("#instList .instcard:not(.empty)")]; },
                text: function(){ return $("#instList .instcard:not(.empty)") ? "onb.s0" : "onb.s0.none"; }, next: "nav" },
@@ -501,8 +522,9 @@
     var textKey = def.text();
     var key = id + "|" + textKey;
     var primary = targets[0];
-    allowEls = (def.allow ? def.allow() : targets).filter(Boolean);
-    if(def.allow && !allowEls.length) allowEls = [];
+    allowEls = def.free ? null : (def.allow ? def.allow() : targets).filter(Boolean);
+    if(!def.free && def.allow && !allowEls.length) allowEls = [];
+    if(def.free) targets = [];   // étape d'accueil : ni cadre ni voile, tout reste cliquable
 
     // Cadres de surlignage (un par élément).
     while(rings.length > targets.length){ rings.pop().remove(); }
@@ -542,6 +564,13 @@
       document.body.appendChild(bubble);
       shownKey = key;
     }
+    if(def.free){
+      // Accueil : pas de voile, bulle en bas au centre pour laisser l'interface visible.
+      if(dim){ dim.remove(); dim = null; holes = []; }
+      bubble.style.left = Math.max(12, Math.round((window.innerWidth - bubble.offsetWidth) / 2)) + "px";
+      bubble.style.top = Math.max(12, Math.round(window.innerHeight - bubble.offsetHeight - 32)) + "px";
+      return;
+    }
     // L'élément visé est amené à l'écran une fois par étape.
     if(scrolledFor !== id){
       scrolledFor = id;
@@ -559,6 +588,18 @@
     stopTick();
     if(document.getElementById("onbFinishMarker")) return;
     var marker = el("span"); marker.id = "onbFinishMarker"; marker.hidden = true; document.body.appendChild(marker);
+    if(guest){
+      // Invité : la fin du tutoriel propose de créer un compte.
+      openModal({
+        title: tr("onb.finish.title"),
+        text: tr("guest.invite.text"),
+        buttons: [
+          { label: tr("guest.invite.later"), onClick: function(){ clearState(); marker.remove(); setAccountState("done"); } },
+          { label: tr("guest.invite.go"), primary: true, onClick: function(){ clearState(); setAccountState("done"); window.location.href = "login.html?signup=1"; } }
+        ]
+      });
+      return;
+    }
     openModal({
       title: tr("onb.finish.title"),
       text: tr("onb.finish.text"),
@@ -584,7 +625,7 @@
     if(!STEPS[step]){ clearState(); clearUi(); stopTick(); return; }
 
     // ---- recalage sur la page réellement affichée
-    if(step === "inst0"){
+    if(step === "inst0" || step === "intro"){
       if(PAGE !== "espace-personnel.html"){ saveStep("nav"); step = "nav"; }
     } else if(step === "nav"){
       if(PAGE === "simulations.html"){ saveStep("scene"); step = "scene"; }
@@ -625,9 +666,14 @@
   // ------------------------------------------------------------- lancement
   async function start(){
     if(!uid){
-      try { uid = (await supabaseClient.auth.getSession()).data.session.user.id; } catch(e){ return; }
+      try {
+        var ss = (await supabaseClient.auth.getSession()).data.session;
+        if(ss) uid = ss.user.id;
+        else if(guestActive()){ guest = true; uid = "guest"; }
+        else return;
+      } catch(e){ return; }
     }
-    saveStep(PAGE === "espace-personnel.html" ? "inst0" : "nav");
+    saveStep(PAGE === "espace-personnel.html" ? "intro" : "nav");
     startTick();
     tick();
   }
@@ -635,8 +681,9 @@
   async function init(){
     try {
       var s = (await supabaseClient.auth.getSession()).data.session;
-      if(!s) return;
-      uid = s.user.id;
+      if(s) uid = s.user.id;
+      else if(guestActive()){ guest = true; uid = "guest"; }
+      else return;
     } catch(e){ return; }
     if(loadState()){ startTick(); tick(); }
     // 11/10/2026 : la fenêtre de bienvenue est proposée à chaque arrivée dans l'espace personnel tant qu'elle n'a pas

@@ -84,6 +84,7 @@ var I18N = {
   "onb.next": { fr: "Suivant", en: "Next" },
   "onb.quit": { fr: "Quitter le tutoriel", en: "Leave the tutorial" },
   "onb.quit.toast": { fr: "Tutoriel fermé. Vous pouvez le relancer depuis Paramètres.", en: "Tutorial closed. You can restart it from Settings." },
+  "onb.intro": { fr: "Voici votre espace Nysa. À gauche, le menu : Instruments, Simulations et Résultats. Au centre, la liste de vos instruments. Prenez un instant pour regarder l'interface, puis cliquez sur « Suivant ».", en: "This is your Nysa workspace. On the left, the menu: Instruments, Simulations and Results. In the center, the list of your instruments. Take a moment to look around, then click \"Next\"." },
   "onb.s0": { fr: "C'est ici que vous créez vos instruments (bouton « Créer un instrument »). Pour ce tutoriel, un instrument d'exemple est déjà créé : nous allons l'utiliser.", en: "This is where you create your instruments (\"Create an instrument\" button). For this tutorial, an example instrument is already created: we will use it." },
   "onb.s0.none": { fr: "C'est ici que vous créez vos instruments. Le tutoriel utilise un instrument complet : si l'exemple a été supprimé, créez-en un d'abord.", en: "This is where you create your instruments. The tutorial uses a complete instrument: if the example was deleted, create one first." },
   "onb.s2b": { fr: "Très bien. Cliquez sur « Suivant ».", en: "Great. Click \"Next\"." },
@@ -612,6 +613,18 @@ var I18N = {
   "login.reset.expired": { fr: "Ce lien n'est plus valable. Demandez un nouvel e-mail ci-dessous.", en: "This link is no longer valid. Request a new email below." },
   "login.reset.done":    { fr: "Mot de passe mis à jour. Connexion…", en: "Password updated. Signing you in…" },
   "auth.err.same_password": { fr: "Le nouveau mot de passe doit être différent de l'ancien.", en: "The new password must be different from the old one." },
+
+  // Mode invité (essai sans compte, 16/10/2026). « Gratuit pendant la bêta » (guest.tip et guest.invite.text) est à retirer à la fin de l'essai.
+  "guest.name":          { fr: "Invité", en: "Guest" },
+  "guest.create":        { fr: "Créer un compte", en: "Create an account" },
+  "guest.tip":           { fr: "Créez un compte pour y accéder (gratuit pendant la bêta)", en: "Create an account to access this (free during the beta)" },
+  "guest.invite.title":  { fr: "Créez votre compte gratuit", en: "Create your free account" },
+  "guest.invite.text":   { fr: "Avec un compte, vous créez vos propres instruments, lancez vos simulations et retrouvez vos résultats. C'est gratuit pendant la bêta.", en: "With an account, you create your own instruments, run your simulations and keep your results. It is free during the beta." },
+  "guest.invite.later":  { fr: "Plus tard", en: "Later" },
+  "guest.invite.go":     { fr: "Créer un compte gratuit", en: "Create a free account" },
+  "guest.settings.note": { fr: "Vous essayez Nysa en tant qu'invité. Créez un compte pour enregistrer vos instruments et vos résultats.", en: "You are trying Nysa as a guest. Create an account to save your instruments and results." },
+  "guest.sim.note":      { fr: "En mode invité, seule la scène se choisit : les conditions d'acquisition sont figées. Créez un compte pour les modifier.", en: "In guest mode, only the scene can be chosen: the acquisition conditions are fixed. Create an account to change them." },
+  "guest.settings.lang": { fr: "Langue de l'interface.", en: "Language of the interface." },
 
   "nav.menu":            { fr: "Menu", en: "Menu" },
   "nav.menu.close":      { fr: "Fermer le menu", en: "Close menu" },

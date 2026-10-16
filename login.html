@@ -250,6 +250,8 @@ function showView(name){
 document.querySelectorAll(".tab").forEach(function(tab){
   tab.addEventListener("click", function(){ showView(tab.dataset.view); });
 });
+// 16/10/2026 : « login.html?signup=1 » ouvre directement l'onglet « Créer un compte » (depuis le mode invité).
+if (urlParams.get("signup") === "1" && !RESET_MODE) showView("signup");
 
 // ===================== Mot de passe oublié =====================
 document.getElementById("forgotLink").addEventListener("click", function(){

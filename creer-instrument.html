@@ -259,6 +259,23 @@ details.advanced summary .count{font-family:var(--mono);font-size:12px;color:var
   border:1px solid var(--line-soft);border-radius:4px;padding:5px 8px;font-size:12px}
 .zterm .zk{color:var(--muted)}
 .zterm .zv{font-family:var(--mono);color:var(--pixel)}
+/* 16/10/2026 : mode invité (instrument d'exemple en lecture seule) */
+.guestlock{opacity:.5;cursor:not-allowed}
+.guestlock:hover{transform:none}
+input:disabled,select:disabled{opacity:.6;cursor:not-allowed}
+.g-tip{position:fixed;z-index:200;max-width:260px;padding:8px 11px;border-radius:6px;background:var(--panel-2);border:1px solid var(--pixel);color:var(--paper);font-size:12.5px;line-height:1.4;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.g-tip[hidden]{display:none}
+.g-overlay{position:fixed;inset:0;z-index:150;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(5,10,14,.72);backdrop-filter:blur(3px)}
+.g-overlay.open{display:flex}
+.g-modal{width:100%;max-width:440px;background:var(--panel-2);border:1px solid var(--line);border-radius:10px;box-shadow:0 18px 50px rgba(0,0,0,.5)}
+.g-head{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line)}
+.g-head h2{margin:0;font-size:16px;color:var(--paper)}
+.g-close{background:none;border:0;color:var(--muted);font-size:16px;cursor:pointer;padding:4px 8px}
+.g-close:hover{color:var(--paper)}
+.g-body{margin:0;padding:18px 20px 6px;font-size:14px;line-height:1.55;color:var(--paper)}
+.g-actions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:14px 20px 20px}
+.g-btn{display:inline-block;font:inherit;font-size:13px;padding:9px 14px;border-radius:5px;border:1px solid var(--line);background:none;color:var(--paper);cursor:pointer;text-decoration:none}
+.g-btn.primary{background:var(--photon);border-color:var(--photon);color:#1a1208;font-weight:600}
 header{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .helplink{display:inline-flex;align-items:center;gap:8px;font-size:13px;color:var(--paper);text-decoration:none;
   border:1px solid var(--line);border-radius:5px;padding:7px 12px;transition:border-color .14s,color .14s}
@@ -314,9 +331,27 @@ header{display:flex;align-items:center;justify-content:space-between;gap:16px;fl
 
 </div>
 
+<!-- 16/10/2026 : fenêtre d'invitation du mode invité -->
+<div class="g-overlay" id="guestOverlay">
+  <div class="g-modal" role="dialog" aria-modal="true" aria-labelledby="guestTitle">
+    <div class="g-head">
+      <h2 id="guestTitle" data-i18n="guest.invite.title">Créez votre compte gratuit</h2>
+      <button class="g-close" id="guestCloseBtn" type="button" aria-label="Fermer" data-i18n-aria="common.close">✕</button>
+    </div>
+    <p class="g-body" data-i18n="guest.invite.text">Avec un compte, vous créez vos propres instruments, lancez vos simulations et retrouvez vos résultats. C'est gratuit pendant la bêta.</p>
+    <div class="g-actions">
+      <button class="g-btn" id="guestLaterBtn" type="button" data-i18n="guest.invite.later">Plus tard</button>
+      <a class="g-btn primary" id="guestGoBtn" href="login.html?signup=1" data-i18n="guest.invite.go">Créer un compte gratuit</a>
+    </div>
+  </div>
+</div>
+<div class="g-tip" id="guestTip" role="tooltip" hidden></div>
+
 <!-- Bibliothèque Supabase hébergée avec le site (dossier vendor/), version figée. -->
 <script src="vendor/supabase.js"></script>
 <script src="supabase-client.js"></script>
+<!-- Instrument d'exemple, affiché en lecture seule en mode invité -->
+<script src="instrument-exemple.js"></script>
 <script>
 var SCHEMA = [
   {id:"paysage", kind:"ctx", label:"Paysage L", sub:"scène source"},
@@ -426,10 +461,21 @@ function persist(){}
  * ?id=<uuid> (lien "Ouvrir" depuis espace-personnel.html) ; sinon,
  * repart d'un formulaire vide (création).
  */
+var IS_GUEST = (typeof isGuest === "function") && isGuest();
 async function loadInstrument(){
   var params = new URLSearchParams(window.location.search);
   var id = params.get("id");
   if(!id) return;
+
+  // 16/10/2026 : invité = instrument d'exemple local, aucun appel à Supabase.
+  if(IS_GUEST){
+    if(typeof NYSA_EXAMPLE_INSTRUMENT !== "undefined"){
+      state.instrumentId = null;
+      state.values = JSON.parse(JSON.stringify(NYSA_EXAMPLE_INSTRUMENT.config));
+      document.getElementById("instName").value = NYSA_EXAMPLE_INSTRUMENT.name[nysaLang()] || NYSA_EXAMPLE_INSTRUMENT.name.en;
+    }
+    return;
+  }
 
   var { data, error } = await supabaseClient
     .from("instruments")
@@ -2508,9 +2554,89 @@ document.getElementById("fileInput").addEventListener("change", function(e){
   e.target.value = ""; // permet de recharger le même fichier ensuite
 });
 
+// ===================== Mode invité (16/10/2026) : lecture seule =====================
+// L'invité voit l'exemple en entier (navigation, aide, export), mais rien ne se modifie : champs
+// désactivés, boutons de modification grisés (info-bulle au survol, fenêtre d'invitation au clic).
+function setupGuestReadOnly(){
+  var overlay = document.getElementById("guestOverlay");
+  var tip = document.getElementById("guestTip");
+  var lastFocus = null;
+  function openInvite(){
+    lastFocus = document.activeElement;
+    tip.hidden = true;
+    overlay.classList.add("open");
+    document.getElementById("guestGoBtn").focus();
+  }
+  function closeInvite(){
+    overlay.classList.remove("open");
+    if(lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  document.getElementById("guestCloseBtn").addEventListener("click", closeInvite);
+  document.getElementById("guestLaterBtn").addEventListener("click", closeInvite);
+  overlay.addEventListener("click", function(e){ if(e.target === overlay) closeInvite(); });
+  document.addEventListener("keydown", function(e){
+    if(!overlay.classList.contains("open")) return;
+    if(e.key === "Escape"){ e.stopPropagation(); closeInvite(); return; }
+    if(e.key === "Tab"){
+      var f = [document.getElementById("guestCloseBtn"), document.getElementById("guestLaterBtn"), document.getElementById("guestGoBtn")];
+      var i = f.indexOf(document.activeElement);
+      e.preventDefault();
+      f[(i + (e.shiftKey ? f.length - 1 : 1)) % f.length].focus();
+    }
+  }, true);
+
+  function showTip(el){
+    tip.textContent = el.getAttribute("data-guest-tip");
+    tip.hidden = false;
+    var r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+    var x = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+    var y = r.bottom + 8;
+    if(y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 8);
+    tip.style.left = x + "px"; tip.style.top = y + "px";
+  }
+  function tipTarget(e){ return e.target.closest && e.target.closest("[data-guest-tip]"); }
+  document.addEventListener("mouseover", function(e){ var el = tipTarget(e); if(el) showTip(el); else tip.hidden = true; });
+  document.addEventListener("focusin", function(e){ var el = tipTarget(e); if(el) showTip(el); else tip.hidden = true; });
+  document.addEventListener("focusout", function(){ tip.hidden = true; });
+  window.addEventListener("scroll", function(){ tip.hidden = true; }, true);
+
+  var panel = document.getElementById("fieldPanel");
+  function lock(el){
+    el.classList.add("guestlock");
+    el.setAttribute("aria-disabled", "true");
+    el.setAttribute("data-guest-tip", t("guest.tip"));
+  }
+  // Appelée après chaque rendu du panneau (le contenu est réécrit en entier).
+  function freeze(){
+    document.getElementById("instName").disabled = true;
+    document.getElementById("fileInput").disabled = true;
+    lock(document.getElementById("btnFile"));
+    panel.querySelectorAll("input, select, textarea").forEach(function(el){ el.disabled = true; });
+    panel.querySelectorAll("button").forEach(function(b){
+      if(b.id === "btnNext" || b.classList.contains("helpbtn")) return; // navigation et aide restent actives
+      lock(b);
+    });
+  }
+  // Un clic sur un bouton grisé ouvre l'invitation et ne fait rien d'autre.
+  document.addEventListener("click", function(e){
+    var el = e.target.closest && e.target.closest(".guestlock");
+    if(!el) return;
+    e.preventDefault(); e.stopImmediatePropagation();
+    openInvite();
+  }, true);
+  new MutationObserver(freeze).observe(panel, { childList: true, subtree: true });
+  freeze();
+}
+
 (async function(){
   var session = await requireAuth();
   if(!session) return; // requireAuth a déjà redirigé vers login.html
+
+  // Invité : cette page ne sert qu'à voir l'exemple ; sans ?id=, rien à montrer (la création est réservée aux comptes).
+  if(session.guest && !new URLSearchParams(window.location.search).get("id")){
+    window.location.href = "espace-personnel.html";
+    return;
+  }
 
   await loadInstrument(); // no-op si pas de ?id= dans l'URL (création)
   markSaved(); // référence pour détecter les modifications non enregistrées
@@ -2518,6 +2644,7 @@ document.getElementById("fileInput").addEventListener("change", function(e){
   renderSchema();
   renderChain();
   renderPanel();
+  if(session.guest) setupGuestReadOnly();
 })();
 </script>
 <script src="aide.js"></script>

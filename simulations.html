@@ -91,6 +91,11 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .stephead{display:flex;align-items:center;gap:10px;margin-bottom:4px}
 .stephead .ttl{font-family:var(--display);font-weight:600;font-size:15px;letter-spacing:0}
 .stepintro{font-size:12.5px;color:var(--muted);margin:0 0 14px}
+/* 16/10/2026 : mode invité */
+.guestnote{font-size:12.5px;color:var(--photon);margin:-6px 0 14px}
+.acq-fields input:disabled,.acq-fields select:disabled{opacity:.6;cursor:not-allowed}
+.g-tip{position:fixed;z-index:200;max-width:260px;padding:8px 11px;border-radius:6px;background:var(--panel-2);border:1px solid var(--pixel);color:var(--paper);font-size:12.5px;line-height:1.4;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.g-tip[hidden]{display:none}
 
 
 .scenegrid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
@@ -478,6 +483,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 <body>
 <!-- Bandeau « version bêta » : se désactive dans beta.js (BETA_ACTIVE = false) -->
 <script src="beta.js"></script>
+<div class="g-tip" id="guestTip" role="tooltip" hidden></div>
 <div class="app">
 
   <aside class="sidebar">
@@ -566,6 +572,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
             <div class="stepbody">
               <div class="stephead"><span class="ttl" data-i18n="sim.step3.title">3. Conditions d'acquisition</span></div>
               <p class="stepintro" data-i18n="sim.step3.intro">Définissez le scénario d'acquisition de la scène.</p>
+              <p class="guestnote" id="guestSimNote" hidden data-i18n="guest.sim.note">En mode invité, seule la scène se choisit : les conditions d'acquisition sont figées. Créez un compte pour les modifier.</p>
               <div class="acq-layout">
                 <div class="acq-illustration" id="acqDiagram"></div>
                 <div class="acq-fields">
@@ -770,6 +777,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 <!-- Bibliothèque Supabase hébergée avec le site (dossier vendor/), version figée. -->
 <script src="vendor/supabase.js"></script>
 <script src="supabase-client.js"></script>
+<!-- Instrument d'exemple, utilisé en mode invité -->
+<script src="instrument-exemple.js"></script>
 <script>
 // Textes par défaut des éléments que ce script met ensuite à jour lui-même :
 // ils ne portent pas d'attribut data-i18n, qui écraserait la valeur calculée.
@@ -783,6 +792,8 @@ var API_URL = "https://nssharphopper7bba2963-container-kind-mcclintock.functions
 
 var session = null;
 var accountId = null;
+var guest = false;          // 16/10/2026 : mode invité (essai sans compte), voir supabase-client.js
+var guestTimer = null;
 
 // ===================== Indicateur d'étapes =====================
 var STEP_LABELS = [t("sim.steps.scene"), t("sim.steps.instrument"), t("sim.steps.conditions"), t("sim.steps.run")];
@@ -889,6 +900,18 @@ var PREVIEW_FALLBACK_INSTRUMENTS = [
 function isDraft(inst){ return !inst.config || inst.config._draft !== false; }
 async function loadInstruments(){
   try {
+    if(guest){
+      // Invité : seul l'instrument d'exemple (instrument-exemple.js), sans appel à Supabase.
+      if(typeof NYSA_EXAMPLE_INSTRUMENT === "undefined") throw new Error("instrument-exemple.js absent");
+      var nowIso = new Date().toISOString();
+      instruments = [{ id: "example", name: NYSA_EXAMPLE_INSTRUMENT.name[nysaLang()] || NYSA_EXAMPLE_INSTRUMENT.name.en,
+        config: JSON.parse(JSON.stringify(NYSA_EXAMPLE_INSTRUMENT.config)), created_at: nowIso, updated_at: nowIso }];
+      selectedInstIdx = 0;
+      renderInstruments();
+      renderWfeCaseOptions();
+      updateSummary();
+      return;
+    }
     if(typeof supabaseClient === "undefined") throw new Error("supabaseClient indisponible");
     var { data, error } = await supabaseClient
       .from("instruments")
@@ -1822,6 +1845,9 @@ async function launchSimulation(){
   setStatus("running", t("sim.status.running"));
   addLog(t("sim.log.started"));
 
+  // 16/10/2026 : invité = attente fictive puis résultat pré-calculé (dossier demo/), aucun appel serveur.
+  if(guest){ runGuestSimulation(scene); return; }
+
   // Ping périodique pendant l'attente : le calcul est synchrone côté
   // serveur (pas de flux de logs en direct), donc sans ça le panneau
   // paraît figé pendant 1-2 minutes.
@@ -2055,6 +2081,43 @@ async function launchSimulation(){
       setStatus("error", t("sim.status.failed"));
     }
   }
+}
+
+// ===================== Mode invité : simulation fictive (16/10/2026) =====================
+// Les trois résultats possibles ont été calculés d'avance (demo/<scène>/result.json). On fait attendre environ
+// une minute (durée variable de quelques secondes) pour que le parcours reste celui d'une vraie simulation.
+var GUEST_SLUGS = { aix: "ville", avion: "avion", port: "port" };
+function runGuestSimulation(scene){
+  var pfill = document.getElementById("pfill"), ppct = document.getElementById("ppct"), etaText = document.getElementById("etaText");
+  var duration = 55000 + Math.round(Math.random() * 10000);
+  pingInterval = setInterval(function(){ addLog(t("sim.log.still")); }, 10000);
+  abortController = { abort: function(){
+    if(!simRunning) return;
+    clearTimeout(guestTimer); clearInterval(pingInterval);
+    simRunning = false;
+    etaText.textContent = "-";
+    addLog(t("sim.log.stopped"));
+    setStatus("interrupted", t("sim.status.stopped"));
+  } };
+  guestTimer = setTimeout(function(){
+    clearInterval(pingInterval);
+    simRunning = false;
+    pfill.style.transition = "width .4s ease-out";
+    pfill.style.width = "100%";
+    ppct.textContent = "100 %";
+    etaText.textContent = t("sim.eta.done");
+    addLog(t("sim.log.done"));
+    setStatus("ok", t("sim.status.done"));
+    var slug = GUEST_SLUGS[scene.id] || scene.id;
+    // Le résultat est retenu pour la durée de l'onglet : la page Résultats de l'invité le liste (sessionStorage).
+    try {
+      var kept = JSON.parse(sessionStorage.getItem("nysa_guest_results") || "[]").filter(function(x){ return x.slug !== slug; });
+      kept.push({ slug: slug, at: Date.now() });
+      sessionStorage.setItem("nysa_guest_results", JSON.stringify(kept));
+    } catch(e){ /* stockage indisponible : le lien direct fonctionne quand même */ }
+    document.getElementById("statusActions").innerHTML =
+      "<a class='viewresultsbtn' href='resultats.html?id=demo-" + encodeURIComponent(slug) + "'>" + t("sim.save.view") + "</a>";
+  }, duration);
 }
 
 document.getElementById("interruptBtn").addEventListener("click", function(){
@@ -2335,6 +2398,39 @@ function admShowServerLogs(logs){
   d.appendChild(s); d.appendChild(pre); host.appendChild(d);
 }
 
+// Conditions figées de l'essai invité : 500 km, 60°, TDI 4, TI 298 µs, cas WFE simplifié. Les champs restent
+// visibles mais désactivés ; seule la scène se choisit. Les résultats pré-calculés correspondent à ces valeurs.
+function setupGuestConditions(){
+  var vals = { fH: 500, fS: 60, fTI: 298, fTDI: 4 };
+  Object.keys(vals).forEach(function(id){
+    var el = document.getElementById(id);
+    el.min = "1"; el.max = "3000";   // les bornes de validation ne s'appliquent plus à des valeurs figées
+    el.value = String(vals[id]);
+    el.disabled = true;
+    el.closest(".field").setAttribute("data-guest-tip", t("guest.tip"));
+  });
+  tiTouched = true;   // syncTimeField ne doit plus réécrire le temps d'intégration
+  var wfe = document.getElementById("fWfeCase");
+  wfe.disabled = true; wfe.closest(".field").setAttribute("data-guest-tip", t("guest.tip"));
+  ["fAtmosProfile", "fAeroProfile", "fAeroLoadKind", "fAeroLoad", "fWater", "fOzone"].forEach(function(id){
+    var el = document.getElementById(id); if(el) el.disabled = true;
+  });
+  document.getElementById("guestSimNote").hidden = false;
+  var tip = document.getElementById("guestTip");
+  function show(el){
+    tip.textContent = el.getAttribute("data-guest-tip"); tip.hidden = false;
+    var r = el.getBoundingClientRect(), w = tip.offsetWidth, h = tip.offsetHeight;
+    tip.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2)) + "px";
+    var y = r.bottom + 8; if(y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 8);
+    tip.style.top = y + "px";
+  }
+  document.addEventListener("mouseover", function(e){
+    var el = e.target.closest && e.target.closest("[data-guest-tip]");
+    if(el) show(el); else tip.hidden = true;
+  });
+  window.addEventListener("scroll", function(){ tip.hidden = true; }, true);
+}
+
 (async function(){
   try {
     session = (typeof requireAuth === "function") ? await requireAuth() : null;
@@ -2350,10 +2446,24 @@ function admShowServerLogs(logs){
     session = { user: { id: "preview", email: "" } };
   }
   accountId = session.user.id;
+  guest = !!session.guest;
 
-  document.getElementById("userEmail").textContent = session.user.email || "";
-  document.getElementById("userAvatar").textContent = (session.user.email || "").slice(0, 2).toUpperCase();
-  document.getElementById("signOutBtn").addEventListener("click", signOut);
+  if(guest){
+    document.getElementById("userEmail").textContent = t("guest.name");
+    document.getElementById("userAvatar").textContent = "?";
+    var soBtn = document.getElementById("signOutBtn");
+    soBtn.removeAttribute("data-i18n-aria"); soBtn.removeAttribute("data-i18n-title");
+    soBtn.removeAttribute("aria-label"); soBtn.removeAttribute("title");
+    soBtn.className = "nextbtn";
+    soBtn.style.cssText = "width:auto;margin:0;padding:8px 16px";
+    soBtn.textContent = t("guest.create");
+    soBtn.addEventListener("click", function(){ window.location.href = "login.html?signup=1"; });
+    setupGuestConditions();
+  } else {
+    document.getElementById("userEmail").textContent = session.user.email || "";
+    document.getElementById("userAvatar").textContent = (session.user.email || "").slice(0, 2).toUpperCase();
+    document.getElementById("signOutBtn").addEventListener("click", signOut);
+  }
 
   await loadInstruments();
 
@@ -2362,10 +2472,12 @@ function admShowServerLogs(logs){
   // s'ouvre qu'au moment de lancer, une fois la scène, l'instrument et les
   // conditions choisis : c'est là que l'envie de voir le résultat est la
   // plus forte (choix du 04/10/2026, à la place de l'ouverture à l'arrivée).
-  await loadEntitlement();
-  await loadQuota();
+  if(!guest){
+    await loadEntitlement();
+    await loadQuota();
+  }
   // 09/10/2026 : pendant une simulation de plan (« Voir comme »), les outils d'administration disparaissent, comme pour un vrai compte de ce plan.
-  if(typeof isAdminAccount === "function" && await isAdminAccount() && !(typeof simulatedPlan === "function" && await simulatedPlan())){
+  if(!guest && typeof isAdminAccount === "function" && await isAdminAccount() && !(typeof simulatedPlan === "function" && await simulatedPlan())){
     isAdminUser = true;
     document.getElementById("adminBox").hidden = false;
   }

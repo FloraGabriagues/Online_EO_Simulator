@@ -359,6 +359,17 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 @media(max-width:640px){.hero.trust .content{max-width:100%}.hero.trust .shield{opacity:.08}}
 .hero.trust .trustlink{display:inline-block;margin-top:6px;font-family:var(--mono);font-size:12px;color:var(--photon);text-decoration:none}
 .hero.trust .trustlink:hover{text-decoration:underline}
+
+/* 16/10/2026 : mode invité. Boutons visibles mais grisés ; info-bulle et fenêtre d'invitation. */
+.guestlock{opacity:.5;cursor:not-allowed}
+.createbtn.guestlock:hover{background:var(--pixel);border-color:var(--pixel);transform:none;box-shadow:0 2px 12px rgba(95,220,208,.30)}
+.selbtn.guestlock:hover{background:none}
+.instcard .dropdown button.guestlock:hover{background:none}
+.guesttip{position:fixed;z-index:200;max-width:260px;padding:8px 11px;border-radius:6px;background:var(--panel-2);border:1px solid var(--pixel);color:var(--paper);font-size:12.5px;line-height:1.4;pointer-events:none;box-shadow:0 6px 18px rgba(0,0,0,.35)}
+.guesttip[hidden]{display:none}
+.modal.small{max-width:440px;height:auto}
+.guestbody{padding:6px 24px 8px;font-size:14px;line-height:1.55;color:var(--paper)}
+.guestactions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;padding:14px 24px 22px}
 </style>
 </head>
 <body>
@@ -494,6 +505,22 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
 </div>
 
+<!-- 16/10/2026 : fenêtre d'invitation du mode invité -->
+<div class="modal-overlay" id="guestOverlay">
+  <div class="modal small" role="dialog" aria-modal="true" aria-labelledby="guestTitle">
+    <div class="modal-head">
+      <div class="htitle"><h2 id="guestTitle" data-i18n="guest.invite.title">Créez votre compte gratuit</h2></div>
+      <button class="modal-close" id="guestCloseBtn" type="button" aria-label="Fermer" data-i18n-aria="common.close">✕</button>
+    </div>
+    <p class="guestbody" data-i18n="guest.invite.text">Avec un compte, vous créez vos propres instruments, lancez vos simulations et retrouvez vos résultats. C'est gratuit pendant la bêta.</p>
+    <div class="guestactions">
+      <button class="mbtn" id="guestLaterBtn" type="button" data-i18n="guest.invite.later">Plus tard</button>
+      <a class="mbtn primary" id="guestGoBtn" href="login.html?signup=1" data-i18n="guest.invite.go">Créer un compte gratuit</a>
+    </div>
+  </div>
+</div>
+<div class="guesttip" id="guestTip" role="tooltip" hidden></div>
+
 <div class="modal-overlay" id="settingsOverlay">
   <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
     <div class="modal-head">
@@ -534,7 +561,10 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
             </div>
           </div>
           <div class="msection-body">
-            <div class="minfo-row"><span class="label" data-i18n="settings.account.email">E-mail</span><span class="value" id="settingsEmail">-</span></div>
+            <div class="minfo-row" id="settingsEmailRow"><span class="label" data-i18n="settings.account.email">E-mail</span><span class="value" id="settingsEmail">-</span></div>
+            <!-- 16/10/2026 : visible seulement en mode invité -->
+            <div class="minfo-row" id="settingsGuestRow" style="display:none"><span class="label" data-i18n="guest.name">Invité</span><span class="value">
+              <a class="mbtn primary" id="settingsGuestBtn" href="login.html?signup=1" data-i18n="guest.create">Créer un compte</a></span></div>
             <!-- 06/10/2026 — langue de préférence du compte : interface et e-mails -->
             <div class="minfo-row"><span class="label" data-i18n="settings.lang.label">Langue</span><span class="value">
               <img id="settingsLangFlag" alt="" width="20" height="14" style="margin-right:8px;border-radius:2px;vertical-align:middle">
@@ -542,7 +572,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                 <option value="en">English</option>
                 <option value="fr">Français</option>
               </select></span></div>
-            <div class="minfo-row"><span class="label" data-i18n="settings.account.since">Membre depuis</span><span class="value" id="settingsCreated">-</span></div>
+            <div class="minfo-row" id="settingsCreatedRow"><span class="label" data-i18n="settings.account.since">Membre depuis</span><span class="value" id="settingsCreated">-</span></div>
             <!-- 09/10/2026 : relancer le tutoriel d'accueil -->
             <div class="minfo-row"><span class="label" data-i18n="settings.tour.label">Tutoriel</span><span class="value">
               <button class="mbtn" id="settingsTourBtn" type="button" data-i18n="settings.tour.btn">Revoir le tutoriel</button></span></div>
@@ -654,10 +684,85 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   var FUNCTIONS_URL = SUPABASE_URL + "/functions/v1";
 
   // ===================== Topbar : utilisateur réel =====================
+  // 16/10/2026 : mode invité (essai sans compte, voir supabase-client.js). Seul l'affichage change :
+  // aucun appel à Supabase ni au serveur de calcul n'est fait en invité.
+  var guest = !!session.guest;
   var email = session.user.email || "";
-  document.getElementById("userEmail").textContent = email;
-  document.getElementById("userAvatar").textContent = email.slice(0, 2).toUpperCase();
-  document.getElementById("signOutBtn").addEventListener("click", signOut);
+  if(guest){
+    document.getElementById("userEmail").textContent = t("guest.name");
+    document.getElementById("userAvatar").textContent = "?";
+    var soBtn = document.getElementById("signOutBtn");
+    soBtn.removeAttribute("data-i18n-aria"); soBtn.removeAttribute("data-i18n-title");
+    soBtn.removeAttribute("aria-label"); soBtn.removeAttribute("title");
+    soBtn.className = "mbtn primary";
+    soBtn.textContent = t("guest.create");
+    soBtn.addEventListener("click", function(){ window.location.href = "login.html?signup=1"; });
+  } else {
+    document.getElementById("userEmail").textContent = email;
+    document.getElementById("userAvatar").textContent = email.slice(0, 2).toUpperCase();
+    document.getElementById("signOutBtn").addEventListener("click", signOut);
+  }
+
+  // ===================== Mode invité : info-bulle et fenêtre d'invitation =====================
+  var guestOverlay = document.getElementById("guestOverlay");
+  var guestTip = document.getElementById("guestTip");
+  var guestLastFocus = null;
+  function openGuestInvite(){
+    guestLastFocus = document.activeElement;
+    guestTip.hidden = true;
+    guestOverlay.classList.add("open");
+    document.getElementById("guestGoBtn").focus();
+  }
+  function closeGuestInvite(){
+    guestOverlay.classList.remove("open");
+    if(guestLastFocus && guestLastFocus.focus) guestLastFocus.focus();
+  }
+  document.getElementById("guestCloseBtn").addEventListener("click", closeGuestInvite);
+  document.getElementById("guestLaterBtn").addEventListener("click", closeGuestInvite);
+  guestOverlay.addEventListener("click", function(e){ if(e.target === guestOverlay) closeGuestInvite(); });
+  document.addEventListener("keydown", function(e){
+    if(!guestOverlay.classList.contains("open")) return;
+    if(e.key === "Escape"){ e.stopPropagation(); closeGuestInvite(); return; }
+    if(e.key === "Tab"){   // le focus reste dans la fenêtre
+      var f = [document.getElementById("guestCloseBtn"), document.getElementById("guestLaterBtn"), document.getElementById("guestGoBtn")];
+      var i = f.indexOf(document.activeElement);
+      e.preventDefault();
+      f[(i + (e.shiftKey ? f.length - 1 : 1)) % f.length].focus();
+    }
+  }, true);
+  function lockForGuest(el){
+    el.classList.add("guestlock");
+    el.setAttribute("aria-disabled", "true");
+    el.setAttribute("data-guest-tip", t("guest.tip"));
+  }
+  function showGuestTip(el){
+    guestTip.textContent = el.getAttribute("data-guest-tip");
+    guestTip.hidden = false;
+    var r = el.getBoundingClientRect();
+    var w = guestTip.offsetWidth, h = guestTip.offsetHeight;
+    var x = Math.max(8, Math.min(window.innerWidth - w - 8, r.left + r.width / 2 - w / 2));
+    var y = r.bottom + 8;
+    if(y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 8);
+    guestTip.style.left = x + "px"; guestTip.style.top = y + "px";
+  }
+  if(guest){
+    document.addEventListener("mouseover", function(e){
+      var el = e.target.closest && e.target.closest("[data-guest-tip]");
+      if(el) showGuestTip(el); else guestTip.hidden = true;
+    });
+    document.addEventListener("focusin", function(e){
+      var el = e.target.closest && e.target.closest("[data-guest-tip]");
+      if(el) showGuestTip(el); else guestTip.hidden = true;
+    });
+    document.addEventListener("focusout", function(){ guestTip.hidden = true; });
+    window.addEventListener("scroll", function(){ guestTip.hidden = true; }, true);
+    // « Créer un instrument » : grisé, ouvre l'invitation
+    var createLink = document.querySelector("a.createbtn");
+    lockForGuest(createLink);
+    createLink.addEventListener("click", function(e){ e.preventDefault(); openGuestInvite(); });
+    // « Sélectionner » : idem
+    lockForGuest(document.getElementById("btnInstSel"));
+  }
 
   var ICON_CAL = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><rect x='4' y='5' width='16' height='15' rx='1.5'/><path d='M4 9h16M8 3v4M16 3v4'/></svg>";
   var ICON_CLOCK = "<svg viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='1.6'><circle cx='12' cy='12' r='8.5'/><path d='M12 7.5V12l3 2'/></svg>";
@@ -680,12 +785,27 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   // listé. Il reste restaurable depuis Supabase (remettre deleted_at à
   // NULL) jusqu'à la purge. Nécessite la colonne instruments.deleted_at
   // (cf. migration SQL fournie avec ce fichier).
-  var { data: instruments, error: instErr } = await supabaseClient
-    .from("instruments")
-    .select("*")
-    .is("deleted_at", null)
-    .order("updated_at", { ascending: false });
-  if(instErr) console.error("Erreur chargement instruments :", instErr);
+  var instruments = null, instErr = null;
+  if(guest){
+    // Invité : seul l'instrument d'exemple (instrument-exemple.js), en lecture seule, construit ici.
+    if(typeof NYSA_EXAMPLE_INSTRUMENT !== "undefined"){
+      var nowIso = new Date().toISOString();
+      instruments = [{
+        id: "example",
+        name: NYSA_EXAMPLE_INSTRUMENT.name[nysaLang()] || NYSA_EXAMPLE_INSTRUMENT.name.en,
+        config: JSON.parse(JSON.stringify(NYSA_EXAMPLE_INSTRUMENT.config)),
+        created_at: nowIso, updated_at: nowIso
+      }];
+    } else { instruments = []; }
+  } else {
+    var instRes = await supabaseClient
+      .from("instruments")
+      .select("*")
+      .is("deleted_at", null)
+      .order("updated_at", { ascending: false });
+    instruments = instRes.data; instErr = instRes.error;
+    if(instErr) console.error("Erreur chargement instruments :", instErr);
+  }
 
   // 06/10/2026 — instrument d'exemple, créé une seule fois par compte.
   // À la première visite d'un compte sans aucun instrument, on lui ajoute
@@ -695,7 +815,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   // revient pas. Sans le fichier instrument-exemple.js, rien n'est créé.
   try {
     var meta = session.user.user_metadata || {};
-    if(typeof NYSA_EXAMPLE_INSTRUMENT !== "undefined" && !instErr && (instruments || []).length === 0 && !meta.example_created){
+    if(!guest && typeof NYSA_EXAMPLE_INSTRUMENT !== "undefined" && !instErr && (instruments || []).length === 0 && !meta.example_created){
       var lg = nysaLang();
       var exCfg = JSON.parse(JSON.stringify(NYSA_EXAMPLE_INSTRUMENT.config));
       var { data: exRow, error: exErr } = await supabaseClient
@@ -817,6 +937,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         "</div>";
       list.appendChild(a);
     });
+    if(guest) list.querySelectorAll(".dropdown button").forEach(lockForGuest);
     updateCarousel();
     if(selMode) refreshSel();
   }
@@ -851,7 +972,10 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     closeAllMenus();
     render();
   }
-  document.getElementById("btnInstSel").addEventListener("click", function(){ setSelMode(!selMode); });
+  document.getElementById("btnInstSel").addEventListener("click", function(){
+    if(guest){ openGuestInvite(); return; }
+    setSelMode(!selMode);
+  });
   document.getElementById("instSelCancel").addEventListener("click", function(){ setSelMode(false); });
   document.getElementById("instSelAll").addEventListener("click", function(){
     var vis = visibleItems();
@@ -961,6 +1085,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     e.preventDefault();
     e.stopPropagation();
     closeAllMenus();
+    if(guest){ openGuestInvite(); return; }
 
     var id = actionBtn.dataset.id;
     var action = actionBtn.dataset.action;
@@ -1052,18 +1177,20 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   // rien pour un abonné payant, ni après la date de fin. Si la fonction
   // n'existe pas encore, l'appel échoue sans conséquence.
   try {
-    if(typeof supabaseClient.rpc === "function"){
+    if(!guest && typeof supabaseClient.rpc === "function"){
       var betaRes = await supabaseClient.rpc("claim_beta_access");
       if(betaRes && betaRes.error) console.warn("Accès bêta non accordé :", betaRes.error.message);
     }
   } catch(e){ console.warn("Accès bêta non accordé :", e); }
 
-  var { data: entRow, error: entErr } = await supabaseClient
-    .from("account_entitlements")
-    .select("*") // toute la ligne : si la colonne cancel_at_period_end n'existe pas encore, la lecture ne casse pas
-    .maybeSingle();
-  if(entErr) console.error("Erreur chargement abonnement :", entErr);
-  if(entRow) entitlement = applySimulatedPlan(entRow);
+  if(!guest){
+    var { data: entRow, error: entErr } = await supabaseClient
+      .from("account_entitlements")
+      .select("*") // toute la ligne : si la colonne cancel_at_period_end n'existe pas encore, la lecture ne casse pas
+      .maybeSingle();
+    if(entErr) console.error("Erreur chargement abonnement :", entErr);
+    if(entRow) entitlement = applySimulatedPlan(entRow);
+  }
 
   var overlay = document.getElementById("settingsOverlay");
   var planBadge = document.getElementById("settingsPlanBadge");
@@ -1086,7 +1213,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   // Compte créé avant l'ajout de cette préférence : on y enregistre la langue
   // affichée, pour que ses e-mails aient une langue définie.
   var accountLang = session.user.user_metadata ? session.user.user_metadata.lang : null;
-  if(accountLang !== "en" && accountLang !== "fr" && supabaseClient.auth.updateUser){
+  if(!guest && accountLang !== "en" && accountLang !== "fr" && supabaseClient.auth.updateUser){
     supabaseClient.auth.updateUser({ data: { lang: nysaLang() } }).catch(function(e){ console.warn("Préférence de langue non enregistrée :", e); });
   }
   var langNote = document.getElementById("settingsLangNote");
@@ -1104,6 +1231,19 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   });
   document.getElementById("settingsCreated").textContent = session.user.created_at
     ? formatDate(session.user.created_at) : "-";
+  if(guest){
+    // Paramètres réduits : langue, tutoriel, et un bloc « Créer un compte ».
+    ["settingsSectionPwd", "settingsSectionSub", "settingsSectionDelete"].forEach(function(id){
+      document.getElementById(id).style.display = "none";
+      var rb = document.querySelector(".railbtn[data-target='" + id + "']");
+      if(rb) rb.style.display = "none";
+    });
+    document.getElementById("settingsEmailRow").style.display = "none";
+    document.getElementById("settingsCreatedRow").style.display = "none";
+    document.getElementById("settingsGuestRow").style.display = "";
+    langNote.removeAttribute("data-i18n");
+    langNote.textContent = t("guest.settings.note");
+  }
 
   // Même règle que le serveur (main.py, _require_active_plan) : plan payant,
   // statut « active », et échéance absente ou future. Avant le 04/10/2026,
