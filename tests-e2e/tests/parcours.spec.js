@@ -600,12 +600,16 @@ for (const lang of ["en", "fr"]) {
       await tabs.nth(3).click();
       await expect(page.locator("#entInstConfig")).toContainText("iFoV");
       await tabs.nth(0).click();
-      // réglages d'affichage : ils ne doivent pas casser la page
-      await page.locator("#satChk").check();
-      await page.locator("#resetDisplayBtn").click();
+      // réglages d'affichage : ils ne doivent pas casser la page.
+      // 16/10/2026 : la case « pixels saturés » est désactivée sur la vue RGB (celle de l'ouverture) : on passe d'abord
+      // sur la bande Rouge. Délais explicites : sans eux, une action impossible attendait jusqu'à la fin du test (8 min).
+      await page.locator(".bandthumb[data-key='R']").click({ timeout: 15 * 1000 });
+      await page.locator("#satChk").check({ timeout: 15 * 1000 });
+      await page.locator("#resetDisplayBtn").click({ timeout: 15 * 1000 });   // revient aussi à la vue RGB, attendue par le test suivant
+      await expect(page.locator(".bandthumb[data-key='RGB']")).toHaveClass(/selected/);
       // renommer le résultat
       promptValue = NAME.result;
-      await page.locator("#btnRenameResult").click();
+      await page.locator("#btnRenameResult").click({ timeout: 15 * 1000 });
       await expect(page.locator("#resTitle")).toHaveText(NAME.result);
       promptValue = undefined;
     });
