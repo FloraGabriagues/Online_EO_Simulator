@@ -4,6 +4,8 @@
 // PAGES PUBLIQUES (aucun compte nécessaire)
 //   - la démo : s'affiche en anglais et en français, ses liens mènent au mode invité ;
 //   - le mode invité : essai complet sans compte et sans serveur (simulation fictive, résultat pré-calculé) ;
+//   - les statistiques anonymes du tutoriel : trois événements comptés une seule fois, jamais par un robot
+//     (les requêtes sont interceptées : rien n'est écrit dans la vraie table) ;
 //   - la connexion : mauvais mot de passe, mot de passe oublié, inscription (contrôles),
 //     choix de la langue ;
 //   - aucun appel à un service tiers, aucun texte non traduit, aucun tiret long ;
@@ -244,6 +246,61 @@ test.describe("Pages publiques @public", () => {
 
     expect(server, "appels au serveur de calcul ou aux données en mode invité").toEqual([]);
     expect(errors).toEqual([]);
+  });
+
+  // Statistiques anonymes du tutoriel (19/10/2026). Le comptage ignore les navigateurs pilotés par un robot, sinon
+  // chaque passage des tests fausserait les chiffres de la bêta. Les deux premiers tests se font passer pour un
+  // navigateur ordinaire ; dans tous les cas la requête est interceptée, rien n'arrive dans la vraie table.
+  async function interceptTutoEvents(page) {
+    const sent = [];
+    await page.addInitScript(() => { Object.defineProperty(navigator, "webdriver", { get: () => false }); });
+    await page.route(/\/rest\/v1\/tuto_events/, async (route) => {
+      const cors = { "access-control-allow-origin": "*", "access-control-allow-headers": "*", "access-control-allow-methods": "POST, OPTIONS" };
+      if (route.request().method() === "OPTIONS") { await route.fulfill({ status: 204, headers: cors }); return; }
+      sent.push(...[].concat(route.request().postDataJSON()));
+      await route.fulfill({ status: 201, headers: cors, body: "" });
+    });
+    return sent;
+  }
+
+  test("statistiques du tutoriel : ouvert puis démarré, une seule fois par navigateur", async ({ page }) => {
+    const sent = await interceptTutoEvents(page);
+    await page.goto("/espace-personnel.html?invite=1&lang=en");
+    await expect(page.locator(".onb-modal")).toBeVisible();
+    await page.locator(".onb-modal button", { hasText: "Discover my first simulation" }).click();
+    await expect(page.locator(".onb-bubble")).toBeVisible();
+    await expect.poll(() => sent.length).toBe(2);
+    expect(sent).toEqual([{ event: "tuto_ouvert", guest: true }, { event: "tuto_demarre", guest: true }]);
+    // rechargement : rien n'est recompté
+    await page.reload();
+    await page.waitForTimeout(2000);
+    expect(sent).toHaveLength(2);
+  });
+
+  test("statistiques du tutoriel : la fin du tutoriel est comptée", async ({ page }) => {
+    const sent = await interceptTutoEvents(page);
+    // un invité qui a déjà vu la fenêtre de bienvenue et qui arrive à la dernière étape
+    await page.addInitScript(() => {
+      try {
+        localStorage.setItem("nysa_guest_tour_seen", "1");
+        localStorage.setItem("nysa_onb", JSON.stringify({ uid: "guest", step: "finish", ts: Date.now() }));
+      } catch (e) { /* sans gravité */ }
+    });
+    await page.goto("/espace-personnel.html?invite=1&lang=en");
+    await expect(page.locator(".onb-modal h2")).toHaveText("First simulation complete!");
+    await expect.poll(() => sent.length).toBe(1);
+    expect(sent).toEqual([{ event: "tuto_termine", guest: true }]);
+  });
+
+  test("statistiques du tutoriel : un navigateur piloté par un robot n'est pas compté", async ({ page }) => {
+    // pas de contournement ici : Playwright se déclare comme navigateur automatisé
+    const attempts = [];
+    await page.route(/\/rest\/v1\/tuto_events/, async (route) => { attempts.push(route.request().url()); await route.abort(); });
+    await page.goto("/espace-personnel.html?invite=1&lang=en");
+    await page.locator(".onb-modal button", { hasText: "Discover my first simulation" }).click();
+    await expect(page.locator(".onb-bubble")).toBeVisible();
+    await page.waitForTimeout(1500);
+    expect(attempts, "aucune requête de comptage ne doit partir d'un navigateur automatisé").toEqual([]);
   });
 
   test("les polices et les bibliothèques viennent du site, pas d'un tiers", async ({ page }) => {

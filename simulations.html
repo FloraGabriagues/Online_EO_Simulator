@@ -1611,11 +1611,12 @@ function validateConditions(show){
 }
 
 // 12/10/2026 : limite de simulations par semaine glissante (plan bêta). Le serveur la fait respecter (main.py,
-// _BETA_WEEKLY_LIMIT) ; ici on l'affiche, et on grise le bouton quand elle est atteinte. L'administrateur n'en a pas.
+// _BETA_WEEKLY_LIMIT) ; ici on l'affiche, et on grise le bouton quand elle est atteinte. L'administrateur n'en a pas,
+// ni le compte marqué unlimited_simulations (compte des tests automatiques, 19/10/2026).
 var QUOTA_MAX = 20;        // même valeur que _BETA_WEEKLY_LIMIT dans main.py
 var quotaMsg = "";
 var quotaUsed = null;      // dates (ms) des simulations réussies des 7 derniers jours ; null = sans objet ou illisible
-function quotaApplies(){ return !!entitlement && !entitlement.isAdmin && entitlement.beta_access === true; }
+function quotaApplies(){ return !!entitlement && !entitlement.isAdmin && entitlement.beta_access === true && entitlement.unlimited_simulations !== true; }
 function quotaFull(){ return quotaApplies() && quotaUsed !== null && quotaUsed.length >= QUOTA_MAX; }
 async function loadQuota(){
   var note = document.getElementById("quotaNote");

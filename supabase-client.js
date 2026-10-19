@@ -72,6 +72,8 @@ function markGuestTourSeen() { _writeStore(localStorage, GUEST_TOUR_KEY, "1"); }
 //   (localStorage, jamais envoyé) retient qu'il l'a déjà été. L'envoi ne doit
 //   jamais gêner le tutoriel : en cas d'échec (réseau, stockage bloqué), rien
 //   ne s'affiche, et l'envoi sera retenté à la prochaine occasion.
+//   Un navigateur piloté par un robot (tests automatiques, certains robots
+//   d'exploration) n'est jamais compté : il fausserait les chiffres de la bêta.
 // ---------------------------------------------------------------------------
 const TUTO_EVENTS = ["tuto_ouvert", "tuto_demarre", "tuto_termine"];
 const _tutoPending = {};
@@ -79,6 +81,7 @@ const _tutoPending = {};
 /** Compte un événement du tutoriel, une seule fois par navigateur. invite : true en mode invité. */
 async function trackTuto(event, invite) {
   try {
+    if (navigator.webdriver) return;   // navigateur piloté par un robot : non compté
     if (TUTO_EVENTS.indexOf(event) === -1) return;
     const key = "nysa_tuto_" + event;
     if (_readStore(localStorage, key) === "1" || _tutoPending[event]) return;
