@@ -20,7 +20,14 @@
 //   pré-calculés (dossier demo/). Il n'y a ni compte, ni jeton, ni appel au
 //   serveur de calcul : isGuest() ne sert qu'à l'AFFICHAGE. Toute requête vers
 //   Supabase partirait avec la seule clé publique et serait refusée par les
-//   règles d'accès, comme pour n'importe quel visiteur anonyme.
+//   règles d'accès, comme pour n'importe quel visiteur anonyme, à une seule
+//   exception : le comptage anonyme du tutoriel (voir trackTuto plus bas).
+//
+// 19/10/2026 : statistiques anonymes du tutoriel.
+//   trackTuto() ajoute une ligne (type d'événement, invité ou compte) dans la
+//   table tuto_events. Ni identifiant, ni adresse IP, ni cookie : la date est
+//   posée par la base. Les règles d'accès autorisent seulement l'ajout, la
+//   lecture est réservée à l'administrateur (page admin, onglet Statistiques).
 // ============================================================================
 
 const SUPABASE_URL = "https://szosbxkhnsjmbrzivlsb.supabase.co";
@@ -58,6 +65,32 @@ function isGuest() { return _readStore(sessionStorage, GUEST_KEY) === "1"; }
 /** Ce navigateur a-t-il déjà vu le tutoriel en mode invité ? */
 function guestTourSeen() { return _readStore(localStorage, GUEST_TOUR_KEY) === "1"; }
 function markGuestTourSeen() { _writeStore(localStorage, GUEST_TOUR_KEY, "1"); }
+
+// ---------------------------------------------------------------------------
+// Statistiques anonymes du tutoriel (19/10/2026).
+//   Chaque événement n'est compté qu'une fois par navigateur : un drapeau local
+//   (localStorage, jamais envoyé) retient qu'il l'a déjà été. L'envoi ne doit
+//   jamais gêner le tutoriel : en cas d'échec (réseau, stockage bloqué), rien
+//   ne s'affiche, et l'envoi sera retenté à la prochaine occasion.
+// ---------------------------------------------------------------------------
+const TUTO_EVENTS = ["tuto_ouvert", "tuto_demarre", "tuto_termine"];
+const _tutoPending = {};
+
+/** Compte un événement du tutoriel, une seule fois par navigateur. invite : true en mode invité. */
+async function trackTuto(event, invite) {
+  try {
+    if (TUTO_EVENTS.indexOf(event) === -1) return;
+    const key = "nysa_tuto_" + event;
+    if (_readStore(localStorage, key) === "1" || _tutoPending[event]) return;
+    _tutoPending[event] = true;   // évite un double envoi si l'appel est répété pendant l'envoi
+    try {
+      const { error } = await supabaseClient.from("tuto_events").insert({ event: event, guest: !!invite });
+      if (!error) _writeStore(localStorage, key, "1");
+    } finally {
+      delete _tutoPending[event];
+    }
+  } catch (e) { /* sans gravité */ }
+}
 
 /** Fausse session renvoyée à un invité : même forme qu'une vraie, sans jeton. */
 function _guestSession() {

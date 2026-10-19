@@ -29,6 +29,10 @@
 // façon, avec l'identifiant « guest ». La fenêtre de bienvenue n'est proposée qu'une fois par navigateur
 // (localStorage, guestTourSeen / markGuestTourSeen) ; rien n'est écrit sur un compte.
 //
+// STATISTIQUES ANONYMES (19/10/2026) : trackTuto (supabase-client.js) compte trois événements, une fois par
+// navigateur : tuto_ouvert (fenêtre de bienvenue affichée), tuto_demarre (tutoriel lancé) et tuto_termine (dernière
+// étape validée). Aucun identifiant n'est envoyé, seulement « invité ou compte ».
+//
 // À charger en fin de page, après menu.js (pages : espace personnel,
 // simulations, résultats).
 // ============================================================================
@@ -281,6 +285,7 @@
     } catch(e){ return; }
     welcomeOpen = true;
     var marker = el("span"); marker.id = "onbWelcomeMarker"; marker.hidden = true; document.body.appendChild(marker);
+    if(typeof trackTuto === "function") trackTuto("tuto_ouvert", guest);   // 19/10/2026 : comptage anonyme
     openModal({
       title: tr("onb.welcome.title"),
       text: tr("onb.welcome.text"),
@@ -588,6 +593,7 @@
     stopTick();
     if(document.getElementById("onbFinishMarker")) return;
     var marker = el("span"); marker.id = "onbFinishMarker"; marker.hidden = true; document.body.appendChild(marker);
+    if(typeof trackTuto === "function") trackTuto("tuto_termine", guest);   // 19/10/2026 : comptage anonyme
     if(guest){
       // Invité : la fin du tutoriel propose de créer un compte.
       openModal({
@@ -673,6 +679,7 @@
         else return;
       } catch(e){ return; }
     }
+    if(typeof trackTuto === "function") trackTuto("tuto_demarre", guest);   // 19/10/2026 : comptage anonyme
     saveStep(PAGE === "espace-personnel.html" ? "intro" : "nav");
     startTick();
     tick();

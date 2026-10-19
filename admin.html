@@ -359,6 +359,43 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .followup select,.followup textarea{background:var(--panel-2);border:1px solid var(--line);color:var(--paper);border-radius:5px;padding:7px 9px;font-family:var(--body);font-size:13px}
 .empty{color:var(--muted);padding:26px 18px;font-size:13.5px}
 .toast{font-size:12.5px;color:var(--pixel);margin-top:10px;min-height:18px}
+
+/* onglets et statistiques du tutoriel (19/10/2026) */
+[hidden]{display:none!important}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.panelnote{margin:0 0 14px;color:var(--muted);font-size:13.5px}
+.stfilters{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:16px}
+.stfilters select{background:var(--panel-2);border:1px solid var(--line);color:var(--paper);border-radius:5px;padding:6px 8px;font-size:13px}
+.stfilters .cnt{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--muted)}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:20px}
+.kpi{background:var(--panel);border:1px solid var(--line-soft);border-left:3px solid var(--line);border-radius:8px;padding:14px 16px}
+.kpi.o{border-left-color:var(--muted-2)}
+.kpi.s{border-left-color:var(--pixel)}
+.kpi.t{border-left-color:var(--photon)}
+.kpi .lbl{font-family:var(--mono);font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.kpi .val{font-family:var(--display);font-weight:600;font-size:34px;line-height:1.15;margin:4px 0 2px}
+.kpi .sub{font-size:12px;color:var(--muted);min-height:18px}
+.stcard{background:var(--panel);border:1px solid var(--line-soft);border-radius:8px;padding:16px 18px;margin-bottom:20px}
+.stcard h2{margin:0 0 12px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;font-family:var(--mono);color:var(--muted-2);font-weight:500}
+.stbl{width:100%;border-collapse:collapse;font-size:13.5px}
+.stbl th,.stbl td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line-soft)}
+.stbl th:first-child,.stbl td:first-child{text-align:left}
+.stbl th{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--muted-2)}
+.stbl tr:last-child td{border-bottom:none}
+.stbl tr.total td{font-weight:600}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);margin:0 0 12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block}
+.ymax{font-family:var(--mono);font-size:12px;color:var(--muted-2);margin-bottom:4px}
+.chartscroll{overflow-x:auto;padding-bottom:4px}
+.bars{display:flex;align-items:stretch;gap:6px;height:200px;border-bottom:1px solid var(--line)}
+.daycol{flex:1;min-width:0;display:flex;align-items:flex-end;justify-content:center;gap:2px;height:100%}
+.bar{display:block;flex:1;max-width:14px;min-width:3px;border-radius:2px 2px 0 0}
+.bar.o{background:var(--muted-2)}
+.bar.s{background:var(--pixel)}
+.bar.t{background:var(--photon)}
+.dlabels{display:flex;gap:6px;margin-top:4px}
+.dlabels span{flex:1;min-width:0;text-align:center;font-family:var(--mono);font-size:12px;color:var(--muted-2);white-space:nowrap}
 </style>
 
 <body>
@@ -417,11 +454,20 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     <div class="wrap">
       <div class="pageheader">
         <div>
-          <p class="eyebrow">ADMINISTRATION</p>
-          <h1>Signalements</h1>
-          <p class="sub">Résultats signalés par les utilisateurs, avec leur consentement. Cette page n'est visible que du compte administrateur.</p>
+          <p class="eyebrow">COMPTE ADMINISTRATEUR</p>
+          <h1>Administration</h1>
+          <p class="sub">Cette page n'est visible que du compte administrateur.</p>
         </div>
       </div>
+      <div class="tabsrow">
+        <div class="tabs" role="tablist" aria-label="Sections de l'administration">
+          <button class="tab" id="tabReports" role="tab" type="button" aria-selected="true" aria-controls="panelReports">Signalements</button>
+          <button class="tab" id="tabStats" role="tab" type="button" aria-selected="false" aria-controls="panelStats">Statistiques</button>
+        </div>
+      </div>
+
+      <div id="panelReports" role="tabpanel" aria-labelledby="tabReports">
+      <p class="panelnote">Résultats signalés par les utilisateurs, avec leur consentement.</p>
       <div class="admwrap">
         <div class="admlist">
           <div class="admfilters">
@@ -434,6 +480,23 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           <div id="rptList"></div>
         </div>
         <div class="admdetail" id="rptDetail"><p class="empty">Choisissez un signalement dans la liste.</p></div>
+      </div>
+      </div>
+
+      <div id="panelStats" role="tabpanel" aria-labelledby="tabStats" hidden>
+        <p class="panelnote">Fréquentation anonyme du tutoriel : chaque navigateur compte une fois par étape, sans identifiant ni adresse IP.</p>
+        <div class="stfilters">
+          <label class="sr" for="stPeriod">Période</label>
+          <select id="stPeriod">
+            <option value="beta">Bêta (12 au 30 octobre)</option>
+            <option value="7">7 derniers jours</option>
+            <option value="30">30 derniers jours</option>
+            <option value="all">Depuis le début</option>
+          </select>
+          <button class="mbtn" id="stRefresh" type="button">Actualiser</button>
+          <span class="cnt" id="stStamp"></span>
+        </div>
+        <div id="stBody"><p class="empty">Chargement…</p></div>
       </div>
     </div>
   </div>
@@ -586,6 +649,132 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     }, "danger");
   }
   document.getElementById("fStatus").addEventListener("change", renderList);
+
+  // ---- Onglets : Signalements | Statistiques (19/10/2026)
+  var TABS = {
+    reports: { tab: "tabReports", panel: "panelReports", hash: "" },
+    stats:   { tab: "tabStats",   panel: "panelStats",   hash: "#statistiques" }
+  };
+  function showTab(name){
+    Object.keys(TABS).forEach(function(k){
+      var on = (k === name);
+      document.getElementById(TABS[k].tab).setAttribute("aria-selected", on ? "true" : "false");
+      document.getElementById(TABS[k].panel).hidden = !on;
+    });
+    try { history.replaceState(null, "", location.pathname + location.search + TABS[name].hash); } catch(e){ /* sans gravité */ }
+    if(name === "stats") loadStats();
+  }
+  Object.keys(TABS).forEach(function(k){
+    document.getElementById(TABS[k].tab).addEventListener("click", function(){ showTab(k); });
+  });
+
+  // ---- Statistiques du tutoriel (19/10/2026) : nombres anonymes, un seul comptage par navigateur et par étape.
+  // Les chiffres viennent de la fonction SQL tuto_stats (jours comptés à l'heure de Paris).
+  var BETA = { from: "2026-10-12T00:00:00+02:00", to: "2026-10-31T00:00:00+01:00", first: "2026-10-12", last: "2026-10-30" };
+  var STKEY = { tuto_ouvert: "o", tuto_demarre: "s", tuto_termine: "t" };
+  var stSeq = 0;
+  function parisToday(){ return new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Paris" }).format(new Date()); }
+  function addDays(iso, n){ var d = new Date(iso + "T12:00:00Z"); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+  function dayRange(a, b){ var out = [], d = a; while(d <= b && out.length < 400){ out.push(d); d = addDays(d, 1); } return out; }
+  function pct(a, b){ return b > 0 ? Math.round(100 * a / b) + " %" : "-"; }
+  function dm(iso){ return iso.slice(8, 10) + "/" + iso.slice(5, 7); }
+
+  async function loadStats(){
+    var body = document.getElementById("stBody"), my = ++stSeq;
+    var period = document.getElementById("stPeriod").value, today = parisToday(), args = {}, days = null;
+    if(period === "beta"){
+      args = { p_from: BETA.from, p_to: BETA.to };
+      days = dayRange(BETA.first, today < BETA.last ? today : BETA.last);
+      if(!days.length) days = [BETA.first];
+    } else if(period === "7" || period === "30"){
+      var n = Number(period);
+      days = dayRange(addDays(today, -(n - 1)), today);
+      args = { p_from: new Date(Date.now() - (n + 1) * 86400000).toISOString() };
+    }
+    var r = await supabaseClient.rpc("tuto_stats", args);
+    if(my !== stSeq) return;   // une demande plus récente a pris le relais
+    if(r.error){ body.replaceChildren(el("p", "Chargement impossible : " + r.error.message, "empty")); return; }
+    var rows = (r.data || []).map(function(x){
+      return { day: String(x.day), key: STKEY[x.event], guest: !!x.guest, n: Number(x.n) || 0 };
+    }).filter(function(x){ return x.key; });
+    if(days){
+      rows = rows.filter(function(x){ return days.indexOf(x.day) !== -1; });
+    } else {
+      var first = rows.reduce(function(m, x){ return (!m || x.day < m) ? x.day : m; }, null);
+      days = dayRange(first || today, today);
+    }
+    renderStats(rows, days);
+    document.getElementById("stStamp").textContent = "Mis à jour à " + new Date().toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function renderStats(rows, days){
+    var body = document.getElementById("stBody");
+    var inv = { o: 0, s: 0, t: 0 }, acc = { o: 0, s: 0, t: 0 }, byDay = {};
+    days.forEach(function(d){ byDay[d] = { o: 0, s: 0, t: 0 }; });
+    rows.forEach(function(x){ (x.guest ? inv : acc)[x.key] += x.n; byDay[x.day][x.key] += x.n; });
+    var all = { o: inv.o + acc.o, s: inv.s + acc.s, t: inv.t + acc.t };
+    body.replaceChildren();
+    if(!all.o && !all.s && !all.t){ body.appendChild(el("p", "Aucun événement sur cette période.", "empty")); return; }
+
+    // Quatre chiffres : l'entonnoir ouverts, démarrés, terminés, et le taux de complétion (terminés sur ouverts).
+    function of(a, b, label){ return b > 0 ? pct(a, b) + " " + label : ""; }
+    function tile(cls, label, value, sub){
+      var t = el("div", null, "kpi " + cls);
+      t.appendChild(el("div", label, "lbl")); t.appendChild(el("div", String(value), "val")); t.appendChild(el("div", sub, "sub"));
+      return t;
+    }
+    var kp = el("div", null, "kpis");
+    kp.appendChild(tile("o", "Ouverts", all.o, "fenêtre de bienvenue affichée"));
+    kp.appendChild(tile("s", "Démarrés", all.s, of(all.s, all.o, "des ouverts")));
+    kp.appendChild(tile("t", "Terminés", all.t, of(all.t, all.s, "des démarrés")));
+    kp.appendChild(tile("c", "Taux de complétion", pct(all.t, all.o), "terminés sur ouverts"));
+    body.appendChild(kp);
+
+    // Invités et comptes.
+    var card = el("div", null, "stcard"); card.appendChild(el("h2", "Par public"));
+    var tb = el("table", null, "stbl"), hr = el("tr");
+    ["Public", "Ouverts", "Démarrés", "Terminés", "Complétion"].forEach(function(h){ hr.appendChild(el("th", h)); });
+    tb.appendChild(hr);
+    [["Invités", inv], ["Comptes", acc], ["Total", all]].forEach(function(p, i){
+      var tr = el("tr", null, i === 2 ? "total" : null);
+      [p[0], p[1].o, p[1].s, p[1].t, pct(p[1].t, p[1].o)].forEach(function(v){ tr.appendChild(el("td", String(v))); });
+      tb.appendChild(tr);
+    });
+    card.appendChild(tb);
+    body.appendChild(card);
+
+    // Histogramme par jour : trois barres (ouverts, démarrés, terminés), sans librairie.
+    var ch = el("div", null, "stcard"); ch.appendChild(el("h2", "Par jour"));
+    var lg = el("div", null, "legend");
+    [["Ouverts", "var(--muted-2)"], ["Démarrés", "var(--pixel)"], ["Terminés", "var(--photon)"]].forEach(function(l){
+      var sp = el("span"), sw = el("i"); sw.style.background = l[1];
+      sp.appendChild(sw); sp.appendChild(document.createTextNode(l[0])); lg.appendChild(sp);
+    });
+    ch.appendChild(lg);
+    var max = 1; days.forEach(function(d){ max = Math.max(max, byDay[d].o, byDay[d].s, byDay[d].t); });
+    ch.appendChild(el("div", "maximum : " + max, "ymax"));
+    var scroll = el("div", null, "chartscroll"), bars = el("div", null, "bars"), labs = el("div", null, "dlabels");
+    bars.style.minWidth = labs.style.minWidth = (days.length * 30) + "px";
+    var every = Math.ceil(days.length / 10);
+    days.forEach(function(d, i){
+      var v = byDay[d], txt = dm(d) + " : " + v.o + " ouverts, " + v.s + " démarrés, " + v.t + " terminés";
+      var col = el("div", null, "daycol"); col.title = txt; col.setAttribute("role", "img"); col.setAttribute("aria-label", txt);
+      ["o", "s", "t"].forEach(function(k){
+        var b = el("i", null, "bar " + k);
+        b.style.height = v[k] ? Math.max(2, Math.round(100 * v[k] / max)) + "%" : "0px";
+        col.appendChild(b);
+      });
+      bars.appendChild(col);
+      labs.appendChild(el("span", i % every === 0 ? dm(d) : ""));
+    });
+    scroll.appendChild(bars); scroll.appendChild(labs); ch.appendChild(scroll);
+    body.appendChild(ch);
+    body.appendChild(el("p", "Un visiteur qui change de navigateur ou d'appareil compte deux fois. « Terminé » : dernière étape du tutoriel validée.", "mnote"));
+  }
+  document.getElementById("stPeriod").addEventListener("change", loadStats);
+  document.getElementById("stRefresh").addEventListener("click", loadStats);
+  if(location.hash === "#statistiques") showTab("stats");
+
   await load();
 })();
 </script>
