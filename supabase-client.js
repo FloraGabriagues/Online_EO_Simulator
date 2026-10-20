@@ -28,6 +28,13 @@
 //   table tuto_events. Ni identifiant, ni adresse IP, ni cookie : la date est
 //   posée par la base. Les règles d'accès autorisent seulement l'ajout, la
 //   lecture est réservée à l'administrateur (page admin, onglet Statistiques).
+//
+// 20/10/2026 : exclusion de son propre navigateur du comptage.
+//   Ouvrir une page du site avec « ?notrack=1 » (par exemple login.html?notrack=1) pose un
+//   drapeau local dans ce navigateur : plus rien n'y est compté. « ?notrack=0 » le retire.
+//   Le drapeau reste dans le navigateur (localStorage), il survit à l'arrêt de l'ordinateur ;
+//   il disparaît si les données du site sont effacées, et il n'existe pas en navigation privée
+//   (il faut alors rouvrir le lien dans la fenêtre). Rien n'est envoyé nulle part.
 // ============================================================================
 
 const SUPABASE_URL = "https://szosbxkhnsjmbrzivlsb.supabase.co";
@@ -78,10 +85,21 @@ function markGuestTourSeen() { _writeStore(localStorage, GUEST_TOUR_KEY, "1"); }
 const TUTO_EVENTS = ["tuto_ouvert", "tuto_demarre", "tuto_termine"];
 const _tutoPending = {};
 
+// Exclusion de ce navigateur (20/10/2026) : posée ou retirée par « ?notrack=1 » / « ?notrack=0 ».
+const TUTO_OPTOUT_KEY = "nysa_notrack";
+(function () {
+  try {
+    const v = new URLSearchParams(window.location.search).get("notrack");
+    if (v === "1") _writeStore(localStorage, TUTO_OPTOUT_KEY, "1");
+    else if (v === "0") _writeStore(localStorage, TUTO_OPTOUT_KEY, null);
+  } catch (e) { /* sans gravité */ }
+})();
+
 /** Compte un événement du tutoriel, une seule fois par navigateur. invite : true en mode invité. */
 async function trackTuto(event, invite) {
   try {
     if (navigator.webdriver) return;   // navigateur piloté par un robot : non compté
+    if (_readStore(localStorage, TUTO_OPTOUT_KEY) === "1") return;   // navigateur exclu par « ?notrack=1 »
     if (TUTO_EVENTS.indexOf(event) === -1) return;
     const key = "nysa_tuto_" + event;
     if (_readStore(localStorage, key) === "1" || _tutoPending[event]) return;
