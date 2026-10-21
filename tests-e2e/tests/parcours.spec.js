@@ -4,6 +4,7 @@
 // PAGES PUBLIQUES (aucun compte nécessaire)
 //   - la démo : s'affiche en anglais et en français, ses liens mènent au mode invité ;
 //   - le mode invité : essai complet sans compte et sans serveur (simulation fictive, résultat pré-calculé) ;
+//   - la fenêtre de bienvenue : un seul bouton, trois captures dans la langue de la page ;
 //   - les statistiques anonymes du tutoriel : trois événements comptés une seule fois, jamais par un robot
 //     (les requêtes sont interceptées : rien n'est écrit dans la vraie table) ;
 //   - la connexion : mauvais mot de passe, mot de passe oublié, inscription (contrôles),
@@ -205,10 +206,14 @@ test.describe("Pages publiques @public", () => {
     await expect(page.locator("#userEmail")).toHaveText("Guest");
     await expect(page.locator(".instcard")).toHaveCount(1);
 
-    // Fenêtre de bienvenue : proposée une fois, puis plus jamais dans ce navigateur.
+    // Fenêtre de bienvenue : un seul bouton, qui lance le tutoriel (21/10/2026). On en sort par « Leave the tutorial » ;
+    // elle n'est alors plus proposée dans ce navigateur.
     await expect(page.locator(".onb-modal")).toBeVisible();
-    await page.locator(".onb-modal button", { hasText: "Explore on my own" }).click();
+    await page.locator(".onb-modal button", { hasText: "Try it now" }).click();
     await expect(page.locator(".onb-modal")).toHaveCount(0);
+    await expect(page.locator(".onb-bubble")).toBeVisible();
+    await page.locator(".onb-bubble .onb-link").click();
+    await expect(page.locator(".onb-bubble")).toHaveCount(0);
     await page.reload();
     await page.clock.runFor(3000);
     await expect(page.locator(".onb-modal")).toHaveCount(0);
@@ -267,7 +272,7 @@ test.describe("Pages publiques @public", () => {
     const sent = await interceptTutoEvents(page);
     await page.goto("/espace-personnel.html?invite=1&lang=en");
     await expect(page.locator(".onb-modal")).toBeVisible();
-    await page.locator(".onb-modal button", { hasText: "Discover my first simulation" }).click();
+    await page.locator(".onb-modal button", { hasText: "Try it now" }).click();
     await expect(page.locator(".onb-bubble")).toBeVisible();
     await expect.poll(() => sent.length).toBe(2);
     expect(sent).toEqual([{ event: "tuto_ouvert", guest: true }, { event: "tuto_demarre", guest: true }]);
@@ -297,11 +302,33 @@ test.describe("Pages publiques @public", () => {
     const attempts = [];
     await page.route(/\/rest\/v1\/tuto_events/, async (route) => { attempts.push(route.request().url()); await route.abort(); });
     await page.goto("/espace-personnel.html?invite=1&lang=en");
-    await page.locator(".onb-modal button", { hasText: "Discover my first simulation" }).click();
+    await page.locator(".onb-modal button", { hasText: "Try it now" }).click();
     await expect(page.locator(".onb-bubble")).toBeVisible();
     await page.waitForTimeout(1500);
     expect(attempts, "aucune requête de comptage ne doit partir d'un navigateur automatisé").toEqual([]);
   });
+
+  // 21/10/2026 : la fenêtre de bienvenue n'a qu'un seul bouton (qui lance le tutoriel), ni croix ni sortie par Échap,
+  // et affiche trois captures réelles (dossier onboarding/) dans la langue de la page.
+  for (const lang of ["en", "fr"]) {
+    test(`fenêtre de bienvenue : un seul bouton et trois captures (${lang})`, async ({ page }) => {
+      await page.goto(`/espace-personnel.html?invite=1&lang=${lang}`);
+      const modal = page.locator(".onb-modal");
+      await expect(modal).toBeVisible();
+      await expect(modal.locator(".onb-actions button")).toHaveCount(1);
+      await expect(modal.locator(".onb-actions button")).toHaveText(lang === "en" ? "Try it now" : "Essayer maintenant");
+      await expect(modal.locator(".onb-x")).toHaveCount(0);
+      await page.keyboard.press("Escape");
+      await expect(modal).toBeVisible();
+      const shots = modal.locator("img.onb-shot");
+      await expect(shots, "une des trois captures est introuvable").toHaveCount(3);
+      for (let i = 0; i < 3; i++) {
+        await expect.poll(() => shots.nth(i).evaluate((img) => img.complete && img.naturalWidth), { timeout: 30 * 1000 }).toBeGreaterThan(0);
+      }
+      const srcs = await shots.evaluateAll((els) => els.map((e) => e.getAttribute("src")));
+      expect(srcs.every((src) => src.endsWith(`-${lang}.webp`)), "captures dans la mauvaise langue").toBe(true);
+    });
+  }
 
   test("les polices et les bibliothèques viennent du site, pas d'un tiers", async ({ page }) => {
     const outside = [];
