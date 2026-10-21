@@ -18,6 +18,9 @@
 // le lien « Quitter » (fonction quit). Les statistiques anonymes ne changent pas : « ouvert » = fenêtre affichée,
 // « démarré » = clic sur le bouton, « terminé » = dernière étape validée.
 //
+// 21/10/2026 (suite) : les trois cartes de la fenêtre de bienvenue affichent de vraies captures de l'interface
+// (instrument, simulation, résultats) au lieu de schémas dessinés, en français ou en anglais selon la langue.
+//
 // ÉTAT
 //   - Compte (user_metadata.onboarding) : "welcome" = fenêtre à montrer,
 //     "started", "skipped" ou "done". Un compte existant n'a pas cette valeur :
@@ -140,31 +143,16 @@
     ".onb-flow{display:flex;align-items:stretch;gap:10px;margin:0 0 26px}"+
     ".onb-flow .onb-arrow{flex:none;align-self:center;color:#7FA6C8;font-size:22px}"+
     ".onb-card{flex:1 1 0;min-width:0;border:1px solid rgba(120,160,200,.22);border-radius:14px;padding:16px;background:rgba(14,24,36,.72);display:flex;flex-direction:column;gap:14px}"+
-    ".onb-card .vis{height:150px;display:flex;align-items:center;gap:10px;overflow:hidden}"+
+    ".onb-card .vis{height:184px;display:flex;align-items:center;justify-content:center;overflow:hidden}"+
+    ".onb-shot{display:block;width:100%;height:auto;max-height:100%;object-fit:contain;border-radius:8px;border:1px solid rgba(120,160,200,.22)}"+
     ".onb-card .hd{display:flex;align-items:center;gap:12px}"+
     ".onb-card .num{flex:none;width:34px;height:34px;border-radius:50%;background:var(--pixel,#5FDCD0);color:#07131A;font:700 17px/34px var(--display,system-ui,sans-serif);text-align:center}"+
     ".onb-card .tt{font:600 21px/1.1 var(--display,system-ui,sans-serif);color:#fff}"+
     ".onb-card .dd{font-size:14.5px;line-height:1.5;color:#B9CCE0}"+
-    ".onb-chips{display:flex;flex-direction:column;gap:7px;width:100%}"+
-    ".onb-chip{display:flex;align-items:center;gap:9px;padding:9px 12px;border-radius:7px;background:rgba(40,60,82,.55);color:#C9D8E8;font-size:13.5px}"+
-    ".onb-chip i{width:14px;height:14px;border:1.5px solid #8FB0CF;border-radius:50%;flex:none}"+
-    ".onb-chip:nth-child(2) i{border-radius:3px}.onb-chip:nth-child(3) i{border-radius:2px 8px 2px 8px}"+
-    ".onb-form{flex:1;border-radius:8px;background:rgba(24,38,54,.9);padding:10px 12px;font-size:12px;color:#C9D8E8;display:flex;flex-direction:column;gap:6px}"+
-    ".onb-form b{font-weight:600;font-size:12px;color:#fff}"+
-    ".onb-form div{display:flex;justify-content:space-between;gap:8px;color:#9DB4CB}.onb-form div span:last-child{color:#E3EEF8;font-family:var(--mono,monospace)}"+
-    ".onb-form em{font-style:normal;margin-top:2px;text-align:center;border-radius:5px;background:var(--pixel,#5FDCD0);color:#07131A;font-weight:600;padding:5px 6px}"+
-    ".onb-map{width:34%;align-self:stretch;border-radius:8px;background:linear-gradient(135deg,#17415a 0,#285a66 38%,#5a6a4a 62%,#1b3550 100%)}"+
-    ".onb-split{flex:1;align-self:stretch;border-radius:8px;position:relative;overflow:hidden;background:linear-gradient(135deg,#1b3550,#285a66 40%,#5a6a4a 70%,#1b3550)}"+
-    ".onb-split:before{content:'';position:absolute;inset:0 50% 0 0;background:rgba(170,175,180,.55);backdrop-filter:blur(3px)}"+
-    ".onb-split:after{content:'';position:absolute;left:50%;top:0;bottom:0;width:2px;background:#fff}"+
-    ".onb-metrics{width:46%;display:flex;flex-direction:column;gap:6px;justify-content:center}"+
-    ".onb-metrics div{border-radius:6px;background:rgba(24,38,54,.9);padding:6px 9px;font-size:11px;color:#C9D8E8}"+
-    ".onb-metrics div span{display:flex;justify-content:space-between;gap:6px;margin-bottom:4px;white-space:nowrap}"+
-    ".onb-metrics div i{display:block;height:4px;border-radius:2px;background:linear-gradient(90deg,var(--pixel,#5FDCD0) var(--w),rgba(255,255,255,.12) var(--w))}"+
     ".onb-modal.rich .onb-actions{border-top:1px solid rgba(120,160,200,.2);padding-top:20px;margin-top:0}"+
     ".onb-modal.rich .onb-btn{font-size:16px;padding:14px 22px;border-radius:9px;border-color:rgba(160,200,235,.55);color:#fff}"+
     ".onb-modal.rich .onb-btn.primary{background:var(--pixel,#5FDCD0);border-color:var(--pixel,#5FDCD0);color:#07131A}"+
-    "@media (max-width:860px){.onb-flow{flex-direction:column}.onb-flow .onb-arrow{transform:rotate(90deg)}.onb-modal.rich{padding:26px 20px 20px}.onb-modal.rich h2{font-size:30px}}"+
+    "@media (max-width:860px){.onb-card .vis{height:auto}.onb-flow{flex-direction:column}.onb-flow .onb-arrow{transform:rotate(90deg)}.onb-modal.rich{padding:26px 20px 20px}.onb-modal.rich h2{font-size:30px}}"+
     "@media (max-width:640px){.onb-steps{grid-template-columns:1fr}.onb-modal{padding:22px 18px 18px}}"+
     "@media (prefers-reduced-motion:reduce){.onb-ring{transition:none}}";
   document.head.appendChild(css);
@@ -187,11 +175,16 @@
 
   // ------------------------------------------------------- fenêtres modales
   // Fenêtre simple (bienvenue, fin) : titre, texte, éventuellement une liste, boutons.
-  // Petites illustrations de la fenêtre de bienvenue (gabarit simple, aucune image à charger).
-  function welcomeVisual(i){
-    if(i === 0) return "<div class='onb-chips'><div class='onb-chip'><i></i>" + tr("onb.v.optics") + "</div><div class='onb-chip'><i></i>" + tr("onb.v.detector") + "</div><div class='onb-chip'><i></i>" + tr("onb.v.electronics") + "</div></div>";
-    if(i === 1) return "<div class='onb-form'><b>" + tr("onb.v.conditions") + "</b><div><span>" + tr("onb.v.date") + "</span><span>2025-06-12</span></div><div><span>" + tr("onb.v.sun") + "</span><span>10:24</span></div><div><span>" + tr("onb.v.angle") + "</span><span>Nadir</span></div><em>" + tr("onb.v.run") + "</em></div><div class='onb-map'></div>";
-    return "<div class='onb-split'></div><div class='onb-metrics'><div><span><b>SNR</b><b>42.8</b></span><i style='--w:72%'></i></div><div><span><b>" + tr("onb.v.res") + "</b><b>1.5 m</b></span><i style='--w:55%'></i></div><div><span><b>Full well</b><b>78k e⁻</b></span><i style='--w:34%'></i></div></div>";
+  // Captures réelles de la fenêtre de bienvenue (21/10/2026), dans la langue de la personne : instrument, simulation,
+  // résultats. Fichiers hébergés avec le site, dossier onboarding/ ; si un fichier manque, la carte reste simplement sans image.
+  var SHOTS = ["instrument", "simulation", "results"];
+  function welcomeShot(i){
+    var lg = (typeof nysaLang === "function" && nysaLang() === "fr") ? "fr" : "en";
+    var img = el("img", "onb-shot");
+    img.alt = ""; img.setAttribute("aria-hidden", "true"); img.decoding = "async";
+    img.src = "onboarding/onb-" + SHOTS[i] + "-" + lg + ".webp";
+    img.addEventListener("error", function(){ img.remove(); });
+    return img;
   }
 
   function openModal(opts){
@@ -217,7 +210,7 @@
       opts.steps.forEach(function(st, i){
         if(i) flow.appendChild(el("span", "onb-arrow", "→"));
         var card = el("div", "onb-card");
-        var vis = el("div", "vis"); vis.innerHTML = welcomeVisual(i); card.appendChild(vis);
+        var vis = el("div", "vis"); vis.appendChild(welcomeShot(i)); card.appendChild(vis);
         var hd = el("div", "hd"); hd.appendChild(el("span", "num", String(i + 1))); hd.appendChild(el("span", "tt", st.title));
         card.appendChild(hd); card.appendChild(el("div", "dd", st.desc));
         flow.appendChild(card);
