@@ -61,8 +61,8 @@ var I18N = {
   "sub.admin.desc":     { fr: "Accès complet au simulateur", en: "Full access to the simulator" },
   // ---------------- onboarding (09/10/2026) ----------------
   "onb.aria": { fr: "Tutoriel", en: "Tutorial" },
-  "onb.welcome.title": { fr: "Générez votre première image satellite simulée", en: "Generate your first simulated satellite image" },
-  "onb.welcome.text": { fr: "En quelques minutes, guidé pas à pas, avec un instrument d'exemple déjà prêt. Rien à configurer.", en: "In a few minutes, guided step by step, with a ready-made example instrument. Nothing to set up." },
+  "onb.welcome.title": { fr: "Votre première simulation en moins de 5 minutes", en: "Your first simulation in under 5 minutes" },
+  "onb.welcome.text": { fr: "Guidé pas à pas, avec un instrument d'exemple prêt à l'emploi. Rien à configurer.", en: "Guided step by step, with a ready-made example instrument. Nothing to set up." },
   "onb.welcome.s1.t": { fr: "Instrument", en: "Instrument" },
   "onb.welcome.s1.d": { fr: "Vous créez vos instruments ici. Pour commencer, un instrument d'exemple est déjà créé.", en: "You create your instruments here. To get you started, an example instrument is already created." },
   "onb.welcome.s2.t": { fr: "Simulation", en: "Simulation" },
