@@ -13,6 +13,11 @@
 // le calcul), puis la page du résultat (image, curseur de comparaison), puis un
 // message de fin.
 //
+// 21/10/2026 : la fenêtre de bienvenue n'a plus qu'un seul bouton, qui lance directement le tutoriel (plus de choix
+// « explorer d'abord », ni croix, ni touche Échap). La sortie reste possible dès la première bulle du tutoriel, avec
+// le lien « Quitter » (fonction quit). Les statistiques anonymes ne changent pas : « ouvert » = fenêtre affichée,
+// « démarré » = clic sur le bouton, « terminé » = dernière étape validée.
+//
 // ÉTAT
 //   - Compte (user_metadata.onboarding) : "welcome" = fenêtre à montrer,
 //     "started", "skipped" ou "done". Un compte existant n'a pas cette valeur :
@@ -218,9 +223,13 @@
         flow.appendChild(card);
       });
       box.appendChild(flow);
-      var x = el("button", "onb-x", "×"); x.type = "button"; x.setAttribute("aria-label", tr("onb.quit"));
-      x.addEventListener("click", function(){ close(); if(opts.onEscape) opts.onEscape(); });
-      box.appendChild(x);
+      // 21/10/2026 : la croix de fermeture n'existe que si la fenêtre peut être fermée sans choisir (ce n'est plus le cas
+      // de la fenêtre de bienvenue).
+      if(opts.onEscape){
+        var x = el("button", "onb-x", "×"); x.type = "button"; x.setAttribute("aria-label", tr("onb.quit"));
+        x.addEventListener("click", function(){ close(); opts.onEscape(); });
+        box.appendChild(x);
+      }
     } else if(opts.steps){
       var ul = el("ul", "onb-steps");
       opts.steps.forEach(function(s, i){
@@ -286,6 +295,8 @@
     welcomeOpen = true;
     var marker = el("span"); marker.id = "onbWelcomeMarker"; marker.hidden = true; document.body.appendChild(marker);
     if(typeof trackTuto === "function") trackTuto("tuto_ouvert", guest);   // 19/10/2026 : comptage anonyme
+    // 21/10/2026 : un seul bouton, qui lance directement le tutoriel. Pas d'onEscape : la fenêtre ne se ferme pas
+    // autrement (si la personne quitte la page sans cliquer, la fenêtre reviendra à la prochaine visite).
     openModal({
       title: tr("onb.welcome.title"),
       text: tr("onb.welcome.text"),
@@ -295,10 +306,8 @@
         { title: tr("onb.welcome.s3.t"), desc: tr("onb.welcome.s3.d") }
       ],
       buttons: [
-        { label: tr("onb.welcome.explore"), onClick: function(){ welcomeOpen = false; setAccountState("skipped"); } },
         { label: tr("onb.welcome.start"), primary: true, onClick: function(){ welcomeOpen = false; setAccountState("started"); start(); } }
-      ],
-      onEscape: function(){ welcomeOpen = false; setAccountState("skipped"); }
+      ]
     });
   }
 
