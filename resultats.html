@@ -716,8 +716,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                     <span id="downloadLabel">Télécharger l'image RGB</span>
                     <svg class="dlchev" id="dlChev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></button>
                   <div class="dlmenulist" id="dlMenu" role="menu" hidden>
-                    <button type="button" role="menuitem" data-mode="raw" data-when="le16" data-i18n="res.dl.mode.raw">Valeurs brutes (DN)</button>
-                    <button type="button" role="menuitem" data-mode="raw" data-when="gt16" data-i18n="res.dl.mode.raw16">Valeurs brutes (DN), remises à l'échelle sur 16 bits</button>
+                    <button type="button" role="menuitem" data-mode="raw" data-i18n="res.dl.mode.raw">Valeurs brutes (DN)</button>
                     <button type="button" role="menuitem" data-mode="tiff32" data-when="tiff" data-i18n="res.dl.mode.tiff32">TIFF 32 bits (DN exacts)</button>
                     <button type="button" role="menuitem" data-mode="wb" data-for="rgb" data-i18n="res.dl.mode.wb">Brut avec balance des blancs</button>
                     <button type="button" role="menuitem" data-mode="pct" data-for="rgb" data-i18n="res.dl.mode.pct">Percentile p2/p98 (avec balance des blancs)</button>
@@ -2668,10 +2667,11 @@ async function deleteResult(r){
     // entrées selon la profondeur de l'accumulateur (PNG remis à l'échelle au-delà de 16 bits) et la présence du TIFF
     var dnD = (result && result.diagnostics && result.diagnostics.dn) || {};
     var over16 = Number(dnD.bits_tdi || dnD.bits_adc || 0) > 16;
-    dlMenuEl.querySelectorAll("button[data-when]").forEach(function(btn){
-      var w = btn.dataset.when;
-      btn.hidden = w === "tiff" ? !tiffPath() : (w === "gt16" ? !over16 : over16);
-    });
+    // un seul bouton « brut » (data-mode="raw") : seul son libellé change au-delà de 16 bits
+    var rawBtn = dlMenuEl.querySelector("button[data-mode='raw']"), rawKey = over16 ? "res.dl.mode.raw16" : "res.dl.mode.raw";
+    rawBtn.setAttribute("data-i18n", rawKey);
+    rawBtn.textContent = t(rawKey);
+    dlMenuEl.querySelectorAll("button[data-when='tiff']").forEach(function(btn){ btn.hidden = !tiffPath(); });
     dlMenuEl.hidden = !open;
     dlBtnEl.setAttribute("aria-expanded", open ? "true" : "false");
     if(open) dlMenuEl.querySelector("button:not([hidden])").focus();
