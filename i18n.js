@@ -567,6 +567,8 @@ var I18N = {
   "res.dl.mode.wb":     { fr: "Brut avec balance des blancs", en: "Raw with white balance" },
   "res.dl.mode.pct":    { fr: "Percentile p2/p98 (avec balance des blancs)", en: "Percentile p2/p98 (with white balance)" },
   "res.dl.mode.raw":     { fr: "Valeurs brutes (DN)", en: "Raw values (DN)" },
+  "res.dl.mode.raw16":   { fr: "Valeurs brutes (DN), remises à l'échelle sur 16 bits", en: "Raw values (DN), rescaled to 16 bits" },
+  "res.dl.mode.tiff32":  { fr: "TIFF 32 bits (DN exacts)", en: "32-bit TIFF (exact DN)" },
   "res.download.rgb_dn":  { fr: "Télécharger l'image RGB ({bits} bits)", en: "Download RGB image ({bits} bits)" },
   "res.download.rgb_dn_tdi":  { fr: "Télécharger l'image RGB ({bits} bits : ADC {adc} bits × {tdi} étages TDI)", en: "Download RGB image ({bits} bits: {adc}-bit ADC × {tdi} TDI stages)" },
   "res.download.band_dn_tdi": { fr: "Télécharger la bande {band} ({bits} bits : ADC {adc} bits × {tdi} étages TDI)", en: "Download {band} band ({bits} bits: {adc}-bit ADC × {tdi} TDI stages)" },
@@ -875,8 +877,8 @@ var I18N_TEXT = {
     "Number of DN per electron. If the datasheet gives e⁻/DN, enter the inverse.",
   "Offset électronique ajouté à chaque étage, distinct du courant d'obscurité. Doit rester inférieur à 2^bits − 1.":
     "Electronic offset added at each stage, distinct from dark current. Must remain below 2^bits − 1.",
-  "Profondeur du registre qui somme les étages, 16 bits au plus. Vide : dimensionné pour ne jamais saturer, dans la limite de 16 bits. Sinon au moins égal à la résolution ADC.":
-    "Depth of the register that sums the stages, 16 bits at most. Empty: sized so that it never saturates, within the 16-bit limit. Otherwise at least equal to the ADC resolution.",
+  "Profondeur du registre qui somme les étages, 32 bits au plus. Vide : dimensionné pour ne jamais saturer, dans la limite de 32 bits. Sinon au moins égal à la résolution ADC.":
+    "Depth of the register that sums the stages, 32 bits at most. Empty: sized so that it never saturates, within the 32-bit limit. Otherwise at least equal to the ADC resolution.",
   "Écart RMS entre le front d'onde réel et le front d'onde parfait, en nanomètres. Repère : λ/14, soit environ 39 nm à 550 nm, pour une optique limitée par la diffraction.":
     "RMS deviation between the actual wavefront and the perfect one, in nanometers. Rule of thumb: λ/14, about 39 nm at 550 nm, for diffraction-limited optics.",
 
@@ -887,6 +889,7 @@ var I18N_TEXT = {
   "Valeur strictement positive attendue.": "A strictly positive value is expected.",
   "L'obscuration doit rester inférieure au diamètre de pupille.": "The obscuration must remain smaller than the pupil diameter.",
   "16 bits au plus.": "16 bits at most.",
+  "32 bits au plus.": "32 bits at most.",
   "Doit rester inférieur à 2^bits − 1.": "Must remain below 2^bits − 1.",
   "Au moins égal à la résolution ADC.": "At least equal to the ADC resolution.",
   "Valeur inhabituelle : obscuration supérieure à la moitié du diamètre.": "Unusual value: obscuration larger than half the diameter.",

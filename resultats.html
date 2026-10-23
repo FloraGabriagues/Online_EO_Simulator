@@ -716,7 +716,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
                     <span id="downloadLabel">Télécharger l'image RGB</span>
                     <svg class="dlchev" id="dlChev" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M6 9l6 6 6-6"/></svg></button>
                   <div class="dlmenulist" id="dlMenu" role="menu" hidden>
-                    <button type="button" role="menuitem" data-mode="raw" data-i18n="res.dl.mode.raw">Valeurs brutes (DN)</button>
+                    <button type="button" role="menuitem" data-mode="raw" data-when="le16" data-i18n="res.dl.mode.raw">Valeurs brutes (DN)</button>
+                    <button type="button" role="menuitem" data-mode="raw" data-when="gt16" data-i18n="res.dl.mode.raw16">Valeurs brutes (DN), remises à l'échelle sur 16 bits</button>
+                    <button type="button" role="menuitem" data-mode="tiff32" data-when="tiff" data-i18n="res.dl.mode.tiff32">TIFF 32 bits (DN exacts)</button>
                     <button type="button" role="menuitem" data-mode="wb" data-for="rgb" data-i18n="res.dl.mode.wb">Brut avec balance des blancs</button>
                     <button type="button" role="menuitem" data-mode="pct" data-for="rgb" data-i18n="res.dl.mode.pct">Percentile p2/p98 (avec balance des blancs)</button>
                     <button type="button" role="menuitem" data-mode="scaled" data-for="band" data-i18n="res.dl.mode.scaled">Mis à l'échelle sur le maximum de l'image</button>
@@ -1336,6 +1338,7 @@ async function removeResult(r){
   // la suppression du résultat. Trouvé par le test automatique, qui voyait le stockage grossir.
   if(r.source_image_path) paths.push(r.source_image_path);
   if(r.diagnostics && r.diagnostics.dn && r.diagnostics.dn.rgb_path) paths.push(r.diagnostics.dn.rgb_path);
+  if(r.diagnostics && r.diagnostics.dn && r.diagnostics.dn.tiff_path) paths.push(r.diagnostics.dn.tiff_path);
   var bands = (r.diagnostics && r.diagnostics.bands) || {};
   for(var bandName in bands){
     for(var key in bands[bandName]){
@@ -1377,8 +1380,8 @@ async function deleteResult(r){
   // ===== Export / import d'un résultat entre comptes (08/10/2026) =====
   // Un seul fichier JSON : paramètres, diagnostics et images (en base64). Les journaux de calcul
   // n'y figurent que si le compte exportateur est administrateur.
-  var FILE_RE = /^[A-Za-z0-9_.-]{1,120}\.png$/;
-  var MAX_IMPORT = 80 * 1024 * 1024;
+  var FILE_RE = /^[A-Za-z0-9_.-]{1,120}\.(png|tif)$/;
+  var MAX_IMPORT = 400 * 1024 * 1024;   // 23/10/2026 : 80 -> 400 Mo (le TIFF 32 bits est volumineux)
   function blobToB64(blob){
     return new Promise(function(res, rej){
       var fr = new FileReader();
@@ -1387,10 +1390,10 @@ async function deleteResult(r){
       fr.readAsDataURL(blob);
     });
   }
-  function b64ToBlob(b64){
+  function b64ToBlob(b64, type){
     var bin = atob(b64), arr = new Uint8Array(bin.length);
     for(var i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i);
-    return new Blob([arr], { type: "image/png" });
+    return new Blob([arr], { type: type || "image/png" });
   }
   async function exportResult(r){
     var files = {}, diag = JSON.parse(JSON.stringify(r.diagnostics || {}));
@@ -1411,6 +1414,7 @@ async function deleteResult(r){
     }
     var mainKey = await grab(r.image_path), srcKey = await grab(r.source_image_path);
     if(diag.dn && diag.dn.rgb_path) diag.dn.rgb_path = await grab(diag.dn.rgb_path);
+    if(diag.dn && diag.dn.tiff_path) diag.dn.tiff_path = await grab(diag.dn.tiff_path);
     var bands = diag.bands || {};
     for(var bn in bands) for(var k in bands[bn]){
       if(k.endsWith("_path") && bands[bn][k]) bands[bn][k] = await grab(bands[bn][k]);
@@ -1443,7 +1447,8 @@ async function deleteResult(r){
       async function put(key){
         if(!key) return null;
         if(!FILE_RE.test(key) || typeof data.files[key] !== "string") throw new Error("format");
-        var { error } = await supabaseClient.storage.from("results").upload(base + key, b64ToBlob(data.files[key]), { contentType: "image/png" });
+        var isTif = /\.tif$/.test(key), ctype = isTif ? "image/tiff" : "image/png";
+        var { error } = await supabaseClient.storage.from("results").upload(base + key, b64ToBlob(data.files[key], ctype), { contentType: ctype });
         if(error) throw error;
         sent.push(base + key);
         return base + key;
@@ -1454,6 +1459,11 @@ async function deleteResult(r){
       var diag = JSON.parse(JSON.stringify(R.diagnostics || {})), bands = diag.bands || {};
       for(var bn in bands) for(var k in bands[bn]){
         if(k.endsWith("_path")) bands[bn][k] = await put(bands[bn][k]);
+      }
+      // DN bruts : PNG 16 bits RVB et TIFF 32 bits (23/10/2026 : ils n'étaient pas réimportés)
+      if(diag.dn){
+        if(diag.dn.rgb_path) diag.dn.rgb_path = await put(diag.dn.rgb_path);
+        if(diag.dn.tiff_path) diag.dn.tiff_path = await put(diag.dn.tiff_path);
       }
       var cond = Object.assign({}, R.conditions || {}, { imported: true });
       var { error: insErr } = await supabaseClient.from("saved_results").insert({
@@ -1939,6 +1949,7 @@ async function deleteResult(r){
         if(result.image_path) paths.push(result.image_path);
         if(result.source_image_path) paths.push(result.source_image_path);
         if(result.diagnostics && result.diagnostics.dn && result.diagnostics.dn.rgb_path) paths.push(result.diagnostics.dn.rgb_path);
+        if(result.diagnostics && result.diagnostics.dn && result.diagnostics.dn.tiff_path) paths.push(result.diagnostics.dn.tiff_path);
         var bands = (result.diagnostics && result.diagnostics.bands) || {};
         for(var bn in bands) for(var k in bands[bn]) if(k.endsWith("_path") && bands[bn][k]) paths.push(bands[bn][k]);
         var failed = 0;
@@ -2462,11 +2473,11 @@ async function deleteResult(r){
   function fileSlug(s){
     return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
   }
-  var DL_NAME_SUFFIX = { raw: "_brut", scaled: "_echelle-max", wb: "_balance-blancs", pct: "_p2-p98" };
+  var DL_NAME_SUFFIX = { raw: "_brut", scaled: "_echelle-max", wb: "_balance-blancs", pct: "_p2-p98", tiff32: "_tiff32" };
   function downloadName(key, mode){
     var name = fileSlug((result && result.name) || tScene(sceneName)) || "resultat";
     var info = dnInfo(key);
-    return fileSlug(bandDisplayName(key)) + "_" + name + "_" + createdLabel + (info && mode ? "_DN" + info.bits + "bit" + (DL_NAME_SUFFIX[mode] || "_brut") : "") + ".png";
+    return fileSlug(bandDisplayName(key)) + "_" + name + "_" + createdLabel + (info && mode ? "_DN" + info.bits + "bit" + (DL_NAME_SUFFIX[mode] || "_brut") : "") + (mode === "tiff32" ? ".tif" : ".png");
   }
   var CRC_TABLE = null;
   function crc32(buf){
@@ -2654,9 +2665,16 @@ async function deleteResult(r){
     var open = dlMenuEl.hidden;
     // entrées propres au RGB (balance des blancs, percentile) ou aux bandes séparées (mise à l'échelle)
     dlMenuEl.querySelectorAll("button[data-for]").forEach(function(btn){ btn.hidden = btn.dataset.for !== (key === "RGB" ? "rgb" : "band"); });
+    // entrées selon la profondeur de l'accumulateur (PNG remis à l'échelle au-delà de 16 bits) et la présence du TIFF
+    var dnD = (result && result.diagnostics && result.diagnostics.dn) || {};
+    var over16 = Number(dnD.bits_tdi || dnD.bits_adc || 0) > 16;
+    dlMenuEl.querySelectorAll("button[data-when]").forEach(function(btn){
+      var w = btn.dataset.when;
+      btn.hidden = w === "tiff" ? !tiffPath() : (w === "gt16" ? !over16 : over16);
+    });
     dlMenuEl.hidden = !open;
     dlBtnEl.setAttribute("aria-expanded", open ? "true" : "false");
-    if(open) dlMenuEl.querySelector("button").focus();
+    if(open) dlMenuEl.querySelector("button:not([hidden])").focus();
   });
   dlMenuEl.addEventListener("click", function(e){
     var it = e.target.closest("button[data-mode]");
@@ -2666,9 +2684,78 @@ async function deleteResult(r){
   });
   document.addEventListener("click", function(e){ if(!dlMenuEl.hidden && !e.target.closest(".dlmenu")) closeDlMenu(); });
   document.addEventListener("keydown", function(e){ if(e.key === "Escape" && !dlMenuEl.hidden){ closeDlMenu(); dlBtnEl.focus(); } });
+  // ---- TIFF 32 bits (23/10/2026) ----
+  // Le serveur écrit une pile non compressée (uint32, une page par bande : Rouge, Vert, Bleu), stockée une seule fois.
+  // RGB : la pile est téléchargée telle quelle. Une bande : on en extrait la page et on réécrit un TIFF d'une seule page.
+  function tiffPath(){
+    var dn = result && result.diagnostics && result.diagnostics.dn;
+    return dn && dn.tiff_path ? dn.tiff_path : null;
+  }
+  async function extractTiffBand(blob, idx, bandName){
+    var buf = await blob.arrayBuffer(), dv = new DataView(buf);
+    var le = dv.getUint16(0) === 0x4949;
+    if(dv.getUint16(2, le) !== 42) throw new Error("TIFF non reconnu");
+    var ifd = dv.getUint32(4, le), desc = "";
+    // la description (JSON : bandes, bits, DN0) n'est écrite que dans la première page
+    var n0 = dv.getUint16(ifd, le);
+    for(var i0 = 0; i0 < n0; i0++){
+      var e0 = ifd + 2 + i0 * 12;
+      if(dv.getUint16(e0, le) === 270){
+        var c0 = dv.getUint32(e0 + 4, le), a0 = c0 <= 4 ? e0 + 8 : dv.getUint32(e0 + 8, le);
+        desc = new TextDecoder().decode(new Uint8Array(buf, a0, c0)).replace(/\0+$/, "");
+      }
+    }
+    try{ var dj = JSON.parse(desc); dj.pages = [bandName]; desc = JSON.stringify(dj); }catch(eJ){}
+    for(var p = 0; p < idx; p++){
+      var nPrev = dv.getUint16(ifd, le);
+      ifd = dv.getUint32(ifd + 2 + nPrev * 12, le);
+      if(!ifd) throw new Error("page absente");
+    }
+    var n = dv.getUint16(ifd, le), tags = {};
+    for(var i = 0; i < n; i++){
+      var e = ifd + 2 + i * 12, tag = dv.getUint16(e, le), typ = dv.getUint16(e + 2, le), cnt = dv.getUint32(e + 4, le);
+      var sz = ({1: 1, 2: 1, 3: 2, 4: 4})[typ] || 1, at = cnt * sz <= 4 ? e + 8 : dv.getUint32(e + 8, le);
+      tags[tag] = { typ: typ, cnt: cnt, at: at };
+    }
+    function vals(t){
+      var o = [];
+      for(var j = 0; j < t.cnt; j++) o.push(t.typ === 3 ? dv.getUint16(t.at + 2 * j, le) : dv.getUint32(t.at + 4 * j, le));
+      return o;
+    }
+    var w = vals(tags[256])[0], h = vals(tags[257])[0];
+    var offs = vals(tags[273]), cnts = vals(tags[279]);
+    var total = 0; for(var q = 0; q < cnts.length; q++) total += cnts[q];
+    var pix = new Uint8Array(total), pos = 0;
+    for(var s2 = 0; s2 < offs.length; s2++){ pix.set(new Uint8Array(buf, offs[s2], cnts[s2]), pos); pos += cnts[s2]; }
+    var descB = new TextEncoder().encode(desc + "\0");
+    var entries = [[256, 4, 1, w], [257, 4, 1, h], [258, 3, 1, 32], [259, 3, 1, 1], [262, 3, 1, 1], [270, 2, descB.length, null],
+                   [273, 4, 1, null], [277, 3, 1, 1], [278, 4, 1, h], [279, 4, 1, total], [339, 3, 1, 1]];
+    var ifdSize = 2 + entries.length * 12 + 4, descOff = 8 + ifdSize, pixOff = descOff + descB.length + (descB.length % 2);
+    var out = new Uint8Array(pixOff + total), od = new DataView(out.buffer);
+    od.setUint16(0, 0x4949, true); od.setUint16(2, 42, true); od.setUint32(4, 8, true);
+    od.setUint16(8, entries.length, true);
+    entries.forEach(function(en, k){
+      var a = 10 + k * 12;
+      od.setUint16(a, en[0], true); od.setUint16(a + 2, en[1], true); od.setUint32(a + 4, en[2], true);
+      var v = en[0] === 270 ? descOff : (en[0] === 273 ? pixOff : en[3]);
+      if(en[1] === 3 && en[2] === 1) od.setUint16(a + 8, v, true); else od.setUint32(a + 8, v, true);
+    });
+    od.setUint32(10 + entries.length * 12, 0, true);
+    out.set(descB, descOff); out.set(pix, pixOff);
+    return new Blob([out], { type: "image/tiff" });
+  }
+  async function downloadTiff32(key){
+    var path = tiffPath();
+    var sg = guest ? { data: { signedUrl: path } } : await supabaseClient.storage.from("results").createSignedUrl(path, 600);
+    if(sg.error || !sg.data) throw new Error("lien TIFF");
+    var tb = await (await fetch(sg.data.signedUrl)).blob();
+    if(key !== "RGB") tb = await extractTiffBand(tb, CHANNEL_IDX[key], ["Rouge", "Vert", "Bleu"][CHANNEL_IDX[key]]);
+    saveBlob(tb, downloadName(key, "tiff32"));
+  }
   async function doDownload(mode){
     var key = adj.band || "RGB";
     try{
+      if(mode === "tiff32" && tiffPath()){ await downloadTiff32(key); return; }
       var info = dnInfo(key);
       if(info){
         var sg = guest ? { data: { signedUrl: info.path } } : await supabaseClient.storage.from("results").createSignedUrl(info.path, 600);

@@ -2309,6 +2309,11 @@ async function autoSaveResultInner(){
       var { error: dnErr } = await supabaseClient.storage.from("results").upload(basePath + "dn_rgb.png", base64ToBlob(lastResult.dn_raw_png16_b64, "image/png"));
       if(!dnErr) dnDiag = Object.assign({}, lastResult.dn_info || {}, { rgb_path: basePath + "dn_rgb.png" });
     }
+    // TIFF 32 bits (DN exacts, une page par bande Rouge, Vert, Bleu), téléchargeable depuis la page Résultats
+    if(dnDiag && lastResult.dn_raw_tiff32_b64){
+      var { error: tifErr } = await supabaseClient.storage.from("results").upload(basePath + "dn_rgb32.tif", base64ToBlob(lastResult.dn_raw_tiff32_b64, "image/tiff"));
+      if(!tifErr) dnDiag.tiff_path = basePath + "dn_rgb32.tif";
+    }
 
     var { error: insErr } = await supabaseClient.from("saved_results").insert({
       id: resultId,
