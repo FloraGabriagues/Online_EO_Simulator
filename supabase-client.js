@@ -37,8 +37,52 @@
 //   (il faut alors rouvrir le lien dans la fenêtre). Rien n'est envoyé nulle part.
 // ============================================================================
 
-const SUPABASE_URL = "https://szosbxkhnsjmbrzivlsb.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_KvMrQXbFT-UtAgIFtG2GNQ_Ab5YlFvB";
+// ---------------------------------------------------------------------------
+// Environnements (24/10/2026) : prod et dev ont chacun leur base Supabase et leur
+// serveur de calcul. L'environnement est choisi d'après l'adresse du site :
+//   - nysa-imaging.com (et www) : PROD ;
+//   - toute autre adresse (site de test github.io, localhost, aperçu...) : DEV.
+// Par sécurité, une adresse inconnue tombe en DEV et jamais en PROD : un site de test
+// ne peut donc pas écrire par erreur dans la base de production.
+// Les clés ci-dessous sont des clés publiques (« publishable »), faites pour être visibles.
+// ---------------------------------------------------------------------------
+const NYSA_PROD_HOSTS = ["nysa-imaging.com", "www.nysa-imaging.com"];
+const NYSA_ENVS = {
+  prod: {
+    name: "prod",
+    supabaseUrl: "https://szosbxkhnsjmbrzivlsb.supabase.co",
+    supabaseKey: "sb_publishable_KvMrQXbFT-UtAgIFtG2GNQ_Ab5YlFvB",
+    apiUrl: "https://nssharphopper7bba2963-container-kind-mcclintock.functions.fnc.fr-par.scw.cloud"
+  },
+  dev: {
+    name: "dev",
+    supabaseUrl: "https://rirpyjdrnjvkbixanuxx.supabase.co",
+    supabaseKey: "sb_publishable_56JJf8-vsqiNh3dYgq9utA_DjMDQzil",
+    apiUrl: "https://nysadev3d82ebc4-nysa-api-dev.functions.fnc.fr-par.scw.cloud"
+  }
+};
+const NYSA_ENV = NYSA_PROD_HOSTS.indexOf(window.location.hostname) !== -1 ? NYSA_ENVS.prod : NYSA_ENVS.dev;
+
+// En dev : le site n'est pas indexé par les moteurs de recherche, et un bandeau « DEV »
+// rappelle qu'on n'est pas sur le vrai site.
+if (NYSA_ENV.name === "dev") {
+  try {
+    const robots = document.createElement("meta");
+    robots.name = "robots";
+    robots.content = "noindex, nofollow";
+    document.head.appendChild(robots);
+    document.addEventListener("DOMContentLoaded", function () {
+      const tag = document.createElement("div");
+      tag.textContent = "DEV";
+      tag.title = "Environnement de test : base et serveur de dev";
+      tag.style.cssText = "position:fixed;top:0;left:0;z-index:2147483647;padding:2px 10px;border-bottom-right-radius:8px;background:#c0392b;color:#fff;font:700 11px/1.6 monospace;letter-spacing:.08em;pointer-events:none";
+      document.body.appendChild(tag);
+    });
+  } catch (e) { /* sans gravité */ }
+}
+
+const SUPABASE_URL = NYSA_ENV.supabaseUrl;
+const SUPABASE_ANON_KEY = NYSA_ENV.supabaseKey;
 
 const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
