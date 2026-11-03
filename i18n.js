@@ -997,6 +997,9 @@ var I18N_TEXT = {
   "Pour la conception et l'analyse des systèmes d'imagerie spatiale": "For the design and analysis of space imaging systems",
   "Nysa est un simulateur d'images satellite conçu pour les ingénieurs et les équipes qui développent des systèmes d'observation de la Terre. À partir des caractéristiques de l'instrument, Nysa simule la formation de l'image en tenant compte de l'optique, du détecteur, des conditions d'acquisition et de l'atmosphère.": "Nysa is a satellite image simulator for engineers and teams developing Earth observation systems. From the instrument characteristics, Nysa simulates image formation, accounting for the optics, the detector, the acquisition conditions and the atmosphere.",
   "Explorez l'influence des paramètres instrumentaux sur la qualité de l'image, à travers la fonction de transfert de modulation (MTF), la fonction d'étalement du point (PSF) et le rapport signal sur bruit (SNR). Évaluez les compromis instrumentaux avant la réalisation du système.": "Explore how instrument parameters affect image quality through the modulation transfer function (MTF), the point spread function (PSF) and the signal-to-noise ratio (SNR). Evaluate instrument trade-offs before the system is built.",
+  "Hypothèses et sources de la simulation d'images satellite | Nysa": "Satellite Image Simulation: Assumptions and Sources | Nysa",
+  "Mentions légales et conditions d'essai | Nysa": "Legal Notice and Beta Terms | Nysa",
+  "Politique de confidentialité | Nysa": "Privacy Policy | Nysa",
   "Simulation d'images satellite et qualité optique | Nysa": "Satellite Image Simulation and Optical Quality | Nysa",
   "Mentions légales et conditions d'essai": "Legal notice and beta terms",
   "Politique de confidentialité": "Privacy policy",
@@ -1340,7 +1343,7 @@ var I18N_API_FR = {
       applyI18n(document); mountSwitch();
       // Meta description : suit la langue choisie (l'anglais reste la version indexée par défaut).
       var md = document.getElementById("metaDesc");
-      if(md && lang === "fr") md.setAttribute("content", "Simulez des images satellite réalistes à partir de votre instrument : optique, détecteur, atmosphère, acquisition. Analysez MTF, PSF et SNR avec Nysa.");
+      if(md && lang === "fr" && md.getAttribute("data-fr")) md.setAttribute("content", md.getAttribute("data-fr"));
     }
     finally { html.classList.remove("i18n-pending"); }
   }
