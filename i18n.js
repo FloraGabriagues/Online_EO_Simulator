@@ -113,8 +113,8 @@ var I18N = {
   "onb.finish.btn": { fr: "Terminer le tutoriel", en: "Finish the tutorial" },
   "settings.tour.label": { fr: "Tutoriel", en: "Tutorial" },
   "settings.tour.btn": { fr: "Revoir le tutoriel", en: "Replay the tutorial" },
-  "demo.h1":             { fr: "Simulateur d'imagerie <span class=\"cool\">multispectrale</span>",
-                           en: "<span class=\"cool\">Multispectral</span> imaging simulator" },
+  "demo.h1":             { fr: "Simulez les images produites par votre <span class=\"cool\">satellite ou instrument</span> d'observation de la Terre",
+                           en: "Simulate images acquired by your Earth observation <span class=\"cool\">satellite or imaging instrument</span>" },
 
   // ---------------- bandeau bêta (beta.js) ----------------
   "beta.chip":           { fr: "BÊTA", en: "BETA" },
@@ -991,6 +991,12 @@ var I18N_TEXT = {
   "Fichier illisible : JSON attendu.": "Unreadable file: JSON expected.",
 
   // ---- démo publique (index.html) ----
+  "Simulez les performances de votre instrument d'observation de la Terre": "Simulate the performance of your Earth observation instrument",
+  "De l'instrument optique à l'image simulée": "From optical instrument to simulated image",
+  "Analysez la qualité image : MTF, PSF et SNR": "Analyze image quality: MTF, PSF and SNR",
+  "Pour la conception et l'analyse des systèmes d'imagerie spatiale": "For the design and analysis of space imaging systems",
+  "Nysa est un simulateur d'images satellite conçu pour les ingénieurs et les équipes qui développent des systèmes d'observation de la Terre. À partir des caractéristiques de l'instrument, Nysa simule la formation de l'image en tenant compte de l'optique, du détecteur, des conditions d'acquisition et de l'atmosphère.": "Nysa is a satellite image simulator for engineers and teams developing Earth observation systems. From the instrument characteristics, Nysa simulates image formation, accounting for the optics, the detector, the acquisition conditions and the atmosphere.",
+  "Explorez l'influence des paramètres instrumentaux sur la qualité de l'image, à travers la fonction de transfert de modulation (MTF), la fonction d'étalement du point (PSF) et le rapport signal sur bruit (SNR). Évaluez les compromis instrumentaux avant la réalisation du système.": "Explore how instrument parameters affect image quality through the modulation transfer function (MTF), the point spread function (PSF) and the signal-to-noise ratio (SNR). Evaluate instrument trade-offs before the system is built.",
   "Simulation d'images satellite et qualité optique | Nysa": "Satellite Image Simulation and Optical Quality | Nysa",
   "Mentions légales et conditions d'essai": "Legal notice and beta terms",
   "Politique de confidentialité": "Privacy policy",

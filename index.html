@@ -336,6 +336,10 @@ canvas.chart{width:100%;height:272px;display:block}
 .note{font-size:12.5px;color:var(--muted);margin-top:12px;line-height:1.65}
 .note .flag{color:var(--alert)}
 
+.about{margin-top:56px;max-width:78ch}
+.about h2{font-family:var(--display);font-weight:500;font-size:19px;line-height:1.3;margin:0 0 10px;color:var(--paper)}
+.about h2:not(:first-child){margin-top:28px}
+.about p{margin:0;font-size:14.5px;line-height:1.7;color:var(--muted)}
 footer{margin-top:56px;padding-top:26px;border-top:1px solid var(--line-soft);
   display:flex;justify-content:space-between;gap:28px;flex-wrap:wrap}
 footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-height:1.75}
@@ -380,7 +384,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <span class="mark"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24.00" cy="13.70" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="32.92" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="32.92" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="24.00" cy="34.30" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="15.08" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="15.08" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="24" cy="24" r="5.3" fill="#FFB86B"/></svg></span>
       <span><span class="name">Nysa</span><span class="tag">EO Imaging Engineering</span></span>
     </a>
-    <h1 data-i18n-html="demo.h1">Simulateur d'imagerie <span class="cool">multispectrale</span></h1>
+    <h1 data-i18n-html="demo.h1">Simulez les images produites par votre <span class="cool">satellite ou instrument</span> d'observation de la Terre</h1>
     <p class="valueprop" data-tx>Optique, détecteur, acquisition : visualisez leur impact sur l'image avant de construire votre système.</p>
     <!-- retirée temporairement pour voir le rendu sans, cf. échange du 27/08
     <p class="chain">
@@ -496,6 +500,13 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
 
 </div>
 
+
+<section class="about">
+  <h2 data-tx>Simulez les performances de votre instrument d'observation de la Terre</h2>
+  <p data-tx>Nysa est un simulateur d'images satellite conçu pour les ingénieurs et les équipes qui développent des systèmes d'observation de la Terre. À partir des caractéristiques de l'instrument, Nysa simule la formation de l'image en tenant compte de l'optique, du détecteur, des conditions d'acquisition et de l'atmosphère.</p>
+  <h2 data-tx>Analysez la qualité image : MTF, PSF et SNR</h2>
+  <p data-tx>Explorez l'influence des paramètres instrumentaux sur la qualité de l'image, à travers la fonction de transfert de modulation (MTF), la fonction d'étalement du point (PSF) et le rapport signal sur bruit (SNR). Évaluez les compromis instrumentaux avant la réalisation du système.</p>
+</section>
 
 <footer>
   <p><span data-tx>Scènes : IGN, BD ORTHO® 2023, Licence Ouverte Etalab 2.0.</span> <a href="hypotheses.html" style="color:var(--muted);text-decoration:underline" data-tx>Hypothèses et sources</a></p>
