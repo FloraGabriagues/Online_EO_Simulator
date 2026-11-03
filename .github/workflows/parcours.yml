@@ -2,7 +2,7 @@
 #
 # Il se lance :
 #   - après chaque envoi sur la branche principale (le temps que le site se mette à jour) ;
-#   - chaque matin ;
+#   - chaque lundi matin ;
 #   - à la demande, depuis l'onglet « Actions » de GitHub.
 #
 # Il a besoin de deux secrets du dépôt (Settings, Secrets and variables, Actions) :
@@ -15,7 +15,7 @@ on:
   push:
     branches: [main, master]
   schedule:
-    - cron: "30 5 * * *"      # tous les jours à 5 h 30 UTC
+    - cron: "30 5 * * 1"      # tous les lundis à 5 h 30 UTC
   workflow_dispatch:
 
 # Un seul test à la fois : le compte de test n'accepte qu'une session.
