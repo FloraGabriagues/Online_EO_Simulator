@@ -991,7 +991,7 @@ var I18N_TEXT = {
   "Fichier illisible : JSON attendu.": "Unreadable file: JSON expected.",
 
   // ---- démo publique (index.html) ----
-  "Simulateur de qualité image | Nysa": "Image quality simulator | Nysa",
+  "Simulation d'images satellite et qualité optique | Nysa": "Satellite Image Simulation and Optical Quality | Nysa",
   "Mentions légales et conditions d'essai": "Legal notice and beta terms",
   "Politique de confidentialité": "Privacy policy",
   "Optique, détecteur, acquisition : visualisez leur impact sur l'image avant de construire votre système.":
@@ -1330,7 +1330,12 @@ var I18N_API_FR = {
   var done = false;
   function ready(){
     if(done) return; done = true;
-    try { applyI18n(document); mountSwitch(); }
+    try {
+      applyI18n(document); mountSwitch();
+      // Meta description : suit la langue choisie (l'anglais reste la version indexée par défaut).
+      var md = document.getElementById("metaDesc");
+      if(md && lang === "fr") md.setAttribute("content", "Simulez des images satellite réalistes à partir de votre instrument : optique, détecteur, atmosphère, acquisition. Analysez MTF, PSF et SNR avec Nysa.");
+    }
     finally { html.classList.remove("i18n-pending"); }
   }
   if(document.readyState === "loading") document.addEventListener("DOMContentLoaded", ready);
