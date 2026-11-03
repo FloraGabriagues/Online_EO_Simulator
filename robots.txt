@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+Disallow: /admin.html
+Disallow: /espace-personnel.html
+Disallow: /login.html
+Disallow: /creer-instrument.html
+Disallow: /simulations.html
+Disallow: /resultats.html
+Disallow: /email-valide.html
+
+Sitemap: https://nysa-imaging.com/sitemap.xml
