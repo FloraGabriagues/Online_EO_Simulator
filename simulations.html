@@ -787,8 +787,12 @@ document.getElementById("payBannerText").textContent = t("paywall.banner");
 document.getElementById("payBannerBtn").textContent = t("sub.subscribe");
 document.getElementById("paywallEyebrow").textContent = t("paywall.eyebrow");
 document.getElementById("panelActionBtn").textContent = t("common.next");
-// URL du conteneur Scaleway — à vérifier/ajuster si elle a changé depuis.
-var API_URL = "https://nssharphopper7bba2963-container-kind-mcclintock.functions.fnc.fr-par.scw.cloud";
+// URL du serveur de calcul (conteneur Scaleway) : elle est choisie dans supabase-client.js
+// selon l'environnement (prod, dev ou local). Sans supabase-client.js (aperçu Claude),
+// on garde l'adresse de la prod.
+var API_URL = (typeof NYSA_ENV !== "undefined" && NYSA_ENV.apiUrl)
+  ? NYSA_ENV.apiUrl
+  : "https://nssharphopper7bba2963-container-kind-mcclintock.functions.fnc.fr-par.scw.cloud";
 
 var session = null;
 var accountId = null;
