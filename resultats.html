@@ -308,6 +308,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .selbtn.danger:not(:disabled):hover{border-color:var(--alert);color:var(--alert)}
 .selbtn.danger:not(:disabled){border-color:var(--alert);color:var(--alert)}
 .selbtn:disabled{opacity:.45;cursor:not-allowed}
+.selbtn.pri:not(:disabled){border-color:var(--pixel);color:var(--pixel)}
 .selbar{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px;padding:10px 12px;border:1px solid var(--line-soft);border-radius:6px;background:var(--panel)}
 .selbar[hidden]{display:none}
 .selbar .selcount{font-family:var(--mono);font-size:12px;color:var(--muted-2);margin-right:auto}
@@ -568,6 +569,10 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       <li><a class="active" href="resultats.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 20V10M12 20V4M20 20v-7"/></svg>
         <span data-i18n="nav.results">Résultats</span></a></li>
+      <!-- 13/11/2026 : comparaison de 2 à 4 résultats -->
+      <li><a href="comparaison.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="1.5"/><path d="M12 5v14M9 10l-2 2 2 2M15 10l2 2-2 2"/></svg>
+        <span data-i18n="nav.compare">Comparaison</span></a></li>
       <!-- 07/10/2026 : visible du seul compte administrateur (révélé par menu.js) ; la page elle-même est protégée par la base -->
       <li id="navAdminItem" hidden><a href="admin.html">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6z"/><path d="M9.5 12l2 2 3.5-4"/></svg>
@@ -621,6 +626,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         <div class="selbar" id="selBar" hidden>
           <button type="button" class="selbtn" id="selAll" data-i18n="sel.all">Tout sélectionner</button>
           <span class="selcount" id="selCount"></span>
+          <button type="button" class="selbtn pri" id="selCompare" disabled>Comparer (0)</button>
           <button type="button" class="selbtn danger" id="selDelete" disabled>Supprimer (0)</button>
           <button type="button" class="selbtn" id="selCancel" data-i18n="sel.cancel">Annuler</button>
         </div>
@@ -1083,6 +1089,11 @@ function refreshSel(){
   document.getElementById("selCount").textContent = t(sel.length === 1 ? "sel.count_one" : "sel.count_many", { n: sel.length });
   var del = document.getElementById("selDelete");
   del.textContent = t("sel.delete", { n: sel.length }); del.disabled = sel.length === 0;
+  // 13/11/2026 : « Comparer » demande 2 à 4 résultats cochés
+  var cmpBtn = document.getElementById("selCompare");
+  cmpBtn.textContent = t("cmpr.btn", { n: sel.length });
+  cmpBtn.disabled = sel.length < 2 || sel.length > 4;
+  cmpBtn.title = sel.length > 4 ? t("cmpr.limit") : "";
   var all = document.getElementById("selAll");
   all.textContent = (vis.length > 0 && sel.length === vis.length) ? t("sel.none") : t("sel.all");
   all.disabled = vis.length === 0;
@@ -1097,6 +1108,12 @@ function setSelMode(on){
 }
 document.getElementById("btnSelMode").addEventListener("click", function(){ setSelMode(!selMode); });
 document.getElementById("selCancel").addEventListener("click", function(){ setSelMode(false); });
+// 13/11/2026 : ouvre la page Comparaison avec les résultats cochés (dans l'ordre de la liste)
+document.getElementById("selCompare").addEventListener("click", function(){
+  var rows = selectedRows();
+  if(rows.length < 2 || rows.length > 4) return;
+  window.location.href = "comparaison.html?ids=" + rows.map(function(el){ return encodeURIComponent(el._res.id); }).join(",");
+});
 document.getElementById("selAll").addEventListener("click", function(){
   var vis = resultRowEls.filter(function(el){ return !el.hidden; });
   var allOn = vis.length > 0 && vis.every(function(el){ return selIds[el._res.id]; });
