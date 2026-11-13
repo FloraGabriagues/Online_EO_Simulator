@@ -23,6 +23,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20viewBox%3D%220%200%2048%2048%22%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2213.70%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2232.92%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224.00%22%20cy%3D%2234.30%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2229.15%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2215.08%22%20cy%3D%2218.85%22%20r%3D%229.7%22%20fill%3D%22none%22%20stroke%3D%22%234FD1C5%22%20stroke-width%3D%223.6%22/%3E%3Ccircle%20cx%3D%2224%22%20cy%3D%2224%22%20r%3D%225.3%22%20fill%3D%22%23FFB86B%22/%3E%3C/svg%3E">
 <!-- Polices hébergées avec le site (dossier fonts/) : aucun appel à Google. -->
 <link rel="stylesheet" href="fonts/fonts.css">
+<link rel="stylesheet" href="compare-mode.css">
 <style>
 :root{
   --void:#090E13; --panel:#131E27; --panel-2:#1A2833;
@@ -385,7 +386,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
       <span class="mark"><svg viewBox="0 0 48 48" aria-hidden="true"><circle cx="24.00" cy="13.70" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="32.92" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="32.92" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="24.00" cy="34.30" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="15.08" cy="29.15" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="15.08" cy="18.85" r="9.7" fill="none" stroke="#4FD1C5" stroke-width="3.0"/><circle cx="24" cy="24" r="5.3" fill="#FFB86B"/></svg></span>
       <span><span class="name">Nysa</span><span class="tag">EO Imaging Engineering</span></span>
     </a>
-    <h1 data-i18n-html="demo.h1">Simulez les images produites par votre <span class="cool">satellite ou instrument</span> d'observation de la Terre</h1>
+    <h1 data-i18n-html="demo.h1">Simulez les images de votre <span class="cool">satellite d'observation de la Terre</span></h1>
     <p class="valueprop" data-tx>Optique, détecteur, acquisition : visualisez leur impact sur l'image avant de construire votre système.</p>
     <!-- retirée temporairement pour voir le rendu sans, cf. échange du 27/08
     <p class="chain">
@@ -398,7 +399,7 @@ footer p{margin:0;font-size:12.5px;color:var(--muted-2);max-width:62ch;line-heig
   <span data-lang-switch></span>
   <!-- 07/10/2026 : ce bouton ouvrait la saisie d'une clé d'administration ; il mène maintenant au simulateur
        complet (la page de connexion s'ouvre d'abord si la personne n'est pas connectée). -->
-  <a id="fullSimLink" href="espace-personnel.html?invite=1" data-tx>Accéder à la bêta complète</a>
+  <a id="fullSimLink" href="espace-personnel.html?invite=1" data-tx>Accéder au simulateur complet</a>
   </div>
 </header>
 
@@ -1173,7 +1174,8 @@ function refresh(){
   if(pending) cancelAnimationFrame(pending);
   pending = requestAnimationFrame(function(){
     renderSim();
-    paintLeft();
+    (window._nysaPaintLeft || paintLeft)();
+    if(window._nysaAfterRefresh) window._nysaAfterRefresh();
     pending = null;
   });
 }
@@ -1374,8 +1376,25 @@ window.RENDER_HELP_G = {
   percentile: "Étirement dépendant du contenu : écrête 4 % des pixels. À réserver au jugement de netteté, jamais du niveau."
 };
 
+// ===================== EXPOSE POUR COMPARE-MODE.JS =====================
+window._nysa = {
+  get st(){ return st; },
+  PARAMS: PARAMS,
+  PMAP: PMAP,
+  truthCv: truthCv,
+  simCv: simCv,
+  sceneCv: sceneCv,
+  tctx: tctx,
+  compareBox: compareBox,
+  setWipe: setWipe,
+  refresh: refresh,
+  get curW(){ return curW; },
+  get curH(){ return curH; }
+};
 
 })();
 </script>
+<script src="compare-mode.js"></script>
+<script src="capture.js"></script>
 </body>
 </html>
