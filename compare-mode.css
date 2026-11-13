@@ -1,0 +1,62 @@
+/* ========== Compare mode (compare-mode.js) ========== */
+
+/* Lock button in vtools */
+.cmp-lockbtn{margin-left:8px}
+.cmp-lockbtn[data-active="true"]{border-color:var(--photon);color:var(--photon)}
+
+/* Capture button (placeholder until capture.js) */
+.cmp-capturebtn{margin-left:6px;opacity:.4;cursor:default}
+.cmp-capturebtn[data-ready="true"]{opacity:1;cursor:pointer}
+.cmp-capturebtn[data-ready="true"]:hover{border-color:var(--photon);color:var(--photon)}
+
+/* Editable chips (left + right) */
+.chip.cmp-editable{cursor:pointer;border-color:var(--photon);pointer-events:auto}
+.chip.cmp-editable:hover{background:rgba(9,14,19,.92)}
+.cmp-pencil{margin-left:5px;font-size:11px;opacity:.6}
+.chip.cmp-editable:hover .cmp-pencil{opacity:1}
+.cmp-rename-input{background:transparent;border:none;border-bottom:1px solid var(--photon);
+  color:var(--paper);font-family:var(--mono);font-size:12px;letter-spacing:.1em;
+  text-transform:uppercase;width:120px;padding:0;outline:none}
+
+/* Comparison table */
+.cmp-table-wrap{margin-top:14px;margin-bottom:14px;overflow-x:auto}
+.cmp-table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px;
+  letter-spacing:.03em;color:var(--muted)}
+.cmp-table thead th{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);
+  color:var(--muted-2);font-weight:400;text-transform:uppercase;letter-spacing:.08em;font-size:11px}
+.cmp-table thead th:first-child{width:28px;padding:8px 4px}
+.cmp-table tbody td{padding:6px 10px;border-bottom:1px solid var(--line-soft)}
+.cmp-table tbody td:first-child{padding:6px 4px;text-align:center}
+.cmp-table .cmp-name{color:var(--paper);white-space:nowrap}
+.cmp-table .cmp-val-left,.cmp-table .cmp-val-right{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* Highlighted difference */
+.cmp-diff .cmp-val-left,.cmp-diff .cmp-val-right{color:var(--photon)}
+.cmp-diff .cmp-name{color:var(--photon)}
+.cmp-diff td{background:rgba(245,172,87,.06)}
+
+/* +/- toggle buttons */
+.cmp-toggle button{appearance:none;background:none;border:none;color:var(--muted-2);
+  cursor:pointer;font-size:15px;font-weight:700;padding:0;line-height:1;width:18px;text-align:center}
+.cmp-toggle button:hover{color:var(--paper)}
+
+/* Hidden row: grayed out, stays visible, sorted to bottom */
+.cmp-hidden td.cmp-name,.cmp-hidden td.cmp-val-left,.cmp-hidden td.cmp-val-right{opacity:.25}
+.cmp-hidden .cmp-toggle button{color:var(--muted-2);opacity:.5}
+.cmp-hidden .cmp-toggle button:hover{opacity:1}
+.cmp-hidden.cmp-diff td.cmp-name,.cmp-hidden.cmp-diff td.cmp-val-left,.cmp-hidden.cmp-diff td.cmp-val-right{color:var(--muted)}
+.cmp-hidden.cmp-diff td{background:transparent}
+
+/* ========== Capture panel (capture.js) ========== */
+.cap-panel{background:var(--card,rgba(9,14,19,.92));border:1px solid var(--line);
+  border-radius:6px;padding:12px 16px;margin-top:10px;margin-bottom:10px;
+  font-family:var(--mono);font-size:12px;color:var(--muted);max-width:320px}
+.cap-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.cap-row:last-child{margin-bottom:0}
+.cap-label{color:var(--muted-2);text-transform:uppercase;letter-spacing:.08em;font-size:11px;min-width:60px}
+.cap-sel{background:transparent;color:var(--paper);border:1px solid var(--line);
+  border-radius:3px;padding:3px 6px;font-family:var(--mono);font-size:12px;cursor:pointer}
+.cap-sel option{background:var(--bg,#0a0e13);color:var(--paper)}
+.cap-actions{justify-content:flex-end;gap:8px;margin-top:4px}
+.cap-go{border-color:var(--photon);color:var(--photon)}
+.cap-go:hover{background:rgba(245,172,87,.1)}
