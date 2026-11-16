@@ -111,7 +111,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .bandbar .satchk{margin:0}
 .bandbar .lvnote:empty{display:none}
 .cmppanel .cmphead{margin:0 0 6px}
-.cmppanel #bandGrp,.cmppanel #fmtGrp{margin-top:12px}
+.cmppanel #bandGrp,.cmppanel #fmtGrp,.cmppanel #dirGrp{margin-top:12px}
+.mbtn.ico{display:flex;align-items:center;justify-content:center;gap:7px}
+.mbtn.ico svg{width:15px;height:15px;flex:none}
 .cmppanel .satchk{margin:12px 0 4px}
 .pickhint{margin:0 0 10px;color:var(--muted-2);font-size:12.5px}
 
@@ -169,6 +171,10 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .comparehandle::before,.comparehandle::after{content:"";position:absolute;left:50%;margin-left:-5px;border-left:5px solid transparent;border-right:5px solid transparent}
 .comparehandle::before{top:0;border-top:7px solid #f5ac57}
 .comparehandle::after{bottom:0;border-bottom:7px solid #f5ac57}
+.comparehandle.h{top:0;bottom:auto;left:0;right:0;width:auto;height:3px;margin:-1px 0 0 0}
+.comparehandle.h::before,.comparehandle.h::after{margin:-5px 0 0 0;top:50%;bottom:auto;border-top:5px solid transparent;border-bottom:5px solid transparent}
+.comparehandle.h::before{left:0;right:auto;border-left:7px solid #f5ac57;border-right:0}
+.comparehandle.h::after{right:0;left:auto;border-right:7px solid #f5ac57;border-left:0}
 .cornerlabel{position:absolute;top:10px;z-index:5;max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   background:rgba(9,14,19,.72);font-family:var(--mono);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;
   color:var(--paper);padding:4px 9px;border-radius:3px}
@@ -176,7 +182,11 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .cornerlabel.r{right:10px}
 
 /* Mosaïque : cases ajustées au format des images, sans marge vide ; la taille est calculée en JS */
-.mosaic{display:grid;gap:4px;flex:none}
+.mosaic{display:grid;gap:4px;flex:none;position:relative}
+.swatches{display:flex;gap:10px;margin:12px 0 0}
+.sw{width:22px;height:22px;border-radius:50%;border:2px solid var(--line);padding:0;cursor:pointer}
+.sw:hover{border-color:var(--paper)}
+.sw.on{border-color:var(--pixel);box-shadow:0 0 0 2px var(--panel),0 0 0 3px var(--pixel)}
 .mcell{position:relative;background:var(--void);overflow:hidden;min-height:0}
 .mcell canvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;image-rendering:pixelated}
 
@@ -216,6 +226,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   padding:var(--padv) var(--padl);pointer-events:auto;cursor:text;overflow:hidden}
 .plab.l{left:var(--edge)}
 .plab.r{right:var(--edge)}
+.plab.b{top:auto;bottom:calc(var(--edge) + var(--cs) * 1.4 + var(--cb))}
 .plab .pn,.plab .pm{outline:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .plab .pn{font-size:var(--fs);line-height:1.15}
 .plab .pm{font-size:var(--ms);line-height:1.15;color:rgba(255,255,255,.75);margin-top:var(--gap)}
@@ -321,6 +332,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           <p class="cmpneed" id="cmpNeed" data-i18n="cmpr.need" hidden>Choisissez au moins 2 résultats.</p>
           <div class="cmpstagearea" id="cmpStage"></div>
           <div class="cmpperf" id="cmpPerf" hidden></div>
+          <p class="viewerhint" id="lvModeNote"></p>
           <p class="viewerhint" id="cmpHint" data-i18n="res.hint">Glissez sur l'image pour comparer</p>
         </div>
 
@@ -336,6 +348,10 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
             <span class="modegrp">
               <button type="button" class="mbtn" id="modeSlider" data-i18n="cmpr.mode.slider">Curseur</button>
               <button type="button" class="mbtn" id="modeMosaic" data-i18n="cmpr.mode.mosaic">Mosaïque</button>
+            </span>
+            <span class="modegrp" id="dirGrp">
+              <button type="button" class="mbtn ico" data-d="v" title="Vertical" aria-label="Vertical"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M8 2.5v11"/></svg></button>
+              <button type="button" class="mbtn ico" data-d="h" title="Horizontal" aria-label="Horizontal"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M1.5 8h13"/></svg></button>
             </span>
             <div class="abbox" id="abBox" hidden>
               <label for="selA" data-i18n="cmpr.left">Gauche</label><select id="selA"></select>
@@ -361,7 +377,12 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
           <details class="fold" id="secLevels" hidden>
             <summary class="cmphead" data-i18n="cmpr.lv.title">Contraste (toutes les images)</summary>
-            <div class="lvrow"><label for="lvMin" data-i18n="cmpr.lv.min">Min</label><input type="range" id="lvMin" min="0" max="254" step="1" value="0"><output id="lvMinV">0</output></div>
+            <span class="modegrp" id="lvModeGrp">
+              <button type="button" class="mbtn" data-lm="common">Commune</button>
+              <button type="button" class="mbtn" data-lm="image">Image</button>
+              <button type="button" class="mbtn" data-lm="mean">Moyenne</button>
+            </span>
+            <div class="lvrow" style="margin-top:12px"><label for="lvMin" data-i18n="cmpr.lv.min">Min</label><input type="range" id="lvMin" min="0" max="254" step="1" value="0"><output id="lvMinV">0</output></div>
             <div class="lvrow"><label for="lvMax" data-i18n="cmpr.lv.max">Max</label><input type="range" id="lvMax" min="1" max="255" step="1" value="255"><output id="lvMaxV">255</output></div>
             <div class="lvbtns">
               <button type="button" class="mbtn" id="lvAuto" data-i18n="cmpr.lv.auto">Auto (p2/p98 communs)</button>
@@ -371,6 +392,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           </details>
           <details class="fold" id="secOverlay" hidden>
             <summary class="cmphead" data-i18n="cmpr.ov.title">Incrustations</summary>
+            <label class="satchk"><input type="checkbox" id="ovLabels" checked> <span id="ovLabelsTxt">Noms des résultats</span></label>
             <label class="satchk"><input type="checkbox" id="ovScale" checked> <span data-i18n="cmpr.ov.scale">Échelle</span></label>
             <p class="lvnote" data-i18n="cmpr.ov.hint">Cliquez sur une étiquette dans l'image pour modifier son texte.</p>
             <div class="lvbtns"><button type="button" class="mbtn" id="ovReset" data-i18n="cmpr.ov.reset">Réinitialiser les étiquettes</button></div>
@@ -382,6 +404,13 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
               <button type="button" class="mbtn" data-tool="rect" data-i18n="cmpr.ann.rect">Rectangle</button>
               <button type="button" class="mbtn" data-tool="circle" data-i18n="cmpr.ann.circle">Cercle</button>
             </span>
+            <div class="swatches" id="annColors">
+              <button type="button" class="sw" data-c="#FF2D2D" style="background:#FF2D2D" aria-label="#FF2D2D"></button>
+              <button type="button" class="sw" data-c="#FFD93D" style="background:#FFD93D" aria-label="#FFD93D"></button>
+              <button type="button" class="sw" data-c="#5FDCD0" style="background:#5FDCD0" aria-label="#5FDCD0"></button>
+              <button type="button" class="sw" data-c="#FFFFFF" style="background:#FFFFFF" aria-label="#FFFFFF"></button>
+              <button type="button" class="sw" data-c="#111111" style="background:#111111" aria-label="#111111"></button>
+            </div>
             <label class="satchk"><input type="checkbox" id="annRep"> <span data-i18n="cmpr.ann.repeat">Répéter sur tous les résultats</span></label>
             <div class="lvbtns">
               <button type="button" class="mbtn" id="annUndo" data-i18n="cmpr.ann.undo">Annuler</button>
@@ -566,6 +595,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   }
   buildLut();
 
+  var origO = {};   // id -> pixels d'origine déjà lus (accès direct)
   var origP = {};   // id -> promesse des pixels d'origine (lus une seule fois)
   function loadOrig(x){
     if(origP[x.id]) return origP[x.id];
@@ -594,6 +624,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       };
       im.src = x.url;
     });
+    origP[x.id] = origP[x.id].then(function(o){ origO[x.id] = o; return o; });
     return origP[x.id];
   }
 
@@ -624,6 +655,58 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   function cropW(o){ return cropRect(o).w; }
   function cropH(o){ return cropRect(o).h; }
 
+  // 16/11/2026 : trois façons de régler les niveaux quand les images n'ont pas le même signal.
+  //  - common : une même fenêtre pour toutes (les écarts de signal sont conservés) ;
+  //  - image  : chaque image a sa propre fenêtre p2/p98 (on compare la structure, pas le niveau) ;
+  //  - mean   : chaque image est multipliée par un gain pour avoir la même moyenne, puis la fenêtre commune s'applique
+  //             (on compare netteté et bruit relatif, sans écrêter ni étirer chaque image).
+  var levelsMode = "common";
+  var statC = {};
+  function statsOf(id){
+    var o = origO[id];
+    if(!o || o.tainted) return null;
+    var ch = chan(), dnr = dnMode ? dnCache[id + "|" + band] : null;
+    if(dnr && (dnr.w !== o.w || dnr.h !== o.h)) dnr = null;
+    var key = id + "|" + band + "|" + (dnr ? "d" : "8") + "|" + maxDN;
+    if(statC[key]) return statC[key];
+    var nb = dnr ? maxDN + 1 : 256, hist = new Float64Array(nb), n = 0, sc = dnr ? 1 : maxDN / 255;
+    if(dnr){
+      var q = dnr.data, nc = dnr.ch, cc = nc >= 3 ? ch : 0, cnt = o.w * o.h;
+      for(var p = 0; p < cnt; p++){
+        if(cc === null){ if(nc >= 3){ hist[q[p*nc]]++; hist[q[p*nc+1]]++; hist[q[p*nc+2]]++; } else hist[q[p*nc]] += 3; }
+        else hist[q[p * nc + cc]]++;
+      }
+      n = cnt * (cc === null ? 3 : 1);
+    } else {
+      var d = o.imageData.data;
+      for(var i = 0; i < d.length; i += 4){
+        if(ch !== null) hist[d[i + ch]]++;
+        else { hist[d[i]]++; hist[d[i+1]]++; hist[d[i+2]]++; }
+      }
+      n = o.w * o.h * (ch !== null ? 1 : 3);
+    }
+    var sum = 0;
+    for(var v = 0; v < nb; v++) sum += v * hist[v];
+    function pct(pp){ var tgt = n * pp, acc = 0; for(var u = 0; u < nb; u++){ acc += hist[u]; if(acc >= tgt) return u; } return nb - 1; }
+    return (statC[key] = { mean: sum / n * sc, p2: Math.round(pct(0.02) * sc), p98: Math.round(pct(0.98) * sc) });
+  }
+  // gain de chaque image pour que toutes aient la moyenne commune (moyenne des moyennes)
+  function gainOf(id, ids){
+    var ms = [], mine = null;
+    ids.forEach(function(k){ var st = statsOf(k); if(st && st.mean > 0){ ms.push(st.mean); if(k === id) mine = st.mean; } });
+    if(!mine || ms.length < 2) return 1;
+    var M = ms.reduce(function(a, b){ return a + b; }, 0) / ms.length;
+    return M / mine;
+  }
+  function winFor(id){
+    if(levelsMode === "common") return { lo: lo, hi: hi, g: 1, custom: false };
+    var st = statsOf(id);
+    if(!st) return { lo: lo, hi: hi, g: 1, custom: false };
+    if(levelsMode === "image"){ var b = st.p98 > st.p2 ? st.p98 : st.p2 + 1; return { lo: st.p2, hi: b, g: 1, custom: true }; }
+    var ids = live.filter(function(r){ return r.o; }).map(function(r){ return r.id; });
+    return { lo: lo, hi: hi, g: gainOf(id, ids), custom: true };
+  }
+
   var live = [];   // toiles actuellement affichées : { canvas, o, id }
   function paint(rec){
     var canvas = rec.canvas, o = rec.o;
@@ -636,10 +719,15 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     if(m && (m.w !== o.w || m.h !== o.h)) m = null;
     var dnr = dnMode ? dnCache[rec.id + "|" + band] : null;
     if(dnr && (dnr.w !== o.w || dnr.h !== o.h)) dnr = null;
-    if(!dnr && ch === null && lo === 0 && hi === maxDN && full){ ctx.putImageData(o.imageData, 0, 0); return; }
+    var W = winFor(rec.id), wlo = W.lo, whi = W.hi, wg = W.g, plut = lut;
+    if(W.custom){
+      plut = new Uint8ClampedArray(256);
+      for(var lv = 0; lv < 256; lv++){ plut[lv] = Math.round((lv * maxDN / 255 * wg - wlo) / (whi - wlo) * 255); }
+    }
+    if(!dnr && ch === null && !W.custom && lo === 0 && hi === maxDN && full){ ctx.putImageData(o.imageData, 0, 0); return; }
     var out = ctx.createImageData(vw, vhh), s = o.imageData.data, d = out.data;
     var q = null, nc = 0, kk = 0, cc = 0;
-    if(dnr){ q = dnr.data; nc = dnr.ch; kk = 255 / (hi - lo); cc = nc >= 3 ? (ch === null ? -1 : ch) : 0; }
+    if(dnr){ q = dnr.data; nc = dnr.ch; kk = 255 / (whi - wlo); cc = nc >= 3 ? (ch === null ? -1 : ch) : 0; }
     var i2 = 0;
     for(var y = 0; y < vhh; y++){
       var rowP = (y + cr.y) * o.w + cr.x;
@@ -649,11 +737,11 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
           var pq = p * nc, vr, vg, vb;
           if(cc === -1){ vr = q[pq]; vg = q[pq + 1]; vb = q[pq + 2]; }
           else { vr = vg = vb = q[pq + cc]; }
-          d[i2] = (vr - lo) * kk; d[i2+1] = (vg - lo) * kk; d[i2+2] = (vb - lo) * kk; d[i2+3] = 255;   // Uint8ClampedArray : bornes 0 à 255 et arrondi
+          d[i2] = (vr * wg - wlo) * kk; d[i2+1] = (vg * wg - wlo) * kk; d[i2+2] = (vb * wg - wlo) * kk; d[i2+3] = 255;   // Uint8ClampedArray : bornes 0 à 255 et arrondi
         } else {
           var r = s[si], g = s[si+1], b = s[si+2];
           if(ch !== null){ r = g = b = s[si + ch]; }
-          d[i2] = lut[r]; d[i2+1] = lut[g]; d[i2+2] = lut[b]; d[i2+3] = s[si+3];
+          d[i2] = plut[r]; d[i2+1] = plut[g]; d[i2+2] = plut[b]; d[i2+3] = s[si+3];
         }
         if(m && m.data[si] > 127){ d[i2] = 255; d[i2+1] = 0; d[i2+2] = 255; }
       }
@@ -684,6 +772,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       if(onReady) onReady(o);
       layoutOverlays();
       updateCropUI();
+      if(levelsMode !== "common") repaintAll();
     });
     return c;
   }
@@ -694,6 +783,16 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     document.getElementById("cropBox").hidden = !need;
     document.getElementById("cropLbl").textContent = wide ? "↔" : "↕";
   }
+  function updateDirUI(){
+    document.querySelectorAll("#dirGrp .mbtn").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-d") === sliderDir); });
+  }
+  document.getElementById("dirGrp").addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest(".mbtn");
+    if(!b) return;
+    sliderDir = b.getAttribute("data-d");
+    updateDirUI();
+    renderView();
+  });
   function updateFmtUI(){
     document.querySelectorAll("#fmtGrp .mbtn").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-f") === fmtName); });
   }
@@ -787,6 +886,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       return changed;
     }
     apply(false);
+    if(levelsMode === "mean") autoLevels();
     var need = ids.filter(function(id){ return dnCache[id + "|" + bn] === undefined; });
     if(need.length){
       var items = need.map(function(id){ return { key: id + "|" + bn, p: dnPathOf(id, bn) }; });
@@ -882,7 +982,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     document.getElementById("lvMaxV").textContent = hi;
   }
   function updateLevelsUI(){
-    [lvMin, lvMax, document.getElementById("lvAuto"), document.getElementById("lvReset")].forEach(function(el){ el.disabled = !levelsOK; });
+    [lvMin, lvMax, document.getElementById("lvAuto"), document.getElementById("lvReset")].forEach(function(el){ el.disabled = !levelsOK || levelsMode === "image"; });
     var n = document.getElementById("lvNote");
     n.textContent = !levelsOK ? t("cmpr.lv.na") : (dnMode ? t("cmpr.lv.note_dn", { max: maxDN }) : (dnBits ? t("cmpr.lv.note_bits", { max: maxDN }) : t("cmpr.lv.note")));
     if(typeof updateBandUI === "function") updateBandUI();
@@ -894,6 +994,32 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   lvMin.addEventListener("input", function(){ setLevels(Math.min(+lvMin.value, hi - 1), hi); });
   lvMax.addEventListener("input", function(){ setLevels(lo, Math.max(+lvMax.value, lo + 1)); });
   document.getElementById("lvReset").addEventListener("click", function(){ setLevels(0, maxDN); });
+  // Mode de fenêtre : commune, par image, même moyenne. Le texte sous l'image rappelle ce qui est conservé.
+  function L(fr, en){ return /^en/i.test(String(nysaLocale())) ? en : fr; }
+  function updateLvModeUI(){
+    var lab = { common: L("Commune", "Common"), image: L("Image", "Per image"), mean: L("Moyenne", "Mean") };
+    var tip = { common: L("Même fenêtre pour toutes les images : les écarts de signal sont conservés", "Same window for all images: signal differences are kept"),
+                image: L("Fenêtre propre à chaque image (p2/p98) : on compare la structure, pas le niveau", "Each image has its own window (p2/p98): compares structure, not level"),
+                mean: L("Chaque image est ramenée à la même moyenne : on compare netteté et bruit relatif", "Each image is scaled to the same mean: compares sharpness and relative noise") };
+    var note = { common: L("Fenêtre de niveaux commune : les écarts de signal entre les images sont conservés.", "Common level window: signal differences between images are kept."),
+                 image: L("Niveaux normalisés par image : les écarts de signal entre les images ne sont pas conservés.", "Levels normalised per image: signal differences between images are not kept."),
+                 mean: L("Images ramenées à la même moyenne : les écarts de signal entre les images ne sont pas conservés.", "Images scaled to the same mean: signal differences between images are not kept.") };
+    document.querySelectorAll("#lvModeGrp .mbtn").forEach(function(b){
+      var k = b.getAttribute("data-lm");
+      b.textContent = lab[k]; b.title = tip[k];
+      b.classList.toggle("on", k === levelsMode);
+    });
+    document.getElementById("lvModeNote").textContent = note[levelsMode];
+    updateLevelsUI();
+  }
+  document.getElementById("lvModeGrp").addEventListener("click", async function(e){
+    var b = e.target.closest && e.target.closest(".mbtn");
+    if(!b || b.disabled) return;
+    levelsMode = b.getAttribute("data-lm");
+    updateLvModeUI();
+    if(levelsMode === "mean") await autoLevels();   // fenêtre de départ adaptée aux images mises à la même moyenne
+    repaintAll();
+  });
 
   // Mode d'affichage en cours : choix explicite de l'utilisateur ; sinon curseur pour 2 résultats, mosaïque pour 3 ou 4
   var modeUser = null;
@@ -908,38 +1034,23 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     var ids = (curMode() === "slider" && slA && slB) ? [slA, slB] : sel.slice();
     var os = await Promise.all(ids.map(function(id){ return loadOrig(byId[id]); }));
     if(os.some(function(o){ return !o || o.tainted; })) return;
-    var nb = dnMode ? maxDN + 1 : 256, ch = chan();
+    var sts = ids.map(function(id){ return statsOf(id); });
+    if(sts.some(function(st){ return !st; })) return;
     var a = Infinity, b = -Infinity;
     ids.forEach(function(id, ix){
-      var o = os[ix], dnr = dnMode ? dnCache[id + "|" + band] : null;
-      var hist = new Float64Array(nb), n = 0;
-      if(dnr && dnr.w === o.w && dnr.h === o.h){
-        var q = dnr.data, nc = dnr.ch, cc = nc >= 3 ? ch : 0, cnt = o.w * o.h;
-        for(var p = 0; p < cnt; p++){
-          if(cc === null){ if(nc >= 3){ hist[q[p*nc]]++; hist[q[p*nc+1]]++; hist[q[p*nc+2]]++; } else hist[q[p*nc]] += 3; }
-          else hist[q[p * nc + cc]]++;
-        }
-        n = cnt * (cc === null ? 3 : 1);
-      } else {
-        var d = o.imageData.data;
-        for(var i = 0; i < d.length; i += 4){
-          if(ch !== null) hist[d[i + ch]]++;
-          else { hist[d[i]]++; hist[d[i+1]]++; hist[d[i+2]]++; }
-        }
-        n = o.w * o.h * (ch !== null ? 1 : 3);
-      }
-      function pct(pp){ var tgt = n * pp, acc = 0; for(var v = 0; v < nb; v++){ acc += hist[v]; if(acc >= tgt) return v; } return nb - 1; }
-      var pa = pct(0.02), pb = pct(0.98);
-      if(!dnMode){ pa = Math.round(pa * maxDN / 255); pb = Math.round(pb * maxDN / 255); }
+      var g = levelsMode === "mean" ? gainOf(id, ids) : 1;
+      var pa = Math.round(sts[ix].p2 * g), pb = Math.round(sts[ix].p98 * g);
       if(pa < a) a = pa;
       if(pb > b) b = pb;
     });
+    a = Math.max(0, a); b = Math.min(maxDN, b);
     if(b <= a){ b = Math.min(maxDN, a + 2); if(b <= a) a = b - 1; }
     setLevels(a, b);
   }
   document.getElementById("lvAuto").addEventListener("click", autoLevels);
 
   // ===================== Zone de comparaison =====================
+  var sliderDir = "v";          // orientation du curseur : "v" (gauche / droite) ou "h" (haut / bas)
   var splitPct = 50;            // position du curseur, conservée d'un affichage à l'autre
   var stage = document.getElementById("cmpStage");
   var ro = null;                // ResizeObserver du curseur en cours
@@ -961,7 +1072,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   var annHist = [];     // pile pour « Annuler » : une entrée par tracé, avec les formes ajoutées
   var tool = null, repeatAll = false;
   var ovs = [];         // calques d'annotation affichés : { id, rec, svg, host }
-  var ANN_RED = "#FF2D2D";
+  var ANN_RED = "#FF2D2D";   // couleur par défaut
+  var annColor = ANN_RED;     // couleur des prochaines formes (chaque forme garde la sienne)
+  var ANN_COLORS = ["#FF2D2D", "#FFD93D", "#5FDCD0", "#FFFFFF", "#111111"];
   var SVGNS = "http://www.w3.org/2000/svg";
 
   function mkOverlay(canvas, host){
@@ -982,7 +1095,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       e = document.createElementNS(SVGNS, "circle");
       e.setAttribute("cx", a.x * W); e.setAttribute("cy", a.y * H); e.setAttribute("r", a.r * W);
     }
-    e.setAttribute("fill", "none"); e.setAttribute("stroke", ANN_RED); e.setAttribute("stroke-width", "3");
+    e.setAttribute("fill", "none"); e.setAttribute("stroke", a.c || ANN_RED); e.setAttribute("stroke-width", "3");
     e.setAttribute("vector-effect", "non-scaling-stroke");
     return e;
   }
@@ -1009,6 +1122,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   function updateAnnUI(){
     document.querySelectorAll("#annTools .mbtn").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-tool") === tool); });
     document.getElementById("annRep").checked = repeatAll;
+    document.querySelectorAll("#annColors .sw").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-c") === annColor); });
     document.getElementById("annUndo").disabled = !annHist.length;
     var any = Object.keys(annots).some(function(k){ return annots[k].length; });
     document.getElementById("annClear").disabled = !any;
@@ -1023,6 +1137,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       act.push({ id: rid, a: c });
     });
     annHist.push(act);
+    tool = null;   // une forme à la fois : l'outil se désélectionne et le curseur redevient actif
     redrawAnnots();
   }
   function clamp01(v){ return v < 0 ? 0 : (v > 1 ? 1 : v); }
@@ -1047,8 +1162,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       if(!drag) return;
       var p = pos(e), o = drag.ov.rec.o;
       var a = tool === "rect"
-        ? { t: "rect", x0: drag.x, y0: drag.y, x1: p.x, y1: p.y }
-        : { t: "circle", x: drag.x, y: drag.y, r: Math.hypot((p.x - drag.x) * drag.r.width, (p.y - drag.y) * drag.r.height) / drag.r.width };
+        ? { t: "rect", c: annColor, x0: drag.x, y0: drag.y, x1: p.x, y1: p.y }
+        : { t: "circle", c: annColor, x: drag.x, y: drag.y, r: Math.hypot((p.x - drag.x) * drag.r.width, (p.y - drag.y) * drag.r.height) / drag.r.width };
       drag.ann = a;
       if(drag.el && drag.el.parentNode) drag.el.parentNode.removeChild(drag.el);
       drag.el = shapeEl(a, cropW(o), cropH(o));
@@ -1076,6 +1191,12 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     tool = (tool === tl) ? null : tl;
     updateAnnUI();
   });
+  document.getElementById("annColors").addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest(".sw");
+    if(!b) return;
+    annColor = b.getAttribute("data-c");
+    updateAnnUI();
+  });
   document.getElementById("annRep").addEventListener("change", function(e){ repeatAll = e.target.checked; });
   document.getElementById("annUndo").addEventListener("click", function(){
     var act = annHist.pop();
@@ -1095,7 +1216,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   var POST = { divider: "#f5ac57", maxDim: 1000, footprintM: 200, site: "nysa-imaging.com",
                source: "IGN, BD ORTHO® 2023, Etalab Open Licence 2.0" };
   var labelsEdit = {};          // id -> { name, metrics } : textes modifiés par l'utilisateur
-  var showScale = true, showCredit = true, sourceTxt = POST.source;
+  var showScale = true, showCredit = true, showLabels = true, sourceTxt = POST.source;
+  var mosaicCredit = null;      // mosaïque : une seule source, en bas à droite de la grille
   var chromes = [];             // { host, rec, frame, labels, scale, credit }
 
   function defMetrics(id){
@@ -1143,7 +1265,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     var n = field("pn", "name"), m = field("pm", "metrics");
     return { id: id, el: box, n: n, m: m };
   }
-  function mkFrame(host, canvas, specs){
+  function mkFrame(host, canvas, specs, opts){
     var fr = document.createElement("div");
     fr.className = "pframe";
     var items = specs.map(function(s){ var l = mkLabelEl(s.id, s.side); fr.appendChild(l.el); return l; });
@@ -1154,7 +1276,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     cr.className = "pcredit";
     fr.appendChild(sc); fr.appendChild(cr);
     host.appendChild(fr);
-    chromes.push({ host: host, rec: canvas._rec, frame: fr, labels: items, scale: sc, credit: cr });
+    chromes.push({ host: host, rec: canvas._rec, frame: fr, labels: items, scale: sc, credit: cr, noCredit: !!(opts && opts.noCredit) });
   }
   function refreshLabels(){
     chromes.forEach(function(ch){
@@ -1192,11 +1314,20 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         ch.scale.querySelector(".slab").style.width = barW.toFixed(1) + "px";
         ch.scale.querySelector(".sbar").style.width = barW.toFixed(1) + "px";
       }
-      ch.credit.hidden = !showCredit;
+      ch.labels.forEach(function(l){ l.el.hidden = !showLabels; });
+      ch.credit.hidden = ch.noCredit || !showCredit;
       ch.credit.textContent = (sourceTxt ? sourceTxt + " · " : "") + POST.site;
     });
+    if(mosaicCredit && chromes.length){
+      var f0 = chromes[0].frame.style;
+      ["--edge", "--cb", "--cs", "--sh"].forEach(function(p){ mosaicCredit.style.setProperty(p, f0.getPropertyValue(p)); });
+      mosaicCredit.hidden = !showCredit;
+      mosaicCredit.textContent = (sourceTxt ? sourceTxt + " · " : "") + POST.site;
+    }
     refreshLabels();
   }
+  document.getElementById("ovLabelsTxt").textContent = /^en/i.test(String(nysaLocale())) ? "Result names" : "Noms des résultats";
+  document.getElementById("ovLabels").addEventListener("change", function(e){ showLabels = e.target.checked; layoutChromes(); });
   document.getElementById("ovScale").addEventListener("change", function(e){ showScale = e.target.checked; layoutChromes(); });
   document.getElementById("ovReset").addEventListener("click", function(){
     labelsEdit = {};
@@ -1210,7 +1341,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     var wrap = document.createElement("div");
     wrap.className = "comparewrap";
     wrap.tabIndex = 0;
-    var ar = 1.5;
+    var ar = 1.5, H = sliderDir === "h";
+    if(H) wrap.style.cursor = "ns-resize";
     // Le cadre prend le format de l'image de gauche et le plus grand possible dans la zone disponible
     function fit(){
       var cw = stage.clientWidth, ch = stage.clientHeight;
@@ -1227,14 +1359,15 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     layerA.appendChild(imA); var ovA = mkOverlay(imA, box); layerA.appendChild(ovA.svg);
     layerB.appendChild(imB); var ovB = mkOverlay(imB, box); layerB.appendChild(ovB.svg);
     var handle = document.createElement("div");
-    handle.className = "comparehandle";
+    handle.className = "comparehandle" + (H ? " h" : "");
     wrap.appendChild(layerA); wrap.appendChild(layerB);
     wrap.appendChild(handle);
     box.appendChild(wrap);
-    mkFrame(box, imA, [{ id: a.id, side: "l" }, { id: b.id, side: "r" }]);
+    mkFrame(box, imA, [{ id: a.id, side: "l" }, { id: b.id, side: H ? "r b" : "r" }]);
     mkHit(box, function(e, hit){
       var r = hit.getBoundingClientRect();
-      return ((e.clientX - r.left) / r.width * 100 < splitPct) ? ovA : ovB;
+      var along = H ? (e.clientY - r.top) / r.height : (e.clientX - r.left) / r.width;
+      return (along * 100 < splitPct) ? ovA : ovB;
     });
     stage.appendChild(box);
 
@@ -1242,8 +1375,13 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     var raf = 0, dragging = false, dragRect = null;
     function apply(){
       raf = 0;
-      handle.style.transform = "translateX(" + (splitPct / 100 * wrap.clientWidth) + "px)";
-      layerB.style.clipPath = "inset(0 0 0 " + splitPct + "%)";
+      if(H){
+        handle.style.transform = "translateY(" + (splitPct / 100 * wrap.clientHeight) + "px)";
+        layerB.style.clipPath = "inset(" + splitPct + "% 0 0 0)";
+      } else {
+        handle.style.transform = "translateX(" + (splitPct / 100 * wrap.clientWidth) + "px)";
+        layerB.style.clipPath = "inset(0 0 0 " + splitPct + "%)";
+      }
     }
     function setSplit(p){
       splitPct = Math.max(0, Math.min(100, p));
@@ -1251,7 +1389,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     }
     function fromEvent(e){
       var rect = dragRect || wrap.getBoundingClientRect();
-      if(rect.width) setSplit(((e.clientX - rect.left) / rect.width) * 100);
+      if(H){ if(rect.height) setSplit(((e.clientY - rect.top) / rect.height) * 100); }
+      else if(rect.width) setSplit(((e.clientX - rect.left) / rect.width) * 100);
     }
     fit();
     setSplit(splitPct);
@@ -1273,8 +1412,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       });
     });
     wrap.addEventListener("keydown", function(e){
-      if(e.key === "ArrowLeft"){ setSplit(splitPct - 2); e.preventDefault(); }
-      if(e.key === "ArrowRight"){ setSplit(splitPct + 2); e.preventDefault(); }
+      var prev = H ? "ArrowUp" : "ArrowLeft", next = H ? "ArrowDown" : "ArrowRight";
+      if(e.key === prev){ setSplit(splitPct - 2); e.preventDefault(); }
+      if(e.key === next){ setSplit(splitPct + 2); e.preventDefault(); }
     });
   }
 
@@ -1291,10 +1431,15 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       cell.appendChild(cv);
       var ov = mkOverlay(cv, cell);
       cell.appendChild(ov.svg);
-      mkFrame(cell, cv, [{ id: id, side: "l" }]);
+      mkFrame(cell, cv, [{ id: id, side: "l" }], { noCredit: true });
       mkHit(cell, function(){ return ov; });
       grid.appendChild(cell);
     });
+    var gc = document.createElement("div");
+    gc.className = "pcredit";
+    gc.style.zIndex = "7"; gc.style.pointerEvents = "none"; gc.style.fontFamily = "'IBM Plex Sans', system-ui, sans-serif"; gc.style.fontWeight = "500";
+    grid.appendChild(gc);
+    mosaicCredit = gc;
     stage.appendChild(grid);
     function layout(){
       var cw = stage.clientWidth, ch = stage.clientHeight, n = ids.length;
@@ -1369,9 +1514,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     if(!list || !list.length) return;
     var r = imgRect(cv, geo);
     ctx.save();
-    ctx.strokeStyle = ANN_RED;
     ctx.lineWidth = Math.max(3, Math.round(geo.imgH * 0.004));
     list.forEach(function(a){
+      ctx.strokeStyle = a.c || ANN_RED;
       if(a.t === "rect"){
         ctx.strokeRect(r.x + Math.min(a.x0, a.x1) * r.w, r.y + Math.min(a.y0, a.y1) * r.h, Math.abs(a.x1 - a.x0) * r.w, Math.abs(a.y1 - a.y0) * r.h);
       } else {
@@ -1383,7 +1528,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     ctx.restore();
   }
   // Étiquette : pastille sombre, nom en blanc, métriques en dessous (même dessin que capture.js)
-  function drawPill(ctx, x, y, name, metrics, fSize, mSize, align){
+  function drawPill(ctx, x, y, name, metrics, fSize, mSize, align, anchorBottom){
     if(!name && !metrics) return;
     var padL = 11, padV = 8, rad = 5;
     ctx.font = "500 " + fSize + "px " + EXP.font;
@@ -1393,6 +1538,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     var boxW = Math.max(nameW, metW) + padL * 2;
     var boxH = (name ? fSize : 0) + (metrics ? mSize + (name ? 5 : 0) : 0) + padV * 2;
     var boxX = (align === "right") ? x - boxW : x;
+    if(anchorBottom) y = y - boxH;
     ctx.fillStyle = "rgba(0,0,0,0.6)";
     roundRect(ctx, boxX, y, boxW, boxH, rad);
     ctx.fill();
@@ -1454,26 +1600,36 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
   function mkSweepComposer(items, geo){
     var cvf = newFrameCanvas(geo), ctx = cvf.getContext("2d");
-    var A = items[0], B = items[1], sz = labelSizes(geo);
+    var A = items[0], B = items[1], sz = labelSizes(geo), H = sliderDir === "h";
     var la = { n: effName(A.id), m: effMetrics(A.id) }, lb = { n: effName(B.id), m: effMetrics(B.id) };
+    // 16/11/2026 : curseur horizontal : A en haut, B en bas ; l'étiquette de B se place en bas à droite, au-dessus de la source
+    var bBottom = geo.imgH - sz.edge - (showCredit ? Math.round(Math.max(12, Math.round(geo.imgH * 0.022)) * 1.4) + 10 : 0);
     return function(pct){
       fillBg(ctx, geo);
-      var divX = Math.round(geo.imgW * pct / 100);
+      var div = Math.round((H ? geo.imgH : geo.imgW) * pct / 100), tri = 5;
       drawImg(ctx, A.cv, geo);
-      ctx.save(); ctx.beginPath(); ctx.rect(0, 0, divX, geo.imgH); ctx.clip(); drawShapes(ctx, A.id, A.cv, geo); ctx.restore();
-      if(divX < geo.imgW){
-        ctx.save(); ctx.beginPath(); ctx.rect(divX, 0, geo.imgW - divX, geo.imgH); ctx.clip();
+      ctx.save(); ctx.beginPath(); if(H) ctx.rect(0, 0, geo.imgW, div); else ctx.rect(0, 0, div, geo.imgH); ctx.clip(); drawShapes(ctx, A.id, A.cv, geo); ctx.restore();
+      if(div < (H ? geo.imgH : geo.imgW)){
+        ctx.save(); ctx.beginPath(); if(H) ctx.rect(0, div, geo.imgW, geo.imgH - div); else ctx.rect(div, 0, geo.imgW - div, geo.imgH); ctx.clip();
         drawImg(ctx, B.cv, geo); drawShapes(ctx, B.id, B.cv, geo);
         ctx.restore();
       }
       // trait doré, bords nets sur la grille de pixels, petits triangles dans l'image
       ctx.fillStyle = POST.divider;
-      ctx.fillRect(divX - 1, 0, 3, geo.imgH);
-      var tri = 5;
-      ctx.beginPath(); ctx.moveTo(divX - tri, 0); ctx.lineTo(divX + tri, 0); ctx.lineTo(divX, tri + 2); ctx.closePath(); ctx.fill();
-      ctx.beginPath(); ctx.moveTo(divX - tri, geo.imgH); ctx.lineTo(divX + tri, geo.imgH); ctx.lineTo(divX, geo.imgH - tri - 2); ctx.closePath(); ctx.fill();
-      drawPill(ctx, sz.edge, sz.edge, la.n, la.m, sz.f, sz.m, "left");
-      drawPill(ctx, geo.imgW - sz.edge, sz.edge, lb.n, lb.m, sz.f, sz.m, "right");
+      if(H){
+        ctx.fillRect(0, div - 1, geo.imgW, 3);
+        ctx.beginPath(); ctx.moveTo(0, div - tri); ctx.lineTo(0, div + tri); ctx.lineTo(tri + 2, div); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(geo.imgW, div - tri); ctx.lineTo(geo.imgW, div + tri); ctx.lineTo(geo.imgW - tri - 2, div); ctx.closePath(); ctx.fill();
+      } else {
+        ctx.fillRect(div - 1, 0, 3, geo.imgH);
+        ctx.beginPath(); ctx.moveTo(div - tri, 0); ctx.lineTo(div + tri, 0); ctx.lineTo(div, tri + 2); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(div - tri, geo.imgH); ctx.lineTo(div + tri, geo.imgH); ctx.lineTo(div, geo.imgH - tri - 2); ctx.closePath(); ctx.fill();
+      }
+      if(showLabels){
+        drawPill(ctx, sz.edge, sz.edge, la.n, la.m, sz.f, sz.m, "left");
+        if(H) drawPill(ctx, geo.imgW - sz.edge, bBottom, lb.n, lb.m, sz.f, sz.m, "right", true);
+        else drawPill(ctx, geo.imgW - sz.edge, sz.edge, lb.n, lb.m, sz.f, sz.m, "right");
+      }
       drawChrome(ctx, geo);
       return cvf;
     };
@@ -1486,7 +1642,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       fillBg(cx, geo);
       drawImg(cx, it.cv, geo);
       drawShapes(cx, it.id, it.cv, geo);
-      drawPill(cx, sz.edge, sz.edge, effName(it.id), effMetrics(it.id), sz.f, sz.m, "left");
+      if(showLabels) drawPill(cx, sz.edge, sz.edge, effName(it.id), effMetrics(it.id), sz.f, sz.m, "left");
       return c;
     });
     var out = newFrameCanvas(geo), octx = out.getContext("2d"), n = layers.length, seg = EXP.hold + EXP.fade;
@@ -1670,6 +1826,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     live = [];
     ovs = [];
     chromes = [];
+    mosaicCredit = null;
     need.hidden = ok;
     document.getElementById("viewTabs").hidden = !ok;
     document.getElementById("tabImg").classList.toggle("on", view === "img");
@@ -1681,6 +1838,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     document.getElementById("secOverlay").hidden = !ok || isPerf;
     document.getElementById("secExport").hidden = !ok || isPerf;
     document.getElementById("secLevels").hidden = !ok || isPerf;
+    document.getElementById("lvModeNote").hidden = !ok || isPerf;
     if(!ok){ hint.hidden = true; return; }
     if(isPerf){ hint.hidden = true; renderPerf(); return; }
 
@@ -1688,6 +1846,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     document.getElementById("modeSlider").classList.toggle("on", mode === "slider");
     document.getElementById("modeMosaic").classList.toggle("on", mode === "mosaic");
     hint.hidden = (mode !== "slider");
+    document.getElementById("dirGrp").hidden = (mode !== "slider");
 
     // Les 2 résultats du curseur : toujours parmi les résultats choisis, et différents
     if(sel.indexOf(slA) < 0) slA = sel[0];
@@ -1932,6 +2091,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   });
 
   updateFmtUI();
+  updateDirUI();
+  updateLvModeUI();
   syncLevelsUI();
   updateBandUI();
   updateAnnUI();
