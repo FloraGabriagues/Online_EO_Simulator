@@ -331,14 +331,14 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         </div>
 
         <aside class="cmppanel">
-          <details class="fold" id="secPick" open>
-            <summary class="cmphead" data-i18n="cmpr.pick_title">Résultats disponibles</summary>
+          <section>
+            <p class="cmphead" data-i18n="cmpr.pick_title">Résultats disponibles</p>
             <p class="pickhint" data-i18n="cmpr.pick_hint">Choisissez 2 à 4 résultats.</p>
             <div class="picklist" id="cmpPick"></div>
-          </details>
+          </section>
 
-          <details class="fold" id="secDisplay" hidden>
-            <summary class="cmphead" data-i18n="cmpr.panel.display">Affichage</summary>
+          <section id="secDisplay" hidden>
+            <p class="cmphead" data-i18n="cmpr.panel.display">Affichage</p>
             <span class="modegrp">
               <button type="button" class="mbtn" id="modeSlider" data-i18n="cmpr.mode.slider">Curseur</button>
               <button type="button" class="mbtn" id="modeMosaic" data-i18n="cmpr.mode.mosaic">Mosaïque</button>
@@ -347,10 +347,10 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
               <label for="selA" data-i18n="cmpr.left">Gauche</label><select id="selA"></select>
               <label for="selB" data-i18n="cmpr.right">Droite</label><select id="selB"></select>
             </div>
-          </details>
+          </section>
 
-          <details class="fold" id="secLevels" hidden>
-            <summary class="cmphead" data-i18n="cmpr.lv.title">Contraste (toutes les images)</summary>
+          <section id="secLevels" hidden>
+            <p class="cmphead" data-i18n="cmpr.lv.title">Contraste (toutes les images)</p>
             <div class="lvrow"><label for="lvMin" data-i18n="cmpr.lv.min">Min</label><input type="range" id="lvMin" min="0" max="254" step="1" value="0"><output id="lvMinV">0</output></div>
             <div class="lvrow"><label for="lvMax" data-i18n="cmpr.lv.max">Max</label><input type="range" id="lvMax" min="1" max="255" step="1" value="255"><output id="lvMaxV">255</output></div>
             <div class="lvbtns">
@@ -358,7 +358,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
               <button type="button" class="mbtn" id="lvReset" data-i18n="cmpr.lv.reset">Réinitialiser</button>
             </div>
             <p class="lvnote" id="lvNote" data-i18n="cmpr.lv.note">Même fenêtre pour toutes les images.</p>
-          </details>
+          </section>
           <details class="fold" id="secOverlay" hidden>
             <summary class="cmphead" data-i18n="cmpr.ov.title">Incrustations</summary>
             <label class="satchk"><input type="checkbox" id="ovScale" checked> <span data-i18n="cmpr.ov.scale">Échelle</span></label>
@@ -737,7 +737,6 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       maxDN = newMax; dnMode = mode; dnBits = bits || null;
       if(changed){ lo = 0; hi = maxDN; }
       buildLut(); syncLevelsUI(); updateLevelsUI(); repaintAll();
-      return changed;
     }
     apply(false);
     var need = ids.filter(function(id){ return dnCache[id + "|" + bn] === undefined; });
@@ -767,9 +766,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       var d = dnCache[id + "|" + bn], o = os[i];
       return d && o && !o.tainted && d.w === o.w && d.h === o.h;
     });
-    // Les DN bruts sont souvent bien en dessous de 2^bits : à l'arrivée des DN, la fenêtre démarre sur les percentiles
-    // communs (p2/p98) pour que les images soient lisibles ; 0 à max reste réglable à la main (Réinitialiser).
-    if(ok && apply(true)) await autoLevels();
+    if(ok) apply(true);
   }
 
   var satTok = 0;
@@ -857,7 +854,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   // tous les résultats choisis dans la mosaïque). Pour chaque image on prend ses propres percentiles 2 et 98,
   // puis la fenêtre va du plus petit p2 au plus grand p98 : aucune image n'est écrêtée, et la même fenêtre
   // reste appliquée à toutes, donc l'écart de luminosité entre les images est conservé.
-  async function autoLevels(){
+  document.getElementById("lvAuto").addEventListener("click", async function(){
     var ids = (curMode() === "slider" && slA && slB) ? [slA, slB] : sel.slice();
     var os = await Promise.all(ids.map(function(id){ return loadOrig(byId[id]); }));
     if(os.some(function(o){ return !o || o.tainted; })) return;
@@ -889,8 +886,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     });
     if(b <= a){ b = Math.min(maxDN, a + 2); if(b <= a) a = b - 1; }
     setLevels(a, b);
-  }
-  document.getElementById("lvAuto").addEventListener("click", autoLevels);
+  });
 
   // ===================== Zone de comparaison =====================
   var splitPct = 50;            // position du curseur, conservée d'un affichage à l'autre
@@ -1874,15 +1870,6 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     var v = e.target.value;
     if(v === slA) slA = slB;
     slB = v; renderView();
-  });
-
-  // Panneau en accordéon : une seule section ouverte à la fois
-  var folds = Array.prototype.slice.call(document.querySelectorAll("#cmpBody .cmppanel details.fold"));
-  folds.forEach(function(d){
-    d.addEventListener("toggle", function(){
-      if(!d.open) return;
-      folds.forEach(function(o){ if(o !== d) o.open = false; });
-    });
   });
 
   syncLevelsUI();
