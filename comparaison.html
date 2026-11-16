@@ -111,7 +111,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .bandbar .satchk{margin:0}
 .bandbar .lvnote:empty{display:none}
 .cmppanel .cmphead{margin:0 0 6px}
-.cmppanel #bandGrp{margin-top:12px}
+.cmppanel #bandGrp,.cmppanel #fmtGrp{margin-top:12px}
 .cmppanel .satchk{margin:12px 0 4px}
 .pickhint{margin:0 0 10px;color:var(--muted-2);font-size:12.5px}
 
@@ -349,8 +349,13 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
             </span>
             <label class="satchk off" id="satLbl"><input type="checkbox" id="satChk" disabled> <span data-i18n="cmpr.sat.chk">Pixels saturés en magenta</span></label>
             <p class="lvnote" id="satNote"></p>
+            <span class="modegrp" id="fmtGrp">
+              <button type="button" class="mbtn" data-f="16:9">16:9</button>
+              <button type="button" class="mbtn" data-f="1:1">1:1</button>
+              <button type="button" class="mbtn" data-f="4:5">4:5</button>
+            </span>
             <div class="abbox" id="cropBox" hidden>
-              <label for="cropY" title="16:9">16:9 ↕</label><input type="range" id="cropY" min="0" max="100" step="1" value="50" aria-label="16:9">
+              <label for="cropY" id="cropLbl">&#8597;</label><input type="range" id="cropY" min="0" max="100" step="1" value="50" aria-label="Cadrage">
             </div>
           </details>
 
@@ -603,46 +608,55 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   var masks = {};   // "id|bande" -> { w, h, data } ou false (absent / illisible)
   var dnCache = {}; // "id|bande" -> { w, h, ch, data: Uint16Array } ou false (DN bruts absents / illisibles)
 
-  // 16/11/2026 : cadrage 16:9 pour les supports de communication. Une image plus haute que 16:9 est rognée à la bande
-  // de 16:9 dont la hauteur est réglée par cropPos (0 = haut, 0,5 = centre, 1 = bas). Rognage pur : aucune
-  // interpolation, les pixels gardés sont ceux de l'image. Écran, annotations et vidéo exportée partagent ce cadrage.
-  var cropPos = 0.5;
-  function cropH(o){ var c = Math.round(o.w * 9 / 16); return c < o.h ? c : o.h; }
-  function cropY0(o){ return Math.round((o.h - cropH(o)) * cropPos); }
+  // 16/11/2026 : cadrage pour les supports de communication (16:9, 1:1 ou 4:5). L'image est rognée au format choisi ;
+  // cropPos (0 à 1) règle la zone gardée sur l'axe libre : de haut en bas si l'image est plus haute que le format,
+  // de gauche à droite si elle est plus large. Rognage pur : aucune interpolation, ce sont les pixels de l'image.
+  // Écran, annotations et vidéo exportée partagent ce cadrage.
+  var FORMATS = { "16:9": 16 / 9, "1:1": 1, "4:5": 4 / 5 };
+  var fmtName = "16:9", cropPos = 0.5;
+  function cropRect(o){
+    var a = FORMATS[fmtName], r = o.w / o.h;
+    if(Math.abs(r - a) < 0.002) return { x: 0, y: 0, w: o.w, h: o.h };
+    if(r > a){ var cw = Math.min(o.w, Math.round(o.h * a)); return { x: Math.round((o.w - cw) * cropPos), y: 0, w: cw, h: o.h }; }
+    var chh = Math.min(o.h, Math.round(o.w / a));
+    return { x: 0, y: Math.round((o.h - chh) * cropPos), w: o.w, h: chh };
+  }
+  function cropW(o){ return cropRect(o).w; }
+  function cropH(o){ return cropRect(o).h; }
 
   var live = [];   // toiles actuellement affichées : { canvas, o, id }
   function paint(rec){
     var canvas = rec.canvas, o = rec.o;
     var ctx = canvas.getContext("2d");
-    var vhh = cropH(o), y0 = cropY0(o), base = y0 * o.w;
-    if(canvas.width !== o.w || canvas.height !== vhh){ canvas.width = o.w; canvas.height = vhh; }
-    if(o.tainted){ ctx.drawImage(o.img, 0, y0, o.w, vhh, 0, 0, o.w, vhh); return; }
+    var cr = cropRect(o), vw = cr.w, vhh = cr.h, full = (vw === o.w && vhh === o.h);
+    if(canvas.width !== vw || canvas.height !== vhh){ canvas.width = vw; canvas.height = vhh; }
+    if(o.tainted){ ctx.drawImage(o.img, cr.x, cr.y, vw, vhh, 0, 0, vw, vhh); return; }
     var ch = chan();
     var m = (showSat && ch !== null) ? masks[rec.id + "|" + band] : null;
     if(m && (m.w !== o.w || m.h !== o.h)) m = null;
     var dnr = dnMode ? dnCache[rec.id + "|" + band] : null;
     if(dnr && (dnr.w !== o.w || dnr.h !== o.h)) dnr = null;
-    if(!dnr && ch === null && lo === 0 && hi === maxDN && vhh === o.h){ ctx.putImageData(o.imageData, 0, 0); return; }
-    var out = ctx.createImageData(o.w, vhh), s = o.imageData.data, d = out.data;
-    if(dnr){
-      var q = dnr.data, nc = dnr.ch, kk = 255 / (hi - lo), n = o.w * vhh, cc = nc >= 3 ? (ch === null ? -1 : ch) : 0;
-      for(var p = 0, i2 = 0; p < n; p++, i2 += 4){
-        var pq = (p + base) * nc, vr, vg, vb;
-        if(cc === -1){ vr = q[pq]; vg = q[pq + 1]; vb = q[pq + 2]; }
-        else { vr = vg = vb = q[pq + cc]; }
-        var rr = (vr - lo) * kk, gg = (vg - lo) * kk, bb = (vb - lo) * kk;
-        d[i2] = rr; d[i2+1] = gg; d[i2+2] = bb; d[i2+3] = 255;   // Uint8ClampedArray : bornes 0 à 255 et arrondi
-        if(m && m.data[(p + base) * 4] > 127){ d[i2] = 255; d[i2+1] = 0; d[i2+2] = 255; }
+    if(!dnr && ch === null && lo === 0 && hi === maxDN && full){ ctx.putImageData(o.imageData, 0, 0); return; }
+    var out = ctx.createImageData(vw, vhh), s = o.imageData.data, d = out.data;
+    var q = null, nc = 0, kk = 0, cc = 0;
+    if(dnr){ q = dnr.data; nc = dnr.ch; kk = 255 / (hi - lo); cc = nc >= 3 ? (ch === null ? -1 : ch) : 0; }
+    var i2 = 0;
+    for(var y = 0; y < vhh; y++){
+      var rowP = (y + cr.y) * o.w + cr.x;
+      for(var x = 0; x < vw; x++, i2 += 4){
+        var p = rowP + x, si = p * 4;
+        if(dnr){
+          var pq = p * nc, vr, vg, vb;
+          if(cc === -1){ vr = q[pq]; vg = q[pq + 1]; vb = q[pq + 2]; }
+          else { vr = vg = vb = q[pq + cc]; }
+          d[i2] = (vr - lo) * kk; d[i2+1] = (vg - lo) * kk; d[i2+2] = (vb - lo) * kk; d[i2+3] = 255;   // Uint8ClampedArray : bornes 0 à 255 et arrondi
+        } else {
+          var r = s[si], g = s[si+1], b = s[si+2];
+          if(ch !== null){ r = g = b = s[si + ch]; }
+          d[i2] = lut[r]; d[i2+1] = lut[g]; d[i2+2] = lut[b]; d[i2+3] = s[si+3];
+        }
+        if(m && m.data[si] > 127){ d[i2] = 255; d[i2+1] = 0; d[i2+2] = 255; }
       }
-      ctx.putImageData(out, 0, 0);
-      return;
-    }
-    var b4 = base * 4;
-    for(var i = 0; i < d.length; i += 4){
-      var si = i + b4, r = s[si], g = s[si+1], b = s[si+2];
-      if(ch !== null){ r = g = b = s[si + ch]; }
-      d[i] = lut[r]; d[i+1] = lut[g]; d[i+2] = lut[b]; d[i+3] = s[si+3];
-      if(m && m.data[si] > 127){ d[i] = 255; d[i+1] = 0; d[i+2] = 255; }
     }
     ctx.putImageData(out, 0, 0);
   }
@@ -673,11 +687,23 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     });
     return c;
   }
-  // Le réglage de hauteur du cadrage 16:9 n'apparaît que si une image affichée est rognée
+  // Le réglage de position du cadrage n'apparaît que si une image affichée est rognée ; la flèche indique l'axe libre
   function updateCropUI(){
-    var need = live.some(function(r){ return r.o && cropH(r.o) < r.o.h; });
+    var need = live.some(function(r){ var c = r.o && cropRect(r.o); return c && (c.w < r.o.w || c.h < r.o.h); });
+    var wide = live.some(function(r){ return r.o && cropW(r.o) < r.o.w; });
     document.getElementById("cropBox").hidden = !need;
+    document.getElementById("cropLbl").textContent = wide ? "↔" : "↕";
   }
+  function updateFmtUI(){
+    document.querySelectorAll("#fmtGrp .mbtn").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-f") === fmtName); });
+  }
+  document.getElementById("fmtGrp").addEventListener("click", function(e){
+    var b = e.target.closest && e.target.closest(".mbtn");
+    if(!b) return;
+    fmtName = b.getAttribute("data-f");
+    updateFmtUI();
+    renderView();
+  });
   document.getElementById("cropY").addEventListener("input", function(e){ cropPos = (+e.target.value) / 100; repaintAll(); });
 
   function loadMask(key, url){
@@ -964,7 +990,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     var o = ov.rec.o;
     if(!o) return;
     while(ov.svg.firstChild) ov.svg.removeChild(ov.svg.firstChild);
-    (annots[ov.id] || []).forEach(function(a){ ov.svg.appendChild(shapeEl(a, o.w, cropH(o))); });
+    (annots[ov.id] || []).forEach(function(a){ ov.svg.appendChild(shapeEl(a, cropW(o), cropH(o))); });
   }
   // Le calque recouvre exactement la partie de la case occupée par l'image (l'image est centrée sans être déformée)
   function layoutOverlays(){
@@ -973,9 +999,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       if(!o) return;
       var cw = ov.host.clientWidth, ch = ov.host.clientHeight;
       if(!cw || !ch) return;
-      var oh = cropH(o), sc = Math.min(cw / o.w, ch / oh), w = o.w * sc, h = oh * sc, st = ov.svg.style;
+      var ow = cropW(o), oh = cropH(o), sc = Math.min(cw / ow, ch / oh), w = ow * sc, h = oh * sc, st = ov.svg.style;
       st.left = ((cw - w) / 2) + "px"; st.top = ((ch - h) / 2) + "px"; st.width = w + "px"; st.height = h + "px";
-      ov.svg.setAttribute("viewBox", "0 0 " + o.w + " " + oh);
+      ov.svg.setAttribute("viewBox", "0 0 " + ow + " " + oh);
       drawOverlay(ov);
     });
     layoutChromes();
@@ -1025,7 +1051,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         : { t: "circle", x: drag.x, y: drag.y, r: Math.hypot((p.x - drag.x) * drag.r.width, (p.y - drag.y) * drag.r.height) / drag.r.width };
       drag.ann = a;
       if(drag.el && drag.el.parentNode) drag.el.parentNode.removeChild(drag.el);
-      drag.el = shapeEl(a, o.w, cropH(o));
+      drag.el = shapeEl(a, cropW(o), cropH(o));
       drag.ov.svg.appendChild(drag.el);
     });
     function end(e){
@@ -1145,10 +1171,10 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       if(!o) return;
       var cw = ch.host.clientWidth, chh = ch.host.clientHeight;
       if(!cw || !chh) return;
-      var oh = cropH(o), s = Math.min(cw / o.w, chh / oh), w = o.w * s, h = oh * s, st = ch.frame.style;
+      var ow = cropW(o), oh = cropH(o), s = Math.min(cw / ow, chh / oh), w = ow * s, h = oh * s, st = ch.frame.style;
       st.left = ((cw - w) / 2) + "px"; st.top = ((chh - h) / 2) + "px"; st.width = w + "px"; st.height = h + "px";
       // tailles de la vidéo (hauteur exportée), ramenées à l'affichage par k
-      var sc = Math.max(1, Math.floor(POST.maxDim / Math.max(o.w, oh))), expH = oh * sc, k = h / expH;
+      var sc = Math.max(1, Math.floor(POST.maxDim / Math.max(ow, oh))), expH = oh * sc, k = h / expH;
       function px(v){ return (v * k).toFixed(2) + "px"; }
       st.setProperty("--fs", px(Math.max(15, Math.round(expH * 0.035))));
       st.setProperty("--ms", px(Math.max(12, Math.round(expH * 0.024))));
@@ -1196,7 +1222,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     }
     var layerA = document.createElement("div"); layerA.className = "complayer";
     var layerB = document.createElement("div"); layerB.className = "complayer right";
-    var imA = mkCanvas(a, "compareimg", function(o){ ar = o.w / cropH(o); fit(); setSplit(splitPct); });
+    var imA = mkCanvas(a, "compareimg", function(o){ ar = cropW(o) / cropH(o); fit(); setSplit(splitPct); });
     var imB = mkCanvas(b, "compareimg");
     layerA.appendChild(imA); var ovA = mkOverlay(imA, box); layerA.appendChild(ovA.svg);
     layerB.appendChild(imB); var ovB = mkOverlay(imB, box); layerB.appendChild(ovB.svg);
@@ -1261,7 +1287,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     ids.forEach(function(id, i){
       var cell = document.createElement("div");
       cell.className = "mcell";
-      var cv = mkCanvas(byId[id], "", i === 0 ? function(o){ ar = o.w / cropH(o); layout(); } : null);
+      var cv = mkCanvas(byId[id], "", i === 0 ? function(o){ ar = cropW(o) / cropH(o); layout(); } : null);
       cell.appendChild(cv);
       var ov = mkOverlay(cv, cell);
       cell.appendChild(ov.svg);
@@ -1905,6 +1931,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     });
   });
 
+  updateFmtUI();
   syncLevelsUI();
   updateBandUI();
   updateAnnUI();
