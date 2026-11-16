@@ -85,7 +85,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .pagesub{margin:0;color:var(--muted);font-size:13.5px}
 .cmpempty{color:var(--muted);font-size:13.5px;padding:30px 0}
 .cmpempty a{color:var(--pixel);text-decoration:none}
-.cmphead{font-family:var(--mono);font-size:12px;letter-spacing:.13em;text-transform:uppercase;margin:0 0 10px;color:var(--muted)}
+/* 16/11/2026 : titres de section dans la police de titre de Simulations (Montserrat 600, 13 px, comme « Résumé de la configuration ») */
+.cmphead{font-family:var(--display);font-weight:600;font-size:13px;letter-spacing:0;margin:0 0 10px;color:var(--paper)}
 .cmpnote{color:var(--muted);font-size:13px;margin:0 0 8px;flex:none}
 .cmpnote.warn{color:var(--photon)}
 .cmpempty{padding:12px 0}
@@ -93,7 +94,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
 /* Page : l'image prend toute la hauteur, les réglages sont dans une carte à droite (comme le résumé de Simulations) */
 .cmpbody{flex:1;min-height:0;display:flex;gap:18px}
-.cmpmain{flex:1;min-width:0;display:flex;flex-direction:column}
+.cmpmain{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:14px 16px 12px}
 .cmpstagearea{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center}
 .cmpneed{margin:auto;color:var(--muted);font-size:13.5px}
 .viewerhint{flex:none;text-align:center;font-size:12px;color:var(--muted-2);margin:8px 0 0}
@@ -180,14 +181,14 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .viewtabs{flex:none;margin:0 0 10px}
 .viewtabs .modegrp{display:inline-flex}
 .viewtabs .mbtn{flex:none;padding:7px 18px}
-.cmpperf{flex:1;min-height:0;overflow:auto;background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:16px 20px 18px}
+.cmpperf{flex:1;min-height:0;overflow:auto;padding:0 4px 4px 0}
 .perfbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 18px;margin:0 0 10px;font-size:12.5px;color:var(--muted)}
 .perfbar label{display:inline-flex;align-items:center;gap:7px;cursor:pointer;color:var(--paper)}
 .perfbar input{accent-color:var(--pixel)}
 .perfwarn{margin:0 0 10px;color:var(--photon);font-size:12.5px}
 .perftbl{width:100%;border-collapse:collapse}
 .perftbl th,.perftbl td{padding:6px 12px;text-align:right;border-bottom:1px solid var(--line-soft);font-family:var(--mono);font-size:12.5px;font-weight:400;color:var(--paper)}
-.perftbl thead th{position:sticky;top:-16px;z-index:2;background:var(--panel);font-family:var(--display);font-weight:600;font-size:12.5px;border-bottom:1px solid var(--line)}
+.perftbl thead th{position:sticky;top:0;z-index:2;background:var(--panel);font-family:var(--display);font-weight:600;font-size:12.5px;border-bottom:1px solid var(--line)}
 .perftbl th.rl,.perftbl td.rl{text-align:left;font-family:var(--body);font-size:13px;color:var(--muted)}
 .perftbl tr.grp th{text-align:left;background:var(--panel-2);font-family:var(--mono);font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:5px 12px}
 .perftbl tr.sub th{text-align:left;font-family:var(--mono);font-size:12px;color:var(--paper);padding-top:10px;border-bottom:1px solid var(--line-soft)}
@@ -331,14 +332,14 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         </div>
 
         <aside class="cmppanel">
-          <section>
-            <p class="cmphead" data-i18n="cmpr.pick_title">Résultats disponibles</p>
+          <details class="fold" id="secPick" open>
+            <summary class="cmphead" data-i18n="cmpr.pick_title">Résultats disponibles</summary>
             <p class="pickhint" data-i18n="cmpr.pick_hint">Choisissez 2 à 4 résultats.</p>
             <div class="picklist" id="cmpPick"></div>
-          </section>
+          </details>
 
-          <section id="secDisplay" hidden>
-            <p class="cmphead" data-i18n="cmpr.panel.display">Affichage</p>
+          <details class="fold" id="secDisplay" hidden>
+            <summary class="cmphead" data-i18n="cmpr.panel.display">Affichage</summary>
             <span class="modegrp">
               <button type="button" class="mbtn" id="modeSlider" data-i18n="cmpr.mode.slider">Curseur</button>
               <button type="button" class="mbtn" id="modeMosaic" data-i18n="cmpr.mode.mosaic">Mosaïque</button>
@@ -347,10 +348,10 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
               <label for="selA" data-i18n="cmpr.left">Gauche</label><select id="selA"></select>
               <label for="selB" data-i18n="cmpr.right">Droite</label><select id="selB"></select>
             </div>
-          </section>
+          </details>
 
-          <section id="secLevels" hidden>
-            <p class="cmphead" data-i18n="cmpr.lv.title">Contraste (toutes les images)</p>
+          <details class="fold" id="secLevels" hidden>
+            <summary class="cmphead" data-i18n="cmpr.lv.title">Contraste (toutes les images)</summary>
             <div class="lvrow"><label for="lvMin" data-i18n="cmpr.lv.min">Min</label><input type="range" id="lvMin" min="0" max="254" step="1" value="0"><output id="lvMinV">0</output></div>
             <div class="lvrow"><label for="lvMax" data-i18n="cmpr.lv.max">Max</label><input type="range" id="lvMax" min="1" max="255" step="1" value="255"><output id="lvMaxV">255</output></div>
             <div class="lvbtns">
@@ -358,7 +359,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
               <button type="button" class="mbtn" id="lvReset" data-i18n="cmpr.lv.reset">Réinitialiser</button>
             </div>
             <p class="lvnote" id="lvNote" data-i18n="cmpr.lv.note">Même fenêtre pour toutes les images.</p>
-          </section>
+          </details>
           <details class="fold" id="secOverlay" hidden>
             <summary class="cmphead" data-i18n="cmpr.ov.title">Incrustations</summary>
             <label class="satchk"><input type="checkbox" id="ovScale" checked> <span data-i18n="cmpr.ov.scale">Échelle</span></label>
@@ -737,6 +738,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       maxDN = newMax; dnMode = mode; dnBits = bits || null;
       if(changed){ lo = 0; hi = maxDN; }
       buildLut(); syncLevelsUI(); updateLevelsUI(); repaintAll();
+      return changed;
     }
     apply(false);
     var need = ids.filter(function(id){ return dnCache[id + "|" + bn] === undefined; });
@@ -766,7 +768,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       var d = dnCache[id + "|" + bn], o = os[i];
       return d && o && !o.tainted && d.w === o.w && d.h === o.h;
     });
-    if(ok) apply(true);
+    // Les DN bruts sont souvent bien en dessous de 2^bits : à l'arrivée des DN, la fenêtre démarre sur les percentiles
+    // communs (p2/p98) pour que les images soient lisibles ; 0 à max reste réglable à la main (Réinitialiser).
+    if(ok && apply(true)) await autoLevels();
   }
 
   var satTok = 0;
@@ -854,7 +858,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   // tous les résultats choisis dans la mosaïque). Pour chaque image on prend ses propres percentiles 2 et 98,
   // puis la fenêtre va du plus petit p2 au plus grand p98 : aucune image n'est écrêtée, et la même fenêtre
   // reste appliquée à toutes, donc l'écart de luminosité entre les images est conservé.
-  document.getElementById("lvAuto").addEventListener("click", async function(){
+  async function autoLevels(){
     var ids = (curMode() === "slider" && slA && slB) ? [slA, slB] : sel.slice();
     var os = await Promise.all(ids.map(function(id){ return loadOrig(byId[id]); }));
     if(os.some(function(o){ return !o || o.tainted; })) return;
@@ -886,7 +890,8 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     });
     if(b <= a){ b = Math.min(maxDN, a + 2); if(b <= a) a = b - 1; }
     setLevels(a, b);
-  });
+  }
+  document.getElementById("lvAuto").addEventListener("click", autoLevels);
 
   // ===================== Zone de comparaison =====================
   var splitPct = 50;            // position du curseur, conservée d'un affichage à l'autre
@@ -1870,6 +1875,15 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     var v = e.target.value;
     if(v === slA) slA = slB;
     slB = v; renderView();
+  });
+
+  // Panneau en accordéon : une seule section ouverte à la fois
+  var folds = Array.prototype.slice.call(document.querySelectorAll("#cmpBody .cmppanel details.fold"));
+  folds.forEach(function(d){
+    d.addEventListener("toggle", function(){
+      if(!d.open) return;
+      folds.forEach(function(o){ if(o !== d) o.open = false; });
+    });
   });
 
   syncLevelsUI();
