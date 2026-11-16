@@ -1445,7 +1445,7 @@ async function deleteResult(r){
     var a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
     // 12/10/2026 : nom du fichier = nom de la simulation (s'il y en a un), scène, date et heure de création, comme les images.
-    var slug = function(x){ return String(x || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60); };
+    var slug = function(x){ return String(x || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60); };
     var cd = r.created_at ? new Date(r.created_at) : null, z2 = function(n){ return String(n).padStart(2, "0"); };
     var dateTxt = cd && !isNaN(cd) ? cd.getFullYear() + "-" + z2(cd.getMonth() + 1) + "-" + z2(cd.getDate()) + "_" + z2(cd.getHours()) + z2(cd.getMinutes()) : "";
     var nameParts = [slug(r.name), slug(tScene(r.scene)), dateTxt].filter(Boolean);
@@ -1524,7 +1524,7 @@ async function deleteResult(r){
     var soBtn = document.getElementById("signOutBtn");
     soBtn.removeAttribute("data-i18n-aria"); soBtn.removeAttribute("data-i18n-title");
     soBtn.removeAttribute("aria-label"); soBtn.removeAttribute("title");
-    soBtn.className = "g-btn primary";
+    soBtn.className = "mbtn primary";
     soBtn.textContent = t("guest.create");
     soBtn.addEventListener("click", function(){ window.location.href = "login.html?signup=1"; });
     setupGuestUI();
@@ -2487,7 +2487,7 @@ async function deleteResult(r){
     return null;
   }
   function fileSlug(s){
-    return String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
+    return String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").replace(/[^A-Za-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 60);
   }
   var DL_NAME_SUFFIX = { raw: "_brut", scaled: "_echelle-max", wb: "_balance-blancs", pct: "_p2-p98", tiff32: "_tiff32" };
   function downloadName(key, mode){

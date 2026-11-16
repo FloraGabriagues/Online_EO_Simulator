@@ -1296,7 +1296,7 @@ function updateFmc(){
   var fmt = function(x){ return x.toLocaleString(nysaLocale(), { minimumFractionDigits: 2, maximumFractionDigits: 2 }); };
   // La FMC est un FACTEUR (valeur affichée en grand). La distance balayée en pixels, qui est le même nombre
   // avant compensation, est expliquée dessous : « X px balayés, ramenés à 1 px par la FMC ».
-  val.textContent = info ? "\u00D7\u00A0" + fmt(info.px) : "-";
+  val.textContent = info ? "× " + fmt(info.px) : "-";
   swept.textContent = info ? t("sim.fmc.swept", { px: fmt(info.px) }) : "";
   det.textContent = info ? t("sim.fmc.detail", { vg: fmt(info.vg), gsd: fmt(info.gsd) }) : t("sim.fmc.unavailable");
 }
@@ -2468,8 +2468,7 @@ function setupGuestConditions(){
     var soBtn = document.getElementById("signOutBtn");
     soBtn.removeAttribute("data-i18n-aria"); soBtn.removeAttribute("data-i18n-title");
     soBtn.removeAttribute("aria-label"); soBtn.removeAttribute("title");
-    soBtn.className = "nextbtn";
-    soBtn.style.cssText = "width:auto;margin:0;padding:8px 16px";
+    soBtn.className = "mbtn primary";
     soBtn.textContent = t("guest.create");
     soBtn.addEventListener("click", function(){ window.location.href = "login.html?signup=1"; });
     setupGuestConditions();
