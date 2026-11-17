@@ -101,7 +101,11 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 .fsbtn{position:absolute;top:8px;right:8px;z-index:20;width:32px;height:32px;border-radius:6px;border:1px solid var(--line);
   background:rgba(9,14,19,.72);color:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer}
 .fsbtn:hover{border-color:var(--pixel);color:var(--pixel)}
-.stagewrap:fullscreen .fsbtn{top:18px;right:18px}
+/* 17/11/2026 : le bouton plein écran est sur la ligne des onglets (au-dessus de l'image) ; dans le plein écran, il passe dans le coin de l'écran */
+.stagewrap .fsbtn{display:none}
+.stagewrap:fullscreen .fsbtn{display:flex;top:18px;right:18px}
+.viewtabs{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.viewtabs .fsbtn{position:static}
 .cmpneed{margin:auto;color:var(--muted);font-size:13.5px}
 .viewerhint{flex:none;text-align:center;font-size:12px;color:var(--muted-2);margin:8px 0 0}
 .cmppanel{flex:none;width:320px;overflow-y:auto;background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:18px 18px}
@@ -334,6 +338,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
               <button type="button" class="mbtn" id="tabImg" data-i18n="cmpr.tab.image">Image</button>
               <button type="button" class="mbtn" id="tabPerf" data-i18n="cmpr.tab.perf">Performances</button>
             </span>
+            <button type="button" class="fsbtn" id="fsBtnTab" title="Plein écran" data-i18n-title="res.fullscreen" aria-label="Plein écran">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/></svg>
+            </button>
           </div>
           <p class="cmpneed" id="cmpNeed" data-i18n="cmpr.need" hidden>Choisissez au moins 2 résultats.</p>
           <div class="stagewrap" id="stageWrap">
@@ -498,16 +505,21 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   // Connecté : la table saved_results.
   var all = [];
   if(guest){
-    var kept = [];
+    // 17/11/2026 : l'invité dispose toujours des résultats déjà calculés de la démo pour essayer le comparateur
+    // (sans devoir simuler d'abord). Ceux qu'il a « simulés » dans l'onglet gardent leur date ; pour en proposer
+    // d'autres, ajouter leur dossier demo/<nom>/ et son nom dans cette liste (2 à 20 lettres minuscules).
+    var GUEST_DEMOS = ["port", "ville", "avion"];
+    var kept = [], at = {};
     try { kept = JSON.parse(sessionStorage.getItem("nysa_guest_results") || "[]"); } catch(e){}
-    for(var i = 0; i < kept.length; i++){
-      var slug = String(kept[i].slug || "");
+    kept.forEach(function(k){ if(k && k.slug){ at[k.slug] = k.at; if(GUEST_DEMOS.indexOf(k.slug) < 0) GUEST_DEMOS.push(k.slug); } });
+    for(var i = 0; i < GUEST_DEMOS.length; i++){
+      var slug = String(GUEST_DEMOS[i] || "");
       if(!/^[a-z]{2,20}$/.test(slug)) continue;
       try {
         var resp = await fetch("demo/" + slug + "/result.json");
         if(!resp.ok) continue;
         var r = await resp.json();
-        all.push({ id: "demo-" + slug, created_at: new Date(kept[i].at || Date.now()).toISOString(),
+        all.push({ id: "demo-" + slug, created_at: new Date(at[slug] || r.created_at || Date.now()).toISOString(),
                    name: r.name, scene: r.scene, image_path: r.image_path, url: r.image_path, full: r });
       } catch(e){ console.warn("Résultat de démonstration illisible :", e); }
     }
@@ -1854,6 +1866,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     document.getElementById("tabPerf").classList.toggle("on", view === "perf");
     stage.hidden = !ok || isPerf;
     document.getElementById("stageWrap").hidden = !ok || isPerf;
+    document.getElementById("fsBtnTab").hidden = isPerf;
     perf.hidden = !isPerf;
     document.getElementById("secDisplay").hidden = !ok || isPerf;
     document.getElementById("secAnnot").hidden = !ok || isPerf;
@@ -2089,11 +2102,13 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   }
 
   // Plein écran : la zone image seule (comme la démo) ; la mise en page se recalcule à la nouvelle taille
-  document.getElementById("fsBtn").addEventListener("click", function(){
+  function toggleFullscreen(){
     var w = document.getElementById("stageWrap");
     if(document.fullscreenElement) document.exitFullscreen();
     else if(w.requestFullscreen) w.requestFullscreen();
-  });
+  }
+  document.getElementById("fsBtn").addEventListener("click", toggleFullscreen);
+  document.getElementById("fsBtnTab").addEventListener("click", toggleFullscreen);
   document.addEventListener("fullscreenchange", function(){ layoutOverlays(); });
   document.getElementById("tabImg").addEventListener("click", function(){ view = "img"; renderView(); });
   document.getElementById("tabPerf").addEventListener("click", function(){ view = "perf"; renderView(); });
