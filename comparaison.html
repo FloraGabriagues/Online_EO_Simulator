@@ -95,7 +95,13 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 /* Page : l'image prend toute la hauteur, les réglages sont dans une carte à droite (comme le résumé de Simulations) */
 .cmpbody{flex:1;min-height:0;display:flex;gap:18px}
 .cmpmain{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:14px 16px 12px}
-.cmpstagearea{flex:1;min-height:0;position:relative;display:flex;align-items:center;justify-content:center}
+.stagewrap{flex:1;min-height:0;position:relative;display:flex}
+.stagewrap:fullscreen{background:var(--void);padding:18px}
+.cmpstagearea{flex:1;min-width:0;min-height:0;position:relative;display:flex;align-items:center;justify-content:center}
+.fsbtn{position:absolute;top:8px;right:8px;z-index:20;width:32px;height:32px;border-radius:6px;border:1px solid var(--line);
+  background:rgba(9,14,19,.72);color:var(--paper);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.fsbtn:hover{border-color:var(--pixel);color:var(--pixel)}
+.stagewrap:fullscreen .fsbtn{top:18px;right:18px}
 .cmpneed{margin:auto;color:var(--muted);font-size:13.5px}
 .viewerhint{flex:none;text-align:center;font-size:12px;color:var(--muted-2);margin:8px 0 0}
 .cmppanel{flex:none;width:320px;overflow-y:auto;background:var(--panel);border:1px solid var(--line-soft);border-radius:6px;padding:18px 18px}
@@ -330,7 +336,12 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
             </span>
           </div>
           <p class="cmpneed" id="cmpNeed" data-i18n="cmpr.need" hidden>Choisissez au moins 2 résultats.</p>
-          <div class="cmpstagearea" id="cmpStage"></div>
+          <div class="stagewrap" id="stageWrap">
+            <div class="cmpstagearea" id="cmpStage"></div>
+            <button type="button" class="fsbtn" id="fsBtn" title="Plein écran" data-i18n-title="res.fullscreen" aria-label="Plein écran">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9V5a1 1 0 0 1 1-1h4M20 9V5a1 1 0 0 0-1-1h-4M4 15v4a1 1 0 0 0 1 1h4M20 15v4a1 1 0 0 1-1 1h-4"/></svg>
+            </button>
+          </div>
           <div class="cmpperf" id="cmpPerf" hidden></div>
           <p class="viewerhint" id="lvModeNote"></p>
           <p class="viewerhint" id="cmpHint" data-i18n="res.hint">Glissez sur l'image pour comparer</p>
@@ -429,6 +440,9 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
               <select id="expDur"><option value="2">2 s</option><option value="4" selected>4 s</option><option value="6">6 s</option></select>
             </div>
             <p class="lvnote" id="expInfo"></p>
+            <div class="abbox" id="expNameBox">
+              <label for="expName" id="expNameLbl">Nom du fichier</label><input type="text" id="expName" class="txtin" style="margin:0" value="nysa-comparaison" maxlength="80" spellcheck="false" autocomplete="off">
+            </div>
             <div class="lvbtns"><button type="button" class="mbtn action" id="expGo" data-i18n="cmpr.exp.go">Exporter en mp4</button></div>
             <p class="lvnote" id="expNote" role="status"></p>
           </details>
@@ -660,7 +674,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   //  - image  : chaque image a sa propre fenêtre p2/p98 (on compare la structure, pas le niveau) ;
   //  - mean   : chaque image est multipliée par un gain pour avoir la même moyenne, puis la fenêtre commune s'applique
   //             (on compare netteté et bruit relatif, sans écrêter ni étirer chaque image).
-  var levelsMode = "common";
+  var levelsMode = "image";   // 17/11/2026 : par défaut, chaque image a sa propre fenêtre (on compare la structure ; « Commune » conserve les écarts de signal)
   var statC = {};
   function statsOf(id){
     var o = origO[id];
@@ -1743,6 +1757,13 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     });
   }
 
+  // Nom du fichier choisi par l'utilisateur : caractères interdits remplacés, extension retirée si elle est saisie
+  function fileName(){
+    var v = String(document.getElementById("expName").value || "").trim().replace(/\.(mp4|webm)$/i, "");
+    v = v.replace(/[\\\/:*?"<>|\u0000-\u001f]/g, "-").replace(/^\.+/, "").trim();
+    return v || "nysa-comparaison";
+  }
+  document.getElementById("expNameLbl").textContent = /^en/i.test(String(nysaLocale())) ? "File name" : "Nom du fichier";
   function expSay(txt){ document.getElementById("expNote").textContent = txt || ""; }
   function updateExpUI(){
     document.querySelectorAll("#expMode .mbtn").forEach(function(b){ b.classList.toggle("on", b.getAttribute("data-m") === expMode); });
@@ -1784,7 +1805,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       var out = await encodeExact(total, getFrame, geo, progress);
       if(!out) out = await encodeRealtime(total, getFrame, geo, progress);
       expSay(t("cmpr.exp.encoding"));
-      downloadBlob(out.blob, "nysa-comparaison." + out.ext);
+      downloadBlob(out.blob, fileName() + "." + out.ext);
       expSay(t("cmpr.exp.done"));
     } catch(e){
       console.error("[nysa-export]", e);
@@ -1832,6 +1853,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     document.getElementById("tabImg").classList.toggle("on", view === "img");
     document.getElementById("tabPerf").classList.toggle("on", view === "perf");
     stage.hidden = !ok || isPerf;
+    document.getElementById("stageWrap").hidden = !ok || isPerf;
     perf.hidden = !isPerf;
     document.getElementById("secDisplay").hidden = !ok || isPerf;
     document.getElementById("secAnnot").hidden = !ok || isPerf;
@@ -2066,6 +2088,13 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     });
   }
 
+  // Plein écran : la zone image seule (comme la démo) ; la mise en page se recalcule à la nouvelle taille
+  document.getElementById("fsBtn").addEventListener("click", function(){
+    var w = document.getElementById("stageWrap");
+    if(document.fullscreenElement) document.exitFullscreen();
+    else if(w.requestFullscreen) w.requestFullscreen();
+  });
+  document.addEventListener("fullscreenchange", function(){ layoutOverlays(); });
   document.getElementById("tabImg").addEventListener("click", function(){ view = "img"; renderView(); });
   document.getElementById("tabPerf").addEventListener("click", function(){ view = "perf"; renderView(); });
   document.getElementById("modeSlider").addEventListener("click", function(){ modeUser = "slider"; renderView(); });
