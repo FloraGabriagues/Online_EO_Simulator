@@ -395,6 +395,13 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
 
           <details class="fold" id="secLevels" hidden>
             <summary class="cmphead" data-i18n="cmpr.lv.title">Contraste (toutes les images)</summary>
+            <!-- 18/11/2026 : même liste « Rendu » que la page Résultats -->
+            <p class="lvnote" style="margin:0 0 6px" data-i18n="res.render">Rendu de l'image</p>
+            <select id="renderSel" class="txtin" style="margin:0 0 12px">
+              <option value="none" data-i18n="res.render.none">Brut</option>
+              <option value="wb" data-i18n="res.render.wb">Brut avec balance des blancs</option>
+              <option value="p2p98" selected data-i18n="res.render.p2p98">Percentile p2/p98 (avec balance des blancs)</option>
+            </select>
             <span class="modegrp" id="lvModeGrp">
               <button type="button" class="mbtn" data-lm="common">Commune</button>
               <button type="button" class="mbtn" data-lm="image">Image</button>
@@ -687,19 +694,59 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
   //  - mean   : chaque image est multipliée par un gain pour avoir la même moyenne, puis la fenêtre commune s'applique
   //             (on compare netteté et bruit relatif, sans écrêter ni étirer chaque image).
   var levelsMode = "image";   // 17/11/2026 : par défaut, chaque image a sa propre fenêtre (on compare la structure ; « Commune » conserve les écarts de signal)
+  // 18/11/2026 : liste « Rendu », comme la page Résultats.
+  //  - none  : « Brut » : les DN en pleine échelle du convertisseur (0 à 2^bits), sans aucun réglage ;
+  //  - wb    : « Brut avec balance des blancs » : même fenêtre, avec un gain par canal mesuré au point blanc de la scène ;
+  //  - p2p98 : « Percentile p2/p98 (avec balance des blancs) » : la balance des blancs, puis la fenêtre de niveaux (modes
+  //            Commune / Image / Moyenne ci-dessous). Les percentiles sont donc calculés sur l'image telle qu'elle est affichée.
+  // Les curseurs Min et Max restent réglables dans les trois rendus ; changer de rendu remet la fenêtre à son point de départ.
+  // La balance des blancs ne s'applique qu'au RGB, avec les DN bruts. Sur une bande seule, ou sans DN (ancien résultat,
+  // dont l'image enregistrée est déjà équilibrée par le serveur), l'image est montrée sans gain supplémentaire.
+  var renderMode = "p2p98";
+  function effMode(){ return renderMode === "p2p98" ? levelsMode : "common"; }
+  // Même point blanc par scène que la page Résultats (fraction de l'image : bus blanc, fuselage, superstructure du navire),
+  // moyenné sur 5 x 5 pixels. Si la liste change dans resultats.html, la mettre à jour ici aussi.
+  var SCENE_WP = { ville: { x: 0.36, y: 0.56 }, avion: { x: 0.44, y: 0.46 }, port: { x: 0.92, y: 0.50 } };
+  var WP_RAD = 2;
+  var wbC = {};   // id -> gains [R, G, B] ou null
+  function wbGainsOf(id){
+    var d = dnCache[id + "|RGB"];
+    if(!d || d.ch < 3) return null;
+    if(wbC[id] !== undefined) return wbC[id];
+    var k = String((byId[id] && byId[id].scene) || "").toLowerCase();
+    if(k === "aix") k = "ville";
+    var xy = SCENE_WP[k];
+    if(!xy) return (wbC[id] = null);
+    var cx = Math.min(d.w - 1, Math.max(0, Math.round(xy.x * d.w))), cy = Math.min(d.h - 1, Math.max(0, Math.round(xy.y * d.h)));
+    var x0 = Math.max(0, cx - WP_RAD), x1 = Math.min(d.w - 1, cx + WP_RAD), y0 = Math.max(0, cy - WP_RAD), y1 = Math.min(d.h - 1, cy + WP_RAD);
+    var sum = [0, 0, 0], n = 0;
+    for(var yy = y0; yy <= y1; yy++) for(var xx = x0; xx <= x1; xx++){
+      var q = (yy * d.w + xx) * d.ch;
+      sum[0] += d.data[q]; sum[1] += d.data[q + 1]; sum[2] += d.data[q + 2]; n++;
+    }
+    var wp = sum.map(function(v){ return Math.max(v / n, 1); }), mx = Math.max(wp[0], wp[1], wp[2]);
+    return (wbC[id] = wp.map(function(v){ return mx / v; }));
+  }
   var statC = {};
   function statsOf(id){
     var o = origO[id];
     if(!o || o.tainted) return null;
     var ch = chan(), dnr = dnMode ? dnCache[id + "|" + band] : null;
     if(dnr && (dnr.w !== o.w || dnr.h !== o.h)) dnr = null;
-    var key = id + "|" + band + "|" + (dnr ? "d" : "8") + "|" + maxDN;
+    var wbg = (dnr && ch === null && dnr.ch >= 3 && renderMode !== "none") ? wbGainsOf(id) : null;
+    var key = id + "|" + band + "|" + (dnr ? "d" : "8") + (wbg ? "w" : "") + "|" + maxDN;
     if(statC[key]) return statC[key];
     var nb = dnr ? maxDN + 1 : 256, hist = new Float64Array(nb), n = 0, sc = dnr ? 1 : maxDN / 255;
+    function wv(v, g){ var x = Math.round(v * g); return x > maxDN ? maxDN : x; }
     if(dnr){
       var q = dnr.data, nc = dnr.ch, cc = nc >= 3 ? ch : 0, cnt = o.w * o.h;
       for(var p = 0; p < cnt; p++){
-        if(cc === null){ if(nc >= 3){ hist[q[p*nc]]++; hist[q[p*nc+1]]++; hist[q[p*nc+2]]++; } else hist[q[p*nc]] += 3; }
+        if(cc === null){
+          if(nc >= 3){
+            if(wbg){ hist[wv(q[p*nc], wbg[0])]++; hist[wv(q[p*nc+1], wbg[1])]++; hist[wv(q[p*nc+2], wbg[2])]++; }
+            else { hist[q[p*nc]]++; hist[q[p*nc+1]]++; hist[q[p*nc+2]]++; }
+          } else hist[q[p*nc]] += 3;
+        }
         else hist[q[p * nc + cc]]++;
       }
       n = cnt * (cc === null ? 3 : 1);
@@ -725,10 +772,11 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     return M / mine;
   }
   function winFor(id){
-    if(levelsMode === "common") return { lo: lo, hi: hi, g: 1, custom: false };
+    var em = effMode();
+    if(em === "common") return { lo: lo, hi: hi, g: 1, custom: false };
     var st = statsOf(id);
     if(!st) return { lo: lo, hi: hi, g: 1, custom: false };
-    if(levelsMode === "image"){ var b = st.p98 > st.p2 ? st.p98 : st.p2 + 1; return { lo: st.p2, hi: b, g: 1, custom: true }; }
+    if(em === "image"){ var b = st.p98 > st.p2 ? st.p98 : st.p2 + 1; return { lo: st.p2, hi: b, g: 1, custom: true }; }
     var ids = live.filter(function(r){ return r.o; }).map(function(r){ return r.id; });
     return { lo: lo, hi: hi, g: gainOf(id, ids), custom: true };
   }
@@ -745,6 +793,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     if(m && (m.w !== o.w || m.h !== o.h)) m = null;
     var dnr = dnMode ? dnCache[rec.id + "|" + band] : null;
     if(dnr && (dnr.w !== o.w || dnr.h !== o.h)) dnr = null;
+    var wbg = (dnr && ch === null && dnr.ch >= 3 && renderMode !== "none") ? wbGainsOf(rec.id) : null;
     var W = winFor(rec.id), wlo = W.lo, whi = W.hi, wg = W.g, plut = lut;
     if(W.custom){
       plut = new Uint8ClampedArray(256);
@@ -761,7 +810,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
         var p = rowP + x, si = p * 4;
         if(dnr){
           var pq = p * nc, vr, vg, vb;
-          if(cc === -1){ vr = q[pq]; vg = q[pq + 1]; vb = q[pq + 2]; }
+          if(cc === -1){ vr = q[pq]; vg = q[pq + 1]; vb = q[pq + 2]; if(wbg){ vr *= wbg[0]; vg *= wbg[1]; vb *= wbg[2]; } }
           else { vr = vg = vb = q[pq + cc]; }
           d[i2] = (vr * wg - wlo) * kk; d[i2+1] = (vg * wg - wlo) * kk; d[i2+2] = (vb * wg - wlo) * kk; d[i2+3] = 255;   // Uint8ClampedArray : bornes 0 à 255 et arrondi
         } else {
@@ -908,11 +957,11 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
       var changed = newMax !== maxDN || mode !== dnMode;
       maxDN = newMax; dnMode = mode; dnBits = bits || null;
       if(changed){ lo = 0; hi = maxDN; }
-      buildLut(); syncLevelsUI(); updateLevelsUI(); repaintAll();
+      buildLut(); syncLevelsUI(); updateLvModeUI(); repaintAll();
       return changed;
     }
     apply(false);
-    if(levelsMode === "mean") autoLevels();
+    if(effMode() === "mean") autoLevels();
     var need = ids.filter(function(id){ return dnCache[id + "|" + bn] === undefined; });
     if(need.length){
       var items = need.map(function(id){ return { key: id + "|" + bn, p: dnPathOf(id, bn) }; });
@@ -942,7 +991,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     });
     // Les DN bruts sont souvent bien en dessous de 2^bits : à l'arrivée des DN, la fenêtre démarre sur les percentiles
     // communs (p2/p98) pour que les images soient lisibles ; 0 à max reste réglable à la main (Réinitialiser).
-    if(ok && apply(true)) await autoLevels();
+    if(ok && apply(true) && renderMode === "p2p98") await autoLevels();
   }
 
   var satTok = 0;
@@ -1008,14 +1057,14 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     document.getElementById("lvMaxV").textContent = hi;
   }
   function updateLevelsUI(){
-    [lvMin, lvMax, document.getElementById("lvAuto"), document.getElementById("lvReset")].forEach(function(el){ el.disabled = !levelsOK || levelsMode === "image"; });
+    [lvMin, lvMax, document.getElementById("lvAuto"), document.getElementById("lvReset")].forEach(function(el){ el.disabled = !levelsOK || effMode() === "image"; });
     var n = document.getElementById("lvNote");
     n.textContent = !levelsOK ? t("cmpr.lv.na") : (dnMode ? t("cmpr.lv.note_dn", { max: maxDN }) : (dnBits ? t("cmpr.lv.note_bits", { max: maxDN }) : t("cmpr.lv.note")));
     if(typeof updateBandUI === "function") updateBandUI();
   }
   function setLevels(a, b){
     lo = a; hi = b;
-    buildLut(); syncLevelsUI(); repaintAll();
+    buildLut(); syncLevelsUI(); updateLvModeUI(); repaintAll();
   }
   lvMin.addEventListener("input", function(){ setLevels(Math.min(+lvMin.value, hi - 1), hi); });
   lvMax.addEventListener("input", function(){ setLevels(lo, Math.max(+lvMax.value, lo + 1)); });
@@ -1033,9 +1082,16 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     document.querySelectorAll("#lvModeGrp .mbtn").forEach(function(b){
       var k = b.getAttribute("data-lm");
       b.textContent = lab[k]; b.title = tip[k];
-      b.classList.toggle("on", k === levelsMode);
+      b.classList.toggle("on", renderMode === "p2p98" && k === levelsMode);
+      b.disabled = renderMode !== "p2p98" || !levelsOK;   // les trois modes ne servent qu'au rendu Percentile
     });
-    document.getElementById("lvModeNote").textContent = note[levelsMode];
+    var nt;
+    if(renderMode === "p2p98") nt = note[levelsMode];
+    else if(lo === 0 && hi === maxDN) nt = renderMode === "wb"
+      ? L("Valeurs brutes avec balance des blancs, en pleine échelle : les écarts de signal entre les images sont conservés.", "Raw values with white balance, full scale: signal differences between images are kept.")
+      : L("Valeurs brutes en pleine échelle : les écarts de signal entre les images sont conservés.", "Raw values, full scale: signal differences between images are kept.");
+    else nt = note.common;
+    document.getElementById("lvModeNote").textContent = nt;
     updateLevelsUI();
   }
   document.getElementById("lvModeGrp").addEventListener("click", async function(e){
@@ -1044,6 +1100,20 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     levelsMode = b.getAttribute("data-lm");
     updateLvModeUI();
     if(levelsMode === "mean") await autoLevels();   // fenêtre de départ adaptée aux images mises à la même moyenne
+    repaintAll();
+  });
+
+  // Liste « Rendu » : Brut et Brut avec balance des blancs remettent la fenêtre en pleine échelle ; Percentile calcule la fenêtre
+  // sur l'image affichée (balance des blancs comprise), sauf en mode Image où chaque image a la sienne.
+  document.getElementById("renderSel").addEventListener("change", async function(e){
+    renderMode = e.target.value;
+    if(renderMode === "p2p98"){
+      updateLvModeUI();
+      if(levelsMode !== "image") await autoLevels();
+    } else {
+      setLevels(0, maxDN);
+    }
+    updateLvModeUI();
     repaintAll();
   });
 
@@ -1064,7 +1134,7 @@ h1{font-family:var(--display);font-weight:500;font-size:clamp(21px,2.4vw,27.5px)
     if(sts.some(function(st){ return !st; })) return;
     var a = Infinity, b = -Infinity;
     ids.forEach(function(id, ix){
-      var g = levelsMode === "mean" ? gainOf(id, ids) : 1;
+      var g = effMode() === "mean" ? gainOf(id, ids) : 1;
       var pa = Math.round(sts[ix].p2 * g), pb = Math.round(sts[ix].p98 * g);
       if(pa < a) a = pa;
       if(pb > b) b = pb;
